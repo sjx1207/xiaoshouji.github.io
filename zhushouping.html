@@ -15,10 +15,12 @@
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             height: 100vh;
+            min-height: 100vh;
             display: flex;
             flex-direction: column;
             position: relative;
             overflow: hidden;
+            touch-action: manipulation; /* 确保触摸事件正常工作 */
         }
 
         /* 壁纸 */
@@ -138,6 +140,7 @@
             width: 200%;
             height: 100%;
             transition: transform 0.3s ease;
+            touch-action: pan-x; /* 允许水平滑动 */
         }
 
         .page {
@@ -216,6 +219,7 @@
             box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
             border: 1px solid rgba(255, 255, 255, 0.15);
             z-index: 999;
+            pointer-events: auto; /* 确保可以接收点击事件 */
         }
 
         .dock .app-icon {
@@ -758,9 +762,10 @@
             const dock = document.querySelector('.dock');
             dock.innerHTML = '';
             
-            dockApps.forEach(dockApp => {
+            dockApps.forEach((dockApp, index) => {
                 const dockElement = document.createElement('div');
                 dockElement.className = 'app-icon';
+                dockElement.style.pointerEvents = 'auto'; // 确保可以接收事件
                 dockElement.innerHTML = `
                     <div class="icon-bg">
                         <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -769,12 +774,35 @@
                     </div>
                 `;
                 
-                dockElement.addEventListener('click', function() {
-                    showModal('应用提示', `您点击了${dockApp.name}应用，这是一个演示应用。`);
+                // 为每个Dock图标添加点击事件
+                dockElement.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    
+                    // 根据不同的应用进行跳转
+                    switch(dockApp.name) {
+                        case '电话':
+                            showModal('电话应用', '电话功能正在开发中...');
+                            break;
+                        case '短信':
+                            window.location.href = 'xiaoxiliebiao.html';
+                            break;
+                        case '浏览器':
+                            showModal('浏览器应用', '浏览器功能正在开发中...');
+                            break;
+                        case '音乐':
+                            showModal('音乐应用', '音乐播放器功能正在开发中...');
+                            break;
+                        default:
+                            showModal('应用提示', `您点击了${dockApp.name}应用，这是一个演示应用。`);
+                    }
                 });
                 
                 dock.appendChild(dockElement);
             });
+            
+            // 确保Dock容器也可以接收事件
+            dock.style.pointerEvents = 'auto';
         }
         
         // 显示自定义弹窗
@@ -792,69 +820,112 @@
         // 页面加载时初始化
         document.addEventListener('DOMContentLoaded', function() {
             console.log('DOM loaded'); // 调试信息
-            createAppIconsPage1();
-            createAppIconsPage2();
-            createDockIcons();
             
-            // 绑定弹窗关闭事件
-            document.getElementById('close-modal').addEventListener('click', hideModal);
-            document.getElementById('cancel-btn').addEventListener('click', hideModal);
-            document.getElementById('confirm-btn').addEventListener('click', hideModal);
-            
-            // 绑定名片弹窗事件
-            document.getElementById('close-profile-modal').addEventListener('click', function() {
-                document.getElementById('profile-modal').classList.remove('active');
-            });
-            
-            document.getElementById('cancel-profile-btn').addEventListener('click', function() {
-                document.getElementById('profile-modal').classList.remove('active');
-            });
-            
-            document.getElementById('save-profile-btn').addEventListener('click', saveProfile);
-            
-            // 点击弹窗背景关闭弹窗
-            document.getElementById('custom-modal').addEventListener('click', function(e) {
-                if (e.target === this) {
-                    hideModal();
+            // 确保所有元素都已加载
+            setTimeout(() => {
+                try {
+                    createAppIconsPage1();
+                    createAppIconsPage2();
+                    createDockIcons();
+                    
+                    // 绑定弹窗关闭事件
+                    const closeModalBtn = document.getElementById('close-modal');
+                    if (closeModalBtn) {
+                        closeModalBtn.addEventListener('click', hideModal);
+                    }
+                    
+                    const cancelBtn = document.getElementById('cancel-btn');
+                    if (cancelBtn) {
+                        cancelBtn.addEventListener('click', hideModal);
+                    }
+                    
+                    const confirmBtn = document.getElementById('confirm-btn');
+                    if (confirmBtn) {
+                        confirmBtn.addEventListener('click', hideModal);
+                    }
+                    
+                    // 绑定名片弹窗事件
+                    const closeProfileModalBtn = document.getElementById('close-profile-modal');
+                    if (closeProfileModalBtn) {
+                        closeProfileModalBtn.addEventListener('click', function() {
+                            document.getElementById('profile-modal').classList.remove('active');
+                        });
+                    }
+                    
+                    const cancelProfileBtn = document.getElementById('cancel-profile-btn');
+                    if (cancelProfileBtn) {
+                        cancelProfileBtn.addEventListener('click', function() {
+                            document.getElementById('profile-modal').classList.remove('active');
+                        });
+                    }
+                    
+                    const saveProfileBtn = document.getElementById('save-profile-btn');
+                    if (saveProfileBtn) {
+                        saveProfileBtn.addEventListener('click', saveProfile);
+                    }
+                    
+                    // 点击弹窗背景关闭弹窗
+                    const customModal = document.getElementById('custom-modal');
+                    if (customModal) {
+                        customModal.addEventListener('click', function(e) {
+                            if (e.target === this) {
+                                hideModal();
+                            }
+                        });
+                    }
+                    
+                    const profileModal = document.getElementById('profile-modal');
+                    if (profileModal) {
+                        profileModal.addEventListener('click', function(e) {
+                            if (e.target === this) {
+                                this.classList.remove('active');
+                            }
+                        });
+                    }
+                    
+                    // 处理头像上传
+                    const uploadInput = document.getElementById('upload-input');
+                    if (uploadInput) {
+                        uploadInput.addEventListener('change', function(e) {
+                            const file = e.target.files[0];
+                            if (file) {
+                                const reader = new FileReader();
+                                reader.onload = function(event) {
+                                    // 更新头像显示
+                                    const profileCard = document.querySelector('.profile-card');
+                                    if (profileCard) {
+                                        const avatarElement = profileCard.querySelector('.profile-avatar');
+                                        if (avatarElement) {
+                                            avatarElement.style.backgroundImage = `url('${event.target.result}')`;
+                                            
+                                            // 保存到本地存储
+                                            const profileData = JSON.parse(localStorage.getItem('userProfile') || JSON.stringify({
+                                                nickname: '用户昵称',
+                                                signature: '个性签名',
+                                                avatar: 'https://picsum.photos/seed/profile/100/100'
+                                            }));
+                                            
+                                            profileData.avatar = event.target.result;
+                                            localStorage.setItem('userProfile', JSON.stringify(profileData));
+                                        }
+                                    }
+                                };
+                                reader.readAsDataURL(file);
+                            }
+                        });
+                    }
+                    
+                    // 添加触摸滑动事件
+                    addSwipeEvents();
+                    
+                    // 加载保存的壁纸
+                    loadSavedWallpaper();
+                    
+                    console.log('Initialization completed');
+                } catch (error) {
+                    console.error('Initialization error:', error);
                 }
-            });
-            
-            document.getElementById('profile-modal').addEventListener('click', function(e) {
-                if (e.target === this) {
-                    this.classList.remove('active');
-                }
-            });
-            
-            // 处理头像上传
-            document.getElementById('upload-input').addEventListener('change', function(e) {
-                const file = e.target.files[0];
-                if (file) {
-                    const reader = new FileReader();
-                    reader.onload = function(event) {
-                        // 更新头像显示
-                        const profileCard = document.querySelector('.profile-card');
-                        const avatarElement = profileCard.querySelector('.profile-avatar');
-                        avatarElement.style.backgroundImage = `url('${event.target.result}')`;
-                        
-                        // 保存到本地存储
-                        const profileData = JSON.parse(localStorage.getItem('userProfile') || JSON.stringify({
-                            nickname: '用户昵称',
-                            signature: '个性签名',
-                            avatar: 'https://picsum.photos/seed/profile/100/100'
-                        }));
-                        
-                        profileData.avatar = event.target.result;
-                        localStorage.setItem('userProfile', JSON.stringify(profileData));
-                    };
-                    reader.readAsDataURL(file);
-                }
-            });
-            
-            // 添加触摸滑动事件
-            addSwipeEvents();
-            
-            // 加载保存的壁纸
-            loadSavedWallpaper();
+            }, 100); // 延迟执行以确保元素完全加载
         });
         
         // 添加触摸滑动事件
