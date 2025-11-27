@@ -1695,107 +1695,360 @@ body.light-theme .mini-btn svg {
 
 /* 按钮点击反馈 */
 .mini-btn:active { opacity: 0.6; transform: scale(0.9); }
-        /* --- 1. 灵动岛本体样式 --- */
+        /* ================== 灵动岛逻辑修正 CSS ================== */
+
+/* 1. 灵动岛容器基础 */
 .island-container {
     position: absolute;
     top: 11px; left: 50%; transform: translateX(-50%);
     background: black;
     border-radius: 20px;
-    z-index: 9999; /* 最高层级 */
+    z-index: 9999;
+    /* 关键：默认高度和宽度 */
+    width: 0; height: 0; opacity: 0; /* 默认完全隐藏 */
+
     transition: width 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275),
                 height 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275),
-                border-radius 0.4s;
+                border-radius 0.4s,
+                opacity 0.2s;
     overflow: hidden;
     display: flex; justify-content: space-between; align-items: center;
     padding: 0 15px;
     box-shadow: 0 5px 15px rgba(0,0,0,0.3);
     color: white;
+    pointer-events: none; /* 平时能不能点 */
 }
 
-/* 状态 A: 待机 (小药丸) */
-.island-container.idle {
-    width: 120px; height: 35px; border-radius: 18px;
+/* 状态 A: 待机 (只有开了设置才显示这个小黑条) */
+.island-container.idle-show {
+    width: 120px; height: 35px; border-radius: 18px; opacity: 1;
 }
-.island-container.idle .island-content { opacity: 0; pointer-events: none; }
 
-/* 状态 B: 展开 (长条) */
+/* 状态 B: 音乐常驻 (播放音乐时，即使收缩了也要显示波形) */
+.island-container.music-active {
+    width: 150px; height: 35px; border-radius: 18px; opacity: 1;
+    cursor: pointer; pointer-events: auto;
+}
+
+/* 状态 C: 展开 (通知弹窗) */
 .island-container.active {
-    width: 340px; height: 60px; border-radius: 30px;
+    width: 340px; height: 60px; border-radius: 30px; opacity: 1;
+    z-index: 10000;
 }
 
+/* 内容区域 */
 .island-content {
     width: 100%; height: 100%;
     display: flex; justify-content: space-between; align-items: center;
-    opacity: 1; transition: opacity 0.3s 0.1s; /* 延迟显示内容 */
+    opacity: 0; transition: opacity 0.2s;
+}
+/* 展开或音乐常驻时显示内容 */
+.island-container.active .island-content,
+.island-container.music-active .island-content {
+    opacity: 1;
 }
 
-/* 内部元素 */
-.island-left, .island-right {
-    display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 14px;
+/* 只有在音乐常驻模式下，隐藏中间和右边的文字，只留左边波形 */
+.island-container.music-active .island-center,
+.island-container.music-active .island-right {
+    display: none;
 }
-.island-center {
-    font-size: 14px; font-weight: 500; opacity: 0.8;
+/* 但如果展开了，就显示 */
+.island-container.active .island-center,
+.island-container.active .island-right {
+    display: block;
+}
+        /* ================== 灵动岛显示修复补丁 ================== */
+
+/* 1. 音乐常驻状态 (播放中收缩状态) */
+.island-container.music-active {
+    width: 130px !important; /* 宽度适中 */
+    height: 35px !important;
+    border-radius: 18px !important;
+    opacity: 1 !important;
+    cursor: pointer;
+    pointer-events: auto;
+    background: black; /* 确保背景黑 */
 }
 
-/* 音乐波形动画 */
-.island-sound-wave {
-    display: flex; align-items: center; gap: 2px; height: 15px;
-}
+/* 2. 核心修复：波形颜色和位置 */
+/* 只要是在灵动岛里的波形，全部强制显示颜色 */
 .island-sound-wave span {
-    width: 3px; background: #0a84ff; border-radius: 2px;
+    background-color: #34C759 !important; /* 亮绿色，黑底上很明显 */
+    width: 3px !important;
+    border-radius: 2px;
+    /* 确保动画运行 */
     animation: wave 1s infinite ease-in-out;
 }
-.island-sound-wave span:nth-child(1) { height: 6px; animation-delay: 0s; }
-.island-sound-wave span:nth-child(2) { height: 12px; animation-delay: 0.1s; }
-.island-sound-wave span:nth-child(3) { height: 8px; animation-delay: 0.2s; }
-.island-sound-wave span:nth-child(4) { height: 5px; animation-delay: 0.3s; }
-@keyframes wave { 0%, 100% { transform: scaleY(1); } 50% { transform: scaleY(2); } }
 
-/* --- 2. iOS 开关样式 (Checkbox Hack) --- */
-.ios-switch {
-    position: relative; display: inline-block; width: 50px; height: 30px;
+/* 3. 布局控制：常驻模式下只显示左边的波形 */
+.island-container.music-active .island-content {
+    opacity: 1 !important;
+    justify-content: center !important; /* 居中显示 */
 }
-.ios-switch input { opacity: 0; width: 0; height: 0; }
-.slider {
-    position: absolute; cursor: pointer;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background-color: #39393d; /* 关闭时的颜色 */
-    transition: .4s; border-radius: 30px;
-}
-.slider:before {
-    position: absolute; content: "";
-    height: 26px; width: 26px;
-    left: 2px; bottom: 2px;
-    background-color: white;
-    transition: .4s; border-radius: 50%;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-}
-input:checked + .slider { background-color: #34C759; /* 开启时的绿色 */ }
-input:checked + .slider:before { transform: translateX(20px); }
 
-/* 浅色模式适配 */
-body.light-theme .settings-item { border-bottom: 0.5px solid rgba(0,0,0,0.05); }
-body.light-theme .slider { background-color: #e9e9ea; }
+/* 隐藏中间和右边的文字，防止挤压 */
+.island-container.music-active #island-text,
+.island-container.music-active #island-info {
+    display: none !important;
+}
+
+/* 确保左侧图标区显示 */
+.island-container.music-active #island-icon {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    width: 100%; /* 占满整个小岛 */
+}
+
+/* 4. 动画定义 (防止动画丢失) */
+@keyframes wave {
+    0%, 100% { height: 6px; }
+    50% { height: 16px; }
+}
+
+/* 针对不同柱子的延迟，产生律动感 */
+.island-sound-wave span:nth-child(1) { animation-delay: 0.0s; }
+.island-sound-wave span:nth-child(2) { animation-delay: 0.2s; }
+.island-sound-wave span:nth-child(3) { animation-delay: 0.4s; }
+.island-sound-wave span:nth-child(4) { animation-delay: 0.1s; }
+
+        /* ================== 灵动岛显示强制修复 ================== */
+
+/* 1. 确保灵动岛在最顶层，不被遮挡 */
+#dynamic-island {
+    z-index: 2147483647 !important; /* 浏览器允许的最大 Z-Index */
+    background: black !important;
+}
+
+/* 2. 强制波形可见 (关键修复) */
+.island-sound-wave {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    height: 20px !important;
+    gap: 3px !important;
+}
+
+.island-sound-wave span {
+    display: block !important;
+    background-color: #34C759 !important; /* 亮绿色 */
+    width: 3px !important;
+    height: 10px !important; /* 给一个默认高度，防止动画没加载时看不见 */
+    border-radius: 2px !important;
+    animation: wave 1s infinite ease-in-out !important;
+}
+
+/* 3. 确保常驻模式下的布局正确 */
+.island-container.music-active {
+    width: 130px !important;
+    height: 35px !important;
+    opacity: 1 !important;
+    display: flex !important;
+}
+
+/* 强制显示左侧区域，并居中 */
+.island-container.music-active #island-icon {
+    display: flex !important;
+    width: 100% !important;
+    justify-content: center !important;
+    align-items: center !important;
+}
+
+/* 隐藏不需要的文字 */
+.island-container.music-active #island-text,
+.island-container.music-active #island-info {
+    display: none !important;
+}
+
+/* 定义动画 (防止动画丢失) */
+@keyframes wave {
+    0%, 100% { height: 6px; }
+    50% { height: 18px; }
+}
+        /* ================== 灵动岛动效增强包 (注入灵魂) ================== */
+
+/* 1. 定义更剧烈的跳动动画 (Wave Rhythm) */
+@keyframes wave-rhythm {
+    0% {
+        height: 3px;
+        opacity: 0.6;
+        transform: scaleY(1);
+    }
+    50% {
+        height: 18px; /* 拉得更高，动感更强 */
+        opacity: 1;
+        transform: scaleY(1.1);
+    }
+    100% {
+        height: 3px;
+        opacity: 0.6;
+        transform: scaleY(1);
+    }
+}
+
+/* 2. 强制应用动画到波形条 */
+.island-sound-wave span {
+    display: block !important;
+    width: 3px !important;
+    background-color: #34C759 !important; /* 荧光绿 */
+    border-radius: 10px !important;
+    margin: 0 2px !important; /* 增加间距，别挤在一起 */
+
+    /* 关键：引用上面的新动画，速度加快到 0.6s */
+    animation: wave-rhythm 0.6s infinite ease-in-out !important;
+
+    /* 默认起始高度，防止动画加载前不可见 */
+    height: 6px;
+}
+
+/* 3. 错开时间差 (制造波浪感，而不是整齐划一的起立蹲下) */
+.island-sound-wave span:nth-child(1) { animation-delay: 0.0s !important; animation-duration: 0.6s !important; }
+.island-sound-wave span:nth-child(2) { animation-delay: 0.2s !important; animation-duration: 0.8s !important; }
+.island-sound-wave span:nth-child(3) { animation-delay: 0.4s !important; animation-duration: 0.7s !important; }
+.island-sound-wave span:nth-child(4) { animation-delay: 0.1s !important; animation-duration: 0.9s !important; }
+
+/* 4. 灵动岛容器的“Q弹”变形效果 */
+.island-container {
+    /* 使用贝塞尔曲线 (Cubic Bezier) 模拟物理弹簧效果 */
+    transition: width 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275),
+                height 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275),
+                border-radius 0.5s ease !important;
+}
+
+/* 5. 确保常驻模式下的容器高度足够容纳跳动 */
+.island-container.music-active {
+    align-items: center !important; /* 垂直居中 */
+    display: flex !important;
+    /* 确保背景纯黑，不然看不清绿色 */
+    background: #000000 !important;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.5) !important;
+}
+        /* ================== 灵动岛悬浮播放器 UI (高级深色版) ================== */
+
+/* 1. 悬浮卡片本体 */
+.island-popup {
+    position: fixed;
+    top: 11px; left: 50%; transform: translateX(-50%) scale(0.9);
+    width: 350px; height: 190px; /* 高度稍微加一点容纳进度条 */
+    border-radius: 32px;
+    z-index: 9998;
+    opacity: 0; pointer-events: none;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.15);
+    transform-origin: top center;
+}
+
+.island-popup.active {
+    opacity: 1; pointer-events: auto;
+    top: 55px;
+    transform: translateX(-50%) scale(1);
+}
+
+/* 2. 玻璃背景 */
+.popup-backdrop {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(30, 30, 35, 0.85); /* 深色半透明 */
+    backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px);
+    border-radius: 32px;
+    border: 1px solid rgba(255,255,255,0.12);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    z-index: 0;
+}
+
+/* 3. 内容布局 */
+.popup-content {
+    position: relative; z-index: 1;
+    padding: 20px 24px;
+    display: flex; flex-direction: column; justify-content: space-between;
+    height: 100%;
+}
+
+/* 上半部分 */
+.popup-top { display: flex; align-items: center; gap: 15px; margin-bottom: 5px; }
+
+.popup-cover {
+    width: 56px; height: 56px; border-radius: 10px;
+    background-color: #333; background-size: cover; background-position: center;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    flex-shrink: 0;
+}
+
+.popup-info { flex: 1; overflow: hidden; }
+.popup-title {
+    font-size: 17px; font-weight: 600; color: white; margin-bottom: 3px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.popup-artist {
+    font-size: 13px; color: rgba(255,255,255,0.6);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+/* 右上角列表按钮 */
+.popup-icon-btn {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: rgba(255,255,255,0.1); border: none;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; color: white;
+}
+.popup-icon-btn svg { width: 18px; height: 18px; fill: white; opacity: 0.8; }
+
+/* 进度条区域 */
+.popup-progress {
+    display: flex; align-items: center; gap: 8px;
+    margin-top: auto; margin-bottom: 10px;
+}
+.time-tiny { font-size: 10px; color: rgba(255,255,255,0.4); width: 25px; text-align: center; }
+.popup-slider {
+    flex: 1; height: 3px; border-radius: 2px;
+    background: rgba(255,255,255,0.2);
+    -webkit-appearance: none;
+}
+.popup-slider::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 10px; height: 10px;
+    background: white; border-radius: 50%;
+}
+
+/* 底部按钮组 */
+.popup-controls {
+    display: flex; justify-content: center; align-items: center; gap: 30px;
+}
+.popup-btn {
+    background: none; border: none; cursor: pointer;
+    width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;
+}
+.popup-btn svg { width: 26px; height: 26px; fill: white; }
+.popup-btn.big svg { width: 42px; height: 42px; }
+.popup-btn:active { opacity: 0.7; transform: scale(0.9); }
+
+/* 浅色模式适配 (Light Mode) */
+body.light-theme .popup-backdrop {
+    background: rgba(255, 255, 255, 0.85);
+    border-color: rgba(0,0,0,0.1);
+}
+body.light-theme .popup-title { color: black; }
+body.light-theme .popup-artist { color: rgba(0,0,0,0.6); }
+body.light-theme .popup-btn svg,
+body.light-theme .popup-icon-btn svg { fill: black; }
+body.light-theme .popup-icon-btn { background: rgba(0,0,0,0.05); }
+body.light-theme .popup-slider { background: rgba(0,0,0,0.1); }
+body.light-theme .popup-slider::-webkit-slider-thumb { background: black; }
+body.light-theme .time-tiny { color: rgba(0,0,0,0.5); }
     </style>
 </head>
 <body>
+<div id="dynamic-island" class="island-container idle-show">
+    <div class="island-content">
+        <div class="island-left" id="island-icon"></div>
+        <div class="island-center" id="island-text"></div>
+        <div class="island-right" id="island-info"></div>
+    </div>
+</div>
 <video id="global-video-bg" autoplay loop muted playsinline style="
     position: absolute; top: 0; left: 0; width: 100%; height: 100%;
     object-fit: cover; z-index: -1; display: none; pointer-events: none;
 "></video>
 
 <div class="status-bar">
-    <div id="dynamic-island" class="island-container idle">
-        <div class="island-content">
-            <div class="island-left" id="island-icon">
-                <div class="island-sound-wave">
-                    <span></span><span></span><span></span><span></span>
-                </div>
-            </div>
-            <div class="island-center" id="island-text">Dynamic Island</div>
-            <div class="island-right" id="island-info"></div>
-        </div>
-    </div>
     <div id="clock">15:36</div>
     <div class="status-right">
         <div class="signal-bars">
@@ -2894,6 +3147,46 @@ body.light-theme .slider { background-color: #e9e9ea; }
         </div>
     </div>
 </div>
+<div id="island-popup-mask" onclick="closeIslandPopup()"></div>
+<div id="island-popup-player" class="island-popup">
+    <div class="popup-backdrop"></div>
+
+    <div class="popup-content">
+        <div class="popup-top">
+            <div class="popup-cover" id="popup-cover"></div>
+
+            <div class="popup-info">
+                <div class="popup-title" id="popup-title">Song Name</div>
+                <div class="popup-artist" id="popup-artist">Artist</div>
+            </div>
+
+            <button class="popup-icon-btn" onclick="openPlaylistSheet(); closeIslandPopup();">
+                <svg viewBox="0 0 24 24"><path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/></svg>
+            </button>
+        </div>
+
+        <div class="popup-progress">
+            <span class="time-tiny" id="popup-time-current">0:00</span>
+            <input type="range" class="fp-slider popup-slider" id="popup-slider" min="0" value="0" max="100" oninput="seekAudio(this.value)">
+            <span class="time-tiny" id="popup-time-total">0:00</span>
+        </div>
+
+        <div class="popup-controls">
+            <button class="popup-btn" onclick="playPrevSong()">
+                <svg viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
+            </button>
+
+            <button class="popup-btn big" onclick="togglePlayState()" id="popup-play-btn">
+                <svg id="popup-icon-play" viewBox="0 0 24 24" style="margin-left:2px;"><path d="M8 5v14l11-7z"/></svg>
+                <svg id="popup-icon-pause" viewBox="0 0 24 24" style="display:none;"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+            </button>
+
+            <button class="popup-btn" onclick="playNextSong()">
+                <svg viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>
+            </button>
+        </div>
+    </div>
+</div>
 <script>
     // --- 补上通用的弹窗函数 ---
     function showToast(msg) {
@@ -3610,7 +3903,7 @@ body.light-theme .slider { background-color: #e9e9ea; }
                 if (audioBlob) audioPlayer.src = URL.createObjectURL(audioBlob);
             } else if (meta.url) {
                 audioPlayer.src = meta.url;
-            }1
+            }
         }
         // 加载封面
         const savedCover = await dbHelper.get('music_cover_img');
@@ -4940,63 +5233,48 @@ async function updateFullPlayerInfo(song) {
 }
 
 // 4. 播放控制
-// --- 修复后的播放控制函数 ---
+// --- 更新播放控制逻辑 (同步所有播放器) ---
 function togglePlayState() {
-    // 获取全屏播放器的元素
+    // 1. 核心音频控制
+    if (appAudio.paused) {
+        appAudio.play();
+    } else {
+        appAudio.pause();
+    }
+
+    // 2. 同步全屏播放器图标
     const fullPlayIcon = document.getElementById('fp-icon-play');
     const fullPauseIcon = document.getElementById('fp-icon-pause');
     const fullCover = document.getElementById('full-cover');
+    const miniCover = document.getElementById('mini-cover'); // 迷你封面
 
-    // 获取迷你播放器的元素 (新增)
-    const miniPlayIcon = document.getElementById('mini-icon-play');
-    const miniPauseIcon = document.getElementById('mini-icon-pause');
-    const miniCover = document.getElementById('mini-cover');
-
-    if(appAudio.paused) {
-        // --- 开始播放 ---
-        appAudio.play();
-
-        // 全屏：切到暂停图标
-        if(fullPlayIcon) fullPlayIcon.style.display = 'none';
-        if(fullPauseIcon) fullPauseIcon.style.display = 'block';
-        if(fullCover) fullCover.classList.add('playing');
-
-        // 迷你：切到暂停图标
-        if(miniPlayIcon) miniPlayIcon.style.display = 'none';
-        if(miniPauseIcon) miniPauseIcon.style.display = 'block';
-        if(miniCover) miniCover.classList.add('playing');
-
-    } else {
-        // --- 暂停 ---
-        appAudio.pause();
-
-        // 全屏：切到播放图标
+    if (appAudio.paused) {
         if(fullPlayIcon) fullPlayIcon.style.display = 'block';
         if(fullPauseIcon) fullPauseIcon.style.display = 'none';
         if(fullCover) fullCover.classList.remove('playing');
-
-        // 迷你：切到播放图标
-        if(miniPlayIcon) miniPlayIcon.style.display = 'block';
-        if(miniPauseIcon) miniPauseIcon.style.display = 'none';
         if(miniCover) miniCover.classList.remove('playing');
-    }
-}
-
-function playNextSong() {
-    let nextIndex;
-    if(appPlayMode === 2) { // 随机
-        nextIndex = Math.floor(Math.random() * appPlayQueue.length);
     } else {
-        nextIndex = currentAppSongIndex + 1;
-        if(nextIndex >= appPlayQueue.length) nextIndex = 0;
+        if(fullPlayIcon) fullPlayIcon.style.display = 'none';
+        if(fullPauseIcon) fullPauseIcon.style.display = 'block';
+        if(fullCover) fullCover.classList.add('playing');
+        if(miniCover) miniCover.classList.add('playing');
     }
-    playAppMusic(nextIndex);
-}
 
-function playPrevSong() {
-    let prevIndex = currentAppSongIndex - 1;
-    if(prevIndex < 0) prevIndex = appPlayQueue.length - 1;
-    playAppMusic(prevIndex);
+    // 3. 同步迷你播放器图标
+    const miniPlayIcon = document.getElementById('mini-icon-play');
+    const miniPauseIcon = document.getElementById('mini-icon-pause');
+    if(miniPlayIcon && miniPauseIcon) {
+        if (appAudio.paused) {
+            miniPlayIcon.style.display = 'block';
+            miniPauseIcon.style.display = 'none';
+        } else {
+            miniPlayIcon.style.display = 'none';
+            miniPauseIcon.style.display = 'block';
+        }
+    }
+
+    // 4. 【关键】同步悬浮窗图标 (修复你的报错)
+    syncPopupPlayIcon();
 }
 
 // 5. 弹窗与上传逻辑 (修复 TypeError)
@@ -5118,19 +5396,40 @@ function closeFullPlayer() {
     document.getElementById('music-view-full').classList.remove('active');
 }
 
+// ================== 统一 UI 更新逻辑 (全屏 + 悬浮窗) ==================
+// --- 更新进度条逻辑 (包含悬浮窗) ---
 function updateFullPlayerUI() {
     if(!appAudio.duration) return;
+
     const current = appAudio.currentTime;
     const total = appAudio.duration;
-    document.getElementById('music-slider').value = (current / total) * 100;
+    const percent = (current / total) * 100;
 
+    // 格式化时间 00:00
     const fmt = (t) => {
         const m = Math.floor(t/60);
         const s = Math.floor(t%60);
         return `${m}:${s<10?'0':''}${s}`;
     };
-    document.getElementById('time-current').textContent = fmt(current);
-    document.getElementById('time-total').textContent = fmt(total);
+
+    const timeStrCurrent = fmt(current);
+    const timeStrTotal = fmt(total);
+
+    // 1. 更新全屏播放器
+    const fullSlider = document.getElementById('music-slider');
+    if(fullSlider) {
+        fullSlider.value = percent;
+        document.getElementById('time-current').textContent = timeStrCurrent;
+        document.getElementById('time-total').textContent = timeStrTotal;
+    }
+
+    // 2. 更新悬浮窗播放器 (新增)
+    const popupSlider = document.getElementById('popup-slider');
+    if(popupSlider) {
+        popupSlider.value = percent;
+        document.getElementById('popup-time-current').textContent = timeStrCurrent;
+        document.getElementById('popup-time-total').textContent = timeStrTotal;
+    }
 }
 
 function seekAudio(val) {
@@ -5373,98 +5672,270 @@ function handleMusicBgUpload(input) {
 // 启动
 initMusicApp();
 
-    // ================== 灵动岛逻辑 ==================
+    // ================== 灵动岛核心逻辑 (修复完整版) ==================
 
+// 默认配置
 let islandConfig = {
     master: true,
     charge: true,
     music: true
 };
-let islandTimer = null; // 用于自动收缩的定时器
+let islandTimer = null;
 
 // 1. 初始化
 function initDynamicIsland() {
     const saved = localStorage.getItem('island_config');
     if (saved) islandConfig = JSON.parse(saved);
 
-    // 更新开关 UI 状态
-    document.getElementById('switch-island-master').checked = islandConfig.master;
-    document.getElementById('switch-island-charge').checked = islandConfig.charge;
-    document.getElementById('switch-island-music').checked = islandConfig.music;
+    // 初始化 UI 状态
+    updateIslandState();
 
-    // 更新外部显示文字
-    updateIslandLabel();
+    // 更新设置页开关显示 (防止报错)
+    const swCharge = document.getElementById('switch-island-charge');
+    const swMusic = document.getElementById('switch-island-music');
+    if(swCharge) swCharge.checked = islandConfig.charge;
+    if(swMusic) swMusic.checked = islandConfig.music;
 
-    // 只有开启总开关才显示
-    document.getElementById('dynamic-island').style.display = islandConfig.master ? 'flex' : 'none';
+    // 绑定电池监听
+    if ('getBattery' in navigator) {
+        navigator.getBattery().then(b => {
+            b.addEventListener('chargingchange', () => {
+                if (b.charging) {
+                    triggerIsland('charge', { text: Math.round(b.level * 100) + '%' });
+                }
+            });
+        });
+    }
+
+    // 绑定音乐监听
+    appAudio.addEventListener('play', () => {
+        const currentSong = appPlayQueue[currentAppSongIndex];
+        const title = currentSong ? currentSong.title : '正在播放';
+        // 触发展开动画
+        triggerIsland('music', { text: title });
+    });
+
+    appAudio.addEventListener('pause', () => {
+        updateIslandState(); // 暂停时缩回
+    });
 }
 
-// 2. 开关控制
-function toggleIslandMaster() {
-    islandConfig.master = document.getElementById('switch-island-master').checked;
-    saveIslandConfig();
-    // 实时显示/隐藏
-    document.getElementById('dynamic-island').style.display = islandConfig.master ? 'flex' : 'none';
-    updateIslandLabel();
+// ================== 修复后的状态刷新函数 ==================
+function updateIslandState() {
+    const island = document.getElementById('dynamic-island');
+    const left = document.getElementById('island-icon');
+    const center = document.getElementById('island-text');
+    const right = document.getElementById('island-info');
+
+    // A. 音乐常驻模式 (只要正在播放，且没播完)
+    if (appAudio && !appAudio.paused && !appAudio.ended) {
+        island.className = 'island-container music-active';
+
+        // 核心修复：强制注入波形 HTML
+        left.innerHTML = `
+            <div class="island-sound-wave">
+                <span></span><span></span><span></span><span></span>
+            </div>
+        `;
+
+        // 清空其他文字，防止干扰
+        center.textContent = '';
+        right.textContent = '';
+
+        // 点击回音乐App
+        island.onclick = () => openApp('app-music');
+        return;
+    }
+
+    // B. 待机模式
+    if (islandConfig.master) {
+        island.className = 'island-container idle-show';
+        // 清空所有内容
+        left.innerHTML = '';
+        center.textContent = '';
+        right.textContent = '';
+        island.onclick = null;
+    } else {
+        island.className = 'island-container'; // 隐藏
+        island.onclick = null;
+    }
 }
 
-function saveIslandConfig() {
-    islandConfig.charge = document.getElementById('switch-island-charge').checked;
-    islandConfig.music = document.getElementById('switch-island-music').checked;
-    localStorage.setItem('island_config', JSON.stringify(islandConfig));
-}
-
-function updateIslandLabel() {
-    const label = document.getElementById('island-status-label');
-    if(label) label.textContent = islandConfig.master ? '已开启' : '已关闭';
-}
-
-// 3. 核心：触发灵动岛动画
-// type: 'charge' | 'music' | 'normal'
-// data: { icon, text, subText }
+// 3. 触发通知动画 (核心修改：音乐布局)
 function triggerIsland(type, data) {
-    if (!islandConfig.master) return; // 总开关没开
+    // 检查子开关 (如果没开对应的功能，就不弹窗，但如果是强制测试则忽略)
     if (type === 'charge' && !islandConfig.charge) return;
     if (type === 'music' && !islandConfig.music) return;
 
     const island = document.getElementById('dynamic-island');
     const left = document.getElementById('island-icon');
     const center = document.getElementById('island-text');
-    const right = document.getElementById('island-right'); // 之前HTML里写的是 island-info，这里统一一下
+    const right = document.getElementById('island-info');
 
-    // 清除之前的定时器
     if (islandTimer) clearTimeout(islandTimer);
 
-    // 填充内容
+    // --- 布局填充 ---
     if (type === 'charge') {
+        // 充电：左闪电，中文字，右电量
         left.innerHTML = '<span style="color:#34C759">⚡</span>';
-        center.textContent = 'Charging';
-        document.getElementById('island-info').textContent = data.text || '80%';
-        document.getElementById('island-info').style.color = '#34C759';
-    } else if (type === 'music') {
-        // 音乐波形
-        left.innerHTML = '<div class="island-sound-wave"><span></span><span></span><span></span><span></span></div>';
-        center.textContent = data.text || '正在播放';
-        document.getElementById('island-info').textContent = '';
+        center.innerHTML = 'Charging';
+        right.innerHTML = `<span style="color:#34C759">${data.text}</span>`;
+    }
+    else if (type === 'music') {
+        // 音乐：左音符，中歌名+波形，右空
+        left.innerHTML = '🎵';
+        // 核心修改：歌名旁边加律动效果
+        center.innerHTML = `
+            <div style="display:flex; align-items:center; gap:8px;">
+                <span>${data.text}</span>
+                <div class="island-sound-wave">
+                    <span style="background:#fff"></span>
+                    <span style="background:#fff"></span>
+                    <span style="background:#fff"></span>
+                </div>
+            </div>
+        `;
+        right.innerHTML = '';
     }
 
-    // 展开动画
-    island.classList.remove('idle');
+    // 强制展开
+    island.classList.remove('idle-show', 'music-active');
     island.classList.add('active');
 
-    // 3秒后自动收缩 (音乐模式通常不收缩，除非暂停，这里演示简单版)
+    // 3秒后自动收缩
     islandTimer = setTimeout(() => {
         island.classList.remove('active');
-        island.classList.add('idle');
+        updateIslandState(); // 恢复到该有的状态
     }, 3000);
 }
 
-// 4. 测试函数 (绑定给按钮用)
+// 4. 设置相关函数 (之前缺失的)
+function toggleIslandMaster() {
+    islandConfig.master = document.getElementById('switch-island-master').checked;
+    saveIslandConfig(); // 保存
+    updateIslandState(); // 刷新显示
+}
+
+// 修复报错：定义保存函数
+function saveIslandConfig() {
+    const swCharge = document.getElementById('switch-island-charge');
+    const swMusic = document.getElementById('switch-island-music');
+
+    // 更新配置
+    if(swCharge) islandConfig.charge = swCharge.checked;
+    if(swMusic) islandConfig.music = swMusic.checked;
+
+    localStorage.setItem('island_config', JSON.stringify(islandConfig));
+}
+
+// 修复报错：定义测试函数
 function testIsland(mode) {
     if(mode === 'charge') {
+        // 强制触发，忽略开关检查
+        const island = document.getElementById('dynamic-island');
+        // 临时模拟开关开启以确保能看到效果
+        const oldState = islandConfig.charge;
+        islandConfig.charge = true;
         triggerIsland('charge', { text: '100%' });
+        islandConfig.charge = oldState;
     } else {
-        triggerIsland('music', { text: 'Midnight City' });
+        const oldState = islandConfig.music;
+        islandConfig.music = true;
+        triggerIsland('music', { text: 'Test Song' });
+        islandConfig.music = oldState;
+    }
+}
+
+// ================== 修复版：灵动岛悬浮窗逻辑 ==================
+
+function openIslandPopup() {
+    // 1. 安全检查：如果没有正在播放的歌，就不弹窗
+    if (currentAppSongIndex < 0 || !appPlayQueue[currentAppSongIndex]) {
+        console.log("当前没有播放歌曲");
+        return;
+    }
+    const song = appPlayQueue[currentAppSongIndex];
+
+    // 2. 填充数据
+    const titleEl = document.getElementById('popup-title');
+    const artistEl = document.getElementById('popup-artist');
+    if (titleEl) titleEl.textContent = song.title;
+    if (artistEl) artistEl.textContent = song.artist;
+
+    // 填充封面
+    dbHelper.get('song_cover_' + song.id).then(blob => {
+        const img = blob ? URL.createObjectURL(blob) : '';
+        const coverEl = document.getElementById('popup-cover');
+        if (coverEl) {
+            if (img) coverEl.style.backgroundImage = `url(${img})`;
+            else coverEl.style.backgroundImage = 'none';
+        }
+    });
+
+    // 同步播放按钮
+    syncPopupPlayIcon();
+
+    // 3. 显示动画 (核心修复：加了判断是否存在)
+    const popup = document.getElementById('island-popup-player');
+    const mask = document.getElementById('island-popup-mask');
+
+    if (popup) popup.classList.add('active');
+    else console.error("错误：HTML中找不到 id='island-popup-player'");
+
+    if (mask) mask.classList.add('active');
+}
+
+function closeIslandPopup() {
+    const popup = document.getElementById('island-popup-player');
+    const mask = document.getElementById('island-popup-mask');
+
+    if (popup) popup.classList.remove('active');
+    if (mask) mask.classList.remove('active');
+}
+
+// ================== 修改 updateIslandState (核心绑定) ==================
+// 请找到原本的 updateIslandState 函数，修改 if 里的 onclick 绑定
+
+function updateIslandState() {
+    const island = document.getElementById('dynamic-island');
+    const left = document.getElementById('island-icon');
+
+    // A. 音乐常驻模式
+    if (appAudio && !appAudio.paused && !appAudio.ended) {
+        island.className = 'island-container music-active';
+        left.innerHTML = '<div class="island-sound-wave"><span></span><span></span><span></span><span></span></div>';
+
+        // --- 修改这里：点击改为打开悬浮窗 ---
+        island.onclick = () => openIslandPopup();
+        // --------------------------------
+        return;
+    }
+
+    // B. 待机模式
+    if (islandConfig.master) {
+        island.className = 'island-container idle-show';
+        left.innerHTML = '';
+        island.onclick = null;
+    } else {
+        island.className = 'island-container';
+        island.onclick = null;
+    }
+}
+
+// --- 补全缺失的辅助函数 ---
+function syncPopupPlayIcon() {
+    const playIcon = document.getElementById('popup-icon-play');
+    const pauseIcon = document.getElementById('popup-icon-pause');
+
+    // 安全检查，防止报错
+    if (!playIcon || !pauseIcon) return;
+
+    if (appAudio.paused) {
+        playIcon.style.display = 'block';
+        pauseIcon.style.display = 'none';
+    } else {
+        playIcon.style.display = 'none';
+        pauseIcon.style.display = 'block';
     }
 }
 
