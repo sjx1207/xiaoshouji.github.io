@@ -1015,92 +1015,767 @@
 
         /* ================== 24. 字体大小全局联动补丁 ================== */
 
-:root {
-    /* 定义一个默认值，防止JS未加载时变乱 */
-    --app-font-size: 16px;
+        :root {
+            /* 定义一个默认值，防止JS未加载时变乱 */
+            --app-font-size: 16px;
+        }
+
+        /* 1. 强制所有主要文字跟随变量 */
+        body,
+        .settings-item,
+        .ai-label,
+        .ai-input,
+        .form-label,
+        .form-input,
+        .city-name,
+        .chat-input,
+        .msg-bubble,
+        .song-title,
+        .profile-nickname {
+            /* 使用 calc 计算，确保优先级最高 */
+            font-size: var(--app-font-size) !important;
+        }
+
+        /* 2. 标题类 (比正文大 2px) */
+        .app-title,
+        .preview-text-en,
+        .preview-text-cn {
+            font-size: calc(var(--app-font-size) + 4px) !important;
+        }
+
+        /* 3. 辅助文字类 (比正文小 3px) */
+        .city-detail,
+        .item-value,
+        .ios-header,
+        .group-header,
+        .ai-section-header,
+        .app-label,
+        .profile-signature,
+        .artist-name {
+            font-size: calc(var(--app-font-size) - 3px) !important;
+        }
+
+        /* 4. 预览卡片文字跟随 */
+        #font-preview-box span {
+            font-family: var(--ui-font) !important;
+            font-weight: var(--ui-weight) !important;
+        }
+                /* --- 25. 按钮样式强制补丁 --- */
+
+        /* 按钮容器 */
+        .ai-btn-group {
+            display: flex !important;
+            gap: 15px !important;
+            margin: 20px 16px 40px 16px !important;
+        }
+
+        /* 按钮通用样式 */
+        .ai-btn {
+            flex: 1 !important;
+            height: 48px !important;
+            border-radius: 12px !important;
+            border: none !important;
+            font-size: 16px !important;
+            font-weight: 600 !important;
+            cursor: pointer !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            transition: opacity 0.2s !important;
+        }
+        .ai-btn:active { opacity: 0.7 !important; transform: scale(0.98) !important; }
+
+        /* 主按钮 (深蓝) */
+        .ai-btn-primary {
+            background: #0a84ff !important;
+            color: white !important;
+        }
+
+        /* 次按钮 (浅蓝透明) */
+        .ai-btn-secondary {
+            background: rgba(10, 132, 255, 0.15) !important;
+            color: #0a84ff !important;
+        }
+
+        /* 浅色模式适配 */
+        body.light-theme .ai-btn-secondary {
+            background: rgba(0, 122, 255, 0.1) !important;
+        }
+
+        /* ================== 26. 图标设置 App 样式 ================== */
+
+        /* 图标预览容器 (复用 preview-card，但更紧凑) */
+        .icon-preview-card {
+            background: rgba(255,255,255,0.08) !important;
+            border-radius: 16px !important;
+            padding: 15px !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            border: 1px solid rgba(255,255,255,0.1) !important;
+            margin-bottom: 15px !important;
+        }
+
+        /* 左侧：图标名称和预览 */
+        .icon-info-group {
+            display: flex; align-items: center; gap: 15px;
+        }
+
+        /* 预览图标本身的形状 (复用主屏幕图标样式) */
+        .preview-icon-shape {
+            width: 54px; height: 54px;
+            border-radius: 14px;
+            /* 默认样式，会被 JS 覆盖 */
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(255, 255, 255, 0.5);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex; align-items: center; justify-content: center;
+            background-size: cover; background-position: center;
+            position: relative; overflow: hidden;
+        }
+
+        /* 预览图标里的默认SVG */
+        .preview-icon-svg {
+            width: 24px; height: 24px; fill: white; opacity: 0.8;
+            z-index: 2;
+        }
+
+        /* 右侧：按钮组 */
+        .icon-btn-group {
+            display: flex; gap: 10px;
+        }
+        /* 小按钮样式 */
+        .icon-btn {
+            padding: 8px 12px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; border: none;
+        }
+        .btn-change { background: rgba(10, 132, 255, 0.15); color: #0a84ff; }
+        .btn-reset { background: rgba(255, 59, 48, 0.15); color: #FF3B30; }
+
+        /* 浅色模式适配 */
+        body.light-theme .icon-preview-card {
+            background: #ffffff !important; border-color: rgba(0,0,0,0.05) !important;
+        }
+        body.light-theme .preview-icon-shape {
+            border-top-color: rgba(255,255,255,0.8);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        /* ================== 28. 图标显示强制修复补丁 (Final Fix) ================== */
+
+        /* 1. 强制设置背景图大小和位置 (没了这句，图片会放大几十倍导致看不见) */
+        #icon-home-wallpaper, #icon-home-settings, #icon-home-chat, #icon-home-music,
+        #icon-dock-role, #icon-dock-world, #icon-dock-manual, #icon-dock-gallery,
+        .preview-icon-shape {
+            background-size: cover !important;
+            background-position: center !important;
+            background-repeat: no-repeat !important;
+        }
+
+        /* 2. 当有背景图时，移除默认背景色和模糊 (避免透底) */
+        /* 注意：这里使用属性选择器来检测行内样式 */
+        .app-icon-shape[style*="background-image"],
+        .dock-icon[style*="background-image"],
+        .preview-icon-shape[style*="background-image"] {
+            background-color: transparent !important;
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+            box-shadow: none !important; /* 可选：去掉阴影让图片更纯粹 */
+            border: none !important;     /* 可选：去掉边框 */
+        }
+
+        /* ================== 29. 角色书 App 样式 (列表版) ================== */
+
+        /* 1. 列表容器：改为垂直排列 */
+        .role-grid {
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 10px !important;
+            padding: 10px 0 80px 0 !important; /* 底部留白 */
+        }
+
+        /* 2. 角色卡片：横向布局 (左图右文) */
+        .role-card {
+            background: rgba(255,255,255,0.08) !important;
+            border-radius: 16px !important;
+            padding: 15px !important;
+            display: flex !important;
+            flex-direction: row !important; /* 横向排列 */
+            align-items: center !important; /* 垂直居中 */
+            border: 1px solid rgba(255,255,255,0.1) !important;
+            cursor: pointer !important;
+            transition: background 0.2s !important;
+        }
+        .role-card:active { background: rgba(255,255,255,0.15) !important; }
+
+        /* 3. 头像：变成圆形，固定大小 */
+        .role-card-img {
+            width: 56px !important;
+            height: 56px !important;
+            border-radius: 50% !important; /* 圆形 */
+            object-fit: cover !important;
+            background-color: #333 !important;
+            background-size: cover !important;
+            background-position: center !important;
+            flex-shrink: 0 !important; /* 禁止压缩 */
+            margin-right: 15px !important; /* 和文字的间距 */
+            border: 1px solid rgba(255,255,255,0.2) !important;
+        }
+
+        /* 4. 文字信息区 */
+        .role-card-info {
+            flex: 1 !important;
+            display: flex !important;
+            flex-direction: column !important;
+            justify-content: center !important;
+            overflow: hidden !important; /* 防止文字溢出 */
+            padding: 0 !important; /* 去掉之前的内边距 */
+        }
+
+        /* 名字 */
+        .role-card-name {
+            font-size: 17px !important;
+            font-weight: 600 !important;
+            color: white !important;
+            margin-bottom: 4px !important;
+        }
+
+        /* 描述 (单行省略) */
+        .role-card-desc {
+            font-size: 13px !important;
+            color: rgba(255,255,255,0.6) !important;
+            white-space: nowrap !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+        }
+
+        /* --- 角色详情页样式 (保持不变，但确保适配) --- */
+        .role-header-bg {
+            width: 100%; height: 240px;
+            background-color: #333;
+            background-size: cover; background-position: center;
+            position: relative;
+        }
+        .role-header-bg::after {
+            content: '点击更换背景'; position: absolute; bottom: 10px; right: 10px;
+            font-size: 10px; color: rgba(255,255,255,0.8);
+            background: rgba(0,0,0,0.4); padding: 4px 8px; border-radius: 4px;
+            backdrop-filter: blur(4px);
+        }
+        .role-avatar-container {
+            margin-top: -60px; display: flex; justify-content: center; position: relative; z-index: 10;
+        }
+        .role-big-avatar {
+            width: 110px; height: 110px; border-radius: 50%;
+            border: 4px solid #1c1c1e; /* 深色模式下的描边 */
+            background-size: cover; background-position: center; background-color: #444;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+        }
+        .role-detail-content { padding: 15px 20px 100px 20px; text-align: center; }
+        .role-detail-name { font-size: 24px; font-weight: 700; color: white; margin-bottom: 10px; }
+        .role-detail-desc {
+            font-size: 15px; color: rgba(255,255,255,0.85); line-height: 1.6; text-align: left;
+            white-space: pre-wrap; background: rgba(255,255,255,0.05); padding: 20px; border-radius: 16px;
+        }
+
+        /* --- 浅色模式适配 (关键要求) --- */
+        body.light-theme .role-card {
+            background: #ffffff !important; /* 白底 */
+            border: 1px solid rgba(0,0,0,0.05) !important;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05) !important;
+        }
+        body.light-theme .role-card-name { color: #000000 !important; }
+        body.light-theme .role-card-desc { color: rgba(60,60,67,0.6) !important; }
+
+        /* 详情页浅色适配 */
+        body.light-theme .role-big-avatar { border-color: #f2f2f7 !important; } /* 头像描边变白 */
+        body.light-theme .role-detail-name { color: #000000 !important; }
+        body.light-theme .role-detail-desc { background: #ffffff !important; color: #333 !important; }
+
+        /* ================== 30. 世界书 App 样式 ================== */
+
+        /* 1. 世界书列表项 */
+        .world-card {
+            background: rgba(255,255,255,0.08) !important;
+            border-radius: 12px !important;
+            padding: 16px !important;
+            margin-bottom: 12px !important;
+            display: flex !important;
+            align-items: flex-start !important;
+            cursor: pointer !important;
+            border: 1px solid rgba(255,255,255,0.1) !important;
+            transition: background 0.2s !important;
+        }
+        .world-card:active { background: rgba(255,255,255,0.15) !important; }
+
+        /* 左侧固定图标 */
+        .world-icon-box {
+            width: 40px; height: 40px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #11998e, #38ef7d); /* 青绿色渐变 */
+            display: flex; justify-content: center; align-items: center;
+            margin-right: 15px; flex-shrink: 0;
+        }
+
+        /* 右侧文字 */
+        .world-info { flex: 1; overflow: hidden; }
+        .world-title { font-size: 17px; font-weight: 600; color: white; margin-bottom: 6px; }
+        .world-preview {
+            font-size: 13px; color: rgba(255,255,255,0.5);
+            display: -webkit-box; -webkit-line-clamp: 2; /* 最多显示2行 */
+            -webkit-box-orient: vertical; overflow: hidden;
+            line-height: 1.5;
+        }
+
+        /* 2. 世界书详情页 */
+        .world-detail-container {
+            padding: 20px;
+            height: 100%;
+            display: flex; flex-direction: column;
+        }
+        .world-detail-header {
+            font-size: 28px; font-weight: 800; color: white;
+            margin-bottom: 20px; padding-bottom: 15px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .world-detail-body {
+            font-size: 16px; line-height: 1.8; color: rgba(255,255,255,0.9);
+            white-space: pre-wrap; /* 保留换行符 */
+            flex: 1; overflow-y: auto;
+        }
+
+        /* 浅色模式适配 */
+        body.light-theme .world-card { background: white !important; border-color: rgba(0,0,0,0.05) !important; }
+        body.light-theme .world-title, body.light-theme .world-detail-header { color: black !important; }
+        body.light-theme .world-preview, body.light-theme .world-detail-body { color: #333 !important; }
+
+        /* ================== 音乐 App 终极修复 CSS ================== */
+
+/* 1. 弹窗层级修复 (强制置顶) */
+.modal-overlay {
+    z-index: 2000 !important; /* 必须最高，防止点不动 */
 }
 
-/* 1. 强制所有主要文字跟随变量 */
-body,
-.settings-item,
-.ai-label,
-.ai-input,
-.form-label,
-.form-input,
-.city-name,
-.chat-input,
-.msg-bubble,
-.song-title,
-.profile-nickname {
-    /* 使用 calc 计算，确保优先级最高 */
-    font-size: var(--app-font-size) !important;
+/* 2. 音乐 App 主窗口容器 */
+#app-music {
+    background: #121212; /* 默认黑底 */
+    overflow: hidden;
 }
 
-/* 2. 标题类 (比正文大 2px) */
-.app-title,
-.preview-text-en,
-.preview-text-cn {
-    font-size: calc(var(--app-font-size) + 4px) !important;
+/* 3. 列表视图 (层级 10) */
+#music-view-list {
+    position: relative;
+    z-index: 10;
+    height: 100%;
+    display: flex; flex-direction: column;
+    background: linear-gradient(180deg, rgba(30,30,30,0.8) 0%, #000 100%); /* 列表自带渐变底 */
 }
 
-/* 3. 辅助文字类 (比正文小 3px) */
-.city-detail,
-.item-value,
-.ios-header,
-.group-header,
-.ai-section-header,
-.app-label,
-.profile-signature,
-.artist-name {
-    font-size: calc(var(--app-font-size) - 3px) !important;
+/* 列表头部按钮 (修复重叠元凶) */
+.header-add-btn {
+    position: absolute; right: 15px; top: 58px;
+    width: 32px; height: 32px;
+    background: rgba(255,255,255,0.1); border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; z-index: 20; /* 只要比列表背景高就行 */
 }
 
-/* 4. 预览卡片文字跟随 */
-#font-preview-box span {
-    font-family: var(--ui-font) !important;
-    font-weight: var(--ui-weight) !important;
-}
-        /* --- 25. 按钮样式强制补丁 --- */
+/* 4. 全屏播放器 (层级 100 - 彻底盖住列表) */
+#music-view-full {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    z-index: 100; /* 比列表高 */
+    display: flex; flex-direction: column;
 
-/* 按钮容器 */
-.ai-btn-group {
-    display: flex !important;
-    gap: 15px !important;
-    margin: 20px 16px 40px 16px !important;
-}
+    /* 关键修复：给一个实心背景，不再依赖透明遮罩 */
+    background-color: #1c1c1e;
+    /* 动态背景图会覆盖在上面，这里是保底色 */
 
-/* 按钮通用样式 */
-.ai-btn {
-    flex: 1 !important;
-    height: 48px !important;
-    border-radius: 12px !important;
-    border: none !important;
-    font-size: 16px !important;
-    font-weight: 600 !important;
-    cursor: pointer !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    transition: opacity 0.2s !important;
-}
-.ai-btn:active { opacity: 0.7 !important; transform: scale(0.98) !important; }
-
-/* 主按钮 (深蓝) */
-.ai-btn-primary {
-    background: #0a84ff !important;
-    color: white !important;
+    transform: translateY(100%);
+    transition: transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+    background: transparent; /* 关键：变成透明，让下面的图片透出来 */
 }
 
-/* 次按钮 (浅蓝透明) */
-.ai-btn-secondary {
-    background: rgba(10, 132, 255, 0.15) !important;
-    color: #0a84ff !important;
+#music-view-full.active {
+    transform: translateY(0);
 }
+
+/* 全屏动态背景层 */
+/* 修改后：*/
+#full-player-bg {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    background-color: #1c1c1e; /* 关键：默认底色移到这里 */
+    background-size: cover; background-position: center;
+    z-index: -1;
+    /* 如果不想让背景太模糊，可以把 blur(30px) 改小或者去掉 */
+    filter: blur(30px);
+    transition: background-image 0.5s;
+}
+
+/* 5. 布局优化 (解决下方空隙) */
+.full-player-content {
+    flex: 1;
+    display: flex; flex-direction: column;
+    justify-content: space-evenly; /* 均匀分布 */
+    align-items: center;
+    padding: 0 30px 40px 30px;
+}
+
+/* 唱片 (加大尺寸) */
+.disk-wrapper {
+    flex: 2; display: flex; align-items: center; justify-content: center;
+    width: 100%;
+}
+.disk-cover {
+    width: 280px; height: 280px; border-radius: 50%;
+    background-color: #333; background-size: cover; background-position: center;
+    border: 4px solid rgba(255,255,255,0.1);
+    box-shadow: 0 30px 60px rgba(0,0,0,0.6);
+    animation: rotate 24s linear infinite; animation-play-state: paused;
+}
+.disk-cover.playing { animation-play-state: running; }
+
+/* 进度条 */
+.fp-progress-container { width: 100%; margin: 20px 0; }
+.fp-slider {
+    width: 100%; height: 4px; background: rgba(255,255,255,0.2);
+    border-radius: 2px; -webkit-appearance: none;
+}
+.fp-slider::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 12px; height: 12px;
+    background: white; border-radius: 50%;
+}
+.time-row {
+    display: flex; justify-content: space-between;
+    font-size: 12px; color: rgba(255,255,255,0.5); margin-top: 8px;
+}
+
+/* 6. 图标按钮美化 */
+.fp-controls {
+    width: 100%; display: flex; justify-content: space-between; align-items: center;
+}
+.fp-ctrl-btn {
+    background: none; border: none; padding: 0; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    color: white; /* 确保 SVG 继承颜色 */
+}
+.fp-ctrl-btn svg { fill: white; width: 26px; height: 26px; }
+.fp-ctrl-btn.small svg { width: 22px; height: 22px; opacity: 0.5; }
+.fp-ctrl-btn.big svg { width: 60px; height: 60px; } /* 播放键加大 */
+.fp-ctrl-btn:active { opacity: 0.7; transform: scale(0.95); }
+
+/* 头部功能按钮 */
+.fp-icon-btn {
+    width: 40px; height: 40px; border-radius: 50%;
+    background: rgba(255,255,255,0.1); border: none;
+    display: flex; align-items: center; justify-content: center;
+    margin-left: 10px; cursor: pointer;
+}
+.fp-icon-btn svg { width: 20px; height: 20px; fill: white; }
+        /* --- 1. 修复音乐列表样式 --- */
+.music-list-item {
+    display: flex;             /* 让图片和文字横排 */
+    align-items: center;       /* 垂直居中 */
+    padding: 12px;
+    margin-bottom: 10px;
+    background: rgba(255,255,255,0.08); /* 玻璃半透明背景 */
+    border-radius: 16px;
+    border: 1px solid rgba(255,255,255,0.1);
+    transition: background 0.2s;
+}
+.music-list-item:active { background: rgba(255,255,255,0.15); }
+.music-list-item.active-playing { border-color: #0a84ff; background: rgba(10,132,255,0.1); }
+
+/* 列表里的封面小图 */
+.song-img-box {
+    width: 50px; height: 50px;
+    border-radius: 8px;
+    background-size: cover; background-position: center;
+    background-color: #333;
+    margin-right: 15px; flex-shrink: 0;
+}
+
+/* 列表里的文字区 */
+.song-info-box {
+    flex: 1;
+    display: flex; flex-direction: column; justify-content: center;
+    overflow: hidden;
+}
+.song-list-title { font-size: 16px; font-weight: 600; color: white; margin-bottom: 4px; }
+.song-list-artist { font-size: 13px; color: rgba(255,255,255,0.6); }
+
+/* 列表里的按钮 */
+.song-action-btn {
+    width: 36px; height: 36px;
+    border-radius: 50%; border: none; background: transparent;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; cursor: pointer;
+}
+
+/* --- 2. 修复迷你播放器样式 --- */
+.mini-player {
+    position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
+    width: 90%; height: 64px;
+    background: rgba(40,40,45,0.95); /* 深色背景 */
+    border-radius: 32px;
+    border: 1px solid rgba(255,255,255,0.1);
+    display: flex; align-items: center; padding: 0 8px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+    z-index: 50; /* 保证浮在列表上面 */
+}
+.mini-cover {
+    width: 48px; height: 48px; border-radius: 50%;
+    background-color: #333; background-size: cover; background-position: center;
+    margin-right: 12px; margin-left: 2px;
+}
+.mini-info { flex: 1; display: flex; flex-direction: column; justify-content: center; }
+.mini-title { font-size: 14px; font-weight: 600; color: white; }
+.mini-artist { font-size: 12px; color: #888; }
+.mini-controls { display: flex; gap: 5px; margin-right: 5px; }
+.mini-btn { background: none; border: none; font-size: 20px; color: white; padding: 5px; cursor: pointer; }
+
+/* --- 3. 修复旋转动画 (如果没转就是少了这段) --- */
+@keyframes rotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+        /* --- 底部动作菜单样式 (Action Sheet) --- */
+.action-sheet-content {
+    width: 95%; max-width: 400px;
+    z-index: 2100; /* 比遮罩层高 */
+    transform: translateY(100%);
+    transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* 激活时滑上来 */
+#modal-song-menu.active .action-sheet-content {
+    transform: translateY(0);
+}
+
+.sheet-group {
+    background: rgba(30, 30, 35, 0.9);
+    backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    border-radius: 14px;
+    overflow: hidden;
+}
+
+.sheet-item {
+    height: 56px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 17px; color: white;
+    cursor: pointer;
+    background: transparent;
+}
+.sheet-item:active { background: rgba(255,255,255,0.1); }
+        /* ================== 修复补丁：去模糊 & 浅色模式适配 ================== */
+
+/* 1. 【核心修复】去背景虚化 */
+#full-player-bg {
+    filter: none !important; /* 强制去掉模糊 */
+    opacity: 1 !important;   /* 强制不透明，显示原图色彩 */
+    background-color: #222;  /* 如果没图时的保底色 */
+}
+
+/* 2. 【核心修复】浅色模式适配 (Light Mode) */
+
+/* 列表页背景变白 */
+body.light-theme #app-music {
+    background: #f2f2f7 !important; /* 浅灰底 */
+}
+body.light-theme #music-view-list {
+    background: transparent !important; /* 去掉之前的深色渐变 */
+}
+
+/* 列表头部文字和按钮变黑 */
+body.light-theme .app-title,
+body.light-theme .app-back-btn {
+    color: #000000 !important;
+}
+body.light-theme .app-back-btn svg,
+body.light-theme .header-add-btn svg {
+    fill: #000000 !important;
+}
+body.light-theme .header-add-btn {
+    background: rgba(0,0,0,0.05) !important;
+}
+
+/* 列表项变白底黑字 */
+body.light-theme .music-list-item {
+    background: #ffffff !important;
+    border: 1px solid rgba(0,0,0,0.05) !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+}
+body.light-theme .song-list-title {
+    color: #000000 !important;
+}
+body.light-theme .song-list-artist {
+    color: rgba(60,60,67,0.6) !important;
+}
+
+/* 列表右侧的三个点和插队图标 -> 变成黑色 */
+/* 这里使用滤镜直接反转白色图标，省去改 JS 的麻烦 */
+body.light-theme .song-action-btn svg {
+    filter: invert(1) !important; /* 白色变黑色 */
+    opacity: 0.6;
+}
+
+/* 迷你播放器适配 */
+body.light-theme .mini-player {
+    background: rgba(255,255,255,0.95) !important;
+    border: 1px solid rgba(0,0,0,0.1) !important;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.1) !important;
+}
+body.light-theme .mini-title { color: #000 !important; }
+body.light-theme .mini-controls svg {
+    fill: #000 !important; /* 按钮变黑 */
+}
+
+/* --- 全屏播放器浅色适配 (仅在没有自定义背景图时生效) --- */
+/* 如果用户没传背景图，背景也是浅色的 */
+body.light-theme #full-player-bg {
+    background-color: #f2f2f7 !important;
+}
+
+/* 全屏播放器文字变黑 (为了防止自定义背景图也是浅色看不清，加一点文字阴影) */
+body.light-theme .fp-title {
+    color: #000 !important;
+    text-shadow: 0 0 10px rgba(255,255,255,0.8);
+}
+body.light-theme .fp-artist {
+    color: rgba(0,0,0,0.6) !important;
+    text-shadow: 0 0 10px rgba(255,255,255,0.8);
+}
+body.light-theme #current-lyric-line {
+    color: rgba(0,0,0,0.8) !important;
+}
+body.light-theme .time-text,
+body.light-theme #time-current,
+body.light-theme #time-total {
+    color: rgba(0,0,0,0.5) !important;
+}
+
+/* 全屏控制按钮变黑 */
+body.light-theme .fp-ctrl-btn svg,
+body.light-theme .fp-btn svg,
+body.light-theme .fp-icon-btn svg {
+    fill: #000000 !important;
+}
+body.light-theme .fp-icon-btn {
+    background: rgba(0,0,0,0.05) !important;
+}
+
+/* 进度条底色变深一点 */
+body.light-theme .fp-slider {
+    background: rgba(0,0,0,0.1) !important;
+}
+body.light-theme .fp-slider::-webkit-slider-thumb {
+    background: #000000 !important; /* 滑块变黑 */
+}
+
+/* 底部弹窗 (Action Sheet) 浅色适配 */
+body.light-theme .sheet-group {
+    background: rgba(255,255,255,0.95) !important;
+}
+body.light-theme .sheet-item {
+    color: #000000 !important;
+    border-top-color: rgba(0,0,0,0.1) !important;
+}
+        /* --- 迷你播放器图标修复 --- */
+
+/* 默认样式 (深色模式) */
+.mini-btn svg {
+    width: 28px; height: 28px;
+    fill: white; /* 默认为白 */
+    transition: fill 0.2s;
+}
+
+/* 浅色模式适配 (核心修复) */
+body.light-theme .mini-btn svg {
+    fill: #333333 !important; /* 强制变深灰/黑 */
+}
+
+/* 按钮点击反馈 */
+.mini-btn:active { opacity: 0.6; transform: scale(0.9); }
+        /* --- 1. 灵动岛本体样式 --- */
+.island-container {
+    position: absolute;
+    top: 11px; left: 50%; transform: translateX(-50%);
+    background: black;
+    border-radius: 20px;
+    z-index: 9999; /* 最高层级 */
+    transition: width 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275),
+                height 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275),
+                border-radius 0.4s;
+    overflow: hidden;
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 0 15px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    color: white;
+}
+
+/* 状态 A: 待机 (小药丸) */
+.island-container.idle {
+    width: 120px; height: 35px; border-radius: 18px;
+}
+.island-container.idle .island-content { opacity: 0; pointer-events: none; }
+
+/* 状态 B: 展开 (长条) */
+.island-container.active {
+    width: 340px; height: 60px; border-radius: 30px;
+}
+
+.island-content {
+    width: 100%; height: 100%;
+    display: flex; justify-content: space-between; align-items: center;
+    opacity: 1; transition: opacity 0.3s 0.1s; /* 延迟显示内容 */
+}
+
+/* 内部元素 */
+.island-left, .island-right {
+    display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 14px;
+}
+.island-center {
+    font-size: 14px; font-weight: 500; opacity: 0.8;
+}
+
+/* 音乐波形动画 */
+.island-sound-wave {
+    display: flex; align-items: center; gap: 2px; height: 15px;
+}
+.island-sound-wave span {
+    width: 3px; background: #0a84ff; border-radius: 2px;
+    animation: wave 1s infinite ease-in-out;
+}
+.island-sound-wave span:nth-child(1) { height: 6px; animation-delay: 0s; }
+.island-sound-wave span:nth-child(2) { height: 12px; animation-delay: 0.1s; }
+.island-sound-wave span:nth-child(3) { height: 8px; animation-delay: 0.2s; }
+.island-sound-wave span:nth-child(4) { height: 5px; animation-delay: 0.3s; }
+@keyframes wave { 0%, 100% { transform: scaleY(1); } 50% { transform: scaleY(2); } }
+
+/* --- 2. iOS 开关样式 (Checkbox Hack) --- */
+.ios-switch {
+    position: relative; display: inline-block; width: 50px; height: 30px;
+}
+.ios-switch input { opacity: 0; width: 0; height: 0; }
+.slider {
+    position: absolute; cursor: pointer;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-color: #39393d; /* 关闭时的颜色 */
+    transition: .4s; border-radius: 30px;
+}
+.slider:before {
+    position: absolute; content: "";
+    height: 26px; width: 26px;
+    left: 2px; bottom: 2px;
+    background-color: white;
+    transition: .4s; border-radius: 50%;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+input:checked + .slider { background-color: #34C759; /* 开启时的绿色 */ }
+input:checked + .slider:before { transform: translateX(20px); }
 
 /* 浅色模式适配 */
-body.light-theme .ai-btn-secondary {
-    background: rgba(0, 122, 255, 0.1) !important;
-}
+body.light-theme .settings-item { border-bottom: 0.5px solid rgba(0,0,0,0.05); }
+body.light-theme .slider { background-color: #e9e9ea; }
     </style>
 </head>
 <body>
@@ -1110,6 +1785,17 @@ body.light-theme .ai-btn-secondary {
 "></video>
 
 <div class="status-bar">
+    <div id="dynamic-island" class="island-container idle">
+        <div class="island-content">
+            <div class="island-left" id="island-icon">
+                <div class="island-sound-wave">
+                    <span></span><span></span><span></span><span></span>
+                </div>
+            </div>
+            <div class="island-center" id="island-text">Dynamic Island</div>
+            <div class="island-right" id="island-info"></div>
+        </div>
+    </div>
     <div id="clock">15:36</div>
     <div class="status-right">
         <div class="signal-bars">
@@ -1211,32 +1897,31 @@ body.light-theme .ai-btn-secondary {
         </div>
 
         <div class="grid-app-item" style="grid-row: 5; grid-column: 3; transform: translateY(-35px);">
-            <div class="app-icon-shape bg-wallpaper" onclick="openApp('app-wallpaper')">
+            <div class="app-icon-shape bg-wallpaper" id="icon-home-wallpaper" onclick="openApp('app-wallpaper')">
                 <svg class="app-svg" viewBox="0 0 24 24"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>
             </div>
-            <span class="app-label">壁纸</span>
-
+            <span class="app-label" data-i18n="home_wp">壁纸</span>
         </div>
 
         <div class="grid-app-item" style="grid-row: 5; grid-column: 4; transform: translateY(-35px);">
-            <div class="app-icon-shape bg-settings" onclick="openApp('app-settings')">
+            <div class="app-icon-shape bg-settings" id="icon-home-settings" onclick="openApp('app-settings')">
                 <svg class="app-svg" viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.488.488 0 0 0-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 0 0-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.04.17 0 .36.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.58 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.04-.17 0-.36-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
             </div>
-            <span class="app-label">设置</span>
+            <span class="app-label" data-i18n="home_set">设置</span>
         </div>
 
         <div class="grid-app-item" style="grid-row: 6; grid-column: 3; transform: translateY(-80px);">
-            <div class="app-icon-shape bg-chat">
+            <div class="app-icon-shape bg-chat" id="icon-home-chat" onclick="openApp('app-chat')">
                 <svg class="app-svg" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
             </div>
-            <span class="app-label">聊天</span>
+            <span class="app-label" data-i18n="home_chat">聊天</span>
         </div>
 
         <div class="grid-app-item" style="grid-row: 6; grid-column: 4; transform: translateY(-80px);">
-            <div class="app-icon-shape bg-music">
+            <div class="app-icon-shape bg-music" id="icon-home-music" onclick="openApp('app-music')">
                 <svg class="app-svg" viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
             </div>
-            <span class="app-label">音乐</span>
+            <span class="app-label" data-i18n="home_music">音乐</span>
         </div>
 
     </div>
@@ -1245,19 +1930,16 @@ body.light-theme .ai-btn-secondary {
 
 <div class="dock-container">
 
-    <div class="dock-icon bg-role">
+    <div class="dock-icon bg-role" id="icon-dock-role" onclick="openApp('app-rolebook')">
         <svg class="app-svg" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
     </div>
-
-    <div class="dock-icon bg-world">
+    <div class="dock-icon bg-world" id="icon-dock-world" onclick="openApp('app-worldbook')">
         <svg class="app-svg" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
     </div>
-
-    <div class="dock-icon bg-manual">
+    <div class="dock-icon bg-manual" id="icon-dock-manual">
         <svg class="app-svg" viewBox="0 0 24 24"><path d="M18 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 4h5v8l-2.5-1.5L6 12V4z"/></svg>
     </div>
-
-    <div class="dock-icon bg-gallery">
+    <div class="dock-icon bg-gallery" id="icon-dock-gallery" onclick="openApp('app-icons')">
         <svg class="app-svg" viewBox="0 0 24 24"><path d="M4 8h4V4H4v4zm6 12h4v-4h-4v4zm-6 0h4v-4H4v4zm0-6h4v-4H4v4zm6 0h4v-4h-4v4zm6-10v4h4V4h-4zm-6 4h4V4h-4v4zm6 6h4v-4h-4v4zm0 6h4v-4h-4v4z"/></svg>
     </div>
 
@@ -1424,6 +2106,19 @@ body.light-theme .ai-btn-secondary {
                     <span class="item-arrow">›</span>
                 </div>
             </div>
+
+            <div class="settings-item" onclick="openSubPage('sub-island')">
+                <span style="display:flex; align-items:center; gap:8px;">
+                    <span style="background:black; border-radius:8px; width:24px; height:24px; display:flex; align-items:center; justify-content:center;">
+                        <div style="width:12px; height:4px; background:white; border-radius:2px;"></div>
+                    </span>
+                    灵动岛
+                </span>
+                <div style="display:flex; align-items:center;">
+                    <span class="item-value" id="island-status-label">已开启</span>
+                    <span class="item-arrow">›</span>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -1477,8 +2172,8 @@ body.light-theme .ai-btn-secondary {
         <div class="code-editor-container" id="custom-css-area">
             <div style="color:#666; font-size:12px; margin-bottom:5px;">输入 CSS 代码 (实时覆盖):</div>
             <textarea class="code-textarea" id="css-input" placeholder="/* 例如: */
-.app-window { background: rgba(50,0,0,0.9) !important; }
-.settings-item { border-radius: 0 !important; }"></textarea>
+                .app-window { background: rgba(50,0,0,0.9) !important; }
+                .settings-item { border-radius: 0 !important; }"></textarea>
 
             <button class="action-btn btn-apply" style="margin-top:10px; opacity:1; pointer-events:all; background:#4CAF50;" onclick="applyCustomCSS()">
                 ⚡ 应用并保存
@@ -1653,6 +2348,56 @@ body.light-theme .ai-btn-secondary {
     </div>
 </div>
 
+<div class="sub-page" id="sub-island" style="background: #1c1c1e;">
+    <div class="app-header" style="background: inherit; border-bottom: none;">
+        <div class="app-back-btn" onclick="closeSubPage('sub-island')">
+            <svg style="width:20px;height:20px;fill:#2196F3" viewBox="0 0 24 24"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
+            设置
+        </div>
+        <div class="app-title">灵动岛</div>
+    </div>
+
+    <div class="wallpaper-content">
+        <div class="group-header">总开关</div>
+        <div class="settings-group">
+            <div class="settings-item">
+                <span>启用灵动岛</span>
+                <label class="ios-switch">
+                    <input type="checkbox" id="switch-island-master" onchange="toggleIslandMaster()">
+                    <span class="slider"></span>
+                </label>
+            </div>
+        </div>
+
+        <div class="group-header">交互场景</div>
+        <div class="settings-group">
+            <div class="settings-item">
+                <span>充电提示</span>
+                <label class="ios-switch">
+                    <input type="checkbox" id="switch-island-charge" onchange="saveIslandConfig()">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="settings-item">
+                <span>音乐播放可视化</span>
+                <label class="ios-switch">
+                    <input type="checkbox" id="switch-island-music" onchange="saveIslandConfig()">
+                    <span class="slider"></span>
+                </label>
+            </div>
+        </div>
+
+        <div class="group-header">调试</div>
+        <div class="ai-btn-group" style="margin:0;">
+            <button class="ai-btn ai-btn-secondary" onclick="testIsland('charge')">测试充电动画</button>
+            <button class="ai-btn ai-btn-secondary" onclick="testIsland('music')">测试音乐动画</button>
+        </div>
+        <div style="text-align:center; color:#666; font-size:12px; margin-top:10px;">
+            点击测试按钮查看效果
+        </div>
+    </div>
+</div>
+
 <div class="modal-overlay" id="clear-config-modal">
     <div class="modal-content" style="width: 80%; max-width: 300px;">
         <div class="modal-header">
@@ -1668,6 +2413,484 @@ body.light-theme .ai-btn-secondary {
             <button class="modal-btn" onclick="confirmClearConfig()" style="background: #FF3B30; color: white; font-weight: 600;">
                 删除全部
             </button>
+        </div>
+    </div>
+</div>
+
+<div class="app-window" id="app-icons">
+
+    <div class="app-header">
+        <div class="app-back-btn" onclick="closeApp('app-icons')">
+            <svg style="width:20px;height:20px;fill:#2196F3" viewBox="0 0 24 24"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
+            主屏幕
+        </div>
+        <div class="app-title">图标设置</div>
+    </div>
+
+    <div class="wallpaper-content">
+
+        <div class="ai-header-text">主屏幕应用</div>
+
+        <div class="icon-preview-card">
+            <div class="icon-info-group">
+                <div class="preview-icon-shape app-icon-shape bg-wallpaper" id="preview-home-wallpaper">
+                    <svg class="preview-icon-svg" viewBox="0 0 24 24"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>
+                </div>
+                <div class="city-name">壁纸</div>
+            </div>
+            <div class="icon-btn-group">
+                <button class="icon-btn btn-change" onclick="triggerIconUpload('home-wallpaper')">更换</button>
+                <button class="icon-btn btn-reset" onclick="resetIcon('home-wallpaper')">还原</button>
+            </div>
+        </div>
+
+        <div class="icon-preview-card">
+            <div class="icon-info-group">
+                <div class="preview-icon-shape app-icon-shape bg-settings" id="preview-home-settings">
+                    <svg class="preview-icon-svg" viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.488.488 0 0 0-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 0 0-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.04.17 0 .36.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.58 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.04-.17 0-.36-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+                </div>
+                <div class="city-name">设置</div>
+            </div>
+            <div class="icon-btn-group">
+                <button class="icon-btn btn-change" onclick="triggerIconUpload('home-settings')">更换</button>
+                <button class="icon-btn btn-reset" onclick="resetIcon('home-settings')">还原</button>
+            </div>
+        </div>
+
+        <div class="icon-preview-card">
+            <div class="icon-info-group">
+                <div class="preview-icon-shape app-icon-shape bg-chat" id="preview-home-chat">
+                    <svg class="preview-icon-svg" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
+                </div>
+                <div class="city-name">聊天</div>
+            </div>
+            <div class="icon-btn-group">
+                <button class="icon-btn btn-change" onclick="triggerIconUpload('home-chat')">更换</button>
+                <button class="icon-btn btn-reset" onclick="resetIcon('home-chat')">还原</button>
+            </div>
+        </div>
+
+        <div class="icon-preview-card">
+            <div class="icon-info-group">
+                <div class="preview-icon-shape app-icon-shape bg-music" id="preview-home-music">
+                    <svg class="preview-icon-svg" viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
+                </div>
+                <div class="city-name">音乐</div>
+            </div>
+            <div class="icon-btn-group">
+                <button class="icon-btn btn-change" onclick="triggerIconUpload('home-music')">更换</button>
+                <button class="icon-btn btn-reset" onclick="resetIcon('home-music')">还原</button>
+            </div>
+        </div>
+
+        <div class="ai-header-text">Dock 栏应用</div>
+
+        <div class="icon-preview-card">
+            <div class="icon-info-group">
+                <div class="preview-icon-shape dock-icon bg-role" id="preview-dock-role" style="border-radius: 16px;">
+                    <svg class="preview-icon-svg" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+                </div>
+                <div class="city-name">角色书</div>
+            </div>
+            <div class="icon-btn-group">
+                <button class="icon-btn btn-change" onclick="triggerIconUpload('dock-role')">更换</button>
+                <button class="icon-btn btn-reset" onclick="resetIcon('dock-role')">还原</button>
+            </div>
+        </div>
+
+        <div class="icon-preview-card">
+            <div class="icon-info-group">
+                <div class="preview-icon-shape dock-icon bg-world" id="preview-dock-world" style="border-radius: 16px;">
+                    <svg class="preview-icon-svg" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+                </div>
+                <div class="city-name">世界书</div>
+            </div>
+            <div class="icon-btn-group">
+                <button class="icon-btn btn-change" onclick="triggerIconUpload('dock-world')">更换</button>
+                <button class="icon-btn btn-reset" onclick="resetIcon('dock-world')">还原</button>
+            </div>
+        </div>
+
+        <div class="icon-preview-card">
+            <div class="icon-info-group">
+                <div class="preview-icon-shape dock-icon bg-manual" id="preview-dock-manual" style="border-radius: 16px;">
+                    <svg class="preview-icon-svg" viewBox="0 0 24 24"><path d="M18 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 4h5v8l-2.5-1.5L6 12V4z"/></svg>
+                </div>
+                <div class="city-name">说明书</div>
+            </div>
+            <div class="icon-btn-group">
+                <button class="icon-btn btn-change" onclick="triggerIconUpload('dock-manual')">更换</button>
+                <button class="icon-btn btn-reset" onclick="resetIcon('dock-manual')">还原</button>
+            </div>
+        </div>
+
+        <div class="icon-preview-card">
+            <div class="icon-info-group">
+                <div class="preview-icon-shape dock-icon bg-gallery" id="preview-dock-gallery" style="border-radius: 16px;">
+                    <svg class="preview-icon-svg" viewBox="0 0 24 24"><path d="M4 8h4V4H4v4zm6 12h4v-4h-4v4zm-6 0h4v-4H4v4zm0-6h4v-4H4v4zm6 0h4v-4h-4v4zm6-10v4h4V4h-4zm-6 4h4V4h-4v4zm6 6h4v-4h-4v4zm0 6h4v-4h-4v4z"/></svg>
+                </div>
+                <div class="city-name">图标</div>
+            </div>
+            <div class="icon-btn-group">
+                <button class="icon-btn btn-change" onclick="triggerIconUpload('dock-gallery')">更换</button>
+                <button class="icon-btn btn-reset" onclick="resetIcon('dock-gallery')">还原</button>
+            </div>
+        </div>
+
+        <input type="file" id="icon-file-input" accept="image/png,image/jpeg,image/jpg" style="display:none;" onchange="handleIconFileSelect(this)">
+    </div>
+</div>
+
+<div class="app-window" id="app-rolebook">
+    <div class="app-header">
+        <div class="app-back-btn" onclick="closeApp('app-rolebook')">
+            <svg style="width:20px;height:20px;fill:#2196F3" viewBox="0 0 24 24"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
+            主屏幕
+        </div>
+        <div class="app-title">角色书</div>
+        <div style="position: absolute; right: 15px; top: 55px; color: #0a84ff; font-size: 28px; cursor: pointer; font-weight: 300;" onclick="openRoleEditModal()">+</div>
+    </div>
+
+    <div class="wallpaper-content">
+        <div class="role-grid" id="role-list-container">
+        </div>
+    </div>
+</div>
+
+<div class="sub-page" id="sub-role-detail" style="background: #1c1c1e;">
+    <div style="position: absolute; top: 50px; left: 15px; z-index: 20;">
+        <div onclick="closeSubPage('sub-role-detail')" style="background: rgba(0,0,0,0.5); width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer;">
+            <svg style="width:20px;height:20px;fill:white" viewBox="0 0 24 24"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
+        </div>
+    </div>
+
+    <div class="wallpaper-content" style="padding: 0;">
+        <div class="role-header-bg" id="role-detail-bg" onclick="triggerRoleBgUpload()"></div>
+        <input type="file" id="role-bg-input" accept="image/*" hidden onchange="handleRoleBgUpload(this)">
+
+        <div class="role-avatar-container">
+            <div class="role-big-avatar" id="role-detail-avatar"></div>
+        </div>
+
+        <div class="role-detail-content">
+            <div class="role-detail-name" id="role-detail-name">角色名</div>
+            <div class="role-detail-desc" id="role-detail-desc">人设详情...</div>
+
+            <div class="ai-btn-group" style="margin-top: 40px;">
+                <button class="ai-btn ai-btn-secondary" style="color: #FF3B30; background: rgba(255, 59, 48, 0.1);" onclick="deleteCurrentRole()">删除角色</button>
+                <button class="ai-btn ai-btn-primary" onclick="editCurrentRole()">编辑资料</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="modal-role-edit">
+    <div class="modal-content" style="width: 90%; max-height: 85%;">
+        <div class="modal-header">
+            <span class="modal-title" id="role-modal-title">新建角色</span>
+        </div>
+
+        <div style="overflow-y: auto; flex: 1;">
+            <div style="display: flex; justify-content: center; margin-bottom: 15px;">
+                <div id="role-edit-avatar-preview" onclick="document.getElementById('role-avatar-input').click()"
+                     style="width: 80px; height: 80px; border-radius: 50%; background: #333; border: 2px dashed #666; display: flex; align-items: center; justify-content: center; cursor: pointer; background-size: cover; background-position: center;">
+                    <span style="font-size: 24px; color: #666;">+</span>
+                </div>
+                <input type="file" id="role-avatar-input" accept="image/*" hidden onchange="previewRoleAvatar(this)">
+            </div>
+
+            <div class="ai-item-label" style="margin-bottom: 5px;">昵称</div>
+            <input type="text" class="search-box" id="role-edit-name" placeholder="角色名字" style="text-align: left; padding-left: 10px;">
+
+            <div class="ai-item-label" style="margin: 15px 0 5px 0;">人设详情</div>
+            <textarea class="code-textarea" id="role-edit-desc" placeholder="输入详细设定..." style="height: 150px; background: rgba(255,255,255,0.1); border-radius: 12px; padding: 10px; font-family: inherit; font-size: 15px;"></textarea>
+        </div>
+
+        <div class="modal-footer" style="margin-top: 15px;">
+            <button class="modal-btn btn-cancel" onclick="closeRoleModal()">取消</button>
+            <button class="modal-btn btn-save" onclick="saveRoleData()">保存</button>
+        </div>
+    </div>
+</div>
+
+<div class="app-window" id="app-worldbook">
+    <div class="app-header">
+        <div class="app-back-btn" onclick="closeApp('app-worldbook')">
+            <svg style="width:20px;height:20px;fill:#2196F3" viewBox="0 0 24 24"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
+            主屏幕
+        </div>
+        <div class="app-title">世界书</div>
+        <div style="position: absolute; right: 15px; top: 55px; color: #0a84ff; font-size: 28px; cursor: pointer; font-weight: 300;" onclick="openWorldEditModal()">+</div>
+    </div>
+
+    <div class="wallpaper-content">
+        <div id="world-list-container">
+        </div>
+    </div>
+</div>
+
+<div class="sub-page" id="sub-world-detail" style="background: #1c1c1e;">
+    <div class="app-header" style="background: #1c1c1e; border-bottom: none;">
+        <div class="app-back-btn" onclick="closeSubPage('sub-world-detail')">
+            <svg style="width:20px;height:20px;fill:#2196F3" viewBox="0 0 24 24"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
+            返回
+        </div>
+        <div class="app-title">设定详情</div>
+    </div>
+
+    <div class="wallpaper-content" style="padding: 0;">
+        <div class="world-detail-container">
+            <div class="world-detail-header" id="view-world-title">标题</div>
+            <div class="world-detail-body" id="view-world-content">内容...</div>
+
+            <div class="ai-btn-group" style="margin-top: 30px;">
+                <button class="ai-btn ai-btn-secondary" style="color: #FF3B30; background: rgba(255, 59, 48, 0.1);" onclick="deleteCurrentWorld()">删除</button>
+                <button class="ai-btn ai-btn-primary" onclick="editCurrentWorld()">编辑</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="modal-world-edit">
+    <div class="modal-content" style="width: 90%; max-height: 85%;">
+        <div class="modal-header">
+            <span class="modal-title" id="world-modal-title">新建设定</span>
+        </div>
+
+        <div style="flex: 1; overflow-y: auto;">
+            <div class="ai-item-label" style="margin-bottom: 5px;">设定名称</div>
+            <input type="text" class="search-box" id="world-edit-title" placeholder="例如: 魔法体系、地理环境" style="text-align: left; padding-left: 10px;">
+
+            <div class="ai-item-label" style="margin: 15px 0 5px 0;">详细内容</div>
+            <textarea class="code-textarea" id="world-edit-content" placeholder="输入详细的世界观设定..." style="height: 300px; background: rgba(255,255,255,0.1); border-radius: 12px; padding: 15px; font-family: inherit; font-size: 15px; line-height: 1.6;"></textarea>
+        </div>
+
+        <div class="modal-footer" style="margin-top: 15px;">
+            <button class="modal-btn btn-cancel" onclick="closeWorldModal()">取消</button>
+            <button class="modal-btn btn-save" onclick="saveWorldData()">保存</button>
+        </div>
+    </div>
+</div>
+
+<div class="app-window" id="app-music">
+
+    <div id="music-view-list">
+        <div class="app-header" style="background:transparent; border-bottom:none;">
+            <div class="app-back-btn" onclick="closeApp('app-music')">
+                <svg style="width:20px;height:20px;fill:white" viewBox="0 0 24 24"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
+                主屏幕
+            </div>
+            <div class="app-title" style="color:white;">音乐库</div>
+
+            <div class="header-add-btn" onclick="openMusicUploadModal()">
+                <svg style="width:18px;height:18px;fill:white;" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+            </div>
+        </div>
+
+        <div class="wallpaper-content" id="app-music-list-container" style="padding-bottom: 120px;">
+        </div>
+
+        <div class="mini-player" id="mini-player-bar" onclick="openFullPlayer()">
+            <div class="mini-cover" id="mini-cover"></div>
+            <div class="mini-info">
+                <div class="mini-title" id="mini-title">未播放</div>
+                <div class="mini-artist" id="mini-artist">--</div>
+            </div>
+            <div class="mini-controls">
+                <button class="mini-btn" onclick="event.stopPropagation(); togglePlayState()" id="mini-play-btn">
+                    <svg id="mini-icon-play" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                    <svg id="mini-icon-pause" viewBox="0 0 24 24" style="display:none;"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+                </button>
+
+                <button class="mini-btn" onclick="event.stopPropagation(); playNextSong()">
+                    <svg viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="music-view-full">
+        <div id="full-player-bg"></div>
+
+        <div class="full-player-header" style="padding: 50px 20px 0 20px; display:flex; justify-content:space-between; align-items:center;">
+            <div class="fp-btn" onclick="closeFullPlayer()">
+                <svg viewBox="0 0 24 24" fill="white" width="30" height="30"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg>
+            </div>
+            <div class="fp-actions" style="display:flex;">
+                <button class="fp-icon-btn" onclick="triggerMusicBgUpload()">
+                    <svg viewBox="0 0 24 24"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>
+                </button>
+                <button class="fp-icon-btn">
+                    <svg viewBox="0 0 24 24"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>
+                </button>
+            </div>
+            <input type="file" id="music-bg-input" accept="image/*" hidden onchange="handleMusicBgUpload(this)">
+        </div>
+
+        <div class="full-player-content">
+            <div class="disk-wrapper">
+                <div class="disk-cover" id="full-cover"></div>
+            </div>
+
+            <div style="width:100%; text-align:left; margin-bottom:10px;">
+                <div class="fp-title" id="full-title" style="font-size:24px; font-weight:700; color:white; margin-bottom:5px;">Song Name</div>
+                <div class="fp-artist" id="full-artist" style="font-size:16px; color:rgba(255,255,255,0.6);">Artist</div>
+            </div>
+
+            <div class="lyrics-box" onclick="openLyricsModal()" style="height:40px; color:rgba(255,255,255,0.8);">
+                <span id="current-lyric-line">暂无歌词 - 点击添加</span>
+            </div>
+
+            <div class="fp-progress-container">
+                <input type="range" class="fp-slider" id="music-slider" min="0" value="0" max="100" oninput="seekAudio(this.value)">
+                <div class="time-row">
+                    <span id="time-current">0:00</span>
+                    <span id="time-total">0:00</span>
+                </div>
+            </div>
+
+            <div class="fp-controls">
+                <button class="fp-ctrl-btn small" onclick="togglePlayMode()">
+                    <svg id="icon-mode-0" viewBox="0 0 24 24"><path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z"/></svg>
+                    <svg id="icon-mode-1" viewBox="0 0 24 24" style="display:none"><path d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4zm-4-2V9h-1l-2 1v1h1.5v4H13z"/></svg>
+                    <svg id="icon-mode-2" viewBox="0 0 24 24" style="display:none"><path d="M10.59 9.17L5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.46 20 9.5V4h-5.5zm.33 9.41l-1.41 1.41 3.13 3.13L14.5 20H20v-5.5l-2.04 2.04-3.13-3.13z"/></svg>
+                </button>
+
+                <button class="fp-ctrl-btn" onclick="playPrevSong()">
+                    <svg viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
+                </button>
+
+                <button class="fp-ctrl-btn big" onclick="togglePlayState()" id="full-play-btn">
+                    <svg id="fp-icon-play" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                    <svg id="fp-icon-pause" viewBox="0 0 24 24" style="display:none;"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+                </button>
+
+                <button class="fp-ctrl-btn" onclick="playNextSong()">
+                    <svg viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>
+                </button>
+
+                <button class="fp-ctrl-btn small" onclick="openPlaylistSheet()">
+                    <svg viewBox="0 0 24 24"><path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/></svg>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal-overlay" id="modal-music-upload">
+    <div class="modal-content">
+        <div class="modal-header"><span class="modal-title">添加歌曲</span></div>
+        <div style="display:flex; gap:15px; margin-bottom:15px;">
+            <div id="upload-cover-preview" onclick="document.getElementById('new-song-cover').click()"
+                 style="width:70px; height:70px; background:rgba(255,255,255,0.1); border-radius:10px; display:flex; align-items:center; justify-content:center; cursor:pointer; background-size:cover;">
+                <span style="font-size:24px; color:rgba(255,255,255,0.5);">+</span>
+            </div>
+            <div style="flex:1; display:flex; flex-direction:column; gap:10px;">
+                <input type="text" class="search-box" id="new-song-title" placeholder="歌曲名称" style="margin:0;">
+                <input type="text" class="search-box" id="new-song-artist" placeholder="歌手" style="margin:0;">
+            </div>
+        </div>
+        <input type="file" id="new-song-cover" accept="image/*" hidden onchange="previewNewSongCover(this)">
+
+        <div class="ai-item-label" style="margin-bottom:5px;">音频来源</div>
+        <div style="display:flex; gap:10px; margin-bottom:10px;">
+            <button class="tab-btn active" onclick="switchAudioSource('file')" id="btn-src-file">本地文件</button>
+            <button class="tab-btn" onclick="switchAudioSource('url')" id="btn-src-url">在线 URL</button>
+        </div>
+
+        <div id="src-file-area" style="margin-top: 15px; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 12px;">
+            <button class="file-upload-btn" onclick="document.getElementById('new-song-file').click()">选择 MP3 文件</button>
+            <div id="new-song-filename" style="font-size:12px; color:#999; margin-top:5px;">未选择</div>
+            <input type="file" id="new-song-file" accept="audio/*" hidden onchange="handleNewSongFile(this)">
+        </div>
+        <div id="src-url-area" style="display:none; margin-top: 15px;">
+            <input type="text" class="search-box" id="new-song-url" placeholder="https://example.com/music.mp3">
+        </div>
+
+        <div class="modal-footer" style="margin-top:20px;">
+            <button class="modal-btn btn-cancel" onclick="closeMusicUploadModal()">取消</button>
+            <button class="modal-btn btn-save" onclick="saveNewSong()">保存</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="modal-lyrics">
+    <div class="modal-content" style="height:70%;">
+        <div class="modal-header"><span class="modal-title">编辑歌词</span></div>
+        <textarea class="code-textarea" id="lyrics-input" placeholder="在此粘贴歌词..." style="height:100%; margin-bottom:15px;"></textarea>
+        <div class="modal-footer" style="justify-content: space-between;">
+            <button class="modal-btn btn-cancel" onclick="document.getElementById('lrc-file').click()">📂 导入 LRC</button>
+            <input type="file" id="lrc-file" accept=".lrc,.txt" hidden onchange="handleLrcFile(this)">
+
+            <div style="display:flex; gap:10px;">
+                <button class="modal-btn btn-save" onclick="saveLyrics()">保存</button>
+                <button class="modal-btn btn-cancel" onclick="document.getElementById('modal-lyrics').classList.remove('active'); setTimeout(()=>document.getElementById('modal-lyrics').style.display='none',300);">关闭</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="sub-page" id="sheet-playlist" style="top:auto; bottom:0; height:60vh; border-radius:24px 24px 0 0; transform:translateY(100%); transition:transform 0.3s; background:#1c1c1e; z-index:900;">
+    <div style="padding:15px; border-bottom:1px solid rgba(255,255,255,0.1); display:flex; justify-content:space-between; align-items:center;">
+        <span style="font-weight:600; font-size:18px; color:white;">播放列表</span>
+        <span onclick="closePlaylistSheet()" style="cursor:pointer; padding:5px; color:#0a84ff;">关闭</span>
+    </div>
+    <div id="sheet-list-content" style="overflow-y:auto; height:calc(100% - 60px); padding:10px;"></div>
+</div>
+<div class="modal-overlay" id="modal-song-menu" style="align-items: flex-end; padding-bottom: 20px;">
+    <div style="position:absolute; top:0; left:0; width:100%; height:100%;" onclick="closeSongMenu()"></div>
+
+    <div class="action-sheet-content">
+        <div class="sheet-group">
+            <div class="sheet-item" onclick="openEditSongModal()">
+                <span style="color: #0a84ff;">编辑歌曲信息</span>
+            </div>
+            <div class="sheet-item" onclick="openDeleteConfirmModal()" style="border-top: 1px solid rgba(255,255,255,0.1);">
+                <span style="color: #FF3B30;">删除歌曲</span>
+            </div>
+        </div>
+
+        <div class="sheet-group" style="margin-top: 10px;">
+            <div class="sheet-item" onclick="closeSongMenu()" style="font-weight: 600;">
+                取消
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="modal-edit-song">
+    <div class="modal-content" style="width: 85%; max-width: 320px;">
+        <div class="modal-header">
+            <span class="modal-title">编辑信息</span>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 15px;">
+            <div>
+                <div class="ai-item-label" style="font-size:12px; color:#888; margin-bottom:5px;">歌曲名称</div>
+                <input type="text" class="search-box" id="edit-title-input" style="margin:0;">
+            </div>
+            <div>
+                <div class="ai-item-label" style="font-size:12px; color:#888; margin-bottom:5px;">歌手 / 专辑</div>
+                <input type="text" class="search-box" id="edit-artist-input" style="margin:0;">
+            </div>
+        </div>
+
+        <div class="modal-footer" style="margin-top: 20px;">
+            <button class="modal-btn btn-cancel" onclick="closeEditSongModal()">取消</button>
+            <button class="modal-btn btn-save" onclick="saveSongEdit()">保存修改</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="modal-delete-confirm">
+    <div class="modal-content" style="width: 280px; text-align: center; padding: 20px;">
+        <div style="font-size: 18px; font-weight: 600; margin-bottom: 10px;">删除歌曲</div>
+        <div style="font-size: 14px; color: rgba(255,255,255,0.6); margin-bottom: 25px; line-height: 1.5;">
+            确定要删除 <span id="del-song-name" style="color:white;">这首歌</span> 吗？<br>此操作无法恢复。
+        </div>
+
+        <div style="display: flex; gap: 10px;">
+            <button class="modal-btn btn-cancel" onclick="closeDeleteConfirmModal()">取消</button>
+            <button class="modal-btn" onclick="confirmDeleteSong()" style="background: #FF3B30; color: white; border: none;">删除</button>
         </div>
     </div>
 </div>
@@ -3110,6 +4333,1143 @@ body.light-theme .ai-btn-secondary {
 
     // 启动
     initFontSettings();
+
+    // ================== 11. 图标自定义逻辑 (Pro Plus) ==================
+
+    // 定义所有可修改图标的配置 (ID 和 默认背景类名)
+    const iconConfig = {
+        'home-wallpaper': { defaultClass: 'bg-wallpaper' },
+        'home-settings':  { defaultClass: 'bg-settings' },
+        'home-chat':      { defaultClass: 'bg-chat' },
+        'home-music':     { defaultClass: 'bg-music' },
+        'dock-role':      { defaultClass: 'bg-role' },
+        'dock-world':     { defaultClass: 'bg-world' },
+        'dock-manual':    { defaultClass: 'bg-manual' },
+        'dock-gallery':   { defaultClass: 'bg-gallery' }
+    };
+
+    let currentEditIconId = null;
+
+    // 1. 初始化
+    async function initIconSettings() {
+        for (const key in iconConfig) {
+            try {
+                const blob = await dbHelper.get(`icon_${key}`);
+                if (blob) updateAppIconUI(key, blob);
+            } catch (e) {}
+        }
+    }
+
+    // 2. 触发上传
+    function triggerIconUpload(key) {
+        currentEditIconId = key;
+        document.getElementById('icon-file-input').click();
+    }
+
+    // 3. 处理文件
+    async function handleIconFileSelect(input) {
+        if (input.files && input.files[0] && currentEditIconId) {
+            const file = input.files[0];
+            await dbHelper.save(`icon_${currentEditIconId}`, file);
+            updateAppIconUI(currentEditIconId, file);
+            showToast("✅ 图标已更换");
+            input.value = '';
+        }
+    }
+
+    // 4. 还原
+    async function resetIcon(key) {
+        if(confirm('还原为默认图标？')) {
+            await dbHelper.save(`icon_${key}`, null);
+            updateAppIconUI(key, null);
+            showToast("已还原");
+        }
+    }
+
+    // 5. 更新 UI (核心)
+    function updateAppIconUI(key, blob) {
+        const url = blob ? URL.createObjectURL(blob) : null;
+        const defaultClass = iconConfig[key].defaultClass;
+
+        // 1. 更新主屏幕/Dock上的真实图标
+        const realIcon = document.getElementById(`icon-${key}`);
+        if (realIcon) {
+            const svg = realIcon.querySelector('.app-svg');
+            if (url) {
+                realIcon.style.backgroundImage = `url(${url})`;
+                realIcon.classList.remove(defaultClass); // 移除默认渐变色
+                if(svg) svg.style.display = 'none';      // 隐藏图标
+            } else {
+                realIcon.style.backgroundImage = 'none';
+                realIcon.classList.add(defaultClass);    // 恢复默认渐变色
+                if(svg) svg.style.display = 'block';     // 显示图标
+            }
+        }
+
+        // 2. 更新设置页里的预览图标
+        const previewIcon = document.getElementById(`preview-${key}`);
+        if (previewIcon) {
+            const svg = previewIcon.querySelector('.preview-icon-svg');
+            if (url) {
+                previewIcon.style.backgroundImage = `url(${url})`;
+                previewIcon.classList.remove(defaultClass);
+                if(svg) svg.style.display = 'none';
+            } else {
+                previewIcon.style.backgroundImage = 'none';
+                previewIcon.classList.add(defaultClass);
+                if(svg) svg.style.display = 'block';
+            }
+        }
+    }
+
+    initIconSettings();
+
+    // ================== 12. 角色书逻辑 (Role Book) ==================
+
+    let roleList = [];
+    let currentRoleId = null; // 当前查看的角色ID
+    let tempRoleAvatar = null; // 编辑时的临时头像
+
+    // 1. 初始化：加载列表
+    function initRoleBook() {
+        const saved = localStorage.getItem('role_list_meta');
+        roleList = saved ? JSON.parse(saved) : [];
+        renderRoleList();
+    }
+
+    // 2. 渲染列表
+    async function renderRoleList() {
+        const container = document.getElementById('role-list-container');
+        if(!container) return;
+        container.innerHTML = '';
+
+        if (roleList.length === 0) {
+            container.innerHTML = '<div style="grid-column:span 2; text-align:center; color:#666; padding:50px;">点击右上角 + 新建角色</div>';
+            return;
+        }
+
+        for (const role of roleList) {
+            const card = document.createElement('div');
+            card.className = 'role-card';
+            card.onclick = () => openRoleDetail(role.id);
+
+            // 获取头像 (从IndexedDB)
+            let avatarUrl = '';
+            try {
+                const blob = await dbHelper.get(`role_${role.id}_avatar`);
+                if (blob) avatarUrl = URL.createObjectURL(blob);
+            } catch (e) {}
+
+            card.innerHTML = `
+                <div class="role-card-img" style="${avatarUrl ? 'background-image:url('+avatarUrl+')' : ''}"></div>
+                <div class="role-card-info">
+                    <div class="role-card-name">${role.name}</div>
+                    <div class="role-card-desc">${role.desc}</div>
+                </div>
+            `;
+            container.appendChild(card);
+        }
+    }
+
+    // 3. 打开编辑弹窗 (新建或编辑)
+    function openRoleEditModal(roleId = null) {
+        const modal = document.getElementById('modal-role-edit');
+        const title = document.getElementById('role-modal-title');
+        const nameInput = document.getElementById('role-edit-name');
+        const descInput = document.getElementById('role-edit-desc');
+        const avatarPreview = document.getElementById('role-edit-avatar-preview');
+
+        tempRoleAvatar = null; // 重置临时头像
+        currentRoleId = roleId; // 标记当前ID (如果是null则为新建)
+
+        if (roleId) {
+            // 编辑模式：回显数据
+            const role = roleList.find(r => r.id === roleId);
+            title.textContent = "编辑角色";
+            nameInput.value = role.name;
+            descInput.value = role.desc;
+            // 回显头像
+            dbHelper.get(`role_${roleId}_avatar`).then(blob => {
+                if(blob) avatarPreview.style.backgroundImage = `url(${URL.createObjectURL(blob)})`;
+                else avatarPreview.style.backgroundImage = 'none';
+            });
+        } else {
+            // 新建模式
+            title.textContent = "新建角色";
+            nameInput.value = '';
+            descInput.value = '';
+            avatarPreview.style.backgroundImage = 'none';
+            avatarPreview.innerHTML = '<span style="font-size: 24px; color: #666;">+</span>';
+        }
+
+        modal.style.display = 'flex';
+        setTimeout(() => modal.classList.add('active'), 10);
+    }
+
+    function closeRoleModal() {
+        document.getElementById('modal-role-edit').classList.remove('active');
+        setTimeout(() => document.getElementById('modal-role-edit').style.display = 'none', 300);
+    }
+
+    // 4. 预览上传的头像
+    function previewRoleAvatar(input) {
+        if (input.files && input.files[0]) {
+            tempRoleAvatar = input.files[0];
+            const url = URL.createObjectURL(tempRoleAvatar);
+            const preview = document.getElementById('role-edit-avatar-preview');
+            preview.style.backgroundImage = `url(${url})`;
+            preview.innerHTML = ''; // 清除加号
+        }
+    }
+
+    // 5. 保存角色数据
+    async function saveRoleData() {
+        const name = document.getElementById('role-edit-name').value.trim();
+        const desc = document.getElementById('role-edit-desc').value.trim();
+
+        if (!name) { showToast("请输入角色昵称"); return; }
+
+        let roleId = currentRoleId;
+        if (!roleId) {
+            // 新建：生成ID
+            roleId = Date.now().toString();
+            roleList.push({ id: roleId, name, desc });
+        } else {
+            // 编辑：更新列表
+            const role = roleList.find(r => r.id === roleId);
+            role.name = name;
+            role.desc = desc;
+        }
+
+        // 保存元数据到 LocalStorage
+        localStorage.setItem('role_list_meta', JSON.stringify(roleList));
+
+        // 保存头像到 IndexedDB (如果有更新)
+        if (tempRoleAvatar) {
+            await dbHelper.save(`role_${roleId}_avatar`, tempRoleAvatar);
+        }
+
+        showToast("角色已保存");
+        closeRoleModal();
+        renderRoleList(); // 刷新列表
+
+        // 如果是在详情页编辑的，刷新详情页
+        if(document.getElementById('sub-role-detail').classList.contains('active')) {
+            openRoleDetail(roleId);
+        }
+    }
+
+    // 6. 打开详情页
+    async function openRoleDetail(id) {
+        currentRoleId = id;
+        const role = roleList.find(r => r.id === id);
+        if (!role) return;
+
+        // 填充文字
+        document.getElementById('role-detail-name').textContent = role.name;
+        document.getElementById('role-detail-desc').textContent = role.desc;
+
+        // 加载头像
+        const avatarBlob = await dbHelper.get(`role_${id}_avatar`);
+        const avatarEl = document.getElementById('role-detail-avatar');
+        if (avatarBlob) avatarEl.style.backgroundImage = `url(${URL.createObjectURL(avatarBlob)})`;
+        else avatarEl.style.backgroundImage = 'none';
+
+        // 加载自定义背景
+        const bgBlob = await dbHelper.get(`role_${id}_bg`);
+        const bgEl = document.getElementById('role-detail-bg');
+        if (bgBlob) bgEl.style.backgroundImage = `url(${URL.createObjectURL(bgBlob)})`;
+        else bgEl.style.backgroundImage = 'none'; // 或者设一个默认图
+
+        // 打开页面
+        openSubPage('sub-role-detail');
+    }
+
+    // 7. 详情页：更换背景图
+    function triggerRoleBgUpload() { document.getElementById('role-bg-input').click(); }
+    async function handleRoleBgUpload(input) {
+        if (input.files && input.files[0] && currentRoleId) {
+            const file = input.files[0];
+            await dbHelper.save(`role_${currentRoleId}_bg`, file);
+
+            // 即时更新显示
+            document.getElementById('role-detail-bg').style.backgroundImage = `url(${URL.createObjectURL(file)})`;
+            showToast("背景已更新");
+        }
+    }
+
+    // 8. 详情页：编辑当前
+    function editCurrentRole() {
+        openRoleEditModal(currentRoleId);
+    }
+
+    // 9. 详情页：删除当前
+    async function deleteCurrentRole() {
+        if (confirm("确定要删除这个角色吗？无法恢复。")) {
+            // 删列表
+            roleList = roleList.filter(r => r.id !== currentRoleId);
+            localStorage.setItem('role_list_meta', JSON.stringify(roleList));
+
+            // 删图片 (IndexedDB) - 存 null 覆盖
+            await dbHelper.save(`role_${currentRoleId}_avatar`, null);
+            await dbHelper.save(`role_${currentRoleId}_bg`, null);
+
+            closeSubPage('sub-role-detail');
+            renderRoleList();
+            showToast("角色已删除");
+        }
+    }
+
+    // 启动
+    initRoleBook();
+
+    // ================== 13. 世界书逻辑 (World Book) ==================
+
+    let worldList = [];
+    let currentWorldId = null;
+
+    // 1. 初始化
+    function initWorldBook() {
+        const saved = localStorage.getItem('world_book_data');
+        worldList = saved ? JSON.parse(saved) : [];
+        renderWorldList();
+    }
+
+    // 2. 渲染列表
+    function renderWorldList() {
+        const container = document.getElementById('world-list-container');
+        if(!container) return;
+        container.innerHTML = '';
+
+        if (worldList.length === 0) {
+            container.innerHTML = '<div style="text-align:center; color:#666; padding:50px;">暂无设定<br>点击右上角 + 添加</div>';
+            return;
+        }
+
+        // 按时间倒序排列
+        const sortedList = [...worldList].reverse();
+
+        sortedList.forEach(item => {
+            const card = document.createElement('div');
+            card.className = 'world-card';
+            card.onclick = () => openWorldDetail(item.id);
+
+            card.innerHTML = `
+                <div class="world-icon-box">
+                    <svg style="width:20px;height:20px;fill:white;" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+                </div>
+                <div class="world-info">
+                    <div class="world-title">${item.title}</div>
+                    <div class="world-preview">${item.content}</div>
+                </div>
+            `;
+            container.appendChild(card);
+        });
+    }
+
+    // 3. 打开/关闭 编辑弹窗
+    function openWorldEditModal(id = null) {
+        const modal = document.getElementById('modal-world-edit');
+        const titleInput = document.getElementById('world-edit-title');
+        const contentInput = document.getElementById('world-edit-content');
+        const modalTitle = document.getElementById('world-modal-title');
+
+        currentWorldId = id; // 标记当前编辑ID
+
+        if (id) {
+            const item = worldList.find(w => w.id === id);
+            modalTitle.textContent = "编辑设定";
+            titleInput.value = item.title;
+            contentInput.value = item.content;
+        } else {
+            modalTitle.textContent = "新建设定";
+            titleInput.value = '';
+            contentInput.value = '';
+        }
+
+        modal.style.display = 'flex';
+        setTimeout(() => modal.classList.add('active'), 10);
+    }
+
+    function closeWorldModal() {
+        document.getElementById('modal-world-edit').classList.remove('active');
+        setTimeout(() => document.getElementById('modal-world-edit').style.display = 'none', 300);
+    }
+
+    // 4. 保存数据
+    function saveWorldData() {
+        const title = document.getElementById('world-edit-title').value.trim();
+        const content = document.getElementById('world-edit-content').value.trim();
+
+        if (!title) { showToast("请输入标题"); return; }
+
+        if (currentWorldId) {
+            // 编辑
+            const item = worldList.find(w => w.id === currentWorldId);
+            item.title = title;
+            item.content = content;
+        } else {
+            // 新建
+            worldList.push({
+                id: Date.now().toString(),
+                title: title,
+                content: content
+            });
+        }
+
+        localStorage.setItem('world_book_data', JSON.stringify(worldList));
+        showToast("设定已保存");
+        closeWorldModal();
+        renderWorldList();
+
+        // 如果详情页开着，实时更新
+        if(document.getElementById('sub-world-detail').classList.contains('active')) {
+            document.getElementById('view-world-title').textContent = title;
+            document.getElementById('view-world-content').textContent = content;
+        }
+    }
+
+    // 5. 查看详情
+    function openWorldDetail(id) {
+        const item = worldList.find(w => w.id === id);
+        if (!item) return;
+
+        currentWorldId = id;
+        document.getElementById('view-world-title').textContent = item.title;
+        document.getElementById('view-world-content').textContent = item.content;
+
+        openSubPage('sub-world-detail');
+    }
+
+    function editCurrentWorld() {
+        openWorldEditModal(currentWorldId);
+    }
+
+    function deleteCurrentWorld() {
+        if(confirm('确定要删除这条设定吗？')) {
+            worldList = worldList.filter(w => w.id !== currentWorldId);
+            localStorage.setItem('world_book_data', JSON.stringify(worldList));
+            closeSubPage('sub-world-detail');
+            renderWorldList();
+            showToast("已删除");
+        }
+    }
+
+    // 启动
+    initWorldBook();
+
+    // ================== 音乐 App 完整逻辑 (修复版) ==================
+
+// 全局变量定义
+let appMusicList = [];
+let appPlayQueue = [];
+let currentAppSongIndex = -1;
+let appPlayMode = 0; // 0:顺序, 1:单曲, 2:随机
+let tempSongFile = null;
+let tempSongCover = null;
+const appAudio = new Audio();
+
+// 1. 初始化
+function initMusicApp() {
+    // 恢复列表数据
+    const savedList = localStorage.getItem('app_music_playlist');
+    appMusicList = savedList ? JSON.parse(savedList) : [];
+
+    // 恢复全屏背景
+    dbHelper.get('music_app_bg').then(blob => {
+        if(blob) {
+            document.getElementById('full-player-bg').style.backgroundImage = `url(${URL.createObjectURL(blob)})`;
+        }
+    });
+
+    // 渲染列表 (这就是之前报错找不到的函数)
+    renderAppMusicList();
+
+    // 监听播放事件
+    appAudio.onended = () => {
+        if(appPlayMode === 1) { // 单曲循环
+            appAudio.currentTime = 0;
+            appAudio.play();
+        } else {
+            playNextSong();
+        }
+    };
+    appAudio.ontimeupdate = updateFullPlayerUI;
+}
+
+// ================== 修复后的列表渲染函数 ==================
+async function renderAppMusicList() {
+    const container = document.getElementById('app-music-list-container');
+    const sheetContainer = document.getElementById('sheet-list-content');
+
+    // 防止页面元素还没加载时报错
+    if(!container) return;
+
+    container.innerHTML = '';
+    if(sheetContainer) sheetContainer.innerHTML = '';
+
+    if (appMusicList.length === 0) {
+        container.innerHTML = '<div style="text-align:center; color:#666; margin-top:100px;">暂无歌曲<br>点击右上角 + 添加</div>';
+        return;
+    }
+
+    // 更新播放队列
+    appPlayQueue = [...appMusicList];
+
+    // 定义图标 (使用单引号包裹，防止和HTML的双引号冲突)
+    const iconInsert = '<svg viewBox="0 0 24 24" style="width:20px;height:20px;fill:white;opacity:0.7"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.89 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>';
+    const iconMenu = '<svg viewBox="0 0 24 24" style="width:20px;height:20px;fill:white;opacity:0.7"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>';
+
+    for (let i = 0; i < appMusicList.length; i++) {
+        const song = appMusicList[i];
+
+        let coverUrl = '';
+        try {
+            const blob = await dbHelper.get('song_cover_' + song.id);
+            if(blob) coverUrl = URL.createObjectURL(blob);
+        } catch(e){}
+
+        // 生成 HTML 字符串
+        const itemHTML = `
+            <div class="song-img-box" style="${coverUrl ? 'background-image:url('+coverUrl+')' : ''}"></div>
+            <div class="song-info-box" onclick="playAppMusic(${i})">
+                <div class="song-list-title">${song.title}</div>
+                <div class="song-list-artist">${song.artist}</div>
+            </div>
+
+            <div style="display:flex; gap:0px; align-items:center;">
+                <button class="song-action-btn" onclick="event.stopPropagation(); playNextImmediately(${i})">
+                     ${iconInsert}
+                </button>
+                <button class="song-action-btn" onclick="event.stopPropagation(); openSongMenu('${song.id}')">
+                     ${iconMenu}
+                </button>
+            </div>
+        `;
+
+        // 添加到主列表
+        const item = document.createElement('div');
+        item.className = 'music-list-item';
+        if(i === currentAppSongIndex) item.classList.add('active-playing');
+        item.innerHTML = itemHTML;
+        container.appendChild(item);
+
+        // 添加到底部 Sheet
+        if(sheetContainer) {
+            const sheetItem = document.createElement('div');
+            sheetItem.className = 'music-list-item';
+            sheetItem.innerHTML = itemHTML;
+            // Sheet 里点击是播放并关闭
+            sheetItem.querySelector('.song-info-box').onclick = function() {
+                playAppMusic(i);
+                closePlaylistSheet();
+            };
+            sheetContainer.appendChild(sheetItem);
+        }
+    }
+}
+
+// 补全这两个缺失的功能函数，防止点击报错
+function playNextImmediately(index) {
+    if (index === currentAppSongIndex) return;
+    const song = appPlayQueue[index];
+    // 简单提示
+    showToast('已设为下一首播放');
+    // 如果你要做复杂的插队逻辑，可以在这里操作 appPlayQueue 数组
+}
+
+function openSongMenu(songId) {
+    if(confirm("确定要删除这首歌吗？")) {
+        const index = appMusicList.findIndex(s => s.id === songId);
+        if(index > -1) deleteSong(index);
+    }
+}
+
+// 3. 播放逻辑
+async function playAppMusic(index) {
+    if (index < 0 || index >= appPlayQueue.length) return;
+
+    currentAppSongIndex = index;
+    const song = appPlayQueue[index];
+
+    // A. 设置音频源
+    if (song.type === 'file') {
+        const audioBlob = await dbHelper.get(`song_audio_${song.id}`);
+        if(audioBlob) {
+            appAudio.src = URL.createObjectURL(audioBlob);
+        } else {
+            showToast("音频文件丢失");
+            return;
+        }
+    } else {
+        appAudio.src = song.url;
+    }
+
+    appAudio.play().catch(e => console.log("播放需要交互"));
+
+    // B. 更新 UI
+    updateMiniPlayer(song);
+    updateFullPlayerInfo(song);
+    renderAppMusicList(); // 更新高亮
+}
+
+async function updateMiniPlayer(song) {
+    document.getElementById('mini-title').textContent = song.title;
+    document.getElementById('mini-artist').textContent = song.artist;
+    document.getElementById('mini-play-btn').textContent = "⏸"; // 这里如果有SVG图标会被文字覆盖，最好用 innerHTML 换图标
+
+    const miniCover = document.getElementById('mini-cover');
+    const blob = await dbHelper.get(`song_cover_${song.id}`);
+    if(blob) miniCover.style.backgroundImage = `url(${URL.createObjectURL(blob)})`;
+}
+
+async function updateFullPlayerInfo(song) {
+    document.getElementById('full-title').textContent = song.title;
+    document.getElementById('full-artist').textContent = song.artist;
+
+    // 更新大封面
+    const fullCover = document.getElementById('full-cover');
+    fullCover.classList.add('playing');
+    const blob = await dbHelper.get(`song_cover_${song.id}`);
+    if(blob) fullCover.style.backgroundImage = `url(${URL.createObjectURL(blob)})`;
+    else fullCover.style.backgroundImage = 'none';
+
+    // 歌词
+    const lyrics = song.lyrics || "暂无歌词 - 点击添加";
+    document.getElementById('current-lyric-line').textContent = lyrics.split('\n')[0];
+}
+
+// 4. 播放控制
+// --- 修复后的播放控制函数 ---
+function togglePlayState() {
+    // 获取全屏播放器的元素
+    const fullPlayIcon = document.getElementById('fp-icon-play');
+    const fullPauseIcon = document.getElementById('fp-icon-pause');
+    const fullCover = document.getElementById('full-cover');
+
+    // 获取迷你播放器的元素 (新增)
+    const miniPlayIcon = document.getElementById('mini-icon-play');
+    const miniPauseIcon = document.getElementById('mini-icon-pause');
+    const miniCover = document.getElementById('mini-cover');
+
+    if(appAudio.paused) {
+        // --- 开始播放 ---
+        appAudio.play();
+
+        // 全屏：切到暂停图标
+        if(fullPlayIcon) fullPlayIcon.style.display = 'none';
+        if(fullPauseIcon) fullPauseIcon.style.display = 'block';
+        if(fullCover) fullCover.classList.add('playing');
+
+        // 迷你：切到暂停图标
+        if(miniPlayIcon) miniPlayIcon.style.display = 'none';
+        if(miniPauseIcon) miniPauseIcon.style.display = 'block';
+        if(miniCover) miniCover.classList.add('playing');
+
+    } else {
+        // --- 暂停 ---
+        appAudio.pause();
+
+        // 全屏：切到播放图标
+        if(fullPlayIcon) fullPlayIcon.style.display = 'block';
+        if(fullPauseIcon) fullPauseIcon.style.display = 'none';
+        if(fullCover) fullCover.classList.remove('playing');
+
+        // 迷你：切到播放图标
+        if(miniPlayIcon) miniPlayIcon.style.display = 'block';
+        if(miniPauseIcon) miniPauseIcon.style.display = 'none';
+        if(miniCover) miniCover.classList.remove('playing');
+    }
+}
+
+function playNextSong() {
+    let nextIndex;
+    if(appPlayMode === 2) { // 随机
+        nextIndex = Math.floor(Math.random() * appPlayQueue.length);
+    } else {
+        nextIndex = currentAppSongIndex + 1;
+        if(nextIndex >= appPlayQueue.length) nextIndex = 0;
+    }
+    playAppMusic(nextIndex);
+}
+
+function playPrevSong() {
+    let prevIndex = currentAppSongIndex - 1;
+    if(prevIndex < 0) prevIndex = appPlayQueue.length - 1;
+    playAppMusic(prevIndex);
+}
+
+// 5. 弹窗与上传逻辑 (修复 TypeError)
+function openMusicUploadModal() {
+    // 重置输入框
+    document.getElementById('new-song-title').value = '';
+    document.getElementById('new-song-artist').value = '';
+    document.getElementById('new-song-filename').textContent = '未选择';
+    tempSongFile = null;
+    tempSongCover = null;
+
+    const modal = document.getElementById('modal-music-upload');
+    modal.style.display = 'flex';
+    setTimeout(() => modal.classList.add('active'), 10);
+}
+
+function closeMusicUploadModal() {
+    const modal = document.getElementById('modal-music-upload');
+    modal.classList.remove('active');
+    setTimeout(() => modal.style.display = 'none', 300);
+}
+
+function handleNewSongFile(input) {
+    if (input.files && input.files[0]) {
+        tempSongFile = input.files[0];
+        document.getElementById('new-song-filename').textContent = tempSongFile.name;
+        switchAudioSource('file');
+    }
+}
+
+function switchAudioSource(type) {
+    if(type === 'file') {
+        document.getElementById('src-file-area').style.display = 'block';
+        document.getElementById('src-url-area').style.display = 'none';
+        document.getElementById('btn-src-file').classList.add('active');
+        document.getElementById('btn-src-url').classList.remove('active');
+    } else {
+        document.getElementById('src-file-area').style.display = 'none';
+        document.getElementById('src-url-area').style.display = 'block';
+        document.getElementById('btn-src-file').classList.remove('active');
+        document.getElementById('btn-src-url').classList.add('active');
+    }
+}
+
+function previewNewSongCover(input) {
+    if (input.files && input.files[0]) {
+        tempSongCover = input.files[0];
+        document.getElementById('upload-cover-preview').style.backgroundImage = `url(${URL.createObjectURL(tempSongCover)})`;
+    }
+}
+
+async function saveNewSong() {
+    const title = document.getElementById('new-song-title').value.trim() || '未知歌曲';
+    const artist = document.getElementById('new-song-artist').value.trim() || '未知歌手';
+    const isFile = document.getElementById('btn-src-file').classList.contains('active');
+
+    const songId = Date.now().toString();
+    const newSong = { id: songId, title, artist, type: isFile ? 'file' : 'url', lyrics: '' };
+
+    showToast("正在保存...");
+
+    if (isFile) {
+        if (!tempSongFile) { showToast("请选择MP3文件"); return; }
+        await dbHelper.save(`song_audio_${songId}`, tempSongFile);
+    } else {
+        const url = document.getElementById('new-song-url').value;
+        if (!url) { showToast("请输入URL"); return; }
+        newSong.url = url;
+    }
+
+    if (tempSongCover) {
+        await dbHelper.save(`song_cover_${songId}`, tempSongCover);
+    }
+
+    appMusicList.push(newSong);
+    localStorage.setItem('app_music_playlist', JSON.stringify(appMusicList));
+
+    closeMusicUploadModal();
+    renderAppMusicList();
+    showToast("添加成功！");
+}
+
+// 删除歌曲
+async function deleteSong(index) {
+    if(confirm('确定删除吗？')) {
+        const song = appMusicList[index];
+        appMusicList.splice(index, 1);
+        localStorage.setItem('app_music_playlist', JSON.stringify(appMusicList));
+        await dbHelper.save(`song_audio_${song.id}`, null);
+        await dbHelper.save(`song_cover_${song.id}`, null);
+        renderAppMusicList();
+        showToast("已删除");
+    }
+}
+
+// 6. 全屏界面交互
+function openFullPlayer() {
+    document.getElementById('music-view-full').classList.add('active');
+
+    // --- 新增：同步播放状态 ---
+    const fullPlayIcon = document.getElementById('fp-icon-play');
+    const fullPauseIcon = document.getElementById('fp-icon-pause');
+    const fullCover = document.getElementById('full-cover');
+
+    if (appAudio.paused) {
+        // 如果是暂停的，显示播放(三角形)
+        fullPlayIcon.style.display = 'block';
+        fullPauseIcon.style.display = 'none';
+        fullCover.classList.remove('playing');
+    } else {
+        // 如果正在播放，显示暂停(双竖线)
+        fullPlayIcon.style.display = 'none';
+        fullPauseIcon.style.display = 'block';
+        fullCover.classList.add('playing');
+    }
+    // -----------------------
+}
+function closeFullPlayer() {
+    document.getElementById('music-view-full').classList.remove('active');
+}
+
+function updateFullPlayerUI() {
+    if(!appAudio.duration) return;
+    const current = appAudio.currentTime;
+    const total = appAudio.duration;
+    document.getElementById('music-slider').value = (current / total) * 100;
+
+    const fmt = (t) => {
+        const m = Math.floor(t/60);
+        const s = Math.floor(t%60);
+        return `${m}:${s<10?'0':''}${s}`;
+    };
+    document.getElementById('time-current').textContent = fmt(current);
+    document.getElementById('time-total').textContent = fmt(total);
+}
+
+function seekAudio(val) {
+    if(appAudio.duration) {
+        appAudio.currentTime = (val/100) * appAudio.duration;
+    }
+}
+
+function openPlaylistSheet() {
+    document.getElementById('sheet-playlist').style.transform = 'translateY(0)';
+}
+function closePlaylistSheet() {
+    document.getElementById('sheet-playlist').style.transform = 'translateY(100%)';
+}
+
+function togglePlayMode() {
+    document.getElementById(`icon-mode-${appPlayMode}`).style.display = 'none';
+    appPlayMode = (appPlayMode + 1) % 3;
+    document.getElementById(`icon-mode-${appPlayMode}`).style.display = 'block';
+    showToast(["顺序播放", "单曲循环", "随机播放"][appPlayMode]);
+}
+
+// 歌词逻辑
+function openLyricsModal() {
+    const song = appPlayQueue[currentAppSongIndex];
+    if(!song) return;
+    document.getElementById('lyrics-input').value = song.lyrics || '';
+    const modal = document.getElementById('modal-lyrics');
+    modal.style.display = 'flex';
+    modal.style.zIndex = '2000';
+    setTimeout(()=>modal.classList.add('active'), 10);
+}
+function saveLyrics() {
+    const text = document.getElementById('lyrics-input').value;
+    if(currentAppSongIndex >= 0) {
+        appPlayQueue[currentAppSongIndex].lyrics = text;
+        const id = appPlayQueue[currentAppSongIndex].id;
+        const mainItem = appMusicList.find(s => s.id === id);
+        if(mainItem) mainItem.lyrics = text;
+        localStorage.setItem('app_music_playlist', JSON.stringify(appMusicList));
+        document.getElementById('current-lyric-line').textContent = text.split('\n')[0];
+    }
+    document.getElementById('modal-lyrics').classList.remove('active');
+    setTimeout(()=>document.getElementById('modal-lyrics').style.display='none',300);
+}
+
+// 处理歌词文件导入
+function handleLrcFile(input) {
+    if(input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            // 把文件内容填入文本框
+            document.getElementById('lyrics-input').value = e.target.result;
+            showToast("歌词已导入，请点击保存");
+        };
+        reader.readAsText(input.files[0]);
+    }
+}
+
+// 插队播放 (下一首)
+function playNextImmediately(index) {
+    if (index === currentAppSongIndex) return; // 正在放的不用插队
+    const song = appPlayQueue[index];
+
+    // 简单的逻辑：先从列表删掉，再插到当前位置后面
+    // 注意：这里只是演示逻辑，真实逻辑可能需要处理 appMusicList 和 appPlayQueue 的同步
+    // 为了简单，我们只弹个窗提示，或者你可以只做逻辑不删原位置
+
+    // 这里做最简单的：提示
+    showToast(`已将《${song.title}》添加到下一首`);
+    // 复杂逻辑你可以后续再加，先把按钮显示出来要紧
+}
+
+// 打开菜单 (三个点) - 之前写过，这里确认一下
+function openSongMenu(songId) {
+    // 你的 HTML 里需要有 id="modal-song-menu" 的弹窗结构
+    // 如果没有，可以先用 alert 代替，或者补上弹窗 HTML
+    if(confirm("确定要删除这首歌吗？")) {
+        // 找到 index
+        const index = appMusicList.findIndex(s => s.id === songId);
+        if(index > -1) deleteSong(index);
+    }
+}
+
+// ================== 增强版菜单逻辑 ==================
+
+let activeMenuSongId = null; // 记录当前点击的是哪首歌的 ID
+
+// 1. 打开底部菜单
+function openSongMenu(songId) {
+    activeMenuSongId = songId; // 记住ID
+    const modal = document.getElementById('modal-song-menu');
+    modal.style.display = 'flex';
+    // 强制层级最高
+    modal.style.zIndex = '2100';
+    setTimeout(() => modal.classList.add('active'), 10);
+}
+
+function closeSongMenu() {
+    const modal = document.getElementById('modal-song-menu');
+    modal.classList.remove('active');
+    setTimeout(() => modal.style.display = 'none', 300);
+}
+
+// 2. 编辑歌曲逻辑
+function openEditSongModal() {
+    closeSongMenu(); // 先关掉底部菜单
+
+    // 找到当前歌曲信息
+    const song = appMusicList.find(s => s.id === activeMenuSongId);
+    if (!song) return;
+
+    // 回显数据
+    document.getElementById('edit-title-input').value = song.title;
+    document.getElementById('edit-artist-input').value = song.artist;
+
+    // 打开编辑弹窗
+    const modal = document.getElementById('modal-edit-song');
+    modal.style.display = 'flex';
+    modal.style.zIndex = '2200';
+    setTimeout(() => modal.classList.add('active'), 10);
+}
+
+function closeEditSongModal() {
+    const modal = document.getElementById('modal-edit-song');
+    modal.classList.remove('active');
+    setTimeout(() => modal.style.display = 'none', 300);
+}
+
+function saveSongEdit() {
+    const newTitle = document.getElementById('edit-title-input').value.trim();
+    const newArtist = document.getElementById('edit-artist-input').value.trim();
+
+    if (!newTitle) { showToast("标题不能为空"); return; }
+
+    // 更新内存数据
+    const songIndex = appMusicList.findIndex(s => s.id === activeMenuSongId);
+    if (songIndex > -1) {
+        appMusicList[songIndex].title = newTitle;
+        appMusicList[songIndex].artist = newArtist;
+
+        // 更新 localStorage
+        localStorage.setItem('app_music_playlist', JSON.stringify(appMusicList));
+
+        // 刷新列表界面
+        renderAppMusicList();
+
+        // 如果正在放这首歌，顺便更新播放器界面
+        if (currentAppSongIndex === songIndex) {
+            document.getElementById('mini-title').textContent = newTitle;
+            document.getElementById('mini-artist').textContent = newArtist;
+            document.getElementById('full-title').textContent = newTitle;
+            document.getElementById('full-artist').textContent = newArtist;
+        }
+
+        showToast("修改已保存");
+        closeEditSongModal();
+    }
+}
+
+// 3. 删除确认逻辑
+function openDeleteConfirmModal() {
+    closeSongMenu(); // 先关掉底部菜单
+
+    const song = appMusicList.find(s => s.id === activeMenuSongId);
+    if(song) {
+        document.getElementById('del-song-name').textContent = `《${song.title}》`;
+    }
+
+    const modal = document.getElementById('modal-delete-confirm');
+    modal.style.display = 'flex';
+    modal.style.zIndex = '2200';
+    setTimeout(() => modal.classList.add('active'), 10);
+}
+
+function closeDeleteConfirmModal() {
+    const modal = document.getElementById('modal-delete-confirm');
+    modal.classList.remove('active');
+    setTimeout(() => modal.style.display = 'none', 300);
+}
+
+async function confirmDeleteSong() {
+    // 执行删除
+    const index = appMusicList.findIndex(s => s.id === activeMenuSongId);
+    if (index > -1) {
+        // 1. 删数据
+        appMusicList.splice(index, 1);
+        localStorage.setItem('app_music_playlist', JSON.stringify(appMusicList));
+
+        // 2. 删文件 (IndexedDB)
+        await dbHelper.save(`song_audio_${activeMenuSongId}`, null);
+        await dbHelper.save(`song_cover_${activeMenuSongId}`, null);
+
+        // 3. 刷新界面
+        renderAppMusicList();
+        showToast("已删除");
+
+        // 如果删的是当前正在放的，停止播放
+        if (index === currentAppSongIndex) {
+            appAudio.pause();
+            appAudio.src = "";
+            document.getElementById('mini-player-bar').style.display = 'none'; // 隐藏播放条
+        }
+    }
+    closeDeleteConfirmModal();
+}
+
+// ================== 补全播放器背景上传功能 ==================
+
+// 1. 触发点击隐藏的 input
+function triggerMusicBgUpload() {
+    const input = document.getElementById('music-bg-input');
+    if (input) {
+        input.click();
+    } else {
+        console.error("找不到 id='music-bg-input' 的元素，请检查 HTML");
+    }
+}
+
+// 2. 处理图片文件
+function handleMusicBgUpload(input) {
+    if (input.files && input.files[0]) {
+        const file = input.files[0];
+
+        // 保存到数据库 (下次打开还能记得)
+        dbHelper.save('music_app_bg', file);
+
+        // 立即更新界面背景
+        const url = URL.createObjectURL(file);
+
+        // 注意：我们之前把背景层改到了 #full-player-bg
+        const bgLayer = document.getElementById('full-player-bg');
+        if (bgLayer) {
+            bgLayer.style.backgroundImage = `url(${url})`;
+            showToast("播放器背景已更新");
+        }
+    }
+}
+
+// 启动
+initMusicApp();
+
+    // ================== 灵动岛逻辑 ==================
+
+let islandConfig = {
+    master: true,
+    charge: true,
+    music: true
+};
+let islandTimer = null; // 用于自动收缩的定时器
+
+// 1. 初始化
+function initDynamicIsland() {
+    const saved = localStorage.getItem('island_config');
+    if (saved) islandConfig = JSON.parse(saved);
+
+    // 更新开关 UI 状态
+    document.getElementById('switch-island-master').checked = islandConfig.master;
+    document.getElementById('switch-island-charge').checked = islandConfig.charge;
+    document.getElementById('switch-island-music').checked = islandConfig.music;
+
+    // 更新外部显示文字
+    updateIslandLabel();
+
+    // 只有开启总开关才显示
+    document.getElementById('dynamic-island').style.display = islandConfig.master ? 'flex' : 'none';
+}
+
+// 2. 开关控制
+function toggleIslandMaster() {
+    islandConfig.master = document.getElementById('switch-island-master').checked;
+    saveIslandConfig();
+    // 实时显示/隐藏
+    document.getElementById('dynamic-island').style.display = islandConfig.master ? 'flex' : 'none';
+    updateIslandLabel();
+}
+
+function saveIslandConfig() {
+    islandConfig.charge = document.getElementById('switch-island-charge').checked;
+    islandConfig.music = document.getElementById('switch-island-music').checked;
+    localStorage.setItem('island_config', JSON.stringify(islandConfig));
+}
+
+function updateIslandLabel() {
+    const label = document.getElementById('island-status-label');
+    if(label) label.textContent = islandConfig.master ? '已开启' : '已关闭';
+}
+
+// 3. 核心：触发灵动岛动画
+// type: 'charge' | 'music' | 'normal'
+// data: { icon, text, subText }
+function triggerIsland(type, data) {
+    if (!islandConfig.master) return; // 总开关没开
+    if (type === 'charge' && !islandConfig.charge) return;
+    if (type === 'music' && !islandConfig.music) return;
+
+    const island = document.getElementById('dynamic-island');
+    const left = document.getElementById('island-icon');
+    const center = document.getElementById('island-text');
+    const right = document.getElementById('island-right'); // 之前HTML里写的是 island-info，这里统一一下
+
+    // 清除之前的定时器
+    if (islandTimer) clearTimeout(islandTimer);
+
+    // 填充内容
+    if (type === 'charge') {
+        left.innerHTML = '<span style="color:#34C759">⚡</span>';
+        center.textContent = 'Charging';
+        document.getElementById('island-info').textContent = data.text || '80%';
+        document.getElementById('island-info').style.color = '#34C759';
+    } else if (type === 'music') {
+        // 音乐波形
+        left.innerHTML = '<div class="island-sound-wave"><span></span><span></span><span></span><span></span></div>';
+        center.textContent = data.text || '正在播放';
+        document.getElementById('island-info').textContent = '';
+    }
+
+    // 展开动画
+    island.classList.remove('idle');
+    island.classList.add('active');
+
+    // 3秒后自动收缩 (音乐模式通常不收缩，除非暂停，这里演示简单版)
+    islandTimer = setTimeout(() => {
+        island.classList.remove('active');
+        island.classList.add('idle');
+    }, 3000);
+}
+
+// 4. 测试函数 (绑定给按钮用)
+function testIsland(mode) {
+    if(mode === 'charge') {
+        triggerIsland('charge', { text: '100%' });
+    } else {
+        triggerIsland('music', { text: 'Midnight City' });
+    }
+}
+
+// 启动
+initDynamicIsland();
 </script>
 </body>
 </html>
