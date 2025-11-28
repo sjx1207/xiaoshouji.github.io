@@ -10747,28 +10747,179 @@ initCountdownWidget();
         input.value = '';
     }
 
-    // 3. AI 回复 (模拟接收消息)
+    // ================== 3. AI 回复 (Logic 4.0: 强制随机连发数) ==================
     async function triggerChatDetailAI() {
         if (!currentChatId) return;
 
-        showToast("AI 正在思考...");
-        const mockReply = "欧克，我已将您的消息记录，我们稍后继续。"; // Mock reply text
+        // 1. 检查配置
+        const aiConfig = JSON.parse(localStorage.getItem('ai_active_config') || '{}');
+        if (!aiConfig.key || !aiConfig.endpoint) {
+            showToast("请先配置 AI 模型 key");
+            return;
+        }
 
-        // 模拟延迟
-        setTimeout(async () => {
-            // 1. Append to DOM
-            appendChatBubble('left', mockReply, true);
+        // 2. 读取设定
+        const settings = JSON.parse(localStorage.getItem(`chat_settings_${currentChatId}`) || '{}');
 
-            // 2. Update history
-            const history = await loadChatHistory(currentChatId);
-            history.push({ sender: 'left', text: mockReply, timestamp: Date.now() });
-            await saveChatHistory(currentChatId, history);
+        const charName = settings.charName || document.getElementById('chat-detail-name').textContent || "对方";
+        const charDesc = settings.charDesc || "你的朋友。";
+        const userName = settings.userName || "我";
+        const userDesc = settings.userDesc || "聊天伙伴。";
+        const worldviews = settings.worldviews && settings.worldviews.length > 0
+                           ? settings.worldviews.join('，') : "现代日常";
 
-            // 3. 💾 更新 localStorage 的最后一条消息 (最重要)
-            updateChatLastMessage(currentChatId, mockReply);
+        // 🎲 核心修改：由前端代码决定本次回复几条 (2 ~ 5 条)
+        // Math.random() 生成 0~1，逻辑如下：
+        // < 0.3: 2条 (30%概率)
+        // < 0.7: 3条 (40%概率)
+        // 剩下: 4-5条 (30%概率)
+        const rand = Math.random();
+        let targetCount = 3;
+        if (rand < 0.3) targetCount = 2;
+        else if (rand < 0.7) targetCount = 3;
+        else targetCount = Math.floor(Math.random() * 2) + 4; // 4或5
 
-            showToast("AI 已回复");
-        }, 1500);
+        // 3. 注入灵魂的 System Prompt (动态指令版)
+        const systemPrompt = `
+【指令】
+你正在进行沉浸式语C，扮演"${charName}"与"${userName}"对话。
+
+【设定】
+人设：${charDesc}
+对象：${userDesc}
+世界：${worldviews}
+
+【回复铁律】
+1. 🚫 **严禁**使用括号、星号描写动作。把动作神态融入语言。
+2. 🚫 **严禁**扮演用户。
+3. 💬 **强制连发模式**：
+   - 本次回复请**严格拆分成 ${targetCount} 条**消息。
+   - 必须用**换行符**分隔每一句话。
+   - 每一句都要简短、口语化。不要长篇大论。
+4. 如果上一条是你发的，请继续补充话题。
+`;
+
+        // 4. 构建消息队列
+        let messagesToSend = [
+            { role: "system", content: systemPrompt }
+        ];
+
+        const history = await loadChatHistory(currentChatId);
+        // 增加上下文长度到 40，让它更懂前因后果
+        const recentHistory = history.slice(-40);
+
+        recentHistory.forEach(msg => {
+            messagesToSend.push({
+                role: msg.sender === 'right' ? 'user' : 'assistant',
+                content: msg.text
+            });
+        });
+
+        // 防复读逻辑
+        if (messagesToSend.length > 0 && messagesToSend[messagesToSend.length - 1].role === 'assistant') {
+            messagesToSend.push({
+                role: "system",
+                content: `(System: ${charName}，请继续补充 ${targetCount} 句不同的话，不要重复之前的内容。)`
+            });
+        }
+
+        // UI 显示正在输入
+        const loadingId = Date.now().toString();
+        const box = document.getElementById('chat-detail-msgs');
+        const loadingDiv = document.createElement('div');
+        loadingDiv.id = loadingId;
+        loadingDiv.className = 'chat-msg left';
+        loadingDiv.innerHTML = `<div class="msg-bubble-listen" style="opacity:0.7; font-style:italic;">正在输入...</div>`;
+        box.appendChild(loadingDiv);
+        box.scrollTop = box.scrollHeight;
+
+        // 5. 发起请求
+        try {
+            let url = aiConfig.endpoint;
+            if (url.endsWith('/')) url = url.slice(0, -1);
+            if (!url.endsWith('/v1')) url += '/v1';
+
+            const response = await fetch(`${url}/chat/completions`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${aiConfig.key}`
+                },
+                body: JSON.stringify({
+                    model: aiConfig.model,
+                    messages: messagesToSend,
+                    temperature: 1.0, // 温度拉满，增加随机性和活人感
+                    max_tokens: 800,
+                    presence_penalty: 0.7,
+                    frequency_penalty: 0.4
+                })
+            });
+
+            // 移除“正在输入”
+            const loadingEl = document.getElementById(loadingId);
+            if (loadingEl) loadingEl.remove();
+
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+            const data = await response.json();
+            let rawText = data.choices[0].message.content;
+
+            if (rawText.startsWith(`${charName}:`)) {
+                rawText = rawText.replace(`${charName}:`, '').trim();
+            }
+
+            // --- 6. 连发模拟 (处理空行) ---
+            let replies = rawText.split('\n').filter(line => line.trim() !== '');
+
+            // 如果模型偶尔没听话只回了一句长句，我们尝试按标点符号强行切分一下
+            if (replies.length === 1 && replies[0].length > 30) {
+                 // 按句号、问号、感叹号拆分，但保留标点
+                 replies = replies[0].match(/[^。？！]+[。？！]+/g) || replies;
+            }
+
+            processReplies(replies, 0);
+
+        } catch (error) {
+            console.error("AI Error:", error);
+            const loadingEl = document.getElementById(loadingId);
+            if (loadingEl) loadingEl.innerHTML = `<div class="msg-bubble-listen" style="color:#FF3B30;">连接断开</div>`;
+        }
+    }
+
+    // ================== 🚨 补回丢失的连发助手函数 🚨 ==================
+    // 这个函数负责把 AI 的长回复切开，一条条地发出来，模拟真人打字
+
+    async function processReplies(replies, index) {
+        // 如果发完了，就结束
+        if (index >= replies.length) return;
+
+        const text = replies[index].trim();
+        // 如果是空行，跳过，发下一条
+        if (!text) {
+            processReplies(replies, index + 1);
+            return;
+        }
+
+        // 1. 消息上屏
+        appendChatBubble('left', text, true);
+
+        // 2. 存入历史记录
+        // 注意：这里需要重新读取最新的历史，防止连续写入时的覆盖问题
+        const history = await loadChatHistory(currentChatId);
+        history.push({ sender: 'left', text: text, timestamp: Date.now() });
+        await saveChatHistory(currentChatId, history);
+
+        // 3. 更新消息列表的预览
+        updateChatLastMessage(currentChatId, text);
+
+        // 4. 计算延迟 (模拟打字速度)
+        // 基础 800ms + 每个字 50ms + 随机波动
+        const delay = 800 + (text.length * 50) + Math.random() * 500;
+
+        // 5. 等待后发送下一条
+        setTimeout(() => {
+            processReplies(replies, index + 1);
+        }, Math.min(delay, 3000)); // 最长等待 3 秒，防止太慢
     }
 
     // ================== 好友列表点击后的会话创建逻辑 ==================
