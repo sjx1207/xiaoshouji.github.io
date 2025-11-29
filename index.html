@@ -4286,6 +4286,117 @@ body.light-theme #sub-chat-settings input[type="text"] {
     background: rgba(0, 0, 0, 0.05) !important;
     border-color: rgba(0, 0, 0, 0.1) !important;
 }
+
+        /* --- 多选模式专用样式 --- */
+
+/* 1. 消息容器进入多选模式 */
+.chat-detail-body.selection-mode .chat-msg {
+    cursor: pointer; /* 变成手型 */
+}
+/* 修改前：pointer-events: none; (这句导致了点击失效) */
+/* 修改后：改为禁止文字选择，但允许点击 */
+.chat-detail-body.selection-mode .msg-bubble-listen {
+    user-select: none;          /* 禁止文字反白选中 */
+    pointer-events: auto;       /* 👈 关键：允许点击事件穿透 */
+}
+/* 2. 选择圈圈 (默认隐藏) */
+.msg-checkbox {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    border: 2px solid rgba(255,255,255,0.3);
+    margin: 0 15px;
+    flex-shrink: 0;
+    display: none; /* 平时不显示 */
+    align-items: center; justify-content: center;
+    transition: all 0.2s;
+}
+
+/* 选中状态的圈圈 */
+.chat-msg.selected .msg-checkbox {
+    background: #0a84ff;
+    border-color: #0a84ff;
+}
+.chat-msg.selected .msg-checkbox::after {
+    content: '✔'; font-size: 12px; color: white;
+}
+
+/* 进入模式时显示圈圈 */
+.chat-detail-body.selection-mode .msg-checkbox {
+    display: flex;
+}
+
+/* 3. 底部批量操作栏 (初始隐藏) */
+#batch-action-bar {
+    position: absolute; bottom: 0; left: 0; width: 100%;
+    height: 80px;
+    background: rgba(30, 30, 35, 0.95);
+    border-top: 1px solid rgba(255,255,255,0.1);
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 0 30px 20px 30px; /* 避开 Home Indicator */
+    z-index: 100;
+    transform: translateY(100%); /* 默认藏在下面 */
+    transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+#batch-action-bar.active {
+    transform: translateY(0);
+}
+
+/* 浅色模式适配 */
+body.light-theme .msg-checkbox { border-color: rgba(0,0,0,0.2); }
+body.light-theme #batch-action-bar { background: rgba(255,255,255,0.95); border-top-color: rgba(0,0,0,0.1); }
+
+        /* --- 引用功能专用样式 --- */
+
+/* 1. 输入框上方的预览条 */
+#quote-preview-bar {
+    position: absolute;
+    bottom: 70px; left: 15px; right: 15px;
+    background: rgba(40, 40, 45, 0.95);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border-radius: 12px;
+    padding: 12px 15px;
+    display: none; /* 默认隐藏 */
+    align-items: center; justify-content: space-between;
+    border: 1px solid rgba(255,255,255,0.1);
+    z-index: 35;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+}
+#quote-content-box {
+    flex: 1; overflow: hidden;
+    display: flex; flex-direction: column;
+}
+.quote-title { font-size: 12px; color: #0a84ff; margin-bottom: 2px; font-weight: 600; }
+.quote-text {
+    font-size: 13px; color: rgba(255,255,255,0.8);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.btn-close-quote {
+    width: 24px; height: 24px;
+    background: rgba(255,255,255,0.1); border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; margin-left: 10px; font-size: 14px; color: #888;
+}
+
+/* 2. 气泡内部的灰色引用块 */
+.msg-quote-block {
+    background: rgba(0, 0, 0, 0.15); /* 深色背景 */
+    border-left: 3px solid rgba(255, 255, 255, 0.5); /* 左侧竖线 */
+    padding: 6px 10px;
+    margin-bottom: 8px; /* 和正文拉开距离 */
+    border-radius: 6px;
+    font-size: 13px;
+    display: flex; flex-direction: column;
+    cursor: pointer;
+    user-select: none;
+}
+.msg-quote-sender { font-size: 11px; opacity: 0.7; margin-bottom: 2px; font-weight: 600; }
+.msg-quote-text { opacity: 0.9; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;}
+
+/* 浅色模式适配 */
+body.light-theme #quote-preview-bar { background: rgba(255,255,255,0.95); border-color: rgba(0,0,0,0.1); }
+body.light-theme .quote-text { color: #333; }
+body.light-theme .msg-quote-block { background: rgba(0,0,0,0.05); border-left-color: rgba(0,0,0,0.2); }
+body.light-theme .msg-quote-text { color: #555; }
     </style>
 </head>
 <body>
@@ -6139,6 +6250,14 @@ body.light-theme #sub-chat-settings input[type="text"] {
         <div class="chat-msg right"><div class="msg-bubble-listen">挺好的，刚刚在听歌。</div></div>
     </div>
 
+    <div id="quote-preview-bar">
+        <div id="quote-content-box">
+            <span class="quote-title">回复 用户名:</span>
+            <span class="quote-text" id="quote-preview-content">引用内容...</span>
+        </div>
+        <div class="btn-close-quote" onclick="cancelQuote()">×</div>
+    </div>
+
     <div class="chat-detail-footer">
         <button class="chat-footer-btn" onclick="toggleInputMenu()">
             <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
@@ -6157,6 +6276,16 @@ body.light-theme #sub-chat-settings input[type="text"] {
         <button class="chat-footer-btn" onclick="sendChatDetailMsg()">
             <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
         </button>
+    </div>
+
+    <div id="batch-action-bar">
+        <div style="font-size:16px; color:#0a84ff; font-weight:500; cursor:pointer;" onclick="exitMultiSelectMode()">取消</div>
+        <div style="font-size:16px; color:white; font-weight:600;" id="batch-select-count">已选 0 项</div>
+        <div style="width:30px; height:30px; display:flex; align-items:center; justify-content:center; cursor:pointer;" onclick="confirmBatchDelete()">
+            <svg style="width:24px; height:24px; fill:#FF3B30;" viewBox="0 0 24 24">
+                <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+            </svg>
+        </div>
     </div>
 
 </div>
@@ -6362,6 +6491,8 @@ body.light-theme #sub-chat-settings input[type="text"] {
     </div>
 </div>
 <script>
+    let currentQuoteData = null;
+
     // --- 补上通用的弹窗函数 ---
     function showToast(msg) {
         const toast = document.getElementById('global-toast');
@@ -10651,51 +10782,59 @@ initCountdownWidget();
         closeSubPage('sub-chat-delete');
     }
 
-    // ================== 聊天详情页逻辑 ==================
+    // ================== 聊天详情页逻辑 (修复版) ==================
 
     let currentChatId = null; // 当前正在聊天的 ID
 
-    // ================== 聊天详情页逻辑 (History & Send/Receive) ==================
+    // 4. 气泡上屏工具 (适配引用显示)
+// 增加第5个参数: quoteData
+function appendChatBubble(side, text, doScroll = true, explicitId = null, quoteData = null) {
+    const box = document.getElementById('chat-detail-msgs');
+    if (!box) return;
 
-    // 1. 进入聊天详情 (由列表点击触发)
-    async function openChatDetail(chatId, name, avatarBlobName) {
-        currentChatId = chatId;
+    const msgId = explicitId || (Date.now().toString() + Math.random().toString(36).substr(2, 5));
 
-        // 设置头部信息
-        document.getElementById('chat-detail-name').textContent = name;
-        const avatarEl = document.getElementById('chat-detail-avatar');
+    const div = document.createElement('div');
+    div.className = `chat-msg ${side}`;
+    div.id = `msg-node-${msgId}`;
 
-        // 加载头像
-        if (avatarBlobName) {
-            try {
-                const blob = await dbHelper.get(avatarBlobName);
-                if(blob) avatarEl.style.backgroundImage = `url(${URL.createObjectURL(blob)})`;
-                else avatarEl.style.backgroundImage = 'none';
-            } catch(e) { avatarEl.style.backgroundImage = 'none'; }
-        } else {
-            avatarEl.style.backgroundImage = 'none';
+    div.onclick = function(event) {
+        openMessageMenu(msgId, side, event);
+    };
+
+    if (side === 'system') {
+        div.innerHTML = `<span>${text}</span>`;
+    } else {
+        const avatarHtml = `<div class="chat-msg-avatar" style="background-image: var(--avatar-${side})"></div>`;
+
+        // --- 构建引用块 HTML ---
+        let quoteHtml = '';
+        if (quoteData) {
+            quoteHtml = `
+                <div class="msg-quote-block">
+                    <div class="msg-quote-sender">${quoteData.name}:</div>
+                    <div class="msg-quote-text">${quoteData.text}</div>
+                </div>
+            `;
         }
+        // ---------------------
 
-        // --- 加载历史记录并渲染 ---
-        const msgBox = document.getElementById('chat-detail-msgs');
-        msgBox.innerHTML = ''; // 清空 existing dummy messages
+        // 把引用块放在正文前面
+        const bubbleHtml = `<div class="msg-bubble-listen">${quoteHtml}${text}</div>`;
 
-        const history = await loadChatHistory(chatId);
-
-        if (history.length === 0) {
-            msgBox.innerHTML = `<div class="chat-msg system"><span>新会话已开启</span></div>`;
+        if (side === 'left') {
+            div.innerHTML = avatarHtml + bubbleHtml;
         } else {
-            history.forEach(msg => {
-                appendChatBubble(msg.sender, msg.text, false); // 渲染历史消息，不自动滚动
-            });
+            div.innerHTML = bubbleHtml + avatarHtml;
         }
-        // ------------------------
-
-        // 打开页面，并强制滚动到底部一次 (解决历史记录加载后的位置问题)
-        openSubPage('sub-chat-detail');
-        msgBox.scrollTop = msgBox.scrollHeight;
     }
 
+    box.appendChild(div);
+
+    if (doScroll) {
+        setTimeout(() => { box.scrollTop = box.scrollHeight; }, 50);
+    }
+}
     applyChatSettingsToView(); // 应用高级设置
 
     // ================== 输入栏功能菜单逻辑 ==================
@@ -10727,200 +10866,245 @@ initCountdownWidget();
         // 未来可以在这里编写逻辑，例如：if (action === 'photo') openPhotoSelector();
     }
 
-    // 2. 发送消息 (User Send)
-    async function sendChatDetailMsg() {
-        const input = document.getElementById('chat-msg-input');
-        const text = input.value.trim();
-        if(!text) return;
+    // 2. 发送消息 (修复版：强制带上引用数据)
+async function sendChatDetailMsg() {
+    const input = document.getElementById('chat-msg-input');
+    const text = input.value.trim();
+    if(!text) return;
 
-        // 1. Append message to DOM and scroll
-        appendChatBubble('right', text, true);
+    const msgId = Date.now().toString();
 
-        // 2. Update history
-        const history = await loadChatHistory(currentChatId);
-        history.push({ sender: 'right', text: text, timestamp: Date.now() });
-        await saveChatHistory(currentChatId, history);
+    // 调试日志：按 F12 看看这里是不是 null
+    console.log("正在发送消息，当前引用数据:", currentQuoteData);
 
-        // 3. 💾 更新 localStorage 的最后一条消息 (最重要)
-        updateChatLastMessage(currentChatId, text);
+    // 1. 上屏 (注意：第 5 个参数必须是 currentQuoteData)
+    appendChatBubble('right', text, true, msgId, currentQuoteData);
 
-        input.value = '';
+    // 2. 存入历史
+    const history = await loadChatHistory(currentChatId);
+    history.push({
+        id: msgId,
+        sender: 'right',
+        text: text,
+        timestamp: Date.now(),
+        quote: currentQuoteData // <--- 关键：存进去！
+    });
+    await saveChatHistory(currentChatId, history);
+
+    updateChatLastMessage(currentChatId, text);
+
+    input.value = '';
+
+    // 3. 发送完关闭引用预览
+    if (typeof cancelQuote === 'function') {
+        cancelQuote();
+    } else {
+        // 防止报错的保底写法
+        currentQuoteData = null;
+        const bar = document.getElementById('quote-preview-bar');
+        if(bar) bar.style.display = 'none';
+    }
+}
+
+    // ================== 3. AI 回复 (Logic 12.0: 引用生效 + 撤回可见) ==================
+async function triggerChatDetailAI() {
+    if (!currentChatId) return;
+
+    // 1. 检查配置
+    const aiConfig = JSON.parse(localStorage.getItem('ai_active_config') || '{}');
+    if (!aiConfig.key || !aiConfig.endpoint) {
+        showToast("请先配置 AI 模型 key");
+        return;
     }
 
-    // ================== 3. AI 回复 (Logic 4.0: 强制随机连发数) ==================
-    async function triggerChatDetailAI() {
-        if (!currentChatId) return;
+    // 2. 读取设定
+    const settings = JSON.parse(localStorage.getItem(`chat_settings_${currentChatId}`) || '{}');
+    const charName = settings.charName || document.getElementById('chat-detail-name').textContent || "对方";
+    const charDesc = settings.charDesc || "暂无人设";
+    const userName = settings.userName || "我";
+    const userDesc = settings.userDesc || "暂无";
 
-        // 1. 检查配置
-        const aiConfig = JSON.parse(localStorage.getItem('ai_active_config') || '{}');
-        if (!aiConfig.key || !aiConfig.endpoint) {
-            showToast("请先配置 AI 模型 key");
-            return;
-        }
+    // 3. 读取世界书
+    let worldContext = "";
+    const allWorlds = JSON.parse(localStorage.getItem('world_book_data') || '[]');
+    if (settings.worldviews && settings.worldviews.length > 0) {
+        const contentList = settings.worldviews.map(tagName => {
+            const found = allWorlds.find(w => w.title === tagName);
+            if (found) return `【规则/设定：${found.title}】\n${found.content.trim()}`;
+            return "";
+        }).filter(item => item !== "");
+        worldContext = contentList.join('\n\n');
+    } else {
+        worldContext = "背景：现代日常交流。";
+    }
 
-        // 2. 读取设定
-        const settings = JSON.parse(localStorage.getItem(`chat_settings_${currentChatId}`) || '{}');
+    // 随机连发条数
+    const rand = Math.random();
+    let targetCount = 3;
+    if (rand < 0.3) targetCount = 2;
+    else if (rand < 0.7) targetCount = 3;
+    else targetCount = Math.floor(Math.random() * 2) + 4;
 
-        const charName = settings.charName || document.getElementById('chat-detail-name').textContent || "对方";
-        const charDesc = settings.charDesc || "你的朋友。";
-        const userName = settings.userName || "我";
-        const userDesc = settings.userDesc || "聊天伙伴。";
-        const worldviews = settings.worldviews && settings.worldviews.length > 0
-                           ? settings.worldviews.join('，') : "现代日常";
-
-        // 🎲 核心修改：由前端代码决定本次回复几条 (2 ~ 5 条)
-        // Math.random() 生成 0~1，逻辑如下：
-        // < 0.3: 2条 (30%概率)
-        // < 0.7: 3条 (40%概率)
-        // 剩下: 4-5条 (30%概率)
-        const rand = Math.random();
-        let targetCount = 3;
-        if (rand < 0.3) targetCount = 2;
-        else if (rand < 0.7) targetCount = 3;
-        else targetCount = Math.floor(Math.random() * 2) + 4; // 4或5
-
-        // 3. 注入灵魂的 System Prompt (动态指令版)
-        const systemPrompt = `
+    // --- System Prompt ---
+    const systemPrompt = `
 【指令】
 你正在进行沉浸式语C，扮演"${charName}"与"${userName}"对话。
 
-【设定】
+=== 核心要素 A：角色灵魂 ===
+姓名：${charName}
 人设：${charDesc}
-对象：${userDesc}
-世界：${worldviews}
 
-【回复铁律】
-1. 🚫 **严禁**使用括号、星号描写动作。把动作神态融入语言。
-2. 🚫 **严禁**扮演用户。
-3. 💬 **强制连发模式**：
-   - 本次回复请**严格拆分成 ${targetCount} 条**消息。
-   - 必须用**换行符**分隔每一句话。
-   - 每一句都要简短、口语化。不要长篇大论。
-4. 如果上一条是你发的，请继续补充话题。
-`;
+=== 核心要素 B：当前世界与规则 ===
+${worldContext}
 
-        // 4. 构建消息队列
-        let messagesToSend = [
-            { role: "system", content: systemPrompt }
-        ];
+=== 交互对象 ===
+对象：${userName}
+信息：${userDesc}
 
-        const history = await loadChatHistory(currentChatId);
-        // 增加上下文长度到 40，让它更懂前因后果
-        const recentHistory = history.slice(-40);
+=== 输出格式铁律 ===
+1. 必须融合执行世界规则。
+2. 本次回复拆分为 ${targetCount} 条独立消息。
+3. ⚠️ **必须使用字符串 <<<SPLIT>>> 来分隔消息！** 严禁仅用换行符。
+4. 若涉及双语翻译，原文和翻译必须在同一个 <<<SPLIT>>> 区块内。
+5. 严禁扮演用户。
+`.trim();
 
-        recentHistory.forEach(msg => {
+    // 4. 构建消息队列
+    let messagesToSend = [
+        { role: "system", content: systemPrompt }
+    ];
+
+    const history = await loadChatHistory(currentChatId);
+    const recentHistory = history.slice(-20);
+
+    // --- 🚨 核心修改：构建历史记录逻辑 🚨 ---
+    recentHistory.forEach(msg => {
+
+        // 分支 A: 如果是系统消息 (撤回提示)
+        if (msg.sender === 'system') {
+            // 💡 这里的修改：不再 return 跳过，而是把提示发给 AI
+            // 我们用括号包起来，模拟系统显示的灰色小字
             messagesToSend.push({
-                role: msg.sender === 'right' ? 'user' : 'assistant',
-                content: msg.text
+                role: 'user', // 用 user 身份发，假装是用户界面产生的信息
+                content: `(系统提示：${msg.text})` // 例如：(系统提示：你撤回了一条消息)
             });
+            return;
+        }
+
+        // 分支 B: 正常消息 (处理引用)
+        let finalContent = msg.text;
+
+        // 如果有引用，拼接引用内容
+        if (msg.quote && msg.quote.text) {
+            finalContent = `「回复 ${msg.quote.name}: ${msg.quote.text}」\n${finalContent}`;
+        }
+
+        messagesToSend.push({
+            role: msg.sender === 'right' ? 'user' : 'assistant',
+            content: finalContent
+        });
+    });
+    // ------------------------------------------
+
+    if (messagesToSend.length > 0 && messagesToSend[messagesToSend.length - 1].role === 'assistant') {
+        messagesToSend.push({
+            role: "system",
+            content: `(System: 请继续扮演 ${charName}，输出 ${targetCount} 条新内容，用 <<<SPLIT>>> 分隔。)`
+        });
+    }
+
+    // UI Loading
+    const loadingId = Date.now().toString();
+    const box = document.getElementById('chat-detail-msgs');
+    const loadingDiv = document.createElement('div');
+    loadingDiv.id = loadingId;
+    loadingDiv.className = 'chat-msg left';
+    loadingDiv.innerHTML = `<div class="msg-bubble-listen" style="opacity:0.7;">正在思考...</div>`;
+    box.appendChild(loadingDiv);
+    box.scrollTop = box.scrollHeight;
+
+    // 5. 请求 API
+    try {
+        let url = aiConfig.endpoint;
+        if (url.endsWith('/')) url = url.slice(0, -1);
+        if (!url.endsWith('/v1')) url += '/v1';
+
+        const response = await fetch(`${url}/chat/completions`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${aiConfig.key}`
+            },
+            body: JSON.stringify({
+                model: aiConfig.model,
+                messages: messagesToSend,
+                temperature: 0.8,
+                max_tokens: 1000
+            })
         });
 
-        // 防复读逻辑
-        if (messagesToSend.length > 0 && messagesToSend[messagesToSend.length - 1].role === 'assistant') {
-            messagesToSend.push({
-                role: "system",
-                content: `(System: ${charName}，请继续补充 ${targetCount} 句不同的话，不要重复之前的内容。)`
-            });
+        const loadingEl = document.getElementById(loadingId);
+        if (loadingEl) loadingEl.remove();
+
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+        const data = await response.json();
+        let rawText = data.choices[0].message.content;
+
+        if (rawText.startsWith(`${charName}:`)) {
+            rawText = rawText.replace(`${charName}:`, '').trim();
         }
 
-        // UI 显示正在输入
-        const loadingId = Date.now().toString();
-        const box = document.getElementById('chat-detail-msgs');
-        const loadingDiv = document.createElement('div');
-        loadingDiv.id = loadingId;
-        loadingDiv.className = 'chat-msg left';
-        loadingDiv.innerHTML = `<div class="msg-bubble-listen" style="opacity:0.7; font-style:italic;">正在输入...</div>`;
-        box.appendChild(loadingDiv);
-        box.scrollTop = box.scrollHeight;
+        let replies = rawText.split('<<<SPLIT>>>')
+                             .map(s => s.trim())
+                             .filter(s => s !== '');
 
-        // 5. 发起请求
-        try {
-            let url = aiConfig.endpoint;
-            if (url.endsWith('/')) url = url.slice(0, -1);
-            if (!url.endsWith('/v1')) url += '/v1';
+        processReplies(replies, 0);
 
-            const response = await fetch(`${url}/chat/completions`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${aiConfig.key}`
-                },
-                body: JSON.stringify({
-                    model: aiConfig.model,
-                    messages: messagesToSend,
-                    temperature: 1.0, // 温度拉满，增加随机性和活人感
-                    max_tokens: 800,
-                    presence_penalty: 0.7,
-                    frequency_penalty: 0.4
-                })
-            });
-
-            // 移除“正在输入”
-            const loadingEl = document.getElementById(loadingId);
-            if (loadingEl) loadingEl.remove();
-
-            if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
-            const data = await response.json();
-            let rawText = data.choices[0].message.content;
-
-            if (rawText.startsWith(`${charName}:`)) {
-                rawText = rawText.replace(`${charName}:`, '').trim();
-            }
-
-            // --- 6. 连发模拟 (处理空行) ---
-            let replies = rawText.split('\n').filter(line => line.trim() !== '');
-
-            // 如果模型偶尔没听话只回了一句长句，我们尝试按标点符号强行切分一下
-            if (replies.length === 1 && replies[0].length > 30) {
-                 // 按句号、问号、感叹号拆分，但保留标点
-                 replies = replies[0].match(/[^。？！]+[。？！]+/g) || replies;
-            }
-
-            processReplies(replies, 0);
-
-        } catch (error) {
-            console.error("AI Error:", error);
-            const loadingEl = document.getElementById(loadingId);
-            if (loadingEl) loadingEl.innerHTML = `<div class="msg-bubble-listen" style="color:#FF3B30;">连接断开</div>`;
-        }
+    } catch (error) {
+        console.error("AI Error:", error);
+        const loadingEl = document.getElementById(loadingId);
+        if (loadingEl) loadingEl.innerHTML = `<div class="msg-bubble-listen" style="color:#FF3B30;">出错: ${error.message}</div>`;
     }
+}
 
     // ================== 🚨 补回丢失的连发助手函数 🚨 ==================
     // 这个函数负责把 AI 的长回复切开，一条条地发出来，模拟真人打字
 
-    async function processReplies(replies, index) {
-        // 如果发完了，就结束
-        if (index >= replies.length) return;
+    // ================== 连发助手函数 (升级版：带ID) ==================
+    // 连发助手函数 (修复版：确保 AI 消息也有 ID)
+async function processReplies(replies, index) {
+    if (index >= replies.length) return;
 
-        const text = replies[index].trim();
-        // 如果是空行，跳过，发下一条
-        if (!text) {
-            processReplies(replies, index + 1);
-            return;
-        }
-
-        // 1. 消息上屏
-        appendChatBubble('left', text, true);
-
-        // 2. 存入历史记录
-        // 注意：这里需要重新读取最新的历史，防止连续写入时的覆盖问题
-        const history = await loadChatHistory(currentChatId);
-        history.push({ sender: 'left', text: text, timestamp: Date.now() });
-        await saveChatHistory(currentChatId, history);
-
-        // 3. 更新消息列表的预览
-        updateChatLastMessage(currentChatId, text);
-
-        // 4. 计算延迟 (模拟打字速度)
-        // 基础 800ms + 每个字 50ms + 随机波动
-        const delay = 800 + (text.length * 50) + Math.random() * 500;
-
-        // 5. 等待后发送下一条
-        setTimeout(() => {
-            processReplies(replies, index + 1);
-        }, Math.min(delay, 3000)); // 最长等待 3 秒，防止太慢
+    const text = replies[index].trim();
+    if (!text) {
+        processReplies(replies, index + 1);
+        return;
     }
+
+    // 1. 生成唯一 ID
+    const msgId = Date.now().toString() + "_" + index;
+
+    // 2. 上屏 (绑定 ID)
+    appendChatBubble('left', text, true, msgId);
+
+    // 3. 存入历史 (保存 ID)
+    const history = await loadChatHistory(currentChatId);
+    history.push({
+        id: msgId,
+        sender: 'left',
+        text: text,
+        timestamp: Date.now()
+    });
+    await saveChatHistory(currentChatId, history);
+
+    updateChatLastMessage(currentChatId, text);
+
+    const delay = 800 + (text.length * 50) + Math.random() * 500;
+    setTimeout(() => {
+        processReplies(replies, index + 1);
+    }, Math.min(delay, 3000));
+}
 
     // ================== 好友列表点击后的会话创建逻辑 ==================
 
@@ -11018,62 +11202,400 @@ initCountdownWidget();
 
     let currentMessageId = null; // 跟踪哪个消息气泡被点击了
 
-    // 1. 打开菜单
-    function openMessageMenu(msgId) {
-        currentMessageId = msgId;
-        const modal = document.getElementById('modal-message-menu');
-        modal.style.display = 'flex';
-        modal.style.zIndex = '3000'; // 确保盖住所有东西
-        setTimeout(() => modal.classList.add('active'), 10);
+    // 1. 打开菜单 (修复版：增加日志调试，确保 ID 被捕获)
+// 1. 打开菜单 (适配多选模式)
+function openMessageMenu(msgId, side, event) {
+    // 防止冒泡
+    if (event) event.stopPropagation();
+
+    // 🚨 多选模式拦截：如果正在多选，直接切换选中状态，不弹窗
+    if (isMultiSelectMode) {
+        toggleMsgSelection(msgId);
+        return;
     }
 
-    // 2. 关闭菜单
-    function closeMessageMenu() {
-        const modal = document.getElementById('modal-message-menu');
+    // 正常模式：弹窗
+    currentMessageId = msgId;
+    const modal = document.getElementById('modal-message-menu');
+    modal.style.display = 'flex';
+    modal.style.zIndex = '3000';
+    setTimeout(() => modal.classList.add('active'), 10);
+}
+
+// 2. 关闭菜单 (补回这个丢失的函数)
+function closeMessageMenu() {
+    const modal = document.getElementById('modal-message-menu');
+
+    // 关闭动画
+    if (modal) {
         modal.classList.remove('active');
         setTimeout(() => modal.style.display = 'none', 300);
-        currentMessageId = null;
     }
 
-    // 3. 处理操作 (Placeholder)
-    function handleMessageAction(action) {
-        closeMessageMenu();
-        showToast(`功能开发中: 执行 [${action}] 针对消息 ID: ${currentMessageId}`);
-
-        // 🚨 未来你可以在这里实现真正的逻辑，例如：
-        // if (action === 'delete') {
-        //    deleteMessageFromHistory(currentChatId, currentMessageId);
-        // }
-    }
+    // ⚠️ 关键修改：这里【不要】清空 currentMessageId
+    // 因为 handleMessageAction 紧接着需要读取这个 ID 来执行删除
+    // currentMessageId = null;  <-- 这行旧代码要去掉或注释掉
+}
 
 
-    // 4. 气泡上屏工具 (修改：添加点击事件)
-    // 1. 气泡上屏工具 (修改版：带头像结构)
-    function appendChatBubble(side, text, doScroll = true) {
-        const box = document.getElementById('chat-detail-msgs');
-        if (!box) return;
+    // 4. 气泡上屏工具 (修复版：接收 5 个参数)
+function appendChatBubble(side, text, doScroll = true, explicitId = null, quoteData = null) {
+    const box = document.getElementById('chat-detail-msgs');
+    if (!box) return;
 
-        const msgId = Date.now() + Math.random().toString(36).substring(2, 6);
-        const div = document.createElement('div');
-        div.className = `chat-msg ${side}`;
+    const msgId = explicitId || (Date.now().toString() + Math.random().toString(36).substr(2, 5));
 
-        // 核心修改：使用 CSS 变量显示头像 (稍后在 openChatDetail 里定义变量)
+    const div = document.createElement('div');
+    div.className = `chat-msg ${side}`;
+    div.id = `msg-node-${msgId}`;
+
+    div.onclick = function(event) {
+        if(typeof openMessageMenu === 'function') openMessageMenu(msgId, side, event);
+    };
+
+    if (side === 'system') {
+        div.innerHTML = `<span>${text}</span>`;
+    } else {
         const avatarHtml = `<div class="chat-msg-avatar" style="background-image: var(--avatar-${side})"></div>`;
-        const bubbleHtml = `<div class="msg-bubble-listen" onclick="openMessageMenu('${msgId}', '${side}', event)">${text}</div>`;
 
-        // 根据左右不同，排列头像和气泡的顺序
+        // --- 核心：构建引用块 HTML ---
+        let quoteHtml = '';
+        // 只有当 quoteData 真的有内容时才渲染
+        if (quoteData && quoteData.text) {
+            quoteHtml = `
+                <div class="msg-quote-block">
+                    <div class="msg-quote-sender">${quoteData.name}:</div>
+                    <div class="msg-quote-text">${quoteData.text}</div>
+                </div>
+            `;
+        }
+        // ---------------------
+
+        // 将引用块放在正文前面
+        const bubbleHtml = `<div class="msg-bubble-listen">${quoteHtml}${text}</div>`;
+
         if (side === 'left') {
             div.innerHTML = avatarHtml + bubbleHtml;
         } else {
             div.innerHTML = bubbleHtml + avatarHtml;
         }
+    }
 
-        box.appendChild(div);
+    box.appendChild(div);
 
-        if (doScroll) {
-            box.scrollTop = box.scrollHeight;
+    if (doScroll) {
+        setTimeout(() => { box.scrollTop = box.scrollHeight; }, 50);
+    }
+}
+
+// ================== 3. 处理消息菜单操作 (终极整合版) ==================
+async function handleMessageAction(action) {
+    // 1. 先关闭菜单
+    closeMessageMenu();
+
+    // 安全检查
+    if (!currentMessageId || !currentChatId) {
+        console.error("缺少 ID:", currentMessageId, currentChatId);
+        return;
+    }
+
+    // --- A. 撤回消息 (Recall) ---
+    // 逻辑：不删除，而是把内容改成“撤回提示”
+    if (action === 'recall') {
+        try {
+            let history = await loadChatHistory(currentChatId);
+            const msgIndex = history.findIndex(m => String(m.id) === String(currentMessageId));
+
+            if (msgIndex > -1) {
+                const targetMsg = history[msgIndex];
+
+                // 只有普通消息才能撤回，已经是系统消息就别撤了
+                if (targetMsg.sender === 'system') {
+                    showToast("系统消息无法撤回");
+                    return;
+                }
+
+                // 1. 修改数据
+                const oldSender = targetMsg.sender;
+                targetMsg.sender = 'system'; // 变成系统消息类型
+
+                // 设置提示语
+                if (oldSender === 'right') targetMsg.text = "你撤回了一条消息";
+                else targetMsg.text = "对方撤回了一条消息";
+
+                // 2. 💾 存回数据库 (这样刷新后也是撤回状态)
+                await saveChatHistory(currentChatId, history);
+
+                // 3. 更新界面 (原地变身)
+                const bubbleEl = document.getElementById(`msg-node-${currentMessageId}`);
+                if (bubbleEl) {
+                    bubbleEl.className = 'chat-msg system'; // 样式变灰
+                    bubbleEl.innerHTML = `<span>${targetMsg.text}</span>`; // 内容变文字
+                }
+
+                // 4. 如果撤回的是最后一条，更新列表预览
+                if (msgIndex === history.length - 1) {
+                    updateChatLastMessage(currentChatId, targetMsg.text);
+                }
+
+                showToast("已撤回");
+            }
+        } catch (e) {
+            console.error("撤回失败", e);
         }
     }
+
+    // --- B. 删除消息 (Delete) ---
+    // 逻辑：彻底从数据库移除
+    else if (action === 'delete') {
+        // 1. 视觉移除
+        const bubbleEl = document.getElementById(`msg-node-${currentMessageId}`);
+        if (bubbleEl) {
+            bubbleEl.style.transition = "all 0.3s ease";
+            bubbleEl.style.opacity = "0";
+            bubbleEl.style.transform = "scale(0.9)";
+            setTimeout(() => { if(bubbleEl) bubbleEl.remove(); }, 300);
+        }
+
+        // 2. 数据库移除
+        try {
+            let history = await loadChatHistory(currentChatId);
+            // 🚨 强制 String 类型转换对比
+            const newHistory = history.filter(msg => String(msg.id) !== String(currentMessageId));
+            await saveChatHistory(currentChatId, newHistory);
+
+            // 3. 更新预览
+            if (newHistory.length > 0) {
+                const lastMsg = newHistory[newHistory.length - 1];
+                updateChatLastMessage(currentChatId, lastMsg.text || "[媒体消息]");
+            } else {
+                updateChatLastMessage(currentChatId, "暂无消息");
+            }
+            showToast("已删除");
+        } catch (e) {
+            console.error("删除失败:", e);
+        }
+    }
+
+    // --- C. 编辑 (Edit) ---
+    else if (action === 'edit') {
+        try {
+            let history = await loadChatHistory(currentChatId);
+            const targetMsg = history.find(m => String(m.id) === String(currentMessageId));
+
+            if (targetMsg && targetMsg.sender !== 'system') {
+                editingTextField = 'chat-message';
+                const input = document.getElementById('big-text-input');
+                input.value = targetMsg.text;
+                document.querySelector('#modal-text-edit .modal-title').textContent = "修改消息";
+
+                const modal = document.getElementById('modal-text-edit');
+                modal.style.display = 'flex';
+                modal.style.zIndex = '3500';
+                setTimeout(() => {
+                    modal.classList.add('active');
+                    input.focus();
+                }, 10);
+            } else {
+                showToast("不可编辑");
+            }
+        } catch (e) { console.error(e); }
+    }
+
+    // --- 引用 (Quote) ---
+    else if (action === 'quote') {
+        try {
+            let history = await loadChatHistory(currentChatId);
+            const targetMsg = history.find(m => String(m.id) === String(currentMessageId));
+
+            if (targetMsg && targetMsg.sender !== 'system') {
+                // 1. 获取名字 (如果是右边发的就是"我"，左边就是对方名字)
+                const name = targetMsg.sender === 'right' ? '我' : document.getElementById('chat-detail-name').textContent;
+
+                // 2. 存入全局变量
+                currentQuoteData = {
+                    text: targetMsg.text,
+                    name: name
+                };
+
+                // 3. 显示预览条
+                document.querySelector('.quote-title').textContent = `回复 ${name}:`;
+                document.getElementById('quote-preview-content').textContent = targetMsg.text;
+                document.getElementById('quote-preview-bar').style.display = 'flex';
+
+                // 4. 聚焦输入框并弹出键盘
+                const input = document.getElementById('chat-msg-input');
+                input.focus();
+            } else {
+                showToast("无法引用此消息");
+            }
+        } catch (e) { console.error(e); }
+    }
+
+    // --- 复制 (Copy) ---
+    else if (action === 'copy') {
+        const bubbleEl = document.getElementById(`msg-node-${currentMessageId}`);
+        if (bubbleEl) {
+            // 优先只复制正文，不复制引用块里的字
+            let text = "";
+            // 尝试找正文节点 (排除引用块)
+            // 由于结构比较复杂，我们直接去 history 里找最稳
+            let history = await loadChatHistory(currentChatId);
+            const msg = history.find(m => String(m.id) === String(currentMessageId));
+            if(msg) text = msg.text;
+
+            if(!text) text = bubbleEl.innerText; // 保底
+
+            const input = document.getElementById('chat-msg-input');
+            input.value = text;
+            showToast("已复制");
+        }
+    }
+
+    // --- E. 多选 (Multi-Select) ---
+    else if (action === 'multi-select') {
+        enterMultiSelectMode();
+    }
+
+    else {
+        showToast(`功能 [${action}] 开发中...`);
+    }
+}
+
+// ================== 多选功能核心逻辑 ==================
+
+let isMultiSelectMode = false;
+let selectedMsgIds = new Set(); // 用 Set 存储选中的 ID，自动去重
+
+// 1. 进入多选模式
+function enterMultiSelectMode() {
+    isMultiSelectMode = true;
+    selectedMsgIds.clear();
+
+    // UI 变化
+    document.getElementById('chat-detail-msgs').classList.add('selection-mode');
+    document.querySelector('.chat-detail-footer').style.display = 'none'; // 隐藏输入栏
+    document.getElementById('batch-action-bar').classList.add('active');  // 显示删除栏
+
+    updateBatchCountUI();
+
+    // 给所有现有消息添加圈圈 (如果还没加过)
+    const msgs = document.querySelectorAll('.chat-msg');
+    msgs.forEach(msg => {
+        if (!msg.querySelector('.msg-checkbox')) {
+            const checkbox = document.createElement('div');
+            checkbox.className = 'msg-checkbox';
+            // 圈圈放在最前面
+            msg.insertBefore(checkbox, msg.firstChild);
+        }
+    });
+}
+
+// 2. 退出多选模式
+function exitMultiSelectMode() {
+    isMultiSelectMode = false;
+    selectedMsgIds.clear();
+
+    // UI 还原
+    document.getElementById('chat-detail-msgs').classList.remove('selection-mode');
+    document.querySelector('.chat-detail-footer').style.display = 'flex'; // 恢复输入栏
+    document.getElementById('batch-action-bar').classList.remove('active');
+
+    // 取消所有高亮
+    document.querySelectorAll('.chat-msg.selected').forEach(el => el.classList.remove('selected'));
+}
+
+// 3. 拦截点击 (修改 openMessageMenu)
+// 🚨 请注意：下面这个逻辑需要你修改原有的 openMessageMenu 函数
+// 找到你代码里的 openMessageMenu，把开头改成这样：
+
+/* function openMessageMenu(msgId, side, event) {
+    if (event) event.stopPropagation();
+
+    // --- 🆕 插入这段拦截逻辑 ---
+    if (isMultiSelectMode) {
+        toggleMsgSelection(msgId);
+        return; // 直接结束，不弹菜单
+    }
+    // -------------------------
+
+    currentMessageId = msgId;
+    // ... 原有逻辑 ...
+}
+*/
+
+// 4. 切换选中状态
+function toggleMsgSelection(msgId) {
+    const el = document.getElementById(`msg-node-${msgId}`);
+    if (!el) return;
+
+    if (selectedMsgIds.has(msgId)) {
+        selectedMsgIds.delete(msgId);
+        el.classList.remove('selected');
+    } else {
+        selectedMsgIds.add(msgId);
+        el.classList.add('selected');
+    }
+    updateBatchCountUI();
+}
+
+// 5. 更新底部计数
+function updateBatchCountUI() {
+    document.getElementById('batch-select-count').textContent = `已选 ${selectedMsgIds.size} 项`;
+}
+
+// 6. 执行批量删除 (UI 弹窗版)
+function confirmBatchDelete() {
+    // 如果没选，就不弹窗
+    if (selectedMsgIds.size === 0) return;
+
+    // 🌟 核心修改：调用自定义弹窗 openGenConfirmModal
+    // 参数依次是：标题、内容描述、按钮文字、回调函数
+    openGenConfirmModal(
+        "批量删除",
+        `确定要删除选中的 <span style="color:#FF3B30; font-weight:bold;">${selectedMsgIds.size}</span> 条消息吗？<br>此操作不可撤销。`,
+        "删除",
+        async () => {
+            // --- 这里是点击“确定”后执行的逻辑 ---
+            try {
+                // A. 视觉移除 (遍历 Set 里的 ID)
+                selectedMsgIds.forEach(id => {
+                    const el = document.getElementById(`msg-node-${id}`);
+                    if (el) {
+                        el.style.opacity = '0'; // 加个淡出
+                        setTimeout(() => el.remove(), 200);
+                    }
+                });
+
+                // B. 数据库移除
+                let history = await loadChatHistory(currentChatId);
+
+                // 过滤掉所有在 Set 里的 ID
+                // 注意：必须转 String 对比，防止类型不匹配
+                const newHistory = history.filter(msg => !selectedMsgIds.has(String(msg.id)));
+
+                await saveChatHistory(currentChatId, newHistory);
+
+                // C. 更新外面的列表预览 (取最后一条)
+                if (newHistory.length > 0) {
+                    const lastMsg = newHistory[newHistory.length-1];
+                    updateChatLastMessage(currentChatId, lastMsg.text || "[媒体消息]");
+                } else {
+                    updateChatLastMessage(currentChatId, "暂无消息");
+                }
+
+                showToast("✅ 删除成功");
+
+                // D. 退出多选模式
+                exitMultiSelectMode();
+
+            } catch (e) {
+                console.error("批量删除失败:", e);
+                showToast("❌ 删除出错");
+            }
+        }
+    );
+}
 
     // ================== 聊天背景设置逻辑 ==================
 
@@ -11287,21 +11809,75 @@ initCountdownWidget();
         setTimeout(()=>modal.classList.add('active'),10);
     }
 
-    function confirmTextEdit() {
-        const val = document.getElementById('big-text-input').value;
+    // 确认编辑 (修复版：解决刷新后还原的问题)
+    async function confirmTextEdit() {
+        const val = document.getElementById('big-text-input').value.trim();
+
+        // 1. 修改人设详情 (原逻辑保持不变)
         if (editingTextField === 'char-desc') {
             tempSettings.charDesc = val;
             document.getElementById('setting-char-desc-preview').textContent = val;
-        } else {
+            closeTextEditModal();
+        }
+        // 2. 修改用户人设 (原逻辑保持不变)
+        else if (editingTextField === 'user-desc') {
             tempSettings.userDesc = val;
             document.getElementById('setting-user-desc-preview').textContent = val;
+            closeTextEditModal();
         }
-        document.getElementById('modal-text-edit').classList.remove('active');
-        setTimeout(()=>document.getElementById('modal-text-edit').style.display='none',300);
-    }
-    function closeTextEditModal() {
-        document.getElementById('modal-text-edit').classList.remove('active');
-        setTimeout(()=>document.getElementById('modal-text-edit').style.display='none',300);
+        // 3. 🚨 修改聊天消息 (重点修复这里) 🚨
+        else if (editingTextField === 'chat-message') {
+            if (!val) { showToast("内容不能为空"); return; }
+
+            // --- A. 界面更新 (视觉上先变，让你感觉很快) ---
+            const bubbleEl = document.getElementById(`msg-node-${currentMessageId}`);
+            if (bubbleEl) {
+                const textDiv = bubbleEl.querySelector('.msg-bubble-listen');
+                if (textDiv) textDiv.innerText = val;
+            }
+
+            // --- B. 数据库更新 (确保刷新后还在) ---
+            try {
+                // 安全检查：如果丢失了会话ID，就没法存
+                if (!currentChatId) {
+                    console.error("丢失 currentChatId，无法保存");
+                    showToast("保存失败：会话状态丢失");
+                    return;
+                }
+
+                // 1. 读取历史记录
+                let history = await loadChatHistory(currentChatId);
+
+                // 2. 查找要修改的那条消息
+                // 💡 核心修复：把 id 都转成 String 再对比，防止一个是数字一个是字符串导致找不到
+                const msgIndex = history.findIndex(m => String(m.id) === String(currentMessageId));
+
+                if (msgIndex > -1) {
+                    // 3. 修改内存中的数据
+                    history[msgIndex].text = val;
+
+                    // 4. 【关键】存回数据库
+                    await saveChatHistory(currentChatId, history);
+
+                    // 5. 如果改的是最后一条，顺便更新外面的“消息列表”预览
+                    if (msgIndex === history.length - 1) {
+                        updateChatLastMessage(currentChatId, val);
+                    }
+
+                    console.log("✅ 数据库保存成功"); // F12 控制台可以看到这个
+                    showToast("已修改");
+                } else {
+                    console.error("❌ 错误：在数据库里没找到这条消息 ID:", currentMessageId);
+                    console.log("当前历史记录:", history);
+                }
+            } catch (e) {
+                console.error("保存过程出错:", e);
+                showToast("保存出错");
+            }
+
+            // 关窗
+            closeTextEditModal();
+        }
     }
 
     // 5. 世界观管理
@@ -11342,9 +11918,13 @@ initCountdownWidget();
         input.focus();
     }
 
-    function closeGenInputModal() {
-        document.getElementById('modal-general-input').classList.remove('active');
-        setTimeout(()=>document.getElementById('modal-general-input').style.display='none',300);
+    function closeTextEditModal() {
+        document.getElementById('modal-text-edit').classList.remove('active');
+        setTimeout(() => {
+            document.getElementById('modal-text-edit').style.display = 'none';
+            // 还原标题为默认
+            document.querySelector('#modal-text-edit .modal-title').textContent = "编辑内容";
+        }, 300);
     }
 
     // 绑定输入确认按钮
@@ -11515,41 +12095,62 @@ initCountdownWidget();
     }
 
     // 8. 应用设置到聊天视图 (Apply)
-    // 1. 进入聊天详情 (修复版：正确加载双方头像)
-    async function openChatDetail(chatId, name, avatarBlobName) {
-        currentChatId = chatId;
+    // 1. 进入聊天详情 (修复版：加载历史引用)
+async function openChatDetail(chatId, name, avatarBlobName) {
+    currentChatId = chatId;
 
-        // 设置头部默认信息
-        const nameEl = document.getElementById('chat-detail-name');
-        if(nameEl) nameEl.textContent = name;
+    const nameEl = document.getElementById('chat-detail-name');
+    if(nameEl) nameEl.textContent = name;
 
-        const avatarEl = document.getElementById('chat-detail-avatar');
-        if(avatarEl) avatarEl.style.backgroundImage = 'none'; // 先重置
+    const avatarEl = document.getElementById('chat-detail-avatar');
+    if(avatarEl) avatarEl.style.backgroundImage = 'none';
 
-        // --- 加载历史记录 ---
-        const msgBox = document.getElementById('chat-detail-msgs');
-        if(msgBox) {
-            msgBox.innerHTML = '';
-            const history = await loadChatHistory(chatId);
-
-            if (history.length === 0) {
-                msgBox.innerHTML = `<div class="chat-msg system"><span>新会话已开启</span></div>`;
-            } else {
-                history.forEach(msg => {
-                    appendChatBubble(msg.sender, msg.text, false);
-                });
+    // 加载头像逻辑 (简化版，保留你原有的逻辑即可)
+    if (avatarEl && avatarBlobName) {
+        dbHelper.get(avatarBlobName).then(blob => {
+            if(blob) {
+                const url = URL.createObjectURL(blob);
+                avatarEl.style.backgroundImage = `url(${url})`;
+                const page = document.getElementById('sub-chat-detail');
+                if(page) page.style.setProperty('--avatar-left', `url(${url})`);
             }
-            // 强制滚动
-            setTimeout(() => { msgBox.scrollTop = msgBox.scrollHeight; }, 0);
+        });
+    }
+
+    // 加载用户头像
+    const page = document.getElementById('sub-chat-detail');
+    if(page) {
+        dbHelper.get(`user_avatar_${chatId}`).then(userBlob => {
+            if(!userBlob) return dbHelper.get('userAvatar_main');
+            return userBlob;
+        }).then(userBlob => {
+            if(userBlob) page.style.setProperty('--avatar-right', `url(${URL.createObjectURL(userBlob)})`);
+            else page.style.setProperty('--avatar-right', 'none');
+        });
+    }
+
+    // --- 🚨 加载消息历史 (重点在这里) ---
+    const msgBox = document.getElementById('chat-detail-msgs');
+    if(msgBox) {
+        msgBox.innerHTML = '';
+
+        const history = await loadChatHistory(chatId);
+
+        if (history.length === 0) {
+            msgBox.innerHTML = `<div class="chat-msg system"><span>新会话已开启</span></div>`;
+        } else {
+            history.forEach(msg => {
+                // 🚨 这里的参数顺序必须对：side, text, scroll, id, QUOTE
+                appendChatBubble(msg.sender, msg.text, false, msg.id, msg.quote);
+            });
         }
 
-        // 打开页面
-        openSubPage('sub-chat-detail');
-
-        // 🚨 最后调用一次全量应用函数，负责加载头像、背景和样式
-        // 这样我们就不需要在 openChatDetail 里重复写读取头像的代码了
-        applyChatSettingsToView();
+        setTimeout(() => { msgBox.scrollTop = msgBox.scrollHeight; }, 100);
     }
+
+    openSubPage('sub-chat-detail');
+    if(typeof applyChatSettingsToView === 'function') applyChatSettingsToView();
+}
 
     // 9. 危险操作
     async function clearCurrentChatHistory() {
