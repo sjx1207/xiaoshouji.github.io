@@ -4397,6 +4397,1698 @@ body.light-theme #quote-preview-bar { background: rgba(255,255,255,0.95); border
 body.light-theme .quote-text { color: #333; }
 body.light-theme .msg-quote-block { background: rgba(0,0,0,0.05); border-left-color: rgba(0,0,0,0.2); }
 body.light-theme .msg-quote-text { color: #555; }
+
+        /* ================== Instagram 风格 Stories 样式 ================== */
+
+/* 1. 容器：横向滚动 */
+.ig-stories-container {
+    height: 110px; /* 固定高度 */
+    width: 100%;
+    display: flex;
+    align-items: center;
+    overflow-x: auto; /* 允许横向滚动 */
+    overflow-y: hidden;
+    padding: 10px 15px;
+    border-bottom: 1px solid rgba(255,255,255,0.1); /* 底部细线 */
+    scrollbar-width: none; /* 隐藏滚动条 */
+    flex-shrink: 0; /* 防止被挤压 */
+}
+.ig-stories-container::-webkit-scrollbar { display: none; }
+
+/* 2. 单个 Story 项目 */
+.story-item {
+    display: flex; flex-direction: column; align-items: center;
+    margin-right: 15px; /* 间距 */
+    cursor: pointer;
+    width: 72px; /* 占位宽度 */
+    flex-shrink: 0;
+}
+
+/* 3. 头像外面的圈 (容器) */
+.story-ring-wrap {
+    width: 68px; height: 68px;
+    border-radius: 50%;
+    padding: 2px; /* 圈的粗细 */
+    /* 默认：未发布的浅灰色 */
+    border: 2px solid rgba(255,255,255,0.2);
+    display: flex; align-items: center; justify-content: center;
+    position: relative;
+}
+
+/* 4. 激活状态：彩虹圈 (IG 经典渐变) */
+.story-ring-wrap.active {
+    border: none; /* 去掉边框，改用背景模拟 */
+    background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+    padding: 2px; /* 保持内间距 */
+}
+
+/* 5. 头像本体 */
+.story-avatar {
+    width: 100%; height: 100%;
+    border-radius: 50%;
+    background-color: #1c1c1e; /* 与背景同色，形成隔离带 */
+    border: 2px solid #1c1c1e; /* 内描边，把头像和彩虹圈隔开 */
+    background-size: cover; background-position: center;
+}
+
+/* 6. 名字 */
+.story-name {
+    font-size: 11px; margin-top: 4px;
+    color: rgba(255,255,255,0.9);
+    width: 70px; text-align: center;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+/* 7. 【关键】User 专属样式：右下角加号 */
+.story-add-badge {
+    position: absolute;
+    bottom: 0; right: 0;
+    width: 20px; height: 20px;
+    background: #0a84ff; /* 蓝色 */
+    border-radius: 50%;
+    border: 2px solid #1c1c1e; /* 与背景同色的边框 */
+    display: flex; align-items: center; justify-content: center;
+    color: white; font-size: 16px; font-weight: bold;
+    z-index: 10;
+}
+/* User 的圈不显示彩虹，也不显示灰圈，或者是透明 */
+.story-ring-wrap.user-mode {
+    border-color: transparent;
+    padding: 0;
+}
+.story-ring-wrap.user-mode .story-avatar {
+    border: none; /* User 头像不需要内隔离 */
+    width: 64px; height: 64px; /* 稍微大一点点或保持一致 */
+}
+
+/* 浅色模式适配 */
+body.light-theme .ig-stories-container { border-bottom-color: rgba(0,0,0,0.1); }
+body.light-theme .story-ring-wrap { border-color: rgba(0,0,0,0.1); }
+body.light-theme .story-name { color: #000; }
+body.light-theme .story-avatar { border-color: #f2f2f7; } /* 隔离带变白 */
+body.light-theme .story-add-badge { border-color: #f2f2f7; }
+
+        /* ================== 现代玻璃拟态 Feed (原创风格) ================== */
+
+/* --- 1. 顶部限时动态 (Holographic Cards) --- */
+.status-flow-container {
+    height: 150px; /* 增加高度以容纳动效 */
+    width: 100%;
+    display: flex;
+    align-items: center;
+    overflow-x: auto;
+    padding: 10px 16px;
+    gap: 14px; /* 卡片间距 */
+    scrollbar-width: none;
+}
+.status-flow-container::-webkit-scrollbar { display: none; }
+
+/* 基础卡片结构 */
+.status-card {
+    width: 90px; height: 120px;
+    border-radius: 18px;
+    position: relative;
+    flex-shrink: 0;
+    cursor: pointer;
+    overflow: hidden; /* 裁剪圆角 */
+
+    /* 默认状态 (已读/无新动态) */
+    background: #2c2c2e;
+    border: 1px solid rgba(255,255,255,0.1);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+.status-card:active { transform: scale(0.95); }
+
+/* --- 🌟 核心设计：未读动态 (流光边框) --- */
+.status-card.unread {
+    border: 1px solid transparent; /* 透明边框 */
+    /* 利用双层背景模拟渐变边框 */
+    background-image: linear-gradient(#1c1c1e, #1c1c1e),
+                      linear-gradient(135deg, #0a84ff 0%, #B620E0 50%, #F7B500 100%);
+    background-origin: border-box;
+    background-clip: content-box, border-box;
+    /* 发光投影 */
+    box-shadow: 0 4px 15px rgba(10, 132, 255, 0.3);
+}
+
+/* 动态背景图 */
+.status-bg-img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    opacity: 0.8;
+    transition: opacity 0.2s;
+}
+/* 未读时图片稍微亮一点 */
+.status-card.unread .status-bg-img { opacity: 1; }
+
+/* 底部渐变遮罩 (让文字看清) */
+.status-card::after {
+    content: ''; position: absolute; bottom: 0; left: 0; width: 100%; height: 50%;
+    background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+    pointer-events: none;
+}
+
+/* 左上角：发布者头像 (加大增强版) */
+.status-mini-avatar {
+    position: absolute;
+    top: 6px; left: 6px; /* 稍微往边缘靠一点，显得更饱满 */
+
+    /* 💥 核心修改：尺寸加大 */
+    width: 36px; height: 36px;
+
+    border-radius: 50%;
+    /* 边框加粗一点，更白一点 */
+    border: 2px solid #ffffff;
+
+    style="background-image:url(...); background-size: contain; background-repeat: no-repeat;"
+    z-index: 5;
+    background-color: #333;
+
+    /* 加一点投影，让头像浮在背景图上面 */
+    box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+}
+
+/* 右上角：限时倒计时 */
+.status-time-pill {
+    position: absolute;
+    top: 6px; right: 6px; /* 与左边头像对齐 */
+
+    /* ... 其他属性保持不变 ... */
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+    border-radius: 6px;
+    padding: 2px 6px; /*稍微加宽一点padding*/
+    font-size: 10px; /* 字体稍微大一丢丢，更容易看清 */
+    font-weight: 700; color: rgba(255,255,255,0.9);
+    z-index: 5;
+    border: 0.5px solid rgba(255,255,255,0.2);
+}
+
+/* 底部：名字 */
+.status-name {
+    position: absolute; bottom: 10px; left: 0; width: 100%;
+    text-align: center;
+    font-size: 11px; color: white; font-weight: 600;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    padding: 0 5px;
+    z-index: 5;
+}
+
+/* --- "我"的发布卡片 (特殊样式) --- */
+.status-card.my-card {
+    border: 1px dashed rgba(255,255,255,0.3);
+    background: rgba(255,255,255,0.05);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+}
+.status-card.my-card::after { display: none; } /* 去掉遮罩 */
+
+.my-add-btn {
+    width: 36px; height: 36px;
+    background: #0a84ff;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    color: white; font-size: 20px;
+    box-shadow: 0 4px 10px rgba(10, 132, 255, 0.4);
+    margin-bottom: 8px;
+    z-index: 10;
+}
+.my-card-text { font-size: 11px; color: rgba(255,255,255,0.6); font-weight: 500; }
+
+/* 浅色模式适配 */
+body.light-theme .status-card {
+    background: #fff; border-color: rgba(0,0,0,0.1);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+body.light-theme .status-card.unread {
+    /* 浅色模式下，未读边框更明显 */
+    box-shadow: 0 4px 15px rgba(10, 132, 255, 0.25);
+}
+body.light-theme .status-card.my-card {
+    background: #f2f2f7; border-color: rgba(0,0,0,0.1);
+}
+body.light-theme .my-card-text { color: #666; }
+
+/* --- 2. 帖子列表 (Feed) --- */
+.feed-list-container {
+    padding: 0 16px 80px 16px; /* 底部留白 */
+}
+
+/* 玻璃卡片主体 */
+.feed-card {
+    background: rgba(255, 255, 255, 0.08); /* 极淡的背景 */
+    backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 24px; /* 大圆角 */
+    padding: 16px;
+    margin-bottom: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+}
+
+/* 头部：更像杂志排版 */
+.feed-header {
+    display: flex; align-items: center; margin-bottom: 12px;
+}
+.feed-avatar {
+    width: 40px; height: 40px; border-radius: 12px; /* 方圆形头像 */
+    background-size: cover; background-position: center;
+    margin-right: 12px;
+    border: 1px solid rgba(255,255,255,0.1);
+}
+.feed-user-info { flex: 1; }
+.feed-username { font-size: 15px; font-weight: 700; color: white; display: block;}
+.feed-time { font-size: 11px; color: rgba(255,255,255,0.4); margin-top: 2px; display: block;}
+
+/* 内容区 */
+.feed-text {
+    font-size: 15px; color: rgba(255,255,255,0.9);
+    line-height: 1.6; margin-bottom: 12px;
+}
+.feed-media {
+    width: 100%; aspect-ratio: 4/3; /* 4:3 比例，更像摄影作品 */
+    border-radius: 16px;
+    object-fit: cover;
+    background-color: #2c2c2e;
+    display: block; margin-bottom: 15px;
+    cursor: pointer;
+}
+
+/* 底部操作区 (胶囊风格) */
+.feed-actions {
+    display: flex; gap: 10px;
+}
+
+/* 胶囊按钮 */
+.action-pill {
+    height: 36px;
+    padding: 0 14px;
+    border-radius: 18px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.05);
+    display: flex; align-items: center; justify-content: center;
+    gap: 6px;
+    cursor: pointer; transition: all 0.2s;
+    color: rgba(255,255,255,0.8);
+    font-size: 13px; font-weight: 500;
+}
+.action-pill:active { background: rgba(255,255,255,0.15); transform: scale(0.96); }
+
+/* 激活状态 (点赞/收藏) */
+.action-pill.active-like {
+    background: rgba(255, 59, 48, 0.15);
+    color: #FF3B30;
+    border-color: rgba(255, 59, 48, 0.2);
+}
+.action-pill.active-save {
+    background: rgba(255, 214, 10, 0.15);
+    color: #FFD60A;
+    border-color: rgba(255, 214, 10, 0.2);
+}
+
+.action-icon { width: 18px; height: 18px; fill: currentColor; }
+
+/* 浅色模式适配 */
+body.light-theme .status-card { border-color: rgba(0,0,0,0.05); background: rgba(0,0,0,0.03); }
+body.light-theme .status-name { color: white; text-shadow: 0 1px 2px rgba(0,0,0,0.5); }
+body.light-theme .status-add-overlay { background: rgba(255,255,255,0.6); }
+
+body.light-theme .feed-card {
+    background: #ffffff;
+    border-color: rgba(0,0,0,0.05);
+    box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+}
+body.light-theme .feed-username { color: #000; }
+body.light-theme .feed-text { color: #333; }
+body.light-theme .action-pill {
+    background: #f2f2f7; color: #666; border-color: transparent;
+}
+body.light-theme .action-pill:active { background: #e5e5ea; }
+
+        /* --- 修复：强制点赞/收藏变色 (优先级补丁) --- */
+.action-pill.active-like {
+    background: rgba(255, 59, 48, 0.15) !important;
+    color: #FF3B30 !important;
+    border-color: rgba(255, 59, 48, 0.2) !important;
+}
+.action-pill.active-save {
+    background: rgba(255, 214, 10, 0.15) !important;
+    color: #FFD60A !important;
+    border-color: rgba(255, 214, 10, 0.2) !important;
+}
+/* 确保图标跟随文字变色 */
+.action-pill.active-like svg,
+.action-pill.active-save svg {
+    fill: currentColor !important;
+}
+
+        /* ================== 1. 顶部发布按钮重构 (区别于创建角色) ================== */
+/* 修改 .my-add-btn 的样式 */
+.my-add-btn {
+    width: 40px; height: 40px;
+    /* 渐变色背景，更有活力 */
+    background: linear-gradient(135deg, #0a84ff 0%, #007aff 100%);
+    border-radius: 12px; /* 方圆形，区别于纯圆的角色头像 */
+    display: flex; align-items: center; justify-content: center;
+    color: white; font-size: 24px;
+    box-shadow: 0 4px 15px rgba(10, 132, 255, 0.4);
+    margin-bottom: 8px;
+    z-index: 10;
+    transition: transform 0.1s;
+}
+.my-add-btn:active { transform: scale(0.9); }
+
+/* 给加号换个图标 (可选，用伪元素画一个更细致的加号) */
+.my-add-btn::before, .my-add-btn::after {
+    content: ''; position: absolute; background: white; border-radius: 2px;
+}
+.my-add-btn::before { width: 16px; height: 3px; }
+.my-add-btn::after { width: 3px; height: 16px; }
+
+/* 调整底部文字 */
+.my-card-text {
+    font-size: 10px; font-weight: 600;
+    color: rgba(255,255,255,0.8);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+/* ================== 2. 发帖页面 (Create Moment) ================== */
+
+/* 文本输入区 */
+.moment-textarea {
+    width: 100%; min-height: 120px;
+    background: transparent; border: none; outline: none;
+    color: white; font-size: 16px; line-height: 1.6;
+    padding: 15px; resize: none;
+    font-family: inherit;
+}
+.moment-textarea::placeholder { color: rgba(255,255,255,0.3); }
+
+/* 九宫格上传区 */
+.moment-upload-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr); /* 3列 */
+    gap: 8px;
+    padding: 0 15px 30px 15px;
+}
+
+/* 单个图片预览块 */
+.upload-preview-item {
+    aspect-ratio: 1/1; /* 正方形 */
+    border-radius: 8px;
+    background-color: rgba(255,255,255,0.05);
+    background-size: cover; background-position: center;
+    position: relative;
+    overflow: hidden;
+}
+
+/* 删除按钮 (右上角小叉) */
+.btn-remove-img {
+    position: absolute; top: 4px; right: 4px;
+    width: 20px; height: 20px;
+    background: rgba(0,0,0,0.6); border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    color: white; font-size: 12px; cursor: pointer;
+    backdrop-filter: blur(4px);
+}
+
+/* 上传按钮 (方块+) */
+.upload-add-btn {
+    aspect-ratio: 1/1;
+    border-radius: 8px;
+    background: rgba(255,255,255,0.05);
+    border: 1px dashed rgba(255,255,255,0.3);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: background 0.2s;
+}
+.upload-add-btn:active { background: rgba(255,255,255,0.1); }
+.upload-add-icon { font-size: 30px; color: rgba(255,255,255,0.4); font-weight: 300; }
+
+/* 浅色模式适配 */
+body.light-theme .moment-textarea { color: #000; }
+body.light-theme .moment-textarea::placeholder { color: rgba(0,0,0,0.4); }
+body.light-theme .upload-preview-item { background-color: #f2f2f7; }
+body.light-theme .upload-add-btn { background: #f2f2f7; border-color: rgba(0,0,0,0.1); }
+body.light-theme .upload-add-icon { color: #999; }
+body.light-theme .my-add-btn { box-shadow: 0 4px 15px rgba(10, 132, 255, 0.2); }
+body.light-theme .my-card-text { color: #666; }
+
+        /* ================== 多图轮播 (Carousel) 样式 ================== */
+
+/* 1. 轮播容器 */
+.feed-gallery {
+    width: 100%;
+    aspect-ratio: 4/3; /* 保持 4:3 比例 */
+    display: flex;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-snap-type: x mandatory; /* 关键：强制按页吸附 */
+    scrollbar-width: none; /* 隐藏滚动条 */
+    border-radius: 16px;
+    margin-bottom: 15px;
+    background-color: #2c2c2e;
+    position: relative;
+}
+.feed-gallery::-webkit-scrollbar { display: none; }
+
+/* 2. 单张图片项 */
+.feed-gallery-item {
+    min-width: 100%; /* 强制占满宽度 */
+    height: 100%;
+    object-fit: cover;
+    scroll-snap-align: start; /* 吸附点 */
+}
+
+/* 3. 图片计数器 (右上角显示 1/9) */
+.feed-counter {
+    position: absolute;
+    top: 15px; right: 15px;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 12px; color: white; font-weight: 600;
+    pointer-events: none;
+    z-index: 5;
+}
+
+/* 覆盖之前的 .feed-media 样式 (防止冲突) */
+.feed-media { display: none; }
+
+        /* ================== 多图轮播 (自适应高度版) ================== */
+
+/* 1. 轮播容器 */
+.feed-gallery {
+    width: 100%;
+    /* 🌟 默认高度 (JS会动态覆盖它) */
+    height: 400px;
+    /* 🌟 背景透明：这样短图留白的地方就是卡片颜色 */
+    background-color: transparent;
+
+    display: flex;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+    border-radius: 12px;
+    margin-bottom: 15px;
+    position: relative;
+
+    /* 增加一个过渡，高度变化时丝滑一点 */
+    transition: height 0.3s ease;
+}
+.feed-gallery::-webkit-scrollbar { display: none; }
+
+/* 2. 单张图片项 */
+.feed-gallery-item {
+    min-width: 100%;
+    height: 100%;
+    /* 🌟 核心：包含模式，完整显示 */
+    object-fit: contain;
+    scroll-snap-align: center;
+    display: block;
+}
+
+/* 3. 计数器样式保持不变 */
+.feed-counter {
+    position: absolute;
+    top: 15px; right: 15px;
+    background: rgba(0, 0, 0, 0.4); /*稍微淡一点*/
+    backdrop-filter: blur(8px);
+    padding: 2px 8px;
+    border-radius: 8px;
+    font-size: 11px; color: rgba(255,255,255,0.9); font-weight: 600;
+    pointer-events: none;
+    z-index: 5;
+    border: 0.5px solid rgba(255,255,255,0.1);
+}
+
+        /* ================== 全屏图片预览器 (Image Viewer) ================== */
+.image-viewer-overlay {
+    position: fixed;
+    top: 0; left: 0; width: 100vw; height: 100vh;
+    background-color: rgba(0, 0, 0, 0.95); /* 深黑背景 */
+    z-index: 10000; /* 最高层级 */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none; /* 默认穿透 */
+    transition: opacity 0.3s ease;
+    backdrop-filter: blur(10px);
+}
+
+.image-viewer-overlay.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+#image-viewer-target {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain; /* 保证完整显示 */
+    transform: scale(0.9);
+    transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.image-viewer-overlay.active #image-viewer-target {
+    transform: scale(1);
+}
+
+/* 关闭按钮 (右上角) */
+.viewer-close-btn {
+    position: absolute;
+    top: 40px; right: 20px;
+    width: 40px; height: 40px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    color: white;
+    font-size: 24px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    z-index: 10001;
+}
+
+        /* ================== 全屏画廊预览器 (Gallery Viewer) ================== */
+.image-viewer-overlay {
+    position: fixed;
+    top: 0; left: 0; width: 100vw; height: 100vh;
+    background-color: #000; /* 纯黑沉浸 */
+    z-index: 10000;
+    display: flex; flex-direction: column; justify-content: center;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+.image-viewer-overlay.active {
+    opacity: 1; pointer-events: auto;
+}
+
+/* 轮播容器 */
+.viewer-gallery {
+    display: flex;
+    width: 100%; height: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-snap-type: x mandatory; /* 强制分页 */
+    scrollbar-width: none;
+    align-items: center; /* 垂直居中 */
+}
+.viewer-gallery::-webkit-scrollbar { display: none; }
+
+/* 单张图片项 */
+.viewer-img-item {
+    min-width: 100vw; /* 占满全屏宽 */
+    height: 100vh;    /* 占满全屏高 */
+    object-fit: contain; /* 完整显示 */
+    scroll-snap-align: center; /* 居中吸附 */
+    transform: scale(1);
+}
+
+/* 关闭按钮 */
+.viewer-close-btn {
+    position: absolute; top: 40px; right: 20px;
+    width: 40px; height: 40px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%; color: white; font-size: 24px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; z-index: 10002;
+}
+
+/* 页码计数器 */
+.viewer-counter {
+    position: absolute; top: 40px; left: 50%; transform: translateX(-50%);
+    background: rgba(255, 255, 255, 0.2);
+    padding: 4px 12px; border-radius: 12px;
+    font-size: 14px; color: white; font-weight: 600;
+    z-index: 10002; pointer-events: none;
+}
+
+        /* ================== 帖子详情页与评论样式 ================== */
+
+/* 1. 详情页容器微调 */
+#sub-moment-detail .wallpaper-content {
+    padding: 0;
+    display: flex; flex-direction: column;
+    height: 100%;
+}
+
+/* 2. 详情页里的帖子样式微调 */
+.detail-post-wrapper {
+    padding-top: 10px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    margin-bottom: 10px;
+}
+/* 去掉详情页里帖子的圆角和阴影，让它更像原生页面的头部 */
+.detail-post-wrapper .feed-card {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    margin-bottom: 0;
+    border-radius: 0;
+}
+
+/* 3. 评论区容器 */
+.comments-list-container {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0 16px 80px 16px; /* 底部留白给输入框 */
+}
+
+/* 4. 单条评论 */
+.comment-item {
+    display: flex; gap: 12px;
+    margin-bottom: 16px;
+}
+.comment-avatar {
+    width: 36px; height: 36px; border-radius: 50%;
+    background-color: #333; background-size: cover; background-position: center;
+    flex-shrink: 0; border: 1px solid rgba(255,255,255,0.1);
+}
+.comment-content { flex: 1; }
+.comment-user {
+    font-size: 13px; color: rgba(255,255,255,0.6);
+    font-weight: 600; margin-bottom: 2px;
+}
+.comment-text {
+    font-size: 14px; color: rgba(255,255,255,0.9);
+    line-height: 1.5; white-space: pre-wrap;
+}
+.comment-meta {
+    font-size: 11px; color: rgba(255,255,255,0.3); margin-top: 4px;
+    display: flex; gap: 10px;
+}
+.comment-reply-btn { cursor: pointer; font-weight: 500; }
+
+/* 5. 底部固定输入栏 (复用聊天输入栏样式，微调背景) */
+.moment-footer-input {
+    position: absolute; bottom: 0; left: 0; width: 100%;
+    background: rgba(30, 30, 35, 0.95);
+    backdrop-filter: blur(20px);
+    padding: 10px 16px 30px 16px; /* 适配全面屏底部 */
+    display: flex; align-items: center; gap: 10px;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    z-index: 50;
+}
+
+/* 浅色模式适配 */
+body.light-theme .moment-footer-input { background: rgba(255,255,255,0.95); border-top-color: rgba(0,0,0,0.1); }
+body.light-theme .comment-user { color: rgba(0,0,0,0.6); }
+body.light-theme .comment-text { color: #333; }
+body.light-theme .detail-post-wrapper { border-bottom-color: rgba(0,0,0,0.05); }
+
+        /* ================== 修复：详情页分割线 & 评论样式 ================== */
+
+/* 1. 详情页帖子与评论的分割线 (加深颜色，确保可见) */
+.detail-post-wrapper {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.15) !important;
+    padding-bottom: 20px;
+    margin-bottom: 20px;
+}
+
+/* 2. 评论删除按钮 (默认红色小字) */
+.comment-del-btn {
+    color: #FF3B30;
+    margin-left: 10px;
+    cursor: pointer;
+    font-size: 11px;
+    font-weight: 500;
+}
+
+/* 3. 评论时间样式 */
+.comment-time {
+    font-size: 11px;
+    opacity: 0.6;
+}
+
+/* --- 浅色模式适配 (关键修复) --- */
+body.light-theme .detail-post-wrapper {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1) !important; /* 浅色模式下的灰线 */
+}
+body.light-theme .comment-time {
+    color: rgba(0,0,0,0.5);
+}
+
+        /* ================== 🚨 浅色模式终极修复补丁 (发布页 & 详情页) 🚨 ================== */
+
+/* --- 1. 发布动态页 (Create Moment) --- */
+body.light-theme #sub-create-moment {
+    background-color: #f2f2f7 !important; /* 浅灰底 */
+}
+body.light-theme #sub-create-moment .app-title {
+    color: #000000 !important; /* 标题变黑 */
+}
+body.light-theme #sub-create-moment .app-back-btn {
+    color: #007aff !important; /* 取消按钮变蓝 */
+}
+/* 输入框文字 */
+body.light-theme .moment-textarea {
+    color: #000000 !important;
+}
+body.light-theme .moment-textarea::placeholder {
+    color: rgba(0, 0, 0, 0.4) !important;
+}
+/* 图片预览格 */
+body.light-theme .moment-upload-grid .upload-add-btn {
+    border-color: rgba(0,0,0,0.1) !important;
+    background-color: #ffffff !important;
+}
+body.light-theme .moment-upload-grid .upload-add-icon {
+    color: rgba(0,0,0,0.3) !important;
+}
+
+/* --- 2. 帖子详情页 (Detail Page) --- */
+body.light-theme #sub-moment-detail {
+    background-color: #f2f2f7 !important;
+}
+body.light-theme #sub-moment-detail .app-title {
+    color: #000000 !important;
+}
+body.light-theme #sub-moment-detail .app-back-btn {
+    color: #007aff !important;
+}
+
+/* 帖子内容适配 */
+body.light-theme #moment-detail-card-container .feed-username {
+    color: #000000 !important;
+}
+body.light-theme #moment-detail-card-container .feed-text {
+    color: #333333 !important;
+}
+body.light-theme #moment-detail-card-container .feed-time {
+    color: rgba(0,0,0,0.5) !important;
+}
+/* 分割线 */
+body.light-theme .detail-post-wrapper {
+    border-bottom: 1px solid rgba(0,0,0,0.1) !important;
+}
+/* “全部评论”小标题 */
+body.light-theme #moment-detail-scroll-area div[style*="color:rgba(255,255,255,0.5)"] {
+    color: rgba(0,0,0,0.5) !important;
+}
+
+/* --- 3. 评论区适配 --- */
+body.light-theme .comment-user {
+    color: rgba(0,0,0,0.6) !important; /* 昵称深灰 */
+}
+body.light-theme .comment-text {
+    color: #000000 !important; /* 内容纯黑 */
+}
+body.light-theme .comment-time {
+    color: rgba(0,0,0,0.4) !important;
+}
+body.light-theme .comment-reply-btn {
+    color: #007aff !important; /* 回复按钮蓝色 */
+}
+body.light-theme .comment-avatar {
+    border-color: rgba(0,0,0,0.1) !important;
+    background-color: #ffffff !important;
+}
+
+/* --- 4. 底部评论输入框 --- */
+body.light-theme .moment-footer-input {
+    background-color: rgba(255, 255, 255, 0.95) !important; /* 白底 */
+    border-top: 1px solid rgba(0,0,0,0.1) !important;
+}
+/* 输入框本体 */
+body.light-theme #moment-reply-input {
+    color: #000000 !important;
+    background: transparent !important; /* 去掉 input 自身背景，依赖外层 pill */
+}
+/* 输入框外壳 (圆角条) */
+body.light-theme .moment-footer-input .chat-input-pill {
+    background-color: rgba(0,0,0,0.05) !important; /* 浅灰条 */
+    border: 1px solid rgba(0,0,0,0.05) !important;
+}
+body.light-theme #moment-reply-input::placeholder {
+    color: rgba(0,0,0,0.4) !important;
+}
+
+        /* ================== 修复：帖子时间与更多按钮 ================== */
+
+/* 1. 定义更多按钮的样式类 (替代之前的内联样式) */
+.feed-more-btn {
+    font-size: 20px;
+    color: rgba(255,255,255,0.5); /* 默认深色模式：半透明白 */
+    cursor: pointer;
+    padding: 0 10px;
+    line-height: 1;
+}
+
+/* 2. 浅色模式适配 (核心修复) */
+body.light-theme .feed-time {
+    color: rgba(0, 0, 0, 0.4) !important; /* 时间变深灰 */
+}
+body.light-theme .feed-more-btn {
+    color: rgba(0, 0, 0, 0.5) !important; /* 按钮变黑 */
+}
+
+        /* 修复：动态更多选项弹窗动画 */
+#modal-post-menu.active .action-sheet-content {
+    transform: translateY(0) !important;
+}
+
+/* 确保它在最上层，防止被底部导航栏遮挡 */
+#modal-post-menu {
+    z-index: 3000 !important;
+}
+
+        /* ================== 浅色模式弹窗文字强制修复 ================== */
+
+/* 1. 通用确认弹窗 (删除帖子/评论/清空记录 用这个) */
+body.light-theme #gen-confirm-title {
+    color: #000000 !important; /* 强制标题变黑 */
+}
+
+body.light-theme #gen-confirm-desc {
+    color: rgba(0, 0, 0, 0.6) !important; /* 强制描述变深灰 */
+}
+
+/* 2. 删除歌曲/好友的特定弹窗 (防止那个也看不见) */
+body.light-theme #modal-delete-confirm div[style*="color: white"],
+body.light-theme #modal-delete-confirm div[style*="color:white"] {
+    color: #000000 !important;
+}
+
+body.light-theme #modal-delete-confirm div[style*="color: rgba(255,255,255,0.6)"] {
+    color: rgba(0, 0, 0, 0.6) !important;
+}
+
+/* 3. 选中文字高亮 (比如 "删除xxx吗") */
+body.light-theme #del-song-name,
+body.light-theme #del-chat-target-name {
+    color: #000000 !important;
+    font-weight: bold !important;
+}
+
+        /* ================== 浅色模式弹窗文字强制修复 ================== */
+
+/* 1. 通用确认弹窗 (删除帖子/评论/清空记录 用这个) */
+body.light-theme #gen-confirm-title {
+    color: #000000 !important; /* 强制标题变黑 */
+}
+
+body.light-theme #gen-confirm-desc {
+    color: rgba(0, 0, 0, 0.6) !important; /* 强制描述变深灰 */
+}
+
+/* 2. 删除歌曲/好友的特定弹窗 (防止那个也看不见) */
+body.light-theme #modal-delete-confirm div[style*="color: white"],
+body.light-theme #modal-delete-confirm div[style*="color:white"] {
+    color: #000000 !important;
+}
+
+body.light-theme #modal-delete-confirm div[style*="color: rgba(255,255,255,0.6)"] {
+    color: rgba(0, 0, 0, 0.6) !important;
+}
+
+/* 3. 选中文字高亮 (比如 "删除xxx吗") */
+body.light-theme #del-song-name,
+body.light-theme #del-chat-target-name {
+    color: #000000 !important;
+    font-weight: bold !important;
+}
+
+        /* ================== 🌈 Instagram 风格光圈 (修复增强版) ================== */
+
+/* 1. 消息列表头像容器 */
+.role-card-img-wrapper {
+    position: relative;
+    width: 56px; height: 56px; /* 容器定宽 */
+    margin-right: 15px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+
+    /* 默认透明边框 (占位，防止抖动) */
+    border: 2px solid transparent;
+}
+
+/* 2. 激活状态：彩虹渐变背景 */
+.role-card-img-wrapper.has-story {
+    /* 核心：利用 padding 挤出光圈 */
+    padding: 3px;
+    background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+}
+
+/* 3. 头像本体 (强制覆盖) */
+.role-card-img-wrapper .role-card-img {
+    width: 100% !important;
+    height: 100% !important;
+    border-radius: 50% !important;
+
+    /* 内描边 (黑色)，把头像和光圈隔开 */
+    border: 2px solid #1c1c1e !important;
+
+    background-color: #333;
+    background-size: cover;
+    background-position: center;
+    margin: 0 !important; /* 去掉旧样式的边距 */
+    display: block;
+}
+
+/* 4. 详情页头部头像容器 */
+#chat-header-avatar-wrap {
+    width: 42px; height: 42px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    border: 2px solid transparent; /* 默认无圈 */
+}
+#chat-header-avatar-wrap.has-story {
+    padding: 2px;
+    background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+}
+#chat-header-avatar-wrap .chat-user-avatar {
+    width: 100% !important; height: 100% !important;
+    border: 2px solid #1c1c1e !important; /* 隔离线 */
+    margin: 0 !important;
+}
+
+/* 浅色模式适配 */
+body.light-theme .role-card-img-wrapper .role-card-img,
+body.light-theme #chat-header-avatar-wrap .chat-user-avatar {
+    border-color: #ffffff !important; /* 白底隔离线 */
+}
+
+        /* ================== 修复：限时动态光圈 (移至头像) ================== */
+
+/* 1. 卡片本身去掉发光边框 */
+.status-card.unread {
+    box-shadow: none !important; /* 去掉大卡片的阴影 */
+    border: 1px solid rgba(255,255,255,0.1) !important; /* 恢复普通边框 */
+    background: #2c2c2e !important;
+}
+/* 去掉图片的透明度变化，保持清晰 */
+.status-card .status-bg-img { opacity: 0.8; }
+.status-card.unread .status-bg-img { opacity: 0.8; }
+
+/* 2. 小头像：未读状态 (彩虹圈) */
+.status-mini-avatar.has-story {
+    /* 核心：利用 box-shadow 模拟彩虹光圈，不占布局空间 */
+    box-shadow: 0 0 0 2px #1c1c1e, 0 0 0 4px #dc2743;
+    /* 或者用渐变模拟更像 IG 的效果 */
+    padding: 1.5px; /* 留出空隙 */
+    background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+    border: none !important; /* 去掉原来的白边 */
+
+    /* 确保背景图也就是头像本身被裁切在内部 */
+    background-clip: content-box;
+    /* content-box 让背景色(彩虹)显示在 padding 区域，图片显示在 content 区域 */
+}
+
+/* 3. 恢复“我的发布按钮”样式 */
+.status-card.my-card {
+    border: 1px dashed rgba(255,255,255,0.3);
+    background: rgba(255,255,255,0.05) !important;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+        /* --- 修复 My Card 激活样式 --- */
+
+/* 1. 发布按钮外部的容器 (用于承载渐变和动画) */
+.my-add-btn-wrapper {
+    position: relative;
+    z-index: 2;
+    padding: 2px;
+    border-radius: 12px; /* 方圆形 */
+    display: inline-block;
+    transition: all 0.3s;
+}
+
+/* 2. 激活状态：渐变光晕 */
+.my-add-btn-wrapper.has-story {
+    background: linear-gradient(45deg, #0a84ff, #B620E0); /* 蓝紫渐变 */
+    /* 增加一个明显的投影光晕 */
+    box-shadow: 0 0 15px rgba(10, 132, 255, 0.8);
+}
+.my-add-btn-wrapper.has-story .my-add-btn {
+    /* 确保加号按钮本身有隔离边框 */
+    border: 2px solid #1c1c1e;
+}
+
+/* 3. 浅色模式适配 */
+body.light-theme .my-add-btn-wrapper.has-story .my-add-btn {
+    border-color: #ffffff;
+}
+
+        /* 左上角：发布者头像 (修复版：完整显示图片) */
+.status-mini-avatar {
+    position: absolute;
+    top: 6px; left: 6px;
+
+    width: 36px; height: 36px;
+
+    border-radius: 50%;
+    border: 2px solid #ffffff;
+
+    /* 🚨 核心修复：从 cover 改为 contain，确保图片完整显示 */
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat; /* 防止图片重复 */
+
+    z-index: 5;
+    background-color: #333; /* 占位背景色 */
+    box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+}
+
+/* 如果你的 CSS 还有下面的 .status-mini-avatar.has-story，请保持不动 */
+/* 保持 .status-mini-avatar.has-story 的样式不变 */
+
+        /* ================== Story Creation UI (Final) ================== */
+
+/* 1. 顶部工具栏 (模式切换) */
+.story-mode-toolbar {
+    height: 60px;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(30, 30, 35, 0.9);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    flex-shrink: 0;
+
+    /* 🚨 核心修改：删除 margin-top: 90px; 或确保其不存在 */
+    /* margin-top: 0; */
+}
+/* ... 其他样式保持不变 ... */
+.story-mode-toolbar .mode-btn {
+    background: none; border: none; color: rgba(255,255,255,0.5);
+    font-size: 14px; font-weight: 700; padding: 8px 15px; cursor: pointer;
+    border-radius: 15px;
+    transition: all 0.2s;
+}
+.story-mode-toolbar .mode-btn.active {
+    color: white;
+    background: rgba(255,255,255,0.1);
+}
+
+/* 2. 全屏内容区域 */
+.story-content-area {
+    flex: 1; position: relative;
+    overflow: hidden;
+}
+.story-mode-pane {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    transition: all 0.3s;
+}
+
+/* 文本模式核心 */
+.story-full-textarea {
+    width: 90%; height: 80%;
+    background: transparent; border: none; outline: none;
+    color: white; font-size: 32px; font-weight: 700;
+    text-align: center; line-height: 1.3;
+    resize: none;
+    font-family: inherit;
+    /* 允许换行 */
+    white-space: pre-wrap;
+}
+.story-full-textarea::placeholder { color: rgba(255,255,255,0.7); }
+.story-text-tip { position: absolute; bottom: 30px; font-size: 12px; color: rgba(255,255,255,0.5); }
+
+/* 3. 图片模式核心 */
+.story-image-preview-box {
+    width: 100%; height: 100%;
+    background-color: #222;
+    background-size: contain; /* 完整显示图片 */
+    background-position: center;
+    background-repeat: no-repeat;
+    position: relative;
+}
+.story-image-upload-btn {
+    position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%);
+    background: #0a84ff; color: white; padding: 8px 15px; border-radius: 20px;
+    font-size: 14px; cursor: pointer; z-index: 10;
+}
+.story-overlay-textarea {
+    /* 叠加在图片上方的输入框 */
+    width: 90%;
+    height: 100px;
+    background: transparent; border: none; outline: none;
+    color: white; font-size: 24px; font-weight: 600;
+    text-align: center; padding: 10px;
+    position: absolute;
+    top: 50%; left: 50%; transform: translate(-50%, -50%);
+    resize: none;
+    font-family: inherit;
+}
+
+/* 4. 文本模式颜色预设 (点击背景切换) */
+.color-1 { background: linear-gradient(135deg, #FF9A9E 0%, #FAD0C4 100%); } /* 橙粉 */
+.color-2 { background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%); } /* 蓝绿 */
+.color-3 { background: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%); } /* 紫粉 */
+.color-4 { background: linear-gradient(135deg, #f7ff00 0%, #db36a4 100%); } /* 霓虹 */
+.color-5 { background: linear-gradient(135deg, #232526 0%, #414345 100%); } /* 暗黑 */
+
+/* 浅色模式适配 */
+body.light-theme .story-mode-toolbar { background: rgba(249, 249, 249, 0.95); border-bottom-color: rgba(0,0,0,0.1); }
+body.light-theme .story-mode-toolbar .mode-btn { color: rgba(0,0,0,0.5); }
+body.light-theme .story-mode-toolbar .mode-btn.active { color: #000; background: rgba(0,0,0,0.1); }
+
+        /* ================== 修复：进度条与图片显示 ================== */
+
+/* 1. 进度条容器：固定在最顶部，极细 */
+.viewer-progress-bar-container {
+    position: absolute;
+    top: 8px; /* 距离顶部一点点距离 */
+    left: 5px; right: 5px; /* 左右留出空隙 */
+    width: auto; /* 自动宽度 */
+    height: 2px; /* 🌟 核心：高度只有 2px */
+    z-index: 2000; /* 保证在最上层 */
+
+    display: flex;
+    gap: 4px; /* 分段之间的间隙 */
+    pointer-events: none;
+}
+
+/* 2. 单个分段背景 (未读部分：半透明灰) */
+.progress-segment {
+    flex: 1; /* 平分宽度 */
+    height: 100%;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+/* 3. 进度条填充 (已读/正在读部分：纯白) */
+.progress-fill-inner {
+    height: 100%;
+    background: #ffffff;
+    width: 0%;
+    /* 动画由 JS 控制，CSS不加 transition */
+    border-radius: 2px;
+    box-shadow: 0 0 2px rgba(0,0,0,0.3); /* 增加一点点阴影让白条更明显 */
+}
+
+/* 4. 图片显示模式修复：完整显示 (Contain) */
+#viewer-image-img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain; /* 🌟 核心：确保图片完整显示，不裁剪 */
+    background: #000; /* 留白部分显示黑色 */
+}
+
+/* 5. 调整顶部用户信息的层级，防止被进度条挡住 */
+.viewer-controls {
+    top: 15px !important; /* 稍微往下挪一点，避开进度条 */
+    z-index: 1004;
+    background: linear-gradient(to bottom, rgba(0,0,0,0.6), transparent) !important; /* 加一点渐变阴影让文字看清 */
+    padding-top: 10px;
+}
+
+        /* ================== Story Viewer 按钮样式 ================== */
+
+/* 顶部操作按钮容器 */
+.viewer-action-buttons {
+    display: flex; gap: 8px; /* 按钮之间的间距 */
+    align-items: center;
+}
+.viewer-action-btn {
+    background: none; border: none; cursor: pointer;
+    padding: 5px; opacity: 0.8;
+    transition: opacity 0.2s;
+}
+.viewer-action-btn:hover { opacity: 1; }
+.viewer-action-btn svg { width: 22px; height: 22px; fill: white; }
+
+        /* 修复顶部黑边和底部操作栏 */
+.image-viewer-overlay {
+    /* 确保预览器能占满全屏 */
+    background-color: #000;
+}
+
+/* 顶部控制栏 (只负责头像和关闭按钮，完全透明) */
+.viewer-controls {
+    top: 0 !important; /* 强制贴顶 */
+    height: 90px; /* 容纳状态栏 */
+    padding-top: 44px; /* 推送内容避开状态栏 */
+    background: transparent !important;
+    z-index: 1004;
+}
+.viewer-controls .viewer-close-btn {
+    /* 右上角关闭按钮的 z-index 要高于其他内容 */
+    z-index: 1005;
+}
+
+/* 底部操作栏 */
+.story-viewer-footer {
+    position: absolute; bottom: 0; left: 0; width: 100%;
+    padding: 10px 15px 30px 15px; /* 底部留白给 Home Bar */
+    background: linear-gradient(to top, rgba(0,0,0,0.8), transparent); /* 底部渐变透明背景 */
+    display: flex; align-items: center; justify-content: space-between;
+    z-index: 1003;
+}
+.viewer-reply-input {
+    flex: 1; height: 38px;
+    background: rgba(255,255,255,0.2); border: none; outline: none;
+    border-radius: 19px;
+    color: white; padding: 0 15px; margin-right: 15px;
+}
+
+        /* --- 灰圈样式 (已读但未过期) --- */
+
+/* 1. 针对外层容器 (My Card) 的灰圈 */
+.my-add-btn-wrapper.read-story {
+    /* 只改变渐变背景为灰色，不影响内部 */
+    background: linear-gradient(45deg, #8e8e93, #636366) !important;
+    box-shadow: none !important; /* 去掉发光 */
+}
+
+/* 2. 针对头像 (Status Avatar) 的灰圈 */
+.status-mini-avatar.read-story {
+    /* 关键修复：只改 box-shadow (模拟边框)，绝对不要动 background */
+    box-shadow: 0 0 0 2px #1c1c1e, 0 0 0 4px #8e8e93 !important;
+    padding: 0; /* 灰圈模式下不需要留白，或者保持一致 */
+}
+
+/* 3. 针对聊天列表 (Chat List) 的灰圈 */
+.role-card-img-wrapper.read-story,
+#chat-header-avatar-wrap.read-story {
+    background: linear-gradient(45deg, #8e8e93, #636366) !important;
+    padding: 2px;
+}
+        /* ================== Story Viewer 布局强制修复 ================== */
+
+/* 1. 核心内容容器：强制占满全屏 */
+.story-viewer-content {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1; /* 放在最底层，让进度条和按钮浮在上面 */
+    overflow: hidden;
+}
+
+/* 2. 纯文本模式容器：强制全屏 + 垂直水平居中 */
+.viewer-text-box {
+    width: 100% !important;
+    height: 100% !important;
+
+    /* 弹性布局实现居中 */
+    display: flex !important;
+    flex-direction: column;
+    justify-content: center; /* 垂直居中 */
+    align-items: center;     /* 水平居中 */
+
+    padding: 40px;           /* 两侧留白 */
+    box-sizing: border-box;  /* 确保 padding 不撑破宽高 */
+
+    /* 文字样式优化 */
+    color: white;
+    font-size: 28px;       /* 字体调大一点 */
+    font-weight: 700;
+    text-align: center;
+    line-height: 1.5;
+    white-space: pre-wrap; /* 允许换行 */
+}
+
+/* 3. 图片模式容器 */
+.viewer-image-box {
+    width: 100% !important;
+    height: 100% !important;
+    position: relative;
+    background: #000;      /* 图片没填满的地方显示黑色 */
+    display: flex !important;
+    justify-content: center;
+    align-items: center;
+}
+
+/* 4. 图片显示优化 */
+#viewer-image-img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;   /* 保证图片完整显示，不被裁剪 */
+}
+
+/* 5. 图片上的文字叠加层 */
+.viewer-image-overlay-text {
+    position: absolute;
+    /* 默认居中，会被 JS 的具体坐标覆盖 */
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+
+    color: white;
+    font-size: 24px;
+    font-weight: 600;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.6); /* 加阴影防背景太亮看不清 */
+    text-align: center;
+    pointer-events: none; /* 防止挡住图片点击 */
+    max-width: 90%;
+}
+
+        /* ================== Story Viewer 头部修复 ================== */
+.viewer-controls {
+    position: absolute;
+    top: 0; left: 0; width: 100%;
+    /* 关键修复：增加顶部内边距，避开手机状态栏/刘海 */
+    padding: 55px 15px 15px 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 100; /* 保证在最上层 */
+    /* 顶部渐变黑遮罩，防止白色文字在亮背景看不清 */
+    background: linear-gradient(to bottom, rgba(0,0,0,0.6) 0%, transparent 100%);
+}
+
+.viewer-user-info {
+    display: flex;
+    align-items: center;
+    gap: 10px; /* 头像和文字的间距 */
+}
+
+.viewer-avatar-mini {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background-color: #333;
+    border: 1px solid rgba(255,255,255,0.5);
+    background-size: cover;
+    background-position: center;
+}
+
+.viewer-text-col {
+    display: flex;
+    flex-direction: column;
+}
+
+.viewer-username {
+    font-size: 14px; font-weight: 600; color: white;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+    line-height: 1.2;
+}
+
+.viewer-time {
+    font-size: 11px; color: rgba(255,255,255,0.8);
+    text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+}
+
+.viewer-close-btn {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.3); /* 半透明黑底 */
+    backdrop-filter: blur(5px);
+    display: flex; align-items: center; justify-content: center;
+    color: white; border: none; cursor: pointer;
+}
+
+/* ================== Story Viewer 底部修复 ================== */
+.story-viewer-footer {
+    position: absolute;
+    bottom: 0; left: 0; width: 100%;
+    /* 增加底部内边距，避开手机小白条 */
+    padding: 10px 15px 35px 15px;
+    /* 底部渐变黑遮罩 */
+    background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 100%);
+    display: flex;
+    align-items: center;
+    gap: 12px; /* 元素间距 */
+    z-index: 100;
+}
+
+/* 输入框容器 */
+.viewer-input-box {
+    flex: 1; /* 占据剩余空间 */
+    height: 44px;
+    background: rgba(255, 255, 255, 0.15); /* 磨砂半透明 */
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 22px;
+    display: flex;
+    align-items: center;
+    padding: 0 5px 0 15px; /* 右边留少点给发送按钮 */
+}
+
+.viewer-reply-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: white;
+    font-size: 14px;
+}
+.viewer-reply-input::placeholder { color: rgba(255,255,255,0.6); }
+
+/* 发送按钮 (圆形) */
+.viewer-send-btn {
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.2);
+    border: none;
+    display: flex; align-items: center; justify-content: center;
+    color: white;
+    cursor: pointer;
+}
+.viewer-send-btn:active { background: #0a84ff; }
+
+/* 底部图标按钮组 */
+.viewer-icon-group {
+    display: flex;
+    gap: 15px; /* 图标之间的间距 */
+    align-items: center;
+}
+
+.viewer-action-btn {
+    background: none; border: none; padding: 0;
+    cursor: pointer; opacity: 0.9;
+}
+.viewer-action-btn:active { transform: scale(0.9); opacity: 1; }
+.viewer-action-btn svg {
+    width: 28px; height: 28px; fill: white;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3)); /* 加阴影让图标更清晰 */
+}
+
+        /* ================== 修复：时长选择对勾 ================== */
+/* 默认隐藏所有对勾 */
+#story-duration-options .check-icon {
+    display: none !important;
+}
+/* 只有被选中的项才显示对勾 */
+#story-duration-options .ai-list-item.selected .check-icon {
+    display: block !important;
+    color: #0a84ff;
+    font-weight: bold;
+}
+
+        /* ================== Story Viewer 显示冲突修复 ================== */
+
+/* 1. 默认隐藏两个容器 */
+.viewer-text-box,
+.viewer-image-box {
+    display: none !important; /* 默认都不显示 */
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+}
+
+/* 2. 激活状态：文本模式 */
+.viewer-text-box.active-mode {
+    display: flex !important; /* 只有加了 active-mode 才显示 */
+    z-index: 10;
+    /* 保持之前的全屏居中样式 */
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 40px;
+    box-sizing: border-box;
+    color: white;
+    font-size: 28px;
+    font-weight: 700;
+    text-align: center;
+    white-space: pre-wrap;
+}
+
+/* 3. 激活状态：图片模式 */
+.viewer-image-box.active-mode {
+    display: flex !important; /* 只有加了 active-mode 才显示 */
+    z-index: 10;
+    background: #000;
+    justify-content: center;
+    align-items: center;
+}
+
+        /* --- 1. 顶部更多按钮 (三个点) --- */
+.viewer-menu-btn {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(5px);
+    display: flex; align-items: center; justify-content: center;
+    color: white; border: none; cursor: pointer;
+    margin-right: 10px; /* 和关闭按钮的间距 */
+}
+.viewer-menu-btn svg { width: 24px; height: 24px; fill: white; }
+
+/* --- 2. 爱心点赞特效 (红色发光 + 跳动) --- */
+.viewer-action-btn.active-like svg {
+    fill: #FF3B30 !important; /* 变红 */
+    /* 红色外发光 */
+    filter: drop-shadow(0 0 8px rgba(255, 59, 48, 0.8));
+    /* Q弹动画 */
+    animation: heart-bounce 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes heart-bounce {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.3); }
+    100% { transform: scale(1); }
+}
+
+/* --- 3. 评论/弹幕滚动区 --- */
+.viewer-comments-layer {
+    position: absolute;
+    bottom: 80px; /* 在输入栏上方 */
+    left: 15px;
+    width: 70%; /* 宽度限制，不遮挡右边按钮 */
+    max-height: 200px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end; /* 从底部堆叠 */
+    gap: 8px;
+    z-index: 90;
+    pointer-events: none; /* 让点击穿透，不影响看图 */
+    /* 隐藏滚动条 */
+    scrollbar-width: none;
+}
+.viewer-comment-pill {
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+    padding: 6px 12px;
+    border-radius: 16px;
+    color: white;
+    font-size: 13px;
+    align-self: flex-start; /* 左对齐 */
+    text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+    animation: slide-up 0.3s ease-out;
+}
+@keyframes slide-up {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* --- 4. 分享弹窗列表样式 --- */
+.share-friend-item {
+    display: flex; align-items: center;
+    padding: 10px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    cursor: pointer;
+}
+.share-friend-item:active { background: rgba(255,255,255,0.1); }
+.share-avatar {
+    width: 40px; height: 40px; border-radius: 50%;
+    background-color: #333; background-size: cover; margin-right: 12px;
+}
+.share-name { font-size: 15px; color: white; flex: 1; }
+/* 选中状态 */
+.share-friend-item.selected .share-name { color: #0a84ff; font-weight: 600; }
+.share-friend-item.selected::after { content: '✔'; color: #0a84ff; }
+
+        /* ================== 快拍分享卡片样式 ================== */
+.msg-story-card {
+    width: 160px;
+    height: 240px; /* 9:16 比例 */
+    border-radius: 12px;
+    overflow: hidden;
+    position: relative;
+    background-color: #2c2c2e;
+    border: 1px solid rgba(255,255,255,0.1);
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+}
+
+/* 卡片主体内容 (图片或文字背景) */
+.story-card-body {
+    flex: 1;
+    width: 100%;
+    background-size: cover;
+    background-position: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 15px;
+    box-sizing: border-box;
+}
+
+/* 文本模式下的文字 */
+.story-card-text {
+    font-size: 16px;
+    font-weight: 600;
+    color: white;
+    text-align: center;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 5;
+    -webkit-box-orient: vertical;
+}
+
+/* 底部标签栏 */
+.story-card-footer {
+    height: 36px;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(5px);
+    display: flex;
+    align-items: center;
+    padding: 0 10px;
+    gap: 6px;
+}
+
+/* 底部小图标 */
+.story-card-icon {
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    border: 1px solid rgba(255,255,255,0.5);
+    background-size: cover;
+    background-position: center;
+    flex-shrink: 0;
+}
+
+.story-card-label {
+    font-size: 11px;
+    color: rgba(255,255,255,0.8);
+    font-weight: 500;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    line-height: 1.2;
+}
+.story-card-label span { opacity: 0.6; font-size: 9px; }
+
+/* 浅色模式适配 */
+body.light-theme .msg-story-card {
+    background-color: #fff;
+    border-color: rgba(0,0,0,0.1);
+    box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+}
+body.light-theme .story-card-footer {
+    background: rgba(255,255,255,0.9);
+    border-top-color: rgba(0,0,0,0.05);
+}
+body.light-theme .story-card-label { color: #333; }
+
+        /* ================== 修复：快拍头部按钮重叠问题 ================== */
+
+/* 1. 强制重置快拍页面关闭按钮的定位 */
+/* 因为全屏图片预览器里把 .viewer-close-btn 设为了 absolute，这里要改回 static */
+.viewer-controls .viewer-close-btn {
+    position: static !important; /* 关键：取消绝对定位，让它回到 Flex 排列中 */
+    margin-left: 10px;           /* 给它和左边的菜单按钮留点距离 */
+    transform: none !important;  /* 移除可能的位移 */
+    top: auto !important;
+    right: auto !important;
+    z-index: 10;
+    background: rgba(0, 0, 0, 0.3); /* 确保背景色一致 */
+}
+
+/* 2. 确保右侧按钮组排列正确 */
+.viewer-controls > div:last-child {
+    display: flex;
+    align-items: center;
+    gap: 5px; /* 按钮之间的间隙 */
+}
     </style>
 </head>
 <body>
@@ -5973,15 +7665,21 @@ body.light-theme .msg-quote-text { color: #555; }
 
 <div class="app-window" id="app-chat">
 
-    <!-- 1. 透明头部 -->
     <div class="app-header" style="background: transparent; border-bottom: none; z-index: 60;">
         <div class="app-back-btn" id="chat-back-btn" onclick="closeApp('app-chat')">
-            <svg style="width:20px;height:20px;fill:currentColor" viewBox="0 0 24 24"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
+            <svg style="width:20px;height:20px;fill:currentColor" viewBox="0 0 24 24">
+                <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
+            </svg>
             主屏幕
         </div>
+
         <div class="app-title" style="color:white; font-weight:600;">聊天</div>
-        <!-- 右侧加个加号，方便后面做创建功能 -->
-        <div style="position: absolute; right: 20px; font-size: 24px; color: white; cursor: pointer;" onclick="openChatTypeMenu()">+</div>
+
+        <div id="chat-header-action-btn"
+             style="position: absolute; right: 20px; font-size: 28px; color: white; cursor: pointer; font-weight:300;"
+             onclick="openChatTypeMenu()">
+            +
+        </div>
     </div>
 
     <!-- 2. 主体内容区 (Message 模块) -->
@@ -6013,13 +7711,37 @@ body.light-theme .msg-quote-text { color: #555; }
     </div>
 
     <!-- 3. 动态模块 -->
-    <div id="chat-module-moments" class="chat-module-container" style="flex:1; display:none; padding-top:20px;">
-        <div class="chat-placeholder-text">朋友圈 / 动态<br>(开发中)</div>
+    <div id="chat-module-moments" class="chat-module-container" style="flex:1; display:none; flex-direction:column; overflow:hidden;">
+
+        <div class="status-flow-container">
+        </div>
+
+        <div id="ig-feed-list" class="feed-list-container" style="flex:1; overflow-y:auto;">
+        </div>
     </div>
 
     <!-- 4. 我的模块 -->
     <div id="chat-module-me" class="chat-module-container" style="flex:1; display:none; padding-top:20px;">
-        <div class="chat-placeholder-text">个人中心<br>(开发中)</div>
+
+        <div class="wallpaper-content" style="padding: 0 16px;">
+
+            <div class="group-header" style="margin-top: 0;">我的名片</div>
+            <div class="ai-group-card" id="my-profile-card">
+            </div>
+
+            <div class="group-header" style="margin-top: 30px;">设置</div>
+            <div class="ai-group-card">
+                <div class="ai-list-item" onclick="showToast('正在打开编辑页面')">
+                    <div class="ai-item-label">编辑名片信息</div>
+                    <span style="color:#666; font-size:14px; margin-left:8px;">›</span>
+                </div>
+                <div class="ai-list-item">
+                    <div class="ai-item-label">隐私设置</div>
+                    <span style="color:#666; font-size:14px; margin-left:8px;">›</span>
+                </div>
+            </div>
+        </div>
+        <input type="file" id="profile-bg-input" accept="image/*" hidden onchange="handleProfileBgUpload(this)">
     </div>
 
     <!-- 5. 底部悬浮导航栏 -->
@@ -6234,7 +7956,9 @@ body.light-theme .msg-quote-text { color: #555; }
         </div>
 
         <div class="chat-user-info">
-            <div class="chat-user-avatar" id="chat-detail-avatar"></div>
+            <div id="chat-header-avatar-wrap" class="chat-user-avatar-wrap">
+                <div class="chat-user-avatar" id="chat-detail-avatar"></div>
+            </div>
             <div class="chat-user-name" id="chat-detail-name">用户名称</div>
             <div class="chat-user-status">Online</div>
         </div>
@@ -6288,6 +8012,58 @@ body.light-theme .msg-quote-text { color: #555; }
         </div>
     </div>
 
+</div>
+
+<div class="sub-page" id="sub-create-moment" style="background: #1c1c1e; z-index: 600;">
+
+    <div class="app-header" style="background: inherit; border-bottom: none;">
+        <div class="app-back-btn" onclick="closeSubPage('sub-create-moment')">取消</div>
+        <div class="app-title">发布动态</div>
+        <div style="position: absolute; right: 15px; top: 55px;">
+            <button class="ai-btn ai-btn-primary" onclick="publishMoment()"
+                    style="height: 32px; padding: 0 15px; font-size: 14px; border-radius: 16px;">
+                发布
+            </button>
+        </div>
+    </div>
+
+    <div class="wallpaper-content" style="padding: 0;">
+
+        <textarea id="moment-caption" class="moment-textarea" placeholder="分享当下的想法..."></textarea>
+
+        <div class="moment-upload-grid" id="moment-upload-container">
+        </div>
+
+        <input type="file" id="moment-file-input" accept="image/*" multiple hidden onchange="handleMomentImages(this)">
+    </div>
+</div>
+
+<div class="sub-page" id="sub-moment-detail" style="background: #1c1c1e; z-index: 650;">
+
+    <div class="app-header" style="background: inherit; border-bottom: 1px solid rgba(255,255,255,0.05);">
+        <div class="app-back-btn" onclick="closeSubPage('sub-moment-detail')">返回</div>
+        <div class="app-title">详情</div>
+    </div>
+
+    <div class="wallpaper-content" style="padding: 0; display:flex; flex-direction:column; overflow:hidden;">
+        <div id="moment-detail-scroll-area" style="flex:1; overflow-y:auto;">
+            <div id="moment-detail-card-container" class="detail-post-wrapper"></div>
+
+            <div style="padding: 15px 16px 5px 16px; font-size:13px; color:rgba(255,255,255,0.5); font-weight:600;">全部评论</div>
+
+            <div id="moment-comment-list" class="comments-list-container">
+            </div>
+        </div>
+    </div>
+
+    <div class="moment-footer-input">
+        <div class="chat-input-pill">
+            <input type="text" class="chat-input-real" id="moment-reply-input" placeholder="说点好听的...">
+        </div>
+        <button class="chat-footer-btn" onclick="sendMomentComment()" style="width:auto; padding:0 10px;">
+            <svg style="width:24px;height:24px;fill:#0a84ff;" viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+        </button>
+    </div>
 </div>
 
 <div class="modal-overlay" id="modal-message-menu" style="align-items: flex-end; padding-bottom: 20px;">
@@ -6490,7 +8266,204 @@ body.light-theme .msg-quote-text { color: #555; }
         </div>
     </div>
 </div>
+
+<div class="image-viewer-overlay" id="image-viewer" onclick="closeImagePreview()">
+    <div class="viewer-close-btn">×</div>
+
+    <div id="viewer-counter" class="viewer-counter">1/1</div>
+
+    <div id="viewer-gallery-container" class="viewer-gallery" onclick="event.stopPropagation()">
+    </div>
+</div>
+
+<div class="modal-overlay" id="modal-post-menu" style="align-items: flex-end; padding-bottom: 20px;">
+    <div style="position:absolute; top:0; left:0; width:100%; height:100%;" onclick="closePostMenu()"></div>
+
+    <div class="action-sheet-content">
+        <div class="sheet-group">
+            <div class="sheet-item" onclick="handlePostMenuAction('edit')">
+                <span style="color: #0a84ff;">编辑内容</span>
+            </div>
+            <div class="sheet-item" onclick="handlePostMenuAction('delete')" style="border-top: 1px solid rgba(255,255,255,0.1);">
+                <span style="color: #FF3B30;">删除帖子</span>
+            </div>
+        </div>
+
+        <div class="sheet-group" style="margin-top: 10px;">
+            <div class="sheet-item" onclick="closePostMenu()" style="font-weight: 600;">取消</div>
+        </div>
+    </div>
+</div>
+
+<div class="sub-page" id="sub-create-story" style="background: #1c1c1e; z-index: 680;">
+
+    <div class="app-header" style="background: rgba(30, 30, 35, 0.9); border-bottom: none; z-index: 20; backdrop-filter: blur(20px);">
+        <div class="app-back-btn" onclick="closeSubPage('sub-create-story')">取消</div>
+        <div class="app-title" id="story-creator-title">发布快拍</div>
+
+        <button class="ai-btn ai-btn-primary" onclick="publishStory()"
+                style="
+                    height: 32px; padding: 0 15px; font-size: 14px; border-radius: 16px;
+
+                    /* 垂直居中 FIX：向下推 50% (从顶部 44px 算起)，再向上拉回自身高度 */
+                    position: absolute; right: 15px; top: 50%; transform: translateY(-50%) translateY(22px);
+                ">
+            发布
+        </button>
+    </div>
+
+    <div class="story-mode-toolbar">
+        <button onclick="switchStoryMode('text')" id="btn-mode-text" class="mode-btn active">文字模式</button>
+        <button onclick="switchStoryMode('image')" id="btn-mode-image" class="mode-btn">图片快拍</button>
+    </div>
+
+    <div class="story-content-area" id="story-content-area">
+
+        <div id="story-mode-text" class="story-mode-pane active color-1" onclick="cycleStoryColor(this)">
+            <textarea id="story-text-input" placeholder="输入文字... (点击背景切换颜色)" maxlength="150" class="story-full-textarea"></textarea>
+            <span class="story-text-tip">点击背景切换颜色</span>
+        </div>
+
+        <div id="story-mode-image" class="story-mode-pane" style="display:none;">
+            <div id="story-image-preview" class="story-image-preview-box">
+                <textarea id="story-image-text-input" placeholder="点此添加文字 (可选)" class="story-overlay-textarea" maxlength="150"></textarea>
+            </div>
+
+            <div class="story-image-upload-btn" onclick="document.getElementById('story-image-input').click()">
+                📷 选择照片
+            </div>
+        </div>
+
+    </div>
+
+    <input type="file" id="story-image-input" accept="image/*" hidden onchange="handleStoryImageUpload(this)">
+</div>
+
+<div class="sub-page" id="sub-story-viewer" style="background: #000; z-index: 1000;">
+
+    <div class="viewer-progress-bar-container">
+        <div class="progress-segment" id="story-progress-fill"></div>
+    </div>
+
+    <div class="viewer-controls">
+        <div class="viewer-user-info">
+            <div class="viewer-avatar-mini" id="viewer-avatar"></div>
+            <div class="viewer-text-col">
+                <span class="viewer-username" id="viewer-username">用户名称</span>
+                <span class="viewer-time" id="viewer-time">刚刚</span>
+            </div>
+        </div>
+
+        <div style="display: flex; align-items: center;">
+            <button class="viewer-menu-btn" onclick="openStoryMoreMenu(); event.stopPropagation();">
+                <svg viewBox="0 0 24 24"><path d="M6 10c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm12 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm-6 0c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>
+            </button>
+
+            <button class="viewer-close-btn" onclick="closeSubPage('sub-story-viewer')">
+                <svg viewBox="0 0 24 24" fill="white" width="24" height="24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+            </button>
+        </div>
+    </div>
+
+    <div class="story-viewer-content" id="story-viewer-content">
+        <div id="viewer-text-content" class="viewer-text-box" style="display:none;">
+            <p id="viewer-text-p"></p>
+        </div>
+        <div id="viewer-image-content" class="viewer-image-box" style="display:none;">
+            <img id="viewer-image-img" src="">
+            <p id="viewer-image-text-p" class="viewer-image-overlay-text"></p>
+        </div>
+    </div>
+
+    <div class="viewer-comments-layer" id="viewer-comments-box">
+    </div>
+
+    <div class="story-viewer-footer" id="story-viewer-footer">
+        <div class="viewer-input-box">
+            <input type="text" id="story-reply-input" class="viewer-reply-input" placeholder="发送消息..." onclick="event.stopPropagation(); pauseStory();">
+            <button class="viewer-send-btn" onclick="sendStoryReply(); event.stopPropagation();">
+                <svg viewBox="0 0 24 24" fill="white" width="18" height="18"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+            </button>
+        </div>
+
+        <div class="viewer-icon-group">
+            <button class="viewer-action-btn" id="story-like-btn" onclick="likeStory(); event.stopPropagation();">
+                <svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+            </button>
+            <button class="viewer-action-btn" onclick="openShareModal(); event.stopPropagation(); pauseStory();">
+                <svg viewBox="0 0 24 24"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="modal-share-story">
+    <div class="modal-content" style="height: 60%; display: flex; flex-direction: column;">
+        <div class="modal-header"><span class="modal-title">发送给...</span></div>
+
+        <input type="text" class="search-box" id="share-search" placeholder="搜索好友" oninput="renderShareList()">
+
+        <div id="share-friend-list" style="flex: 1; overflow-y: auto; margin-bottom: 15px;">
+        </div>
+
+        <div class="modal-footer">
+            <button class="modal-btn btn-cancel" onclick="closeModal('modal-share-story'); playStory();">取消</button>
+            <button class="modal-btn btn-save" onclick="confirmShareStory()">发送</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="modal-story-duration">
+    <div class="modal-content" style="width: 85%; max-width: 320px;">
+        <div class="modal-header">
+            <span class="modal-title">快拍有效期</span>
+        </div>
+
+        <div style="font-size: 14px; color: rgba(255,255,255,0.7); margin-bottom: 15px;">
+            请选择你的快拍在动态流中显示的时长：
+        </div>
+
+        <div class="ai-group-card" id="story-duration-options" style="background:transparent; border:none; margin-bottom:0;">
+        </div>
+
+        <div class="modal-footer" style="margin-top: 20px;">
+            <button class="modal-btn btn-cancel" onclick="closeModal('modal-story-duration')">取消</button>
+            <button class="modal-btn btn-save" id="btn-confirm-duration">确认发布</button>
+        </div>
+    </div>
+</div>
+
 <script>
+   
+    // 🚨 全局头像 URL 助手：兼容 Base64/Blob，解决头像不显示的问题
+const getSafeUrl = async (key) => {
+    try {
+        const data = await dbHelper.get(key);
+        if (!data) return '';
+
+        if (data instanceof Blob || data instanceof File) {
+            return URL.createObjectURL(data);
+        }
+        if (typeof data === 'string' && data.startsWith('data:image')) {
+            return data;
+        }
+    } catch(e) {
+        console.warn(`[Avatar Load Error] Key ${key}:`, e);
+    }
+    return '';
+};
+
+// 🚨 关键助手：优先查找 Chat Avatar Key，没有则回退到 Role Book Key
+const getRoleChatAvatarUrl = async (roleId) => {
+    // 1. 尝试查找聊天会话头像 (最新的/已同步的)
+    let url = await getSafeUrl(`chat_avatar_${roleId}`);
+
+    // 2. 如果聊天 Key 为空，则回退查找角色书的 Key
+    if (!url) {
+        url = await getSafeUrl(`role_${roleId}_avatar`);
+    }
+    return url;
+};
     let currentQuoteData = null;
 
     // --- 补上通用的弹窗函数 ---
@@ -10186,117 +12159,119 @@ initCountdownWidget();
         }
     }
 
-    // 2. 切换底部 Nav (消息/动态/我的) - 更新版
-    function switchChatBottomNav(moduleId, btnEl) {
-        // 1. 切换按钮高亮样式
+    // 2. 切换底部 Nav (消息/动态/我的) - 修复版：动态控制右上角按钮
+function switchChatBottomNav(moduleId, btnEl) {
+    // 1. 切换按钮高亮
+    if(btnEl) {
         document.querySelectorAll('.chat-nav-item').forEach(el => el.classList.remove('active'));
         btnEl.classList.add('active');
-
-        // 2. 切换中间大模块显示
-        document.querySelectorAll('.chat-module-container').forEach(el => el.style.display = 'none');
-        document.getElementById(`chat-module-${moduleId}`).style.display = 'flex';
-
-        // 3. 动态修改标题
-        const titleMap = { 'msg': '聊天', 'moments': '动态', 'me': '我的' };
-        document.querySelector('#app-chat .app-title').textContent = titleMap[moduleId];
-
-        // 4. 【核心修改】控制返回按钮显示/隐藏
-        const backBtn = document.getElementById('chat-back-btn');
-        if (moduleId === 'msg') {
-            backBtn.style.display = 'flex'; // 在消息页显示返回
-        } else {
-            backBtn.style.display = 'none'; // 在动态/我的页隐藏
-        }
     }
 
-    // ================== 好友列表逻辑 (滑动+头像修复+点击修复) ==================
+    // 2. 切换主模块显示
+    document.querySelectorAll('.chat-module-container').forEach(el => el.style.display = 'none');
+    document.getElementById(`chat-module-${moduleId}`).style.display = 'flex';
 
-    let deleteTargetType = 'chat'; // 标记当前要删除的是 'chat'(会话) 还是 'friend'(好友)
+    // 3. 更新标题和右上角按钮
+    const titleMap = { 'msg': '聊天', 'moments': '动态', 'me': '我的' };
+    document.querySelector('#app-chat .app-title').textContent = titleMap[moduleId];
+    // 获取右上角按钮和返回按钮
+    const actionBtn = document.getElementById('chat-header-action-btn');
+    const backBtn = document.getElementById('chat-back-btn');
 
-    // 1. 加载好友列表 (核心重写)
-    async function loadChatFriends() {
-        const container = document.getElementById('view-chat-friend');
-        // 读取角色书数据
-        let roles = JSON.parse(localStorage.getItem('role_list_meta') || '[]');
+    // --- 🚨 核心修改：根据 Tab 改变右上角按钮功能 ---
+    if (moduleId === 'msg') {
+        // [消息页]：显示加号 -> 创建聊天 [cite: 1238]
+        backBtn.style.display = 'flex';
+        actionBtn.style.display = 'block';
+        actionBtn.innerHTML = '+'; // 或者是 SVG 图标
+        actionBtn.onclick = openChatTypeMenu; // 绑定创建聊天函数
 
-        if (roles.length === 0) {
-            container.innerHTML = '<div class="chat-placeholder-text">暂无好友<br>去角色书创建几个吧</div>';
-            return;
-        }
+    } else if (moduleId === 'moments') {
+        // [动态页]：显示加号(或相机) -> 发动态 [cite: 1239, 1240]
+        backBtn.style.display = 'none'; // 动态页是一级页面，通常不显示返回
+        actionBtn.style.display = 'block';
 
-        // 排序：置顶的排前面
-        roles.sort((a, b) => {
-            if (a.isPinned && !b.isPinned) return -1;
-            if (!a.isPinned && b.isPinned) return 1;
-            return 0;
-        });
+        // 换个更像“发帖”的图标 (这里用 Unicode 相机 📷 或者继续用 +)
+        // actionBtn.innerHTML = '📷';
+        actionBtn.innerHTML = '+';
+        actionBtn.onclick = openCreateMoment; // 🚨 绑定发帖函数
 
-        container.innerHTML = ''; // 清空列表
+        initMoments(); // 刷新动态列表
 
-        for (const role of roles) { // <-- 循环变量是 'role'
-            // A. 核心修复：先从数据库读头像
-            let avatarUrl = '';
-            try {
-                const blob = await dbHelper.get(`role_${role.id}_avatar`);
-                if(blob) avatarUrl = URL.createObjectURL(blob);
-            } catch(e){}
-
-            // B. 构建滑动容器
-            const wrapper = document.createElement('div');
-            wrapper.className = `chat-swipe-wrapper ${role.isPinned ? 'pinned' : ''}`;
-
-            // C. 主卡片 (头像 + 名字)
-            const mainCard = document.createElement('div');
-            mainCard.className = 'chat-main-card';
-
-            // --- 🚨 修复点：将 chat 替换为 role，并使用 role 的头像 ID 🚨 ---
-            mainCard.onclick = function() {
-                createOrOpenChatFromFriend(role.id, role.name);
-            };
-            // -------------------------------------------------------------
-
-            // 这里的样式和消息列表保持高度一致
-            mainCard.innerHTML = `
-                <div class="role-card-img" style="${avatarUrl ? 'background-image:url('+avatarUrl+')' : ''}; width:50px; height:50px; border-radius:50%; margin-right:15px; background-size:cover; background-position:center; background-color:#333; flex-shrink:0;">
-                    ${!avatarUrl ? `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#888;">${role.name[0]}</div>` : ''}
-                </div>
-                <div class="role-card-info" style="flex:1;">
-                    <div class="role-card-name" style="font-size:17px; font-weight:600;">${role.name}</div>
-                    <div class="role-card-desc" style="font-size:13px; opacity:0.6; margin-top:2px;">${role.desc || '暂无介绍'}</div>
-                </div>
-            `;
-
-            // D. 右侧操作按钮
-            const actions = document.createElement('div');
-            actions.className = 'chat-swipe-actions';
-
-            // 置顶按钮
-            const pinBtn = document.createElement('div');
-            pinBtn.className = 'swipe-btn btn-pin';
-            pinBtn.textContent = role.isPinned ? '取消' : '置顶';
-            pinBtn.onclick = (e) => {
-                e.stopPropagation();
-                toggleFriendPin(role.id);
-            };
-
-            // 删除按钮
-            const delBtn = document.createElement('div');
-            delBtn.className = 'swipe-btn btn-del';
-            delBtn.textContent = '删除';
-            delBtn.onclick = (e) => {
-                e.stopPropagation();
-                // 调用通用的删除页面，传入 'friend' 类型
-                openDeletePageCommon('friend', role.id, role.name);
-            };
-
-            actions.appendChild(pinBtn);
-            actions.appendChild(delBtn);
-
-            wrapper.appendChild(mainCard);
-            wrapper.appendChild(actions);
-            container.appendChild(wrapper);
-        }
+    } else if (moduleId === 'me') {
+        // [我的页]：隐藏按钮 (符合您的要求)
+        backBtn.style.display = 'none';
+        actionBtn.style.display = 'none';
+        renderMyProfileCard();
     }
+}
+    // ================== 好友列表逻辑 (修复版：使用双重查找) ==================
+async function loadChatFriends() {
+    const container = document.getElementById('view-chat-friend');
+    if (!container) return;
+
+    let roles = JSON.parse(localStorage.getItem('role_list_meta') || '[]');
+    if (roles.length === 0) {
+        container.innerHTML = '<div class="chat-placeholder-text">暂无好友<br>去角色书创建几个吧</div>';
+        return;
+    }
+
+    roles.sort((a, b) => {
+        if (a.isPinned && !b.isPinned) return -1;
+        if (!a.isPinned && b.isPinned) return 1;
+        return 0;
+    });
+
+    container.innerHTML = '';
+
+    for (const role of roles) {
+        // 🚨 核心修复：使用双重查找助手
+        let avatarUrl = await getRoleChatAvatarUrl(role.id);
+
+        // 构造背景样式字符串，如果 URL 为空，则样式为 none
+        const bgStyle = avatarUrl ? `background-image:url(${avatarUrl})` : 'background-image:none; background-color:#333';
+
+        const wrapper = document.createElement('div');
+        wrapper.className = `chat-swipe-wrapper ${role.isPinned ? 'pinned' : ''}`;
+
+        const mainCard = document.createElement('div');
+        mainCard.className = 'chat-main-card';
+
+        mainCard.onclick = function() {
+            createOrOpenChatFromFriend(role.id, role.name);
+        };
+
+        // 渲染头像
+        mainCard.innerHTML = `
+            <div class="role-card-img" style="${bgStyle}; width:50px; height:50px; border-radius:50%; margin-right:15px; background-size:cover; background-position:center; flex-shrink:0;">
+                ${!avatarUrl ? `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#888;">${role.name[0]}</div>` : ''}
+            </div>
+            <div class="role-card-info" style="flex:1;">
+                <div class="role-card-name" style="font-size:17px; font-weight:600;">${role.name}</div>
+                <div class="role-card-desc" style="font-size:13px; opacity:0.6; margin-top:2px;">${role.desc || '暂无介绍'}</div>
+            </div>
+        `;
+
+        const actions = document.createElement('div');
+        actions.className = 'chat-swipe-actions';
+
+        const pinBtn = document.createElement('div');
+        pinBtn.className = 'swipe-btn btn-pin';
+        pinBtn.textContent = role.isPinned ? '取消' : '置顶';
+        pinBtn.onclick = (e) => { e.stopPropagation(); toggleFriendPin(role.id); };
+
+        const delBtn = document.createElement('div');
+        delBtn.className = 'swipe-btn btn-del';
+        delBtn.textContent = '删除';
+        delBtn.onclick = (e) => { e.stopPropagation(); openDeletePageCommon('friend', role.id, role.name); };
+
+        actions.appendChild(pinBtn);
+        actions.appendChild(delBtn);
+        wrapper.appendChild(mainCard);
+        wrapper.appendChild(actions);
+        container.appendChild(wrapper);
+    }
+}
 
     // ================== 聊天创建逻辑 (完整版) ==================
 
@@ -10615,92 +12590,90 @@ initCountdownWidget();
         renderChatSessionList();
     }
 
-    // ================== 列表渲染逻辑 (最终修正版) ==================
-    async function renderChatSessionList() {
-        const container = document.getElementById('view-chat-list');
-        if (!container) return; // 防止找不到容器报错
+    // ================== 4. 【列表渲染逻辑】(修复版：带已读灰圈) ==================
+async function renderChatSessionList() {
+    const container = document.getElementById('view-chat-list');
+    if (!container) return;
 
-        let list = JSON.parse(localStorage.getItem('chat_sessions') || '[]');
+    let list = JSON.parse(localStorage.getItem('chat_sessions') || '[]');
+    if(list.length === 0) {
+        container.innerHTML = '<div class="chat-placeholder-text">暂无消息<br>找个好友聊聊天吧</div>';
+        return;
+    }
 
-        if(list.length === 0) {
-            container.innerHTML = '<div class="chat-placeholder-text">暂无消息<br>点击右上角 + 创建</div>';
-            return;
+    list.sort((a, b) => {
+        if (a.isPinned && !b.isPinned) return -1;
+        if (!a.isPinned && b.isPinned) return 1;
+        return 0;
+    });
+
+    container.innerHTML = '';
+
+    const stories = JSON.parse(localStorage.getItem('active_stories') || '{}');
+    const readList = JSON.parse(localStorage.getItem('read_stories_list') || '{}');
+
+    for(const chat of list) {
+        let avatarUrl = '';
+        try {
+            const blob = await dbHelper.get(`chat_avatar_${chat.id}`);
+            if(blob) avatarUrl = URL.createObjectURL(blob);
+        } catch(e){}
+
+        // 检查 Story 状态
+        const hasStory = stories[chat.id] && (Date.now() - stories[chat.id] < 24 * 60 * 60 * 1000);
+        // 检查是否已读
+        const isRead = readList[chat.id] ? true : false;
+
+        // 确定光圈 class
+        let ringClass = '';
+        if (hasStory) {
+            ringClass = isRead ? 'read-story' : 'has-story';
         }
 
-        // 排序：置顶的排前面
-        list.sort((a, b) => {
-            if (a.isPinned && !b.isPinned) return -1;
-            if (!a.isPinned && b.isPinned) return 1;
-            return 0;
-        });
+        const wrapper = document.createElement('div');
+        wrapper.className = `chat-swipe-wrapper ${chat.isPinned ? 'pinned' : ''}`;
 
-        container.innerHTML = ''; // 清空列表
+        const mainCard = document.createElement('div');
+        mainCard.className = 'chat-main-card';
+        // 点击头像看 Story，点击卡片进聊天
+        mainCard.onclick = () => openChatDetail(chat.id, chat.name, `chat_avatar_${chat.id}`);
 
-        // --- 循环开始 ---
-        for(const chat of list) {
-
-            // 1. 获取头像
-            let avatarUrl = '';
-            try {
-                const blob = await dbHelper.get(`chat_avatar_${chat.id}`);
-                if(blob) avatarUrl = URL.createObjectURL(blob);
-            } catch(e){}
-
-            // 2. 创建结构
-            const wrapper = document.createElement('div');
-            wrapper.className = `chat-swipe-wrapper ${chat.isPinned ? 'pinned' : ''}`;
-
-            const mainCard = document.createElement('div');
-            mainCard.className = 'chat-main-card';
-
-            // --- 🚨 核心修复点：这里必须调用 openChatDetail 🚨 ---
-            // 不要改动这里的任何标点符号
-            mainCard.onclick = function() {
-                openChatDetail(chat.id, chat.name, `chat_avatar_${chat.id}`);
-            };
-            // -----------------------------------------------------
-
-            mainCard.innerHTML = `
-                <div class="role-card-img" style="${avatarUrl ? 'background-image:url('+avatarUrl+')' : ''}; width:50px; height:50px; border-radius:50%; margin-right:15px; background-size:cover; background-position:center; background-color:#333;">
+        mainCard.innerHTML = `
+            <div class="role-card-img-wrapper ${ringClass}" ${hasStory ? `onclick="event.stopPropagation(); openStoryViewer('${chat.id}')"` : ''}>
+                <div class="role-card-img" style="${avatarUrl ? 'background-image:url('+avatarUrl+')' : ''}">
                     ${!avatarUrl ? `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#888;">${chat.name[0]}</div>` : ''}
                 </div>
-                <div class="role-card-info" style="flex:1;">
-                    <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
-                        <div class="role-card-name" style="font-size:17px; font-weight:600;">${chat.name} ${chat.type==='group' ? '<span style="font-size:12px;opacity:0.6;">(群)</span>' : ''}</div>
-                        <div style="font-size:12px; opacity:0.5;">${chat.time}</div>
-                    </div>
-                    <div class="role-card-desc" style="font-size:14px; opacity:0.7; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${chat.lastMsg}</div>
+            </div>
+
+            <div class="role-card-info" style="flex:1;">
+                <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                    <div class="role-card-name" style="font-size:17px; font-weight:600;">${chat.name}</div>
+                    <div style="font-size:12px; opacity:0.5;">${chat.time}</div>
                 </div>
-            `;
+                <div class="role-card-desc" style="font-size:14px; opacity:0.7; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${chat.lastMsg}</div>
+            </div>
+        `;
 
-            // 3. 右侧按钮
-            const actions = document.createElement('div');
-            actions.className = 'chat-swipe-actions';
+        const actions = document.createElement('div');
+        actions.className = 'chat-swipe-actions';
 
-            const pinBtn = document.createElement('div');
-            pinBtn.className = 'swipe-btn btn-pin';
-            pinBtn.textContent = chat.isPinned ? '取消' : '置顶';
-            pinBtn.onclick = (e) => {
-                e.stopPropagation();
-                toggleChatPin(chat.id);
-            };
+        const pinBtn = document.createElement('div');
+        pinBtn.className = 'swipe-btn btn-pin';
+        pinBtn.textContent = chat.isPinned ? '取消' : '置顶';
+        pinBtn.onclick = (e) => { e.stopPropagation(); toggleChatPin(chat.id); };
 
-            const delBtn = document.createElement('div');
-            delBtn.className = 'swipe-btn btn-del';
-            delBtn.textContent = '删除';
-            delBtn.onclick = (e) => {
-                e.stopPropagation();
-                openChatDeletePage(chat.id, chat.name);
-            };
+        const delBtn = document.createElement('div');
+        delBtn.className = 'swipe-btn btn-del';
+        delBtn.textContent = '删除';
+        delBtn.onclick = (e) => { e.stopPropagation(); openDeletePageCommon('chat', chat.id, chat.name); };
 
-            actions.appendChild(pinBtn);
-            actions.appendChild(delBtn);
-
-            wrapper.appendChild(mainCard);
-            wrapper.appendChild(actions);
-            container.appendChild(wrapper);
-        }
+        actions.appendChild(pinBtn);
+        actions.appendChild(delBtn);
+        wrapper.appendChild(mainCard);
+        wrapper.appendChild(actions);
+        container.appendChild(wrapper);
     }
+}
 
     // ================== 列表功能：置顶 / 取消置顶 ==================
 
@@ -10787,8 +12760,10 @@ initCountdownWidget();
     let currentChatId = null; // 当前正在聊天的 ID
 
     // 4. 气泡上屏工具 (适配引用显示)
-// 增加第5个参数: quoteData
-function appendChatBubble(side, text, doScroll = true, explicitId = null, quoteData = null) {
+// ================== 气泡上屏工具 (支持快拍卡片版) ==================
+// ================== 气泡上屏工具 (卡片渲染修复版) ==================
+// ⚠️ 注意：函数必须是 async 的，因为它需要等待图片加载
+async function appendChatBubble(side, text, doScroll = true, explicitId = null, quoteData = null, extraOptions = null) {
     const box = document.getElementById('chat-detail-msgs');
     if (!box) return;
 
@@ -10797,35 +12772,95 @@ function appendChatBubble(side, text, doScroll = true, explicitId = null, quoteD
     const div = document.createElement('div');
     div.className = `chat-msg ${side}`;
     div.id = `msg-node-${msgId}`;
-
     div.onclick = function(event) {
-        openMessageMenu(msgId, side, event);
+        if(typeof openMessageMenu === 'function') openMessageMenu(msgId, side, event);
     };
 
     if (side === 'system') {
         div.innerHTML = `<span>${text}</span>`;
     } else {
         const avatarHtml = `<div class="chat-msg-avatar" style="background-image: var(--avatar-${side})"></div>`;
+        let contentHtml = '';
 
-        // --- 构建引用块 HTML ---
-        let quoteHtml = '';
-        if (quoteData) {
-            quoteHtml = `
-                <div class="msg-quote-block">
-                    <div class="msg-quote-sender">${quoteData.name}:</div>
-                    <div class="msg-quote-text">${quoteData.text}</div>
+        // ➤ 分支 A: 渲染快拍卡片
+        if (extraOptions && extraOptions.isStoryShare && extraOptions.storyData) {
+            const sData = extraOptions.storyData;
+
+            // 1. 获取发布者头像
+            let miniAvatarUrl = '';
+            if (sData.ownerId === 'user_me') {
+                miniAvatarUrl = await getSafeUrl('userAvatar_main');
+            } else {
+                miniAvatarUrl = await getRoleChatAvatarUrl(sData.ownerId);
+            }
+            // 默认头像兜底
+            if (!miniAvatarUrl || miniAvatarUrl === 'null') {
+                miniAvatarUrl = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI2ZmZiI+PGNpcmNsZSBjeD0iMTIiIGN5PSIxMiIgcj0iMTIiIGZpbGwtb3BhY2l0eT0iMC4zIi8+PC9zdmc+';
+            }
+
+            // 2. 准备内容样式
+            let bodyStyle = '';
+            let textOverlay = '';
+
+            if (sData.type === 'image' && sData.mediaKey) {
+                // 图片模式
+                const imgUrl = await getSafeUrl(sData.mediaKey);
+                bodyStyle = `background-image: url(${imgUrl});`;
+            } else {
+                // 文字模式：根据 class 映射颜色
+                const colorMap = {
+                    'color-1': 'linear-gradient(135deg, #FF9A9E 0%, #FAD0C4 100%)',
+                    'color-2': 'linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%)',
+                    'color-3': 'linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%)',
+                    'color-4': 'linear-gradient(135deg, #f7ff00 0%, #db36a4 100%)',
+                    'color-5': 'linear-gradient(135deg, #232526 0%, #414345 100%)'
+                };
+                // 默认为 color-1
+                const bg = colorMap[sData.bgClass] || colorMap['color-1'];
+                bodyStyle = `background: ${bg};`;
+                textOverlay = `<div class="story-card-text">${sData.content || ''}</div>`;
+            }
+
+            // ... (前面的代码不变) ...
+
+            // 3. 生成卡片 HTML (修改版：增加 onclick)
+            // 使用 encodeURIComponent 确保对象转字符串后 HTML 格式安全
+            const safeDataStr = encodeURIComponent(JSON.stringify(sData));
+
+            contentHtml = `
+                <div class="msg-story-card" onclick="viewSharedStory(event, '${safeDataStr}')">
+                    <div class="story-card-body" style="${bodyStyle}">
+                        ${textOverlay}
+                    </div>
+                    <div class="story-card-footer">
+                        <div class="story-card-icon" style="background-image: url(${miniAvatarUrl})"></div>
+                        <div class="story-card-label">
+                            快拍
+                            <span>点击查看</span>
+                        </div>
+                    </div>
                 </div>
             `;
         }
-        // ---------------------
+        // ➤ 分支 B: 普通文本气泡
+        else {
+            let quoteHtml = '';
+            if (quoteData && quoteData.text) {
+                quoteHtml = `
+                    <div class="msg-quote-block">
+                        <div class="msg-quote-sender">${quoteData.name}:</div>
+                        <div class="msg-quote-text">${quoteData.text}</div>
+                    </div>
+                `;
+            }
+            contentHtml = `<div class="msg-bubble-listen">${quoteHtml}${text}</div>`;
+        }
 
-        // 把引用块放在正文前面
-        const bubbleHtml = `<div class="msg-bubble-listen">${quoteHtml}${text}</div>`;
-
+        // 组合头像和内容
         if (side === 'left') {
-            div.innerHTML = avatarHtml + bubbleHtml;
+            div.innerHTML = avatarHtml + contentHtml;
         } else {
-            div.innerHTML = bubbleHtml + avatarHtml;
+            div.innerHTML = contentHtml + avatarHtml;
         }
     }
 
@@ -11160,9 +13195,6 @@ async function processReplies(replies, index) {
         switchChatTopTab('list');
     }
 
-    // 页面加载完成后立即执行初始化
-    initChatAppLoad();
-
     // ===========================================
     // ... (可能还有其他 App 的初始化代码，确保放在这之后) ...
 
@@ -11235,57 +13267,6 @@ function closeMessageMenu() {
     // ⚠️ 关键修改：这里【不要】清空 currentMessageId
     // 因为 handleMessageAction 紧接着需要读取这个 ID 来执行删除
     // currentMessageId = null;  <-- 这行旧代码要去掉或注释掉
-}
-
-
-    // 4. 气泡上屏工具 (修复版：接收 5 个参数)
-function appendChatBubble(side, text, doScroll = true, explicitId = null, quoteData = null) {
-    const box = document.getElementById('chat-detail-msgs');
-    if (!box) return;
-
-    const msgId = explicitId || (Date.now().toString() + Math.random().toString(36).substr(2, 5));
-
-    const div = document.createElement('div');
-    div.className = `chat-msg ${side}`;
-    div.id = `msg-node-${msgId}`;
-
-    div.onclick = function(event) {
-        if(typeof openMessageMenu === 'function') openMessageMenu(msgId, side, event);
-    };
-
-    if (side === 'system') {
-        div.innerHTML = `<span>${text}</span>`;
-    } else {
-        const avatarHtml = `<div class="chat-msg-avatar" style="background-image: var(--avatar-${side})"></div>`;
-
-        // --- 核心：构建引用块 HTML ---
-        let quoteHtml = '';
-        // 只有当 quoteData 真的有内容时才渲染
-        if (quoteData && quoteData.text) {
-            quoteHtml = `
-                <div class="msg-quote-block">
-                    <div class="msg-quote-sender">${quoteData.name}:</div>
-                    <div class="msg-quote-text">${quoteData.text}</div>
-                </div>
-            `;
-        }
-        // ---------------------
-
-        // 将引用块放在正文前面
-        const bubbleHtml = `<div class="msg-bubble-listen">${quoteHtml}${text}</div>`;
-
-        if (side === 'left') {
-            div.innerHTML = avatarHtml + bubbleHtml;
-        } else {
-            div.innerHTML = bubbleHtml + avatarHtml;
-        }
-    }
-
-    box.appendChild(div);
-
-    if (doScroll) {
-        setTimeout(() => { box.scrollTop = box.scrollHeight; }, 50);
-    }
 }
 
 // ================== 3. 处理消息菜单操作 (终极整合版) ==================
@@ -11878,6 +13859,29 @@ function confirmBatchDelete() {
             // 关窗
             closeTextEditModal();
         }
+
+        // ... (接在 chat-message 的判断后面) ...
+
+        // 4. 🆕 新增：修改动态文字
+        else if (editingTextField === 'moment-text') {
+            if (currentMenuPostIndex !== -1 && igPostsData[currentMenuPostIndex]) {
+                // 更新数据
+                igPostsData[currentMenuPostIndex].text = val;
+                saveMomentsData(); // 保存
+
+                // 刷新界面
+                renderFeedList();
+
+                // 如果详情页开着，也要刷新详情页的内容
+                // 简单粗暴的方法：重新调用 openMomentDetail 刷新 DOM
+                // 或者手动更新 DOM
+                const detailText = document.querySelector('#moment-detail-card-container .feed-text');
+                if(detailText) detailText.textContent = val;
+
+                showToast("已修改");
+            }
+            closeTextEditModal();
+        }
     }
 
     // 5. 世界观管理
@@ -12095,61 +14099,86 @@ function confirmBatchDelete() {
     }
 
     // 8. 应用设置到聊天视图 (Apply)
-    // 1. 进入聊天详情 (修复版：加载历史引用)
+    // ================== 进入聊天详情 (头像加载修复版) ==================
 async function openChatDetail(chatId, name, avatarBlobName) {
     currentChatId = chatId;
 
+    // 1. 更新顶部名字
     const nameEl = document.getElementById('chat-detail-name');
     if(nameEl) nameEl.textContent = name;
 
-    const avatarEl = document.getElementById('chat-detail-avatar');
-    if(avatarEl) avatarEl.style.backgroundImage = 'none';
+    // 2. 🚨 核心修复：打开聊天时，强制应用一次该聊天的专属设置 (头像、背景、气泡)
+    // 这行代码会去读取数据库里的 user_avatar_xxx 并应用到 CSS 变量里
+    await applyChatSettingsToView();
 
-    // 加载头像逻辑 (简化版，保留你原有的逻辑即可)
-    if (avatarEl && avatarBlobName) {
-        dbHelper.get(avatarBlobName).then(blob => {
-            if(blob) {
-                const url = URL.createObjectURL(blob);
-                avatarEl.style.backgroundImage = `url(${url})`;
-                const page = document.getElementById('sub-chat-detail');
-                if(page) page.style.setProperty('--avatar-left', `url(${url})`);
-            }
-        });
+    // --- 以下是头部大图的 fallback 逻辑 (保持不变，作为双重保险) ---
+    let currentLeftAvatarUrl = '';
+
+    // A. 尝试获取对方头像
+    if (avatarBlobName) {
+        try {
+            const blob = await dbHelper.get(avatarBlobName);
+            if (blob) currentLeftAvatarUrl = (blob instanceof Blob || blob instanceof File) ? URL.createObjectURL(blob) : blob;
+        } catch(e) {}
     }
 
-    // 加载用户头像
-    const page = document.getElementById('sub-chat-detail');
-    if(page) {
-        dbHelper.get(`user_avatar_${chatId}`).then(userBlob => {
-            if(!userBlob) return dbHelper.get('userAvatar_main');
-            return userBlob;
-        }).then(userBlob => {
-            if(userBlob) page.style.setProperty('--avatar-right', `url(${URL.createObjectURL(userBlob)})`);
-            else page.style.setProperty('--avatar-right', 'none');
-        });
+    // B. 更新头部 UI (大头像)
+    const headerAvatar = document.getElementById('chat-detail-avatar');
+    if (headerAvatar) {
+        // 如果 applyChatSettingsToView 已经设置了头像，这里其实是多余的，但保留作为保险
+        // 优先显示 currentLeftAvatarUrl，如果没有则显示默认
+        if (currentLeftAvatarUrl) {
+            headerAvatar.style.backgroundImage = `url(${currentLeftAvatarUrl})`;
+        }
     }
 
-    // --- 🚨 加载消息历史 (重点在这里) ---
+    // 3. 头部光圈逻辑
+    const stories = JSON.parse(localStorage.getItem('active_stories') || '{}');
+    const readMap = JSON.parse(localStorage.getItem('read_stories_map') || '{}');
+    const wrapEl = document.getElementById('chat-header-avatar-wrap');
+
+    if (wrapEl) {
+        wrapEl.className = 'chat-user-avatar-wrap';
+        wrapEl.onclick = null;
+
+        const storyTime = stories[chatId];
+        if (storyTime && (Date.now() - storyTime < 86400000)) {
+            const lastRead = readMap[chatId] || 0;
+            const isRead = lastRead >= storyTime;
+
+            if (isRead) wrapEl.classList.add('read-story');
+            else wrapEl.classList.add('has-story');
+
+            wrapEl.onclick = () => openStoryViewer(chatId);
+        }
+    }
+
+    // 4. 加载历史消息
     const msgBox = document.getElementById('chat-detail-msgs');
     if(msgBox) {
         msgBox.innerHTML = '';
-
         const history = await loadChatHistory(chatId);
 
         if (history.length === 0) {
             msgBox.innerHTML = `<div class="chat-msg system"><span>新会话已开启</span></div>`;
         } else {
-            history.forEach(msg => {
-                // 🚨 这里的参数顺序必须对：side, text, scroll, id, QUOTE
-                appendChatBubble(msg.sender, msg.text, false, msg.id, msg.quote);
-            });
-        }
+            for (const msg of history) {
+                // 检查是否是快拍分享
+                let extra = null;
+                if (msg.isStoryShare && msg.storyData) {
+                    extra = {
+                        isStoryShare: true,
+                        storyData: msg.storyData
+                    };
+                }
 
+                await appendChatBubble(msg.sender, msg.text, false, msg.id, msg.quote, extra);
+            }
+        }
         setTimeout(() => { msgBox.scrollTop = msgBox.scrollHeight; }, 100);
     }
 
     openSubPage('sub-chat-detail');
-    if(typeof applyChatSettingsToView === 'function') applyChatSettingsToView();
 }
 
     // 9. 危险操作
@@ -12349,6 +14378,2134 @@ async function openChatDetail(chatId, name, avatarBlobName) {
         // 重新渲染界面
         renderWorldTags();
     }
+
+    // ================== 🟢 动态/朋友圈 完整逻辑 (持久化版) 🟢 ==================
+
+// 1. 【数据源】从 LocalStorage 读取，如果没有就是空数组 (删掉了自带的示例)
+let igPostsData = JSON.parse(localStorage.getItem('moments_data') || '[]');
+
+// 辅助函数：保存数据到本地
+function saveMomentsData() {
+    localStorage.setItem('moments_data', JSON.stringify(igPostsData));
+}
+
+// 2. 【初始化入口】
+function initMoments() {
+    // 安全调用：先检查函数是否存在
+    if (typeof renderStatusFlow === 'function') renderStatusFlow();
+    if (typeof renderFeedList === 'function') renderFeedList();
+}
+
+// ================== 渲染顶部卡片 (完整最终版) ==================
+async function renderStatusFlow() {
+    const container = document.querySelector('.status-flow-container');
+    if (!container) return;
+    container.innerHTML = '';
+
+    const myId = 'user_me';
+
+    // 1. 读取已读记录 (格式: { userId: lastReadTimestamp })
+    const readMap = JSON.parse(localStorage.getItem('read_stories_map') || '{}');
+
+    // ================== A. 处理“我”的动态 ==================
+    let myStoriesList = JSON.parse(localStorage.getItem('my_stories_list') || '[]');
+    // 过滤过期 (只保留24小时内的)
+    myStoriesList = myStoriesList.filter(s => s.expirationTime > Date.now());
+
+    // 排序：旧 -> 新 (确保播放顺序正确)
+    myStoriesList.sort((a, b) => a.timestamp - b.timestamp);
+
+    const hasMyStory = myStoriesList.length > 0;
+
+    let myAvatarUrl = await getSafeUrl('userAvatar_main');
+    let myProfileBgUrl = await getSafeUrl('user_profile_bg');
+
+    // 确定背景图：如果有动态，显示最新的一张图；否则显示个人背景
+    const latestStory = hasMyStory ? myStoriesList[myStoriesList.length - 1] : null;
+
+    const finalStatusBgUrl = (latestStory && latestStory.mediaKey) ?
+        await getSafeUrl(latestStory.mediaKey) :
+        (myProfileBgUrl || myAvatarUrl);
+
+    // --- 判断我的光圈状态 ---
+    let myRingClass = 'user-mode'; // 默认无圈(发布按钮状态)
+
+    if (hasMyStory) {
+        const lastReadTime = readMap[myId] || 0;
+        const latestStoryTime = latestStory.timestamp;
+
+        // 如果 最后阅读时间 >= 最新一条的发布时间，说明都看过了 -> 灰圈
+        if (lastReadTime >= latestStoryTime) {
+            myRingClass = 'read-story';
+        } else {
+            myRingClass = 'has-story';
+        }
+    }
+
+    const myName = localStorage.getItem('userNickname') || '我';
+    const myCard = document.createElement('div');
+    myCard.className = 'status-card my-card';
+    myCard.onclick = () => openStoryViewer(myId);
+
+    // 中间加号按钮：只有没动态时才显示
+    const centerContent = hasMyStory ? '' : `<div class="my-add-btn-wrapper ${myRingClass}" onclick="openCreateStory(event)"><div class="my-add-btn">+</div></div>`;
+
+    // 构建头像 HTML
+    const avatarHtml = `
+        <div class="status-mini-avatar ${myRingClass}"
+            style="
+                background-image:url(${myAvatarUrl || 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0id2hpdGUiIG9wYWNpdHk9IjAuNSI+PHBhdGggZD0iTTEyIDEyYzIuMjEgMCA0LTEuNzkgNC00cy0xLjc5LTQtNC00LTQgMS43OS00IDQgMS43OSA0IDQgNHptMCAyYy0yLjY3IDAtOCAxLjM0LTggNHYyaDE2di0yYzAtMi42Ni01LjMzLTQtOC00eiIvPjwvc3ZnPg=='});
+                background-size: cover; background-position: center; background-repeat: no-repeat;
+                width: 36px; height: 36px; position: absolute; top: 6px; left: 6px; z-index: 5;
+                border-radius: 50%; border: 2px solid #fff;
+            "
+        ></div>
+    `;
+
+    myCard.innerHTML = `
+        <div class="status-bg-img" style="background-image:url(${finalStatusBgUrl}); background-size:cover; background-position:center;"></div>
+        <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;">
+            ${avatarHtml}
+            <div class="status-name">${myName}</div>
+            <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10; display:flex; justify-content:center; align-items:center;">
+                ${centerContent}
+            </div>
+        </div>
+    `;
+    container.appendChild(myCard);
+
+    // 如果有动态，后面补一个单独的“新增”按钮（可选，仿IG逻辑）
+    if (hasMyStory) {
+        const addBtn = document.createElement('div');
+        addBtn.className = 'status-card my-card';
+        addBtn.style.background = 'transparent';
+        addBtn.style.border = 'none';
+        addBtn.onclick = (e) => openCreateStory(e);
+        addBtn.innerHTML = `
+            <div style="width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center;">
+                 <div class="my-add-btn-wrapper"><div class="my-add-btn">+</div></div>
+                 <div class="my-card-text" style="margin-top:5px;">新增</div>
+            </div>
+        `;
+        container.appendChild(addBtn);
+    }
+
+    // ================== B. 处理“好友”的动态 (完全补全版) ==================
+
+    const roles = JSON.parse(localStorage.getItem('role_list_meta') || '[]');
+    const activeStoriesMap = JSON.parse(localStorage.getItem('active_stories') || '{}'); // 格式: { roleId: timestamp }
+
+    // 1. 筛选出有有效动态的好友
+    let friendStories = [];
+
+    for (const role of roles) {
+        const storyTime = activeStoriesMap[role.id];
+        // 检查是否存在且未过期 (24小时)
+        if (storyTime && (Date.now() - storyTime < 86400000)) {
+            // 计算是否已读
+            const lastRead = readMap[role.id] || 0;
+            const isRead = lastRead >= storyTime; // 如果已读时间 > 发布时间，就是读过了
+
+            friendStories.push({
+                role: role,
+                timestamp: storyTime,
+                isRead: isRead
+            });
+        }
+    }
+
+    // 2. 排序：未读的排前面，已读的排后面；同类中按时间倒序
+    friendStories.sort((a, b) => {
+        if (a.isRead === b.isRead) {
+            return b.timestamp - a.timestamp; // 都是未读或都是已读，按时间新->旧
+        }
+        return a.isRead ? 1 : -1; // 未读(false)排前(-1)，已读(true)排后(1)
+    });
+
+    // 3. 循环渲染
+    for (const item of friendStories) {
+        const role = item.role;
+        const isRead = item.isRead;
+
+        // 异步获取头像
+        let roleAvatarUrl = await getRoleChatAvatarUrl(role.id);
+
+        const card = document.createElement('div');
+        // 如果未读，加 unread 类（虽然现在主要靠下面的 ringClass 控制光圈）
+        card.className = 'status-card';
+        card.onclick = () => openStoryViewer(role.id);
+
+        // 确定光圈样式
+        const ringClass = isRead ? 'read-story' : 'has-story';
+
+        // 背景图：如果有头像用头像，没头像用灰底
+        const bgStyle = roleAvatarUrl ?
+            `background-image:url(${roleAvatarUrl}); background-size:cover;` :
+            'background-image:none; background-color:#333';
+
+        // 头像样式字符串
+        const avatarStyle = roleAvatarUrl ?
+            `background-image:url(${roleAvatarUrl}); background-size: cover; background-repeat: no-repeat;` :
+            'background-image:none; background-color:#333';
+
+        card.innerHTML = `
+            <div class="status-bg-img" style="${bgStyle}"></div>
+
+            <div class="status-mini-avatar ${ringClass}"
+                 style="${avatarStyle}; width: 36px; height: 36px; position: absolute; top: 6px; left: 6px; z-index: 5; border-radius: 50%; border: 2px solid #fff;">
+            </div>
+
+            <div class="status-name" style="position: absolute; bottom: 10px; left: 0; width: 100%; text-align: center;">${role.name}</div>
+        `;
+        container.appendChild(card);
+    }
+}
+
+// 4. 【渲染帖子列表】(持久化修复版：异步加载图片)
+async function renderFeedList() {
+    const container = document.getElementById('ig-feed-list');
+    if (!container) return;
+    container.innerHTML = '';
+
+    if (!igPostsData || igPostsData.length === 0) {
+        container.innerHTML = '<div style="text-align:center; color:#666; margin-top:50px; font-size:14px;">暂无动态<br>快去发布第一条吧</div>';
+        return;
+    }
+
+    const roles = JSON.parse(localStorage.getItem('role_list_meta') || '[]');
+
+    for (let i = 0; i < igPostsData.length; i++) {
+        const post = igPostsData[i];
+
+        let avatarUrl = '';
+        let username = '';
+
+        // --- 获取头像 ---
+        if (post.roleId === null) {
+            username = localStorage.getItem('userNickname') || '我';
+            try {
+                const data = await dbHelper.get('userAvatar_main');
+                if (data) avatarUrl = (data instanceof Blob) ? URL.createObjectURL(data) : data;
+            } catch(e){}
+        } else {
+            const role = roles.find(r => r.id === post.roleId);
+            username = role ? role.name : '未知';
+            if (role) {
+                try {
+                    const data = await dbHelper.get(`role_${role.id}_avatar`);
+                    if (data) avatarUrl = (data instanceof Blob) ? URL.createObjectURL(data) : data;
+                } catch(e){}
+            }
+        }
+
+        // 如果 post.time 存在就用它，不存在就显示 "刚刚"
+        const displayTime = post.time || '刚刚';
+
+        const card = document.createElement('div');
+        card.className = 'feed-card';
+        card.style.position = 'relative';
+
+        // 图标 SVG
+        const iconHeart = `<svg class="action-icon" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>`;
+        const iconComment = `<svg class="action-icon" viewBox="0 0 24 24"><path d="M21.99 4c0-1.1-.89-2-1.99-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14l4 4-.01-18zM18 14H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"/></svg>`;
+        const iconShare = `<svg class="action-icon" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92 1.61 0 2.92-1.31 2.92-2.92s-1.31-2.92-2.92-2.92z"/></svg>`;
+        const iconSave = `<svg class="action-icon" viewBox="0 0 24 24"><path d="M17 3H7c-1.1 0-1.99.9-1.99 2L5 21l7-3 7 3V5c0-1.1-.9-2-2-2z"/></svg>`;
+
+        // --- 🖼️ 核心：从 DB 加载图片 ---
+        let images = [];
+        if (post.imgKeys && post.imgKeys.length > 0) {
+            for (const key of post.imgKeys) {
+                try {
+                    const blob = await dbHelper.get(key);
+                    if (blob) images.push(URL.createObjectURL(blob));
+                } catch(e){}
+            }
+        }
+        // 兼容旧数据 (为了不报错，如果只有 img URL 就用它)
+        else if (post.img) {
+            images = [post.img];
+        }
+
+        let galleryHtml = '';
+        let galleryId = `feed-gallery-${post.id}`;
+
+        if (images.length > 0) {
+            let imgsHtml = images.map((url, idx) =>
+                `<img class="feed-gallery-item" src="${url}"
+                      onload="adjustGalleryHeight('${galleryId}', this)"
+                      onclick="openImageViewer(${i}, ${idx})"
+                      ondblclick="toggleFeedLike(${i}, true)">`
+            ).join('');
+
+            const counterHtml = images.length > 1 ? `<div class="feed-counter">1/${images.length}</div>` : '';
+
+            galleryHtml = `
+                <div style="position:relative;">
+                    <div id="${galleryId}" class="feed-gallery" onscroll="updateFeedCounter(this, ${images.length})">
+                        ${imgsHtml}
+                    </div>
+                    ${counterHtml}
+                </div>
+            `;
+        }
+
+        card.innerHTML = `
+            <div class="feed-header">
+                <div class="feed-avatar" style="${avatarUrl ? 'background-image:url('+avatarUrl+')' : 'background-color:#333'}"></div>
+                <div class="feed-user-info">
+                    <span class="feed-username">${username}</span>
+                    <span class="feed-time">${post.time || '刚刚'}</span>
+                </div>
+
+                <div class="feed-more-btn" onclick="openPostMenu(${i})">···</div>
+            </div>
+
+            <div class="feed-text">${post.text}</div>
+
+            ${galleryHtml}
+
+            <div class="feed-actions">
+                <div class="action-pill ${post.isLiked ? 'active-like' : ''}" id="feed-like-${i}" onclick="toggleFeedLike(${i})">
+                    ${iconHeart}
+                    <span id="feed-like-count-${i}">${post.likes}</span>
+                </div>
+                <div class="action-pill" onclick="openMomentDetail(${i})">  ${iconComment}
+                    <span>${post.comments}</span>
+                </div>
+                <div style="margin-left:auto; display:flex; gap:10px;">
+                    <div class="action-pill" onclick="showToast('分享')">
+                        ${iconShare}
+                    </div>
+                    <div class="action-pill ${post.isSaved ? 'active-save' : ''}" id="feed-save-${i}" onclick="toggleFeedSave(${i})">
+                        ${iconSave}
+                    </div>
+                </div>
+            </div>
+        `;
+        container.appendChild(card);
+    }
+}
+
+// 🆕 新增：自动调整高度函数
+function adjustGalleryHeight(galleryId, img) {
+    const gallery = document.getElementById(galleryId);
+    if (!gallery) return;
+
+    // 获取图片的原始宽高比
+    const ratio = img.naturalWidth / img.naturalHeight;
+    // 获取容器当前的宽度 (通常是屏幕宽 - padding)
+    const containerWidth = gallery.offsetWidth;
+
+    // 计算适应的高度 = 宽度 / 比例
+    const targetHeight = containerWidth / ratio;
+
+    // 逻辑：
+    // 我们只允许容器变高，不允许变矮（如果有多张图，取最高的那个）
+    // 或者：可以设定一个最大高度限制 (比如 550px)，防止 9:16 长图占满整个手机屏太夸张
+
+    const maxHeight = 550; // 最大限高 (约等于 9:16 在手机上的高度)
+    const finalHeight = Math.min(targetHeight, maxHeight);
+
+    // 获取当前容器的高度 (去掉 px 单位)
+    const currentHeight = parseInt(gallery.style.height || 0);
+
+    // 如果这张图算出来的高度 > 当前容器高度，就撑开容器
+    // 这样多图混合时，容器会适配“最高”的那张图
+    if (finalHeight > currentHeight) {
+        gallery.style.height = `${finalHeight}px`;
+    }
+}
+
+// 辅助：更新页码 (可选，简单的实现)
+function updateFeedCounter(el, total) {
+    // 找到这个 gallery 的父级里的 .feed-counter
+    const counter = el.parentElement.querySelector('.feed-counter');
+    if (!counter) return;
+
+    const width = el.offsetWidth;
+    const scroll = el.scrollLeft;
+    // 计算当前是第几张 (四舍五入)
+    const current = Math.round(scroll / width) + 1;
+    counter.textContent = `${current}/${total}`;
+}
+
+// 6. 【收藏逻辑】(新增函数)
+function toggleFeedSave(index) {
+    if (typeof igPostsData === 'undefined' || !igPostsData[index]) return;
+
+    const post = igPostsData[index];
+    const btn = document.getElementById(`feed-save-${index}`);
+
+    // 切换状态
+    post.isSaved = !post.isSaved;
+
+    // 更新 UI (黄色高亮)
+    if (post.isSaved) {
+        btn.classList.add('active-save');
+        showToast("已加入收藏");
+    } else {
+        btn.classList.remove('active-save');
+    }
+}
+
+// 5. 【点赞逻辑】(带保存)
+function toggleFeedLike(index, isDoubleTap) {
+    if (typeof igPostsData === 'undefined' || !igPostsData[index]) return;
+
+    const post = igPostsData[index];
+    const btn = document.getElementById(`feed-like-${index}`);
+    const countEl = document.getElementById(`feed-like-count-${index}`);
+
+    if (isDoubleTap) {
+        if (!post.isLiked) {
+            post.isLiked = true;
+            post.likes++;
+            showToast("❤️");
+        }
+    } else {
+        post.isLiked = !post.isLiked;
+        post.likes += post.isLiked ? 1 : -1;
+    }
+
+    if (post.isLiked) btn.classList.add('active-like');
+    else btn.classList.remove('active-like');
+
+    countEl.textContent = post.likes;
+
+    saveMomentsData(); // 💾 保存状态！
+}
+
+// 6. 【收藏逻辑】(带保存)
+function toggleFeedSave(index) {
+    if (typeof igPostsData === 'undefined' || !igPostsData[index]) return;
+
+    const post = igPostsData[index];
+    const btn = document.getElementById(`feed-save-${index}`);
+
+    post.isSaved = !post.isSaved;
+
+    if (post.isSaved) {
+        btn.classList.add('active-save');
+        showToast("已加入收藏");
+    } else {
+        btn.classList.remove('active-save');
+    }
+
+    saveMomentsData(); // 💾 保存状态！
+}
+
+// ================== 发动态 (Create Moment) 逻辑 ==================
+
+let draftImages = []; // 暂存选中的图片文件
+
+// 1. 打开页面
+function openCreateMoment() {
+    draftImages = []; // 清空草稿
+    document.getElementById('moment-caption').value = ''; // 清空文字
+    renderMomentUploader(); // 渲染上传格
+    openSubPage('sub-create-moment');
+}
+
+// 2. 渲染九宫格 (预览图 + 加号)
+function renderMomentUploader() {
+    const container = document.getElementById('moment-upload-container');
+    container.innerHTML = '';
+
+    // A. 渲染已选图片
+    draftImages.forEach((file, index) => {
+        const url = URL.createObjectURL(file);
+        const div = document.createElement('div');
+        div.className = 'upload-preview-item';
+        div.style.backgroundImage = `url(${url})`;
+
+        // 删除按钮
+        div.innerHTML = `<div class="btn-remove-img" onclick="removeDraftImage(${index})">×</div>`;
+        container.appendChild(div);
+    });
+
+    // B. 渲染加号按钮 (如果还没满9张)
+    if (draftImages.length < 9) {
+        const btn = document.createElement('div');
+        btn.className = 'upload-add-btn';
+        btn.onclick = () => document.getElementById('moment-file-input').click();
+        btn.innerHTML = `<span class="upload-add-icon">+</span>`;
+        container.appendChild(btn);
+    }
+}
+
+// 3. 处理文件选择 (支持多选)
+function handleMomentImages(input) {
+    if (input.files && input.files.length > 0) {
+        // 遍历新选择的文件
+        Array.from(input.files).forEach(file => {
+            if (draftImages.length < 9) { // 再次检查上限
+                draftImages.push(file);
+            }
+        });
+        renderMomentUploader(); // 刷新界面
+    }
+    input.value = ''; // 重置 input 以便下次能选同样的文件
+}
+
+// 4. 删除某张图
+function removeDraftImage(index) {
+    draftImages.splice(index, 1);
+    renderMomentUploader();
+}
+
+// 5. 发布动态 (修复：时间格式优化)
+async function publishMoment() {
+    const text = document.getElementById('moment-caption').value.trim();
+
+    if (!text && draftImages.length === 0) {
+        showToast("请输入内容或配图");
+        return;
+    }
+
+    showToast("正在发布...");
+
+    // A. 处理图片
+    let imgKeys = [];
+    if (draftImages.length > 0) {
+        for (let i = 0; i < draftImages.length; i++) {
+            const file = draftImages[i];
+            const fileId = `moment_img_${Date.now()}_${i}`;
+            await dbHelper.save(fileId, file);
+            imgKeys.push(fileId);
+        }
+    }
+
+    // B. 生成详细时间 (例如: 11月25日 14:30)
+    const now = new Date();
+    const m = (now.getMonth()+1).toString();
+    const d = now.getDate().toString();
+    const hh = now.getHours().toString().padStart(2, '0');
+    const mm = now.getMinutes().toString().padStart(2, '0');
+    const timeStr = `${m}月${d}日 ${hh}:${mm}`;
+
+    // C. 构建数据
+    const newPost = {
+        id: Date.now(),
+        roleId: null,
+        imgKeys: imgKeys,
+        text: text,
+        likes: 0,
+        comments: 0,
+        commentsList: [],
+        time: timeStr,    // 写入优化后的时间
+        isLiked: false,
+        isSaved: false
+    };
+
+    igPostsData.unshift(newPost);
+    saveMomentsData();
+
+    await renderFeedList();
+    closeSubPage('sub-create-moment');
+
+    showToast("发布成功！");
+    // ...
+}
+
+// ================== 全屏画廊逻辑 (升级版) ==================
+
+// 1. 打开预览 (传入帖子Index 和 图片Index)
+function openImageViewer(postIndex, imgIndex) {
+    const viewer = document.getElementById('image-viewer');
+    const container = document.getElementById('viewer-gallery-container');
+    const counter = document.getElementById('viewer-counter');
+
+    if (!viewer || !igPostsData[postIndex]) return;
+
+    const post = igPostsData[postIndex];
+    // 获取该帖子的所有图片
+    const images = post.imgs || (post.img ? [post.img] : []);
+
+    if (images.length === 0) return;
+
+    // A. 生成 HTML
+    container.innerHTML = images.map(url =>
+        `<img class="viewer-img-item" src="${url}" draggable="false">`
+    ).join('');
+
+    // B. 显示预览器
+    viewer.style.display = 'flex';
+    setTimeout(() => viewer.classList.add('active'), 10);
+
+    // C. 滚动到当前点击的那张图 (核心)
+    // 这里的 window.innerWidth 就是一页的宽度
+    const scrollPos = imgIndex * window.innerWidth;
+    container.scrollLeft = scrollPos;
+
+    // D. 更新页码
+    updateViewerCounter(imgIndex + 1, images.length);
+
+    // E. 绑定滚动监听 (滑动时更新页码)
+    container.onscroll = () => {
+        const index = Math.round(container.scrollLeft / window.innerWidth);
+        updateViewerCounter(index + 1, images.length);
+    };
+}
+
+// 2. 更新页码文字
+function updateViewerCounter(current, total) {
+    const counter = document.getElementById('viewer-counter');
+    if(counter) counter.textContent = `${current} / ${total}`;
+}
+
+// 3. 关闭预览
+function closeImagePreview() {
+    const viewer = document.getElementById('image-viewer');
+    if (!viewer) return;
+
+    viewer.classList.remove('active');
+    setTimeout(() => {
+        viewer.style.display = 'none';
+        document.getElementById('viewer-gallery-container').innerHTML = ''; // 清空内存
+    }, 300);
+}
+
+// ================== 详情页与评论逻辑 ==================
+
+let currentDetailIndex = -1; // 当前正在查看哪条帖子的详情
+
+// 1. 打开帖子详情页 (修复版：异步加载图片内容)
+async function openMomentDetail(index) {
+    if (typeof igPostsData === 'undefined' || !igPostsData[index]) return;
+
+    currentDetailIndex = index;
+    const post = igPostsData[index];
+    const roles = JSON.parse(localStorage.getItem('role_list_meta') || '[]');
+
+    // 1. 获取帖子基础信息
+    let avatarUrl = '';
+    let username = '';
+
+    // 确定帖子作者的头像和名字 (保持原逻辑)
+    if (post.roleId === null) {
+        username = localStorage.getItem('userNickname') || '我';
+        try {
+            const data = await dbHelper.get('userAvatar_main');
+            if (data) avatarUrl = (data instanceof Blob) ? URL.createObjectURL(data) : data;
+        } catch(e){}
+    } else {
+        const role = roles.find(r => r.id === post.roleId);
+        username = role ? role.name : '未知';
+        if (role) {
+            try {
+                const data = await dbHelper.get(`role_${role.id}_avatar`);
+                if (data) avatarUrl = (data instanceof Blob) ? URL.createObjectURL(data) : data;
+            } catch(e){}
+        }
+    }
+
+    // --- 🚨 核心修复：加载图片内容 🚨 ---
+    let images = [];
+
+    if (post.imgKeys && post.imgKeys.length > 0) {
+        // 遍历所有图片 Key，并异步从数据库加载 Blob
+        for (const key of post.imgKeys) {
+            try {
+                const blob = await dbHelper.get(key);
+                if (blob) images.push(URL.createObjectURL(blob));
+            } catch(e){}
+        }
+    } else if (post.img) {
+        // 兼容旧的单图 URL
+        images = [post.img];
+    }
+    // ------------------------------------
+
+    // 构建图集 HTML
+    let galleryHtml = '';
+    let galleryId = `detail-gallery-${post.id}`;
+    if (images.length > 0) {
+        let imgsHtml = images.map((url, idx) =>
+            `<img class="feed-gallery-item" src="${url}"
+                  onload="adjustGalleryHeight('${galleryId}', this)"
+                  onclick="openImageViewerDetail(${idx})" >`
+        ).join('');
+        const counterHtml = images.length > 1 ? `<div class="feed-counter">1/${images.length}</div>` : '';
+
+        galleryHtml = `
+            <div style="position:relative;">
+                <div id="${galleryId}" class="feed-gallery" onscroll="updateFeedCounter(this, ${images.length})">
+                    ${imgsHtml}
+                </div>
+                ${counterHtml}
+            </div>
+        `;
+
+        // 供全屏预览器使用的当前图集数据
+        window.currentDetailImages = images;
+    }
+
+    // 帖子 HTML 模板
+    const displayTime = post.time || '刚刚';
+    const postHTML = `
+        <div class="feed-card" style="box-shadow:none; border:none; background:transparent;">
+            <div class="feed-header">
+                <div class="feed-avatar" style="${avatarUrl ? 'background-image:url('+avatarUrl+')' : 'background-color:#333'}"></div>
+                <div class="feed-user-info">
+                    <span class="feed-username">${username}</span>
+                    <span class="feed-time">${displayTime}</span>
+                </div>
+                <div class="feed-more-btn" onclick="openPostMenu(${index})">···</div>
+            </div>
+            <div class="feed-text">${post.text}</div>
+            ${galleryHtml}
+            <div class="feed-actions">
+                <div class="action-pill ${post.isLiked ? 'active-like' : ''}" id="detail-like-btn" onclick="toggleFeedLike(${index}, false); openMomentDetail(${index});">
+                    <svg class="action-icon" viewBox="0 0 24 24" style="fill:currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                    <span>${post.likes}</span>
+                </div>
+            </div>
+        </div>
+    `;
+
+    document.getElementById('moment-detail-card-container').innerHTML = postHTML;
+
+    // --- B. 渲染评论列表 ---
+    renderCommentsList(post);
+
+    // --- C. 打开页面 ---
+    openSubPage('sub-moment-detail');
+}
+
+// 2. 渲染评论列表 (修复：显示时间 + 删除按钮)
+async function renderCommentsList(post) {
+    const listContainer = document.getElementById('moment-comment-list');
+    listContainer.innerHTML = '';
+
+    if (!post.commentsList || post.commentsList.length === 0) {
+        listContainer.innerHTML = '<div style="text-align:center; color:rgba(255,255,255,0.3); margin-top:20px; font-size:13px;">暂无评论，快来抢沙发</div>';
+        return;
+    }
+
+    // 获取我的头像
+    let myAvatarUrl = '';
+    try {
+        const data = await dbHelper.get('userAvatar_main');
+        if (data) myAvatarUrl = (data instanceof Blob) ? URL.createObjectURL(data) : data;
+    } catch(e){}
+
+    const displayTime = post.time || '刚刚';
+
+    // 获取当前用户名，用于判断是否是自己发的
+    const myName = localStorage.getItem('userNickname') || '我';
+
+    post.commentsList.forEach((comment, index) => {
+        const item = document.createElement('div');
+        item.className = 'comment-item';
+
+        // 判断是否是自己发的评论
+        const isMe = (comment.user === myName);
+
+        // 如果是自己发的，显示删除按钮
+        // 注意：onclick 绑定了 deleteMomentComment，传入帖子ID和评论ID(timestamp)
+        const deleteBtnHtml = isMe ?
+            `<span class="comment-del-btn" onclick="deleteMomentComment(${post.id}, ${comment.id})">删除</span>` : '';
+
+        item.innerHTML = `
+            <div class="comment-avatar" style="${myAvatarUrl ? 'background-image:url('+myAvatarUrl+')' : ''}"></div>
+            <div class="comment-content">
+                <div class="comment-user">${comment.user}</div>
+                <div class="comment-text">${comment.text}</div>
+                <div class="comment-meta">
+                    <span class="comment-time">${comment.time || '刚刚'}</span>
+                    <span class="comment-reply-btn" onclick="document.getElementById('moment-reply-input').focus()">回复</span>
+                    ${deleteBtnHtml}
+                </div>
+            </div>
+        `;
+        listContainer.appendChild(item);
+    });
+}
+
+// 3. 发送评论
+function sendMomentComment() {
+    const input = document.getElementById('moment-reply-input');
+    const text = input.value.trim();
+    if (!text) return;
+
+    if (currentDetailIndex === -1 || !igPostsData[currentDetailIndex]) return;
+
+    const post = igPostsData[currentDetailIndex];
+
+    // 初始化数组 (防止旧数据没有这个字段)
+    if (!post.commentsList) post.commentsList = [];
+
+    // 构建评论对象
+    const newComment = {
+        id: Date.now(),
+        user: localStorage.getItem('userNickname') || '我',
+        text: text,
+        time: new Date().toLocaleTimeString('zh-CN', {hour:'2-digit', minute:'2-digit'})
+    };
+
+    // 1. 存入数据
+    post.commentsList.push(newComment);
+    post.comments++; // 更新计数
+
+    // 2. 保存到本地
+    saveMomentsData();
+
+    // 3. 更新界面
+    renderCommentsList(post); // 刷新评论区
+    input.value = ''; // 清空输入框
+
+    // 4. 同时刷新外面的列表页，更新评论数显示
+    renderFeedList();
+}
+
+// 4. 删除评论逻辑 (修复：使用 UI 弹窗)
+function deleteMomentComment(postId, commentId) {
+
+    // 🌟 使用自定义弹窗，而不是 confirm()
+    openGenConfirmModal(
+        "删除评论",
+        "确定要删除这条评论吗？",
+        "删除",
+        () => {
+            // --- 这里是点击“确定”后的逻辑 ---
+
+            // 1. 找到对应的帖子
+            const post = igPostsData.find(p => p.id === postId);
+            if (!post) return;
+
+            // 2. 过滤掉这条评论
+            post.commentsList = post.commentsList.filter(c => c.id !== commentId);
+
+            // 3. 更新计数
+            post.comments = post.commentsList.length;
+
+            // 4. 保存并刷新
+            saveMomentsData();
+
+            // 刷新详情页的评论列表
+            renderCommentsList(post);
+            // 刷新外面的列表页（更新评论数字）
+            renderFeedList();
+
+            showToast("评论已删除");
+
+            // 关闭确认弹窗 (openGenConfirmModal 内部可能没自动关，这里手动关一下保险)
+            closeGenConfirmModal();
+        }
+    );
+}
+
+// 辅助：详情页里的图片预览 (需要读取 window.currentDetailImages)
+function openImageViewerDetail(imgIndex) {
+    const viewer = document.getElementById('image-viewer');
+    const container = document.getElementById('viewer-gallery-container');
+    const counter = document.getElementById('viewer-counter');
+
+    const images = window.currentDetailImages || [];
+    if (images.length === 0) return;
+
+    container.innerHTML = images.map(url => `<img class="viewer-img-item" src="${url}" draggable="false">`).join('');
+    viewer.style.display = 'flex';
+    setTimeout(() => viewer.classList.add('active'), 10);
+
+    const scrollPos = imgIndex * window.innerWidth;
+    container.scrollLeft = scrollPos;
+
+    if(counter) counter.textContent = `${imgIndex + 1} / ${images.length}`;
+
+    container.onscroll = () => {
+        const index = Math.round(container.scrollLeft / window.innerWidth);
+        if(counter) counter.textContent = `${index + 1} / ${images.length}`;
+    };
+}
+
+// ================== 动态帖子菜单逻辑 (编辑/删除) ==================
+
+let currentMenuPostIndex = -1; // 当前正在操作哪个帖子
+
+// 1. 打开菜单
+function openPostMenu(index) {
+    currentMenuPostIndex = index;
+    const modal = document.getElementById('modal-post-menu');
+    modal.style.display = 'flex';
+    modal.style.zIndex = '2100'; // 保证层级够高
+    setTimeout(() => modal.classList.add('active'), 10);
+}
+
+// 2. 关闭菜单
+function closePostMenu() {
+    const modal = document.getElementById('modal-post-menu');
+    modal.classList.remove('active');
+    setTimeout(() => modal.style.display = 'none', 300);
+}
+
+// 3. 处理菜单点击
+function handlePostMenuAction(action) {
+    closePostMenu(); // 先关菜单
+
+    if (currentMenuPostIndex === -1 || !igPostsData[currentMenuPostIndex]) return;
+    const post = igPostsData[currentMenuPostIndex];
+
+    // --- 编辑功能 ---
+    if (action === 'edit') {
+        // 复用之前的文本编辑弹窗 (之前用于改人设和消息)
+        // 我们设置一个全局标记，告诉 confirmTextEdit 函数我们现在是在改帖子
+        editingTextField = 'moment-text';
+
+        // 填充旧内容
+        document.getElementById('big-text-input').value = post.text;
+
+        // 修改弹窗标题
+        document.querySelector('#modal-text-edit .modal-title').textContent = "编辑动态";
+
+        // 打开弹窗
+        const modal = document.getElementById('modal-text-edit');
+        modal.style.display = 'flex';
+        modal.style.zIndex = '2200';
+        setTimeout(() => {
+            modal.classList.add('active');
+            document.getElementById('big-text-input').focus();
+        }, 10);
+    }
+
+    // --- 删除功能 ---
+    else if (action === 'delete') {
+        openGenConfirmModal(
+            "删除动态",
+            "确定要删除这条动态吗？<br>此操作不可恢复。",
+            "删除",
+            () => {
+                // 执行删除
+                igPostsData.splice(currentMenuPostIndex, 1);
+                saveMomentsData(); // 保存到本地
+
+                // 刷新列表
+                renderFeedList();
+
+                // 如果是在详情页删除的，要关掉详情页
+                const detailPage = document.getElementById('sub-moment-detail');
+                if (detailPage.classList.contains('active')) { // 这里原本用style判断，现在用类名更稳
+                     // 简单判断是否打开了详情页，直接关掉
+                     closeSubPage('sub-moment-detail');
+                }
+
+                showToast("动态已删除");
+                closeGenConfirmModal();
+            }
+        );
+    }
+}
+
+// ================== 限时动态 (Story) 状态管理 ==================
+
+// 获取所有有 Story 的用户 ID 列表
+function getActiveStories() {
+    return JSON.parse(localStorage.getItem('active_stories') || '{}');
+}
+
+// ================== 5. 【发布/激活限时动态】 ==================
+function activateStory(roleId) {
+    const stories = getActiveStories();
+    stories[roleId] = Date.now();
+    localStorage.setItem('active_stories', JSON.stringify(stories));
+
+    // 核心逻辑：发布新动态时，移除“已读”标记，让光圈变回彩虹色
+    let readList = JSON.parse(localStorage.getItem('read_stories_list') || '{}');
+    if (readList[roleId]) {
+        delete readList[roleId];
+        localStorage.setItem('read_stories_list', JSON.stringify(readList));
+    }
+
+    renderChatSessionList();
+    renderStatusFlow();
+}
+
+// ================== STORY CREATION/VIEWER 核心逻辑 (整合修复) ==================
+
+let storyDraft = {
+    mode: 'text', // 'text' or 'image'
+    text: '',
+    mediaFile: null, // File object for the image
+    bgColorIndex: 1
+};
+const storyColors = ['color-1', 'color-2', 'color-3', 'color-4', 'color-5']; // 背景色预设
+
+let currentStoryViewer = {
+    roleId: null,      // 当前正在查看谁的 Story
+    stories: [],       // 该用户所有活跃的 Story 列表
+    currentIndex: 0,   // 当前正在播放第几个 Story
+    timer: null,       // 进度条计时器 ID
+    isPlaying: false,
+    isPaused: false,
+    elapsedTime: 0,    // 当前 Story 已播放的时间
+    storyDuration: 15000, // 每个 Story 播放时长 5秒
+};
+
+// ----------------------------------------------------
+// --- 1. 状态管理与辅助函数 ---
+// ----------------------------------------------------
+
+// 格式化时间助手
+function formatTimeAgo(timestamp) {
+    const now = Date.now();
+    const diff = now - timestamp;
+    const minutes = Math.floor(diff / 60000);
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
+
+    if (minutes < 60) return minutes <= 1 ? "刚刚" : `${minutes}分钟前`;
+    if (hours < 24) return `${hours}小时前`;
+    return `${days}天前`;
+}
+
+// 清除 Story 状态 (标记为已读)
+function clearStoryStatus(roleId) {
+    const stories = JSON.parse(localStorage.getItem('active_stories') || '{}');
+    delete stories[roleId];
+    localStorage.setItem('active_stories', JSON.stringify(stories));
+
+    renderChatSessionList();
+    renderStatusFlow();
+}
+
+// 获取 Story 状态
+function getActiveStories() {
+    return JSON.parse(localStorage.getItem('active_stories') || '{}');
+}
+
+// ----------------------------------------------------
+// --- 2. 计时器控制函数 (修复 ReferenceError) ---
+// ----------------------------------------------------
+
+// 启动计时器和进度条动画 (startStoryTimer)
+// ================== 修复：快拍进度条与多段显示逻辑 ==================
+
+// ================== 修复：快拍播放控制逻辑 (完整版) ==================
+
+// 1. 播放入口
+function playStory() {
+    if (currentStoryViewer.isPlaying && !currentStoryViewer.isPaused) return;
+    startStoryTimer();
+}
+
+// 2. 启动/恢复 进度条计时器
+function startStoryTimer() {
+    stopStoryTimer();
+
+    const container = document.querySelector('.viewer-progress-bar-container');
+    if (!container || !currentStoryViewer.stories.length) return;
+
+    // --- A. 动态渲染分段进度条 ---
+    container.innerHTML = '';
+
+    const totalStories = currentStoryViewer.stories.length;
+    const currentIndex = currentStoryViewer.currentIndex;
+
+    for (let i = 0; i < totalStories; i++) {
+        const segment = document.createElement('div');
+        segment.className = 'progress-segment';
+        const fill = document.createElement('div');
+        fill.className = 'progress-fill-inner';
+
+        if (i < currentIndex) {
+            fill.style.width = '100%';
+        } else if (i > currentIndex) {
+            fill.style.width = '0%';
+        } else {
+            fill.id = 'current-story-progress';
+            const initialPercent = (currentStoryViewer.elapsedTime / currentStoryViewer.storyDuration) * 100;
+            fill.style.width = `${initialPercent}%`;
+        }
+        segment.appendChild(fill);
+        container.appendChild(segment);
+    }
+
+    // --- B. 启动当前段的动画 ---
+    const currentBar = document.getElementById('current-story-progress');
+    if (currentBar) {
+        const remainingTime = currentStoryViewer.storyDuration - currentStoryViewer.elapsedTime;
+        currentBar.offsetWidth; // 强制重绘
+        currentBar.style.transition = `width ${remainingTime}ms linear`;
+        currentBar.style.width = '100%';
+
+        // ... (inside startStoryTimer) ...
+        currentStoryViewer.timer = setTimeout(() => {
+            currentStoryViewer.elapsedTime = 0;
+
+            // 🔥 每次播完一张，都标记这张为已读
+            markStoryAsRead(currentStoryViewer.roleId);
+
+            if (currentStoryViewer.currentIndex >= totalStories - 1) {
+                // 全部播完
+                closeSubPage('sub-story-viewer');
+            } else {
+                // 播下一张
+                currentStoryViewer.currentIndex++;
+                renderCurrentStory();
+                playStory();
+            }
+        }, remainingTime);
+        // ...
+    } // <--- 🚨 之前就是漏掉了这个大括号！导致后面全部报错 🚨
+
+    currentStoryViewer.isPlaying = true;
+    currentStoryViewer.isPaused = false;
+}
+
+// 3. 暂停逻辑
+function pauseStory() {
+    if (!currentStoryViewer.isPlaying || currentStoryViewer.isPaused) return;
+
+    currentStoryViewer.isPaused = true;
+
+    if (currentStoryViewer.timer) {
+        clearTimeout(currentStoryViewer.timer);
+        currentStoryViewer.timer = null;
+    }
+
+    const currentBar = document.getElementById('current-story-progress');
+    if (currentBar) {
+        const computedStyle = window.getComputedStyle(currentBar);
+        const widthPx = parseFloat(computedStyle.width);
+        const parentWidth = parseFloat(window.getComputedStyle(currentBar.parentElement).width);
+        const percent = (widthPx / parentWidth);
+
+        currentStoryViewer.elapsedTime = percent * currentStoryViewer.storyDuration;
+
+        currentBar.style.transition = 'none';
+        currentBar.style.width = `${percent * 100}%`;
+    }
+}
+
+// 4. 停止/重置逻辑
+function stopStoryTimer() {
+    if (currentStoryViewer.timer) {
+        clearTimeout(currentStoryViewer.timer);
+        currentStoryViewer.timer = null;
+    }
+}
+
+// ----------------------------------------------------
+// --- 3. 创作页面逻辑 (Creation) ---
+// ----------------------------------------------------
+
+// 核心入口：打开 Story 创作页面
+function openCreateStory(event) {
+    if (event) event.stopPropagation(); // 🚨 修正点 4：阻止冒泡，避免触发父级卡片的点击事件
+
+        // 重置草稿状态
+        storyDraft = { mode: 'text', text: '', mediaFile: null, bgColorIndex: 1 };
+
+        // 初始化 UI
+        switchStoryMode('text');
+        document.getElementById('story-text-input').value = '';
+        document.getElementById('story-image-text-input').value = '';
+        document.getElementById('story-image-preview').style.backgroundImage = 'none';
+
+        document.getElementById('story-creator-title').textContent = "发布快拍";
+        openSubPage('sub-create-story');
+}
+
+// 切换模式
+function switchStoryMode(mode) {
+    storyDraft.mode = mode;
+
+    // 更新按钮状态
+    document.getElementById('btn-mode-text').classList.remove('active');
+    document.getElementById('btn-mode-image').classList.remove('active');
+    document.getElementById('story-mode-text').style.display = 'none';
+    document.getElementById('story-mode-image').style.display = 'none';
+
+    if (mode === 'text') {
+        // 保存当前输入的内容
+        storyDraft.text = document.getElementById('story-image-text-input').value.trim();
+
+        document.getElementById('btn-mode-text').classList.add('active');
+        document.getElementById('story-mode-text').style.display = 'flex';
+        document.getElementById('story-text-input').value = storyDraft.text;
+        document.getElementById('story-text-input').focus();
+
+    } else { // image mode
+        // 保存当前输入的内容
+        storyDraft.text = document.getElementById('story-text-input').value.trim();
+
+        document.getElementById('btn-mode-image').classList.add('active');
+        document.getElementById('story-mode-image').style.display = 'block';
+        document.getElementById('story-image-text-input').value = storyDraft.text;
+
+        // 更新图片预览
+        const preview = document.getElementById('story-image-preview');
+        if (storyDraft.mediaFile) {
+             const url = URL.createObjectURL(storyDraft.mediaFile);
+             preview.style.backgroundImage = `url(${url})`;
+        } else {
+             preview.style.backgroundImage = 'none';
+        }
+        document.getElementById('story-image-text-input').focus();
+    }
+}
+
+// 循环切换文本背景颜色
+function cycleStoryColor(el) {
+    storyDraft.bgColorIndex = (storyDraft.bgColorIndex % storyColors.length) + 1;
+    // 移除所有颜色类
+    storyColors.forEach(c => el.classList.remove(c));
+    // 添加新的颜色类
+    el.classList.add(storyColors[storyDraft.bgColorIndex - 1]);
+}
+
+// 处理图片上传
+function handleStoryImageUpload(input) {
+    if (input.files && input.files[0]) {
+        storyDraft.mediaFile = input.files[0];
+        const url = URL.createObjectURL(storyDraft.mediaFile);
+        document.getElementById('story-image-preview').style.backgroundImage = `url(${url})`;
+
+        // 自动聚焦文字输入
+        document.getElementById('story-image-text-input').focus();
+    }
+}
+
+// 发布 Story (核心保存逻辑)
+async function publishStory() {
+    // A. 收集数据
+    let contentText = '';
+    if (storyDraft.mode === 'text') {
+        contentText = document.getElementById('story-text-input').value.trim();
+    } else {
+        contentText = document.getElementById('story-image-text-input').value.trim();
+    }
+
+    if (!contentText && !storyDraft.mediaFile) {
+        showToast("请输入文字或选择图片");
+        return;
+    }
+
+    showToast("正在发布快拍...");
+    const storyId = Date.now().toString();
+
+    // B. 保存媒体文件 (如果存在)
+    let mediaKey = null;
+    if (storyDraft.mediaFile) {
+        mediaKey = `story_media_${storyId}`;
+        await dbHelper.save(mediaKey, storyDraft.mediaFile);
+    }
+
+    // C. 构造 Story 数据对象 (存储在 active_stories_data)
+    const storyData = {
+        id: storyId,
+        userId: 'user_me',
+        type: storyDraft.mode,
+        text: contentText,
+        mediaKey: mediaKey,
+        backgroundClass: storyDraft.mode === 'text' ? storyColors[storyDraft.bgColorIndex - 1] : 'image-custom',
+        timestamp: Date.now()
+    };
+
+    // D. 存储内容
+    localStorage.setItem('my_active_story_content', JSON.stringify(storyData));
+
+    // E. 触发光圈点亮 (自己的头像)
+    activateStory('user_me');
+
+    // F. 刷新并关闭
+    closeSubPage('sub-create-story');
+    showToast("快拍发布成功！");
+
+    promptStoryDuration();
+}
+
+// ----------------------------------------------------
+// --- 4. 播放器逻辑 (Viewer) ---
+// ----------------------------------------------------
+
+// ================== 打开播放器 (逻辑修正版) ==================
+async function openStoryViewer(targetRoleId) {
+    currentStoryViewer.roleId = targetRoleId;
+    currentStoryViewer.stories = [];
+    currentStoryViewer.isPlaying = false;
+    currentStoryViewer.isPaused = false;
+    stopStoryTimer();
+
+    // 1. 获取数据
+    if (targetRoleId === 'user_me') {
+        let myStories = JSON.parse(localStorage.getItem('my_stories_list') || '[]');
+        myStories = myStories.filter(s => s.expirationTime > Date.now());
+
+        // 🚨 强制排序：时间小的(旧)在前，时间大的(新)在后
+        myStories.sort((a, b) => a.timestamp - b.timestamp);
+
+        currentStoryViewer.stories = myStories;
+    } else {
+        // 🚨 彻底屏蔽好友模拟数据：只要不是 user_me，目前直接为空
+        // 等你做了好友发布功能再改这里
+        currentStoryViewer.stories = [];
+    }
+
+    if (currentStoryViewer.stories.length === 0) {
+        showToast("暂无动态");
+        if(targetRoleId === 'user_me') renderStatusFlow(); // 刷新状态
+        return;
+    }
+
+    // 2. 确定播放起点
+    const readMap = JSON.parse(localStorage.getItem('read_stories_map') || '{}');
+    const lastReadTime = readMap[targetRoleId] || 0;
+
+    // 找第一个“未读”的 (发布时间 > 最后阅读时间)
+    let startIndex = currentStoryViewer.stories.findIndex(s => s.timestamp > lastReadTime);
+
+    // 如果都读过了 (-1)，就从 0 (最旧的) 开始重播
+    if (startIndex === -1) {
+        startIndex = 0;
+    }
+
+    currentStoryViewer.currentIndex = startIndex;
+    currentStoryViewer.elapsedTime = 0;
+
+    // 3. 打开 UI
+    document.getElementById('story-viewer-content').onclick = function() {
+        if (currentStoryViewer.isPaused) playStory();
+        else pauseStory();
+    };
+
+    openSubPage('sub-story-viewer');
+    await renderCurrentStory();
+    playStory();
+}
+
+// ================== 渲染当前 Story (层级修复版) ==================
+async function renderCurrentStory() {
+    const story = currentStoryViewer.stories[currentStoryViewer.currentIndex];
+    if (!story) {
+        // 全部播放完毕
+        // 标记最后一张为已读
+        if (currentStoryViewer.currentIndex > 0) {
+             const lastStory = currentStoryViewer.stories[currentStoryViewer.currentIndex - 1];
+             // 这里逻辑稍微复杂一点，简单起见直接调用关闭
+        }
+
+        closeSubPage('sub-story-viewer');
+        return;
+    }
+
+    // --- 1. 获取 DOM 元素 ---
+    const textPane = document.getElementById('viewer-text-content');
+    const imagePane = document.getElementById('viewer-image-content');
+    const userAvatar = document.getElementById('viewer-avatar');
+    const userName = document.getElementById('viewer-username');
+    const timeLabel = document.getElementById('viewer-time');
+    const deleteBtn = document.getElementById('btn-delete-story');
+
+    // --- 2. 填充头部信息 ---
+    let avatarUrl = '';
+    let usernameStr = '';
+
+    if (story.userId === 'user_me') {
+        avatarUrl = await getSafeUrl('userAvatar_main');
+        usernameStr = localStorage.getItem('userNickname') || '我';
+        if(deleteBtn) deleteBtn.style.display = 'block';
+    } else {
+        avatarUrl = await getRoleChatAvatarUrl(story.userId);
+        // 这里需要获取角色名，为了性能简化，如果没传名字可能需要查表
+        // 简单起见暂时显示 ID 或 "好友"
+        usernameStr = story.userId;
+        if(deleteBtn) deleteBtn.style.display = 'none';
+    }
+
+    if(userAvatar) userAvatar.style.backgroundImage = `url(${avatarUrl})`;
+    if(userName) userName.textContent = usernameStr;
+    if(timeLabel) timeLabel.textContent = formatTimeAgo(story.timestamp);
+
+    // --- 3. 🚨 核心修复：切换显示模式 🚨 ---
+
+    // 先重置：移除所有 active-mode 类
+    textPane.classList.remove('active-mode');
+    imagePane.classList.remove('active-mode');
+
+    // 同时也强制隐藏 style.display (双重保险)
+    textPane.style.display = 'none';
+    imagePane.style.display = 'none';
+
+    if (story.type === 'text') {
+        // === 文本模式 ===
+        textPane.classList.add('active-mode');
+        textPane.style.display = 'flex'; // 强制显示
+
+        // 应用背景色
+        storyColors.forEach(c => textPane.classList.remove(c));
+        textPane.classList.add(story.backgroundClass || 'color-1');
+
+        document.getElementById('viewer-text-p').textContent = story.text;
+
+    } else if (story.type === 'image') {
+        // === 图片模式 ===
+        imagePane.classList.add('active-mode');
+        imagePane.style.display = 'flex'; // 强制显示
+
+        // 加载图片
+        const imgEl = document.getElementById('viewer-image-img');
+        if (story.mediaKey) {
+            const mediaUrl = await getSafeUrl(story.mediaKey);
+            imgEl.src = mediaUrl;
+        }
+
+        // 设置叠加文字
+        const textOverlay = document.getElementById('viewer-image-text-p');
+        textOverlay.textContent = story.text;
+
+        // 应用坐标位置
+        if (story.position) {
+            textOverlay.style.left = story.position.x + '%';
+            textOverlay.style.top = story.position.y + '%';
+            textOverlay.style.transform = 'translate(-50%, -50%)';
+        } else {
+            // 默认居中
+            textOverlay.style.left = '50%';
+            textOverlay.style.top = '50%';
+            textOverlay.style.transform = 'translate(-50%, -50%)';
+        }
+    }
+
+    // 4. 启动进度条
+    startStoryTimer();
+}
+
+// 9. 点赞、转发、删除功能 (修复 ReferenceError)
+// ================== 点赞特效逻辑 ==================
+function likeStory() {
+    const btn = document.getElementById('story-like-btn');
+    // 切换类名触发 CSS 动画
+    btn.classList.toggle('active-like');
+
+    if (btn.classList.contains('active-like')) {
+        showToast("❤️");
+    }
+}
+function shareStory() { showToast("已转发！"); }
+function deleteStory() {
+    if (currentStoryViewer.roleId === 'user_me') {
+        if (confirm("确定要删除你的快拍吗？")) {
+            localStorage.removeItem('my_active_story_content');
+            clearStoryStatus('user_me');
+            closeSubPage('sub-story-viewer');
+            showToast("快拍已删除！");
+        }
+    } else {
+        showToast("你不能删除别人的快拍！");
+    }
+}
+
+// ================== 14. 我的名片模块逻辑 (纯粹背景终极版) ==================
+
+async function renderMyProfileCard() {
+    const container = document.getElementById('my-profile-card');
+    if (!container) return;
+
+    // 1. 读取数据
+    const nick = localStorage.getItem('userNickname') || '点击设置昵称';
+    const sign = localStorage.getItem('userSignature') || '点击设置个性签名';
+    let avatarUrl = '';
+    let bgUrl = '';
+
+    try {
+        const savedAvatar = await dbHelper.get('userAvatar_main');
+        if (savedAvatar) {
+            avatarUrl = (savedAvatar instanceof Blob || savedAvatar instanceof File)
+                ? URL.createObjectURL(savedAvatar)
+                : savedAvatar;
+        }
+        // 读取名片自定义背景
+        const savedBg = await dbHelper.get('user_profile_bg');
+        if (savedBg) {
+             bgUrl = (savedBg instanceof Blob || savedBg instanceof File)
+                ? URL.createObjectURL(savedBg)
+                : savedBg;
+        }
+    } catch(e) {}
+
+    // 2. 构造样式变量
+    const defaultBgGradient = 'linear-gradient(135deg, rgba(64, 196, 255, 0.2), rgba(255, 128, 191, 0.2))';
+    const defaultBgImage = "url('https://images.unsplash.com/photo-1549491630-f965d070104e?q=80&w=2000&auto=format&fit=crop')";
+
+    // 🚨 核心逻辑 1：外层卡片样式 🚨
+    let outerCardStyles = `
+        background: rgba(255, 255, 255, 0.15); /* 默认玻璃底色 */
+        backdrop-filter: blur(35px); -webkit-backdrop-filter: blur(35px);
+        border: 1px solid rgba(255, 255, 255, 0.25);
+        box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        background-image: ${bgUrl
+            ? `url('${bgUrl}')` /* 有图：只用图 */
+            : `${defaultBgGradient}, ${defaultBgImage}`}; /* 无图：用渐变+默认图 */
+    `;
+
+    // 🚨 核心逻辑 2：有自定义背景图时，移除所有玻璃效果 🚨
+    if (bgUrl) {
+        outerCardStyles = `
+            background: transparent; /* 纯透明底 */
+            backdrop-filter: none; -webkit-backdrop-filter: none; /* 移除模糊 */
+            border: none; /* 移除边框 */
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2); /* 保留柔和投影 */
+            background-image: url('${bgUrl}'); /* 只保留图片 */
+        `;
+    }
+
+    // 3. 构建 HTML
+    container.innerHTML = `
+        <div
+            id="profile-card-inner-box"
+            onclick="triggerProfileBgUpload()"
+            style="
+                ${outerCardStyles}
+                border-radius: 20px;
+                padding: 0;
+                width: 100%;
+                cursor: pointer;
+                transition: transform 0.1s;
+                background-size: cover;
+                color: white;
+            "
+        >
+            <div
+                id="profile-content-area"
+                style="
+                    /* 顶层遮罩：有自定义背景时，用透明度更低的纯黑遮罩 */
+                    background: ${bgUrl ? 'rgba(0, 0, 0, 0.35)' : 'rgba(0, 0, 0, 0.25)'};
+                    padding: 20px;
+                    border-radius: 20px;
+                    text-align: center;
+                "
+            >
+                <div
+                    class="profile-avatar"
+                    id="my-profile-avatar-display"
+                    style="
+                        width: 90px; height: 90px; margin: 10px auto 15px auto;
+                        box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+                        border: 4px solid rgba(255,255,255,0.9);
+                        cursor: pointer;
+                        /* ... 头像图片逻辑 ... */
+                        background-image: ${avatarUrl ? 'url(' + avatarUrl + ')' : `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" opacity="0.5"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>')`};
+                        background-size: ${avatarUrl ? 'cover' : 'contain'};
+                        background-position: center;
+                        background-repeat: no-repeat;
+                        background-color: ${avatarUrl ? 'transparent' : 'rgba(255,255,255,0.1)'};
+                    "
+                    onclick="triggerProfileUpload(); return false;"
+                >
+                </div>
+
+                <div
+                    class="profile-nickname"
+                    id="my-profile-nickname"
+                    style="
+                        font-size: 24px; font-weight: 800; text-shadow: 0 2px 5px rgba(0,0,0,0.5);
+                        color: white; margin-bottom: 5px; cursor: pointer;
+                    "
+                    onclick="openProfileEditModal('nickname'); return false;"
+                >${nick}</div>
+
+                <div
+                    class="profile-signature"
+                    id="my-profile-signature"
+                    style="
+                        font-size: 15px; opacity: 0.9; color: rgba(255,255,255,0.9);
+                        max-width: 100%; cursor: pointer; white-space: normal; overflow: visible; text-overflow: unset;
+                    "
+                    onclick="openProfileEditModal('signature'); return false;"
+                >${sign}</div>
+            </div>
+        </div>
+    `;
+
+    // ... (点击反馈和浅色模式适配逻辑，保持不变) ...
+    const innerBox = document.getElementById('profile-card-inner-box');
+    if(innerBox) {
+        innerBox.onmousedown = (e) => { e.stopPropagation(); innerBox.style.transform = 'scale(0.98)'; };
+        innerBox.onmouseup = (e) => { e.stopPropagation(); innerBox.style.transform = 'scale(1)'; };
+        innerBox.ontouchstart = (e) => { e.stopPropagation(); innerBox.style.transform = 'scale(0.98)'; };
+        innerBox.ontouchend = (e) => { e.stopPropagation(); innerBox.style.transform = 'scale(1)'; };
+    }
+
+    if (document.body.classList.contains('light-theme')) {
+         const cardInner = document.getElementById('profile-content-area');
+         const avatarEl = document.getElementById('my-profile-avatar-display');
+
+         if(cardInner) {
+            // 浅色模式下，如果没背景图，内容区域的背景必须是透明的
+            cardInner.style.background = 'transparent';
+            cardInner.style.backdropFilter = 'none';
+            cardInner.style.webkitBackdropFilter = 'none';
+            cardInner.style.borderColor = 'rgba(0,0,0,0.1)';
+            cardInner.style.color = '#333';
+         }
+
+         if(avatarEl) {
+             avatarEl.style.borderColor = 'rgba(0,0,0,0.1)';
+             if (!avatarUrl) {
+                const newBgImage = avatarEl.style.backgroundImage.replace(/fill='w[^']*'/g, "fill='black'");
+                avatarEl.style.backgroundImage = newBgImage.replace(/opacity:0.5/g, 'opacity:0.7');
+                avatarEl.style.backgroundColor = 'rgba(0,0,0,0.05)';
+             }
+         }
+
+         const nickEl = document.getElementById('my-profile-nickname');
+         const signEl = document.getElementById('my-profile-signature');
+         if(nickEl) {
+             nickEl.style.color = '#000000';
+             nickEl.style.textShadow = 'none';
+         }
+         if(signEl) signEl.style.color = 'rgba(0,0,0,0.7)';
+    }
+}
+
+// ... (之前添加的代码，确保它还在您的文件中) ...
+
+// 1. 触发背景上传（卡片点击事件）
+function triggerProfileBgUpload() {
+    const input = document.getElementById('profile-bg-input');
+    if (input) {
+        input.click();
+    } else {
+        // 如果找不到输入框，提示用户检查 HTML 结构
+        console.error("Error: The element 'profile-bg-input' was not found. Please check your HTML structure.");
+        showToast("无法上传：名片模块初始化失败，请检查代码结构。");
+    }
+}
+// 2. 处理背景上传文件
+function handleProfileBgUpload(input) {
+    if (input.files && input.files[0]) {
+        const file = input.files[0];
+
+        // 1. 存入数据库
+        dbHelper.save('user_profile_bg', file)
+            .then(() => {
+                showToast("名片背景已更换");
+                // 2. 立即刷新 UI (调用 renderMyProfileCard 会加载新的背景图并显示)
+                renderMyProfileCard();
+            })
+            .catch(e => {
+                console.error("背景保存失败:", e);
+                showToast("背景保存失败");
+            });
+
+        input.value = ''; // 清空 input 确保下次能再次选择相同文件
+    }
+}
+
+// ================== 快拍发布和时长逻辑 ==================
+
+let selectedDurationHours = 24; // 默认选择 24 小时
+let draftContentForPublish = null; // 临时代存最终发布内容
+
+// ================== 1. 渲染时长选项 (修复对勾逻辑) ==================
+function renderDurationOptions() {
+    const options = [
+        { label: "12 小时", hours: 12 },
+        { label: "24 小时 (默认)", hours: 24 },
+        { label: "3 天", hours: 72 },
+        { label: "7 天 (最长)", hours: 168 }
+    ];
+    const container = document.getElementById('story-duration-options');
+    if (!container) return;
+    container.innerHTML = '';
+
+    options.forEach(opt => {
+        const item = document.createElement('div');
+        item.className = 'ai-list-item';
+        // 如果当前选项等于全局变量 selectedDurationHours，加 selected 类
+        if (opt.hours === selectedDurationHours) item.classList.add('selected');
+
+        item.onclick = () => {
+            // 1. 移除所有选中状态
+            document.querySelectorAll('#story-duration-options .ai-list-item').forEach(e => e.classList.remove('selected'));
+            // 2. 激活当前状态
+            item.classList.add('selected');
+            // 3. 更新变量
+            selectedDurationHours = opt.hours;
+        };
+
+        // 这里的 check-icon 默认没有 style，全靠 CSS 控制
+        item.innerHTML = `
+            <div class="ai-item-label">${opt.label}</div>
+            <span class="check-icon">✔</span>
+        `;
+        container.appendChild(item);
+    });
+
+    // 绑定确认按钮
+    document.getElementById('btn-confirm-duration').onclick = confirmPublishStory;
+}
+
+// 2. 触发时长选择模态框 (替代 publishStory 的主要逻辑)
+function promptStoryDuration() {
+    // A. 收集数据 (与 publishStory 原来的数据收集逻辑相同)
+    let contentText = '';
+    if (storyDraft.mode === 'text') {
+        contentText = document.getElementById('story-text-input').value.trim();
+    } else {
+        contentText = document.getElementById('story-image-text-input').value.trim();
+    }
+    if (!contentText && !storyDraft.mediaFile) {
+        showToast("请输入文字或选择图片");
+        return;
+    }
+
+    // 🚨 记录文字定位坐标（新增逻辑）🚨
+    let position = { x: 0, y: 0 };
+    if (storyDraft.mode === 'image') {
+        const textarea = document.getElementById('story-image-text-input');
+        if (textarea) {
+            position.x = parseFloat(textarea.style.left) || 50;
+            position.y = parseFloat(textarea.style.top) || 50;
+        }
+    }
+
+    // 暂存所有数据
+    draftContentForPublish = {
+        contentText,
+        position,
+        mediaFile: storyDraft.mediaFile,
+        mode: storyDraft.mode,
+        backgroundClass: storyDraft.mode === 'text' ? storyColors[storyDraft.bgColorIndex - 1] : 'image-custom',
+    };
+
+    // B. 渲染并打开模态框
+    renderDurationOptions();
+    openModal('modal-story-duration');
+}
+
+// ================== 3. 确认发布 (顺序强制修正版) ==================
+async function confirmPublishStory() {
+    closeModal('modal-story-duration');
+
+    if (!draftContentForPublish) return;
+
+    showToast("正在发布快拍...");
+    const { contentText, position, mediaFile, mode, backgroundClass } = draftContentForPublish;
+    const storyId = Date.now().toString();
+    const expirationTime = Date.now() + (selectedDurationHours * 60 * 60 * 1000);
+
+    // A. 保存图片
+    let mediaKey = null;
+    if (mediaFile) {
+        mediaKey = `story_media_${storyId}`;
+        await dbHelper.save(mediaKey, mediaFile);
+    }
+
+    // B. 构造数据
+    const storyData = {
+        id: storyId,
+        userId: 'user_me',
+        type: mode,
+        text: contentText,
+        mediaKey: mediaKey,
+        backgroundClass: backgroundClass,
+        timestamp: Date.now(),
+        expirationTime: expirationTime,
+        position: position
+    };
+
+    // C. 存储逻辑 (🚨 关键：先读旧的，再 push 新的)
+    let myStories = JSON.parse(localStorage.getItem('my_stories_list') || '[]');
+    // 1. 清理过期
+    myStories = myStories.filter(s => s.expirationTime > Date.now());
+
+    // 2. 🚨 追加到末尾 (保证 0 是最旧，length-1 是最新)
+    myStories.push(storyData);
+
+    localStorage.setItem('my_stories_list', JSON.stringify(myStories));
+
+    // D. 触发更新 (手动激活，确保光圈亮起)
+    activateStory('user_me');
+
+    closeSubPage('sub-create-story');
+    showToast(`快拍发布成功！`);
+}
+
+// ================== 图片快拍文字拖动定位逻辑 ==================
+
+let isDraggingText = false;
+let currentTextElement = null;
+
+// 初始化拖动监听
+function initTextDragListeners() {
+    const textarea = document.getElementById('story-image-text-input');
+    if (!textarea) return;
+
+    textarea.addEventListener('mousedown', startDrag);
+    textarea.addEventListener('touchstart', startDrag);
+}
+
+function startDrag(e) {
+    // 确保只有在图片模式下才开始拖动
+    if (storyDraft.mode !== 'image') return;
+
+    currentTextElement = e.target;
+    isDraggingText = true;
+    // e.preventDefault(); // 注释掉这行，否则可能无法聚焦输入文字
+
+    document.addEventListener('mousemove', drag);
+    document.addEventListener('touchmove', drag);
+    document.addEventListener('mouseup', endDrag);
+    document.addEventListener('touchend', endDrag);
+}
+
+function drag(e) {
+    if (!isDraggingText || !currentTextElement) return;
+
+    const event = e.touches ? e.touches[0] : e;
+    const parentRect = currentTextElement.parentElement.getBoundingClientRect();
+
+    // 计算相对于父容器的百分比位置
+    let x = event.clientX - parentRect.left;
+    let y = event.clientY - parentRect.top;
+
+    let xPercent = Math.min(100, Math.max(0, (x / parentRect.width) * 100));
+    let yPercent = Math.min(100, Math.max(0, (y / parentRect.height) * 100));
+
+    // 应用样式
+    currentTextElement.style.left = `${xPercent}%`;
+    currentTextElement.style.top = `${yPercent}%`;
+    currentTextElement.style.transform = 'translate(-50%, -50%)';
+}
+
+function endDrag() {
+    if (!isDraggingText) return;
+    isDraggingText = false;
+
+    document.removeEventListener('mousemove', drag);
+    document.removeEventListener('touchmove', drag);
+    document.removeEventListener('mouseup', endDrag);
+    document.removeEventListener('touchend', endDrag);
+
+    // 存储最终百分比位置在 DOM 样式里，发布时会读取
+    currentTextElement = null;
+}
+
+// 确保在应用初始化时调用拖动监听初始化
+document.addEventListener('DOMContentLoaded', initTextDragListeners);
+
+// ================== 通用模态框函数 ==================
+
+// 通用打开模态框函数
+function openModal(id) {
+    const m = document.getElementById(id);
+    if (m) {
+        m.style.display = 'flex';
+        // 确保层级在最高 (针对 modal-overlay)
+        m.style.zIndex = '2100';
+        setTimeout(() => m.classList.add('active'), 10);
+    } else {
+        console.error("找不到模态框:", id);
+    }
+}
+
+// 通用关闭模态框函数
+function closeModal(id) {
+    const m = document.getElementById(id);
+    if(m) {
+        m.classList.remove('active');
+        setTimeout(()=>m.style.display='none', 300);
+    }
+}
+
+// ================== 标记已读 (头部光圈同步版) ==================
+function markStoryAsRead(roleId) {
+    const currentStory = currentStoryViewer.stories[currentStoryViewer.currentIndex];
+    if (!currentStory) return;
+
+    // 1. 更新数据库
+    let readMap = JSON.parse(localStorage.getItem('read_stories_map') || '{}');
+    const oldTime = readMap[roleId] || 0;
+
+    // 只有当 当前看的这条比记录的更新时，才更新记录
+    if (currentStory.timestamp > oldTime) {
+        readMap[roleId] = currentStory.timestamp;
+        localStorage.setItem('read_stories_map', JSON.stringify(readMap));
+    }
+
+    // 2. 刷新首页顶栏 (My Card)
+    renderStatusFlow();
+
+    // 3. 刷新消息列表 (Message List)
+    renderChatSessionList();
+
+    // 4. 🚨 核心修复：如果正开着聊天详情页，直接把头顶的光圈变灰
+    const detailPage = document.getElementById('sub-chat-detail');
+    // 判断页面是否激活 且 当前聊天的对象就是正在看快拍的人
+    if (detailPage && detailPage.classList.contains('active') && currentChatId === roleId) {
+        const headerWrap = document.getElementById('chat-header-avatar-wrap');
+        if (headerWrap) {
+            // 暴力移除彩圈，加上灰圈
+            headerWrap.classList.remove('has-story');
+            headerWrap.classList.add('read-story');
+        }
+    }
+}
+
+// ================== 更多菜单 (删除功能) ==================
+function openStoryMoreMenu() {
+    pauseStory(); // 先暂停
+
+    // 判断是不是自己的快拍
+    if (currentStoryViewer.roleId === 'user_me') {
+        openGenConfirmModal(
+            "删除快拍",
+            "确定要删除这条快拍吗？此操作无法撤销。",
+            "删除",
+            () => {
+                deleteCurrentStory();
+                closeGenConfirmModal();
+            }
+        );
+    } else {
+        // 如果是别人的，可以显示举报或取消关注等
+        showToast("这是好友的动态");
+    }
+}
+
+// ================== 删除当前快拍 (单条删除逻辑) ==================
+async function deleteCurrentStory() {
+    // 1. 获取当前正在播放的这条快拍的数据
+    const currentStory = currentStoryViewer.stories[currentStoryViewer.currentIndex];
+
+    // 安全检查：如果数据不对，直接停止，防止误删
+    if (!currentStory || !currentStory.id) {
+        showToast("无法获取当前快拍信息");
+        return;
+    }
+
+    // 2. 读取本地存储的列表
+    let myStories = JSON.parse(localStorage.getItem('my_stories_list') || '[]');
+
+    // 3. 🚨 核心逻辑：只保留 ID 不等于当前 ID 的项 (即删除当前项)
+    // filter 会返回一个新的数组，里面是被保留下来的项
+    const newStories = myStories.filter(s => s.id !== currentStory.id);
+
+    // 4. 保存回本地存储
+    localStorage.setItem('my_stories_list', JSON.stringify(newStories));
+
+    // 5. 同时也删掉对应的图片文件 (清理垃圾)
+    if (currentStory.mediaKey) {
+        await dbHelper.save(currentStory.mediaKey, null);
+    }
+
+    showToast("这条快拍已删除");
+
+    // 6. 刷新首页光圈状态
+    renderStatusFlow();
+
+    // 7. 关闭播放器 (简单起见，删完直接关掉，避免索引错乱)
+    closeSubPage('sub-story-viewer');
+}
+
+// ================== 评论/回复逻辑 ==================
+function sendStoryReply() {
+    const input = document.getElementById('story-reply-input');
+    const text = input.value.trim();
+    if (!text) return;
+
+    // 1. 显示在屏幕上 (模拟弹幕)
+    const box = document.getElementById('viewer-comments-box');
+    const pill = document.createElement('div');
+    pill.className = 'viewer-comment-pill';
+    pill.textContent = `我: ${text}`;
+    box.appendChild(pill);
+    box.scrollTop = box.scrollHeight;
+
+    // 2. (可选) 这里可以添加逻辑：把回复作为私信发送给对方
+    // addChatMsg('right', `[回复快拍] ${text}`);
+
+    input.value = '';
+    showToast("已发送");
+    playStory(); // 恢复播放
+}
+
+// ================== 分享给好友逻辑 ==================
+
+let selectedShareFriendId = null; // 记录选中的好友ID
+
+// 1. 打开分享弹窗
+function openShareModal() {
+    selectedShareFriendId = null;
+    document.getElementById('share-search').value = '';
+    renderShareList();
+    openModal('modal-share-story');
+}
+
+// 2. 渲染好友列表
+async function renderShareList() {
+    const container = document.getElementById('share-friend-list');
+    container.innerHTML = '';
+
+    const keyword = document.getElementById('share-search').value.toLowerCase();
+    const roles = JSON.parse(localStorage.getItem('role_list_meta') || '[]');
+
+    for (const role of roles) {
+        if (keyword && !role.name.toLowerCase().includes(keyword)) continue;
+
+        let avatarUrl = await getRoleChatAvatarUrl(role.id);
+        const bgStyle = avatarUrl ? `background-image:url(${avatarUrl})` : 'background-color:#333';
+
+        const item = document.createElement('div');
+        item.className = 'share-friend-item';
+        item.onclick = () => {
+            // 单选逻辑
+            document.querySelectorAll('.share-friend-item').forEach(el => el.classList.remove('selected'));
+            item.classList.add('selected');
+            selectedShareFriendId = role.id;
+        };
+
+        item.innerHTML = `
+            <div class="share-avatar" style="${bgStyle}"></div>
+            <div class="share-name">${role.name}</div>
+        `;
+        container.appendChild(item);
+    }
+}
+
+// ================== 3. 确认发送 (修复：带坐标位置 + 存入历史) ==================
+async function confirmShareStory() {
+    if (!selectedShareFriendId) {
+        showToast("请选择一位好友");
+        return;
+    }
+
+    const currentStory = currentStoryViewer.stories[currentStoryViewer.currentIndex];
+    const roles = JSON.parse(localStorage.getItem('role_list_meta') || '[]');
+    const friend = roles.find(r => r.id === selectedShareFriendId);
+    if (!friend) return;
+
+    showToast("正在发送...");
+
+    try {
+        // 1. 确保会话存在
+        let sessionList = JSON.parse(localStorage.getItem('chat_sessions') || '[]');
+        let session = sessionList.find(c => c.id === selectedShareFriendId);
+
+        if (!session) {
+            session = {
+                id: selectedShareFriendId, type: 'single', name: friend.name, lastMsg: '[快拍]', time: '刚刚'
+            };
+            const roleAvatarBlob = await dbHelper.get(`role_${selectedShareFriendId}_avatar`);
+            if (roleAvatarBlob) await dbHelper.save(`chat_avatar_${selectedShareFriendId}`, roleAvatarBlob);
+            sessionList.unshift(session);
+            localStorage.setItem('chat_sessions', JSON.stringify(sessionList));
+        }
+
+        // 2. 构造历史记录 (🚨 核心修复：加入 position 字段)
+        const msgId = Date.now().toString();
+        const newMsg = {
+            id: msgId,
+            sender: 'right',
+            text: '[快拍]',
+            timestamp: Date.now(),
+            isStoryShare: true,
+            storyData: {
+                id: currentStory.id,
+                type: currentStory.type,
+                content: currentStory.text,
+                mediaKey: currentStory.mediaKey,
+                bgClass: currentStory.backgroundClass,
+                ownerId: currentStory.userId,
+                // 👇👇👇 关键新增：把坐标也存进去！
+                position: currentStory.position || {x: 50, y: 50}
+            }
+        };
+
+        // 3. 存入数据库
+        let history = await loadChatHistory(selectedShareFriendId);
+        history.push(newMsg);
+        await saveChatHistory(selectedShareFriendId, history);
+
+        updateChatLastMessage(selectedShareFriendId, `[分享了快拍]`);
+
+        // 4. 如果当前在聊天页，立即上屏
+        const detailPage = document.getElementById('sub-chat-detail');
+        if (detailPage && detailPage.classList.contains('active') && currentChatId === selectedShareFriendId) {
+            await appendChatBubble('right', '', true, msgId, null, {
+                isStoryShare: true,
+                storyData: newMsg.storyData
+            });
+        }
+
+        showToast(`已发送给 ${friend.name}`);
+
+    } catch (e) {
+        console.error("分享失败", e);
+        showToast("发送失败");
+    }
+
+    closeModal('modal-share-story');
+    playStory();
+}
+
+// ================== 查看分享的快拍 (修复：删除检测 + 坐标应用) ==================
+function viewSharedStory(e, encodedData) {
+    // 拦截多选模式
+    if (typeof isMultiSelectMode !== 'undefined' && isMultiSelectMode) return;
+
+    e.stopPropagation();
+
+    try {
+        const data = JSON.parse(decodeURIComponent(encodedData));
+
+        // --- 🚨 1. 核心修复：检查快拍是否已删除 ---
+        // 只有当快拍是“我”发的，或者属于“好友列表”时才检查
+        if (data.ownerId === 'user_me') {
+            const myStories = JSON.parse(localStorage.getItem('my_stories_list') || '[]');
+            const exists = myStories.find(s => s.id === data.id);
+
+            // 如果列表里找不到这个ID，说明被删了
+            if (!exists) {
+                showToast("该快拍已删除或过期");
+                return; // ⛔️ 终止播放
+            }
+        }
+        // (如果是好友发的，逻辑类似，但目前模拟数据不方便查，暂只检查自己的)
+
+        // --- 2. 构造播放数据 (带坐标) ---
+        const storyItem = {
+            id: data.id,
+            userId: data.ownerId,
+            type: data.type,
+            text: data.content,
+            mediaKey: data.mediaKey,
+            backgroundClass: data.bgClass,
+            timestamp: Date.now(),
+            // 👇👇👇 关键新增：读取存入的坐标
+            position: data.position
+        };
+
+        // 3. 设置并播放
+        currentStoryViewer.roleId = data.ownerId;
+        currentStoryViewer.stories = [storyItem]; // 只播这一条
+        currentStoryViewer.currentIndex = 0;
+        currentStoryViewer.elapsedTime = 0;
+        currentStoryViewer.isPlaying = false;
+        currentStoryViewer.isPaused = false;
+
+        const viewerContent = document.getElementById('story-viewer-content');
+        if (viewerContent) {
+            viewerContent.onclick = function() {
+                if (currentStoryViewer.isPaused) playStory();
+                else pauseStory();
+            };
+        }
+
+        openSubPage('sub-story-viewer');
+        renderCurrentStory();
+        playStory();
+
+    } catch (err) {
+        console.error("查看快拍失败", err);
+        showToast("数据已失效");
+    }
+}
+
+// 启动初始化
+initChatAppLoad();
 
 </script>
 </body>
