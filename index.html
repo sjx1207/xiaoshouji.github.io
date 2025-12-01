@@ -6612,6 +6612,425 @@ body.light-theme .d-cmt-name { color: rgba(0,0,0,0.5); }
     color: #FF3B30;
     background: rgba(255, 59, 48, 0.1);
 }
+
+        /* ================== 钱包 App (Cyber Finance Design) ================== */
+
+/* 1. 核心资产卡片 (全息黑金风格) */
+.wallet-card-premium {
+    width: 100%;
+    height: 200px;
+    border-radius: 24px;
+    position: relative;
+    margin-bottom: 25px;
+    overflow: hidden;
+
+    /* 高级渐变底色 (深邃蓝紫 -> 赛博黑) */
+    background: linear-gradient(135deg, #2b2e4a 0%, #1a1a1a 100%);
+
+    /* 玻璃质感边框 */
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+
+    display: flex; flex-direction: column; justify-content: space-between;
+    padding: 25px;
+    transition: transform 0.2s;
+}
+.wallet-card-premium:active { transform: scale(0.98); }
+
+/* 卡片背景的光晕装饰 (不用图片，纯CSS画) */
+.wallet-card-premium::before {
+    content: ''; position: absolute; top: -50%; right: -50%;
+    width: 300px; height: 300px;
+    background: radial-gradient(circle, rgba(10, 132, 255, 0.4) 0%, transparent 70%);
+    filter: blur(40px); z-index: 0;
+}
+.wallet-card-premium::after {
+    content: ''; position: absolute; bottom: -30%; left: -20%;
+    width: 250px; height: 250px;
+    background: radial-gradient(circle, rgba(182, 32, 224, 0.3) 0%, transparent 70%);
+    filter: blur(40px); z-index: 0;
+}
+
+/* 卡片内容层 (浮在光晕上) */
+.card-layer { position: relative; z-index: 2; width: 100%; }
+
+/* 芯片装饰 (纯CSS画个芯片，增加真实感) */
+.card-chip {
+    width: 45px; height: 32px;
+    background: linear-gradient(135deg, #e6cfa3 0%, #d1b464 100%);
+    border-radius: 6px;
+    margin-bottom: 20px;
+    position: relative;
+    box-shadow: inset 0 1px 4px rgba(0,0,0,0.2);
+}
+/* 芯片纹路 */
+.card-chip::before {
+    content: ''; position: absolute; top: 50%; left: 0; width: 100%; height: 1px;
+    background: rgba(0,0,0,0.2);
+}
+.card-chip::after {
+    content: ''; position: absolute; left: 50%; top: 0; height: 100%; width: 1px;
+    background: rgba(0,0,0,0.2);
+}
+
+/* 余额大数字 */
+.card-balance-label { font-size: 12px; color: rgba(255,255,255,0.6); margin-bottom: 5px; text-transform: uppercase; letter-spacing: 1px; }
+.card-balance-value {
+    font-size: 36px; font-weight: 700; color: white;
+    font-family: 'Courier New', monospace; /* 就像真的信用卡字体 */
+    letter-spacing: -1px;
+    text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+}
+
+/* 卡号装饰 */
+.card-number-mask {
+    font-family: monospace; font-size: 14px; color: rgba(255,255,255,0.4);
+    letter-spacing: 2px; margin-top: auto;
+}
+
+/* 2. 快捷操作栏 (悬浮玻璃条) */
+.wallet-quick-actions {
+    display: flex; justify-content: space-around;
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(20px);
+    border-radius: 20px;
+    padding: 15px 10px;
+    margin-bottom: 25px;
+    border: 1px solid rgba(255,255,255,0.1);
+}
+
+.w-action-item {
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+    cursor: pointer; opacity: 0.9; transition: all 0.2s;
+}
+.w-action-item:active { opacity: 0.6; transform: scale(0.95); }
+
+.w-icon-circle {
+    width: 48px; height: 48px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.1);
+    display: flex; align-items: center; justify-content: center;
+    border: 1px solid rgba(255,255,255,0.1);
+}
+.w-action-text { font-size: 12px; color: white; font-weight: 500; }
+
+/* 特殊颜色 */
+.w-icon-circle.add { background: #0a84ff; color: white; box-shadow: 0 4px 12px rgba(10,132,255,0.3); }
+.w-icon-circle svg { width: 22px; height: 22px; fill: white; }
+
+/* 3. 交易记录列表 */
+.trans-list { display: flex; flex-direction: column; gap: 10px; padding-bottom: 40px; }
+
+.trans-item {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 15px;
+    background: rgba(255,255,255,0.03);
+    border-radius: 14px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.trans-left { display: flex; align-items: center; gap: 12px; }
+.trans-icon-box {
+    width: 40px; height: 40px; border-radius: 10px;
+    background: rgba(255,255,255,0.1);
+    display: flex; align-items: center; justify-content: center;
+}
+.trans-title { font-size: 15px; color: white; font-weight: 500; margin-bottom: 3px; }
+.trans-date { font-size: 11px; color: rgba(255,255,255,0.4); }
+.trans-amount { font-size: 16px; font-weight: 600; }
+.trans-amount.plus { color: #34C759; } /* 绿色 */
+.trans-amount.minus { color: #FF3B30; } /* 红色 */
+
+/* 4. 充值页面专用样式 */
+.recharge-input-wrapper {
+    background: rgba(255,255,255,0.1);
+    border-radius: 20px;
+    padding: 30px 20px;
+    text-align: center;
+    margin-top: 30px;
+    border: 1px solid rgba(255,255,255,0.1);
+}
+.money-symbol { font-size: 30px; font-weight: 300; opacity: 0.5; vertical-align: middle; }
+#recharge-input-real {
+    background: transparent; border: none; outline: none;
+    font-size: 40px; color: white; font-weight: 700; width: 150px;
+    text-align: center; vertical-align: middle;
+    font-family: 'Courier New', monospace;
+}
+#recharge-input-real::placeholder { opacity: 0.3; }
+
+/* 浅色模式适配 */
+body.light-theme .wallet-card-premium {
+    /* 浅色下用亮黑卡，或者银色卡 */
+    background: linear-gradient(135deg, #ffffff 0%, #e0e0e0 100%);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    border-color: rgba(0,0,0,0.05);
+}
+body.light-theme .wallet-card-premium::before,
+body.light-theme .wallet-card-premium::after { opacity: 0.3; }
+body.light-theme .card-balance-value,
+body.light-theme .card-number-mask,
+body.light-theme .card-balance-label { color: #333; text-shadow: none; }
+
+body.light-theme .wallet-quick-actions { background: rgba(255,255,255,0.8); border-color: rgba(0,0,0,0.05); }
+body.light-theme .w-icon-circle { background: rgba(0,0,0,0.05); border-color: rgba(0,0,0,0.05); }
+body.light-theme .w-icon-circle svg { fill: #333; }
+body.light-theme .w-icon-circle.add { background: #007aff; }
+body.light-theme .w-icon-circle.add svg { fill: white; }
+body.light-theme .w-action-text { color: #333; }
+
+body.light-theme .trans-item { background: white; border-color: rgba(0,0,0,0.05); }
+body.light-theme .trans-icon-box { background: #f2f2f7; }
+body.light-theme .trans-icon-box svg { fill: #333; }
+body.light-theme .trans-title { color: #000; }
+
+        /* ================== 购物 App 样式 ================== */
+
+/* 1. 分类 Tab */
+.shop-tab-scroll {
+    display: flex; gap: 10px;
+}
+.shop-tab {
+    padding: 6px 16px;
+    border-radius: 18px;
+    background: rgba(255,255,255,0.1);
+    font-size: 13px; color: rgba(255,255,255,0.7);
+    cursor: pointer; transition: all 0.2s;
+    border: 1px solid rgba(255,255,255,0.05);
+}
+.shop-tab.active {
+    background: #ffffff; color: #000; font-weight: 600;
+}
+
+/* 2. 商品网格 (双列) */
+.shop-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* 两列等宽 */
+    gap: 15px;
+    padding: 10px 16px;
+}
+
+/* 3. 商品卡片 */
+.shop-item-card {
+    background: rgba(255,255,255,0.08);
+    backdrop-filter: blur(20px);
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.1);
+    display: flex; flex-direction: column;
+    cursor: pointer; transition: transform 0.2s;
+}
+.shop-item-card:active { transform: scale(0.96); }
+
+/* 图片区 */
+.shop-img-box {
+    width: 100%; aspect-ratio: 1/1; /* 正方形 */
+    background-color: #333;
+    background-size: cover; background-position: center;
+    position: relative;
+}
+
+/* 信息区 */
+.shop-info-box {
+    padding: 10px;
+    display: flex; flex-direction: column; gap: 4px;
+}
+.shop-title { font-size: 14px; font-weight: 600; color: white; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.shop-desc { font-size: 11px; color: rgba(255,255,255,0.5); }
+
+/* 价格行 */
+.shop-price-row {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-top: 6px;
+}
+.shop-price { font-size: 15px; color: #FF3B30; font-weight: 700; }
+.shop-buy-btn {
+    width: 24px; height: 24px; border-radius: 50%;
+    background: rgba(255,255,255,0.1);
+    display: flex; align-items: center; justify-content: center;
+    color: white; font-size: 14px;
+}
+
+/* 浅色模式适配 */
+body.light-theme .shop-tab { background: rgba(0,0,0,0.05); color: #666; }
+body.light-theme .shop-tab.active { background: #000; color: #fff; }
+body.light-theme .shop-item-card { background: white; border-color: rgba(0,0,0,0.05); box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
+body.light-theme .shop-title { color: black; }
+body.light-theme .shop-buy-btn { background: #f2f2f7; color: #000; }
+
+        /* ================== 备忘录 App 样式 ================== */
+
+/* 1. 笔记列表容器 */
+.memo-list {
+    padding: 10px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* 2. 笔记卡片 */
+.memo-card {
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(20px);
+    border-radius: 12px;
+    padding: 15px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    cursor: pointer;
+    transition: background 0.2s;
+    display: flex;
+    flex-direction: column;
+}
+.memo-card:active { background: rgba(255, 255, 255, 0.15); }
+
+/* 卡片内容 */
+.memo-card-title {
+    font-size: 16px; font-weight: 700; color: white;
+    margin-bottom: 6px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.memo-card-preview {
+    font-size: 13px; color: rgba(255, 255, 255, 0.6);
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+    overflow: hidden;
+    line-height: 1.5;
+}
+.memo-card-date {
+    font-size: 11px; color: rgba(255, 255, 255, 0.3);
+    margin-top: 10px;
+}
+
+/* 3. 编辑器样式 */
+.memo-editor {
+    width: 100%; height: 100%;
+    background: transparent; border: none; outline: none;
+    color: white; font-size: 17px; line-height: 1.6;
+    resize: none; font-family: inherit;
+    padding-bottom: 300px; /* 底部留白方便打字 */
+}
+.memo-editor::placeholder { color: rgba(255,255,255,0.3); }
+
+/* 浅色模式适配 */
+body.light-theme .memo-card {
+    background: #ffffff;
+    border-color: rgba(0,0,0,0.05);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+}
+body.light-theme .memo-card-title { color: #000; }
+body.light-theme .memo-card-preview { color: #666; }
+body.light-theme .memo-card-date { color: #999; }
+body.light-theme .memo-editor { color: #000; }
+body.light-theme .memo-editor::placeholder { color: rgba(0,0,0,0.3); }
+
+        /* ================== 电话 App 样式 (Cyber Style) ================== */
+
+/* 1. 视图容器 */
+.phone-view {
+    flex: 1; height: 100%; width: 100%;
+    overflow: hidden;
+    padding-bottom: 80px; /* 留出底部导航空间 */
+}
+
+/* 2. 拨号盘区域 */
+.phone-display-area {
+    width: 100%; padding: 20px 40px;
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 20px;
+    position: relative;
+}
+#phone-number-display {
+    background: transparent; border: none; outline: none;
+    font-size: 36px; color: white; font-weight: 600;
+    text-align: center; width: 100%;
+    letter-spacing: 2px;
+}
+.phone-backspace {
+    position: absolute; right: 40px; top: 50%; transform: translateY(-50%);
+    width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;
+    cursor: pointer; opacity: 0; transition: opacity 0.2s;
+}
+.phone-backspace.show { opacity: 1; }
+.phone-backspace svg { width: 24px; height: 24px; fill: rgba(255,255,255,0.6); }
+
+/* 3. 键盘网格 */
+.phone-keypad-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px 30px; /* 垂直间距, 水平间距 */
+    margin-bottom: 30px;
+}
+
+.phone-key {
+    width: 75px; height: 75px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    font-size: 32px; font-weight: 400; color: white;
+    cursor: pointer; transition: background 0.1s, transform 0.1s;
+    user-select: none;
+    border: 1px solid rgba(255,255,255,0.05);
+}
+.phone-key:active { background: rgba(255, 255, 255, 0.3); transform: scale(0.95); }
+.phone-key .sub {
+    font-size: 10px; font-weight: 600; color: rgba(255,255,255,0.5);
+    margin-top: -2px; letter-spacing: 1px;
+}
+
+/* 4. 呼叫按钮 */
+.phone-call-btn {
+    width: 75px; height: 75px;
+    border-radius: 50%;
+    background: #34C759; /* 电话绿 */
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 5px 20px rgba(52, 199, 89, 0.4);
+    cursor: pointer; transition: transform 0.1s;
+}
+.phone-call-btn:active { transform: scale(0.9); filter: brightness(0.9); }
+.phone-call-btn svg { width: 36px; height: 36px; fill: white; }
+
+/* 5. 通话记录列表 */
+.recent-call-item {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 15px 0; border-bottom: 1px solid rgba(255,255,255,0.1);
+    cursor: pointer;
+}
+.recent-call-item:active { background: rgba(255,255,255,0.05); }
+.call-info-left { display: flex; align-items: center; gap: 12px; }
+.call-type-icon { width: 16px; height: 16px; fill: rgba(255,255,255,0.4); }
+.call-type-icon.missed { fill: #FF3B30; } /* 未接红色 */
+.call-name { font-size: 16px; font-weight: 600; color: white; }
+.call-name.missed { color: #FF3B30; }
+.call-label { font-size: 12px; color: rgba(255,255,255,0.5); margin-top: 2px; }
+.call-time { font-size: 14px; color: rgba(255,255,255,0.4); }
+.call-info-btn {
+    width: 24px; height: 24px; border-radius: 50%; border: 1px solid #0a84ff;
+    color: #0a84ff; display: flex; align-items: center; justify-content: center; font-size: 12px;
+}
+
+/* 6. 短信列表 (加密简讯风) */
+.sms-item {
+    background: rgba(255,255,255,0.05);
+    border-left: 3px solid #0a84ff; /* 蓝色条标记 */
+    padding: 15px; margin-bottom: 10px;
+    border-radius: 4px 12px 12px 4px;
+    cursor: pointer;
+}
+.sms-header { display: flex; justify-content: space-between; margin-bottom: 6px; }
+.sms-sender { font-size: 15px; font-weight: 700; color: white; }
+.sms-time { font-size: 11px; color: rgba(255,255,255,0.4); }
+.sms-preview { font-size: 13px; color: rgba(255,255,255,0.7); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* 浅色模式适配 */
+body.light-theme .phone-key { background: rgba(0,0,0,0.05); color: black; border-color: rgba(0,0,0,0.05); }
+body.light-theme .phone-key:active { background: rgba(0,0,0,0.1); }
+body.light-theme .phone-key .sub { color: rgba(0,0,0,0.4); }
+body.light-theme #phone-number-display { color: black; }
+body.light-theme .phone-backspace svg { fill: rgba(0,0,0,0.4); }
+body.light-theme .recent-call-item { border-bottom-color: rgba(0,0,0,0.05); }
+body.light-theme .call-name { color: black; }
+body.light-theme .call-name.missed { color: #FF3B30; }
+body.light-theme .sms-item { background: white; border-color: rgba(0,0,0,0.05); border-left-color: #0a84ff; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+body.light-theme .sms-sender { color: black; }
+body.light-theme .sms-preview { color: #666; }
     </style>
 </head>
 <body>
@@ -6787,21 +7206,21 @@ body.light-theme .d-cmt-name { color: rgba(0,0,0,0.5); }
         </div>
 
         <div class="grid-app-item">
-            <div class="app-icon-shape bg-wallet" id="icon-home-wallet" onclick="showToast('钱包')">
+            <div class="app-icon-shape bg-wallet" id="icon-home-wallet" onclick="openApp('app-wallet')">
                 <svg class="app-svg" viewBox="0 0 24 24"><path d="M21 18v1c0 1.1-.9 2-2 2H5c-1.11 0-2-.9-2-2V5c0-1.1.89-2 2-2h14c1.1 0 2 .9 2 2v1h-9c-1.11 0-2 .9-2 2v8c0 1.1.89 2 2 2h9zm-9-2h10V8H12v8z"/></svg>
             </div>
             <span class="app-label">钱包</span>
         </div>
 
         <div class="grid-app-item">
-            <div class="app-icon-shape bg-shop" id="icon-home-shop" onclick="showToast('购物')">
+            <div class="app-icon-shape bg-shop" id="icon-home-shop" onclick="openApp('app-shop'); initShop();">
                 <svg class="app-svg" viewBox="0 0 24 24"><path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12.9-1.63h7.45c.75 0 1.41-.41 1.75-1.03l3.58-6.49c.08-.14.12-.31.12-.48 0-.55-.45-1-1-1H5.21l-.94-2H1zm16 16c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2z"/></svg>
             </div>
             <span class="app-label">购物</span>
         </div>
 
         <div class="grid-app-item">
-            <div class="app-icon-shape bg-memo" id="icon-home-memo" onclick="showToast('备忘录')">
+            <div class="app-icon-shape bg-memo" id="icon-home-memo" onclick="openApp('app-memo'); initMemo();">
                 <svg class="app-svg" viewBox="0 0 24 24"><path d="M3 18h12v-2H3v2zM3 6v2h18V6H3zm0 7h18v-2H3v2z"/></svg>
             </div>
             <span class="app-label">备忘录</span>
@@ -6815,7 +7234,7 @@ body.light-theme .d-cmt-name { color: rgba(0,0,0,0.5); }
         </div>
 
         <div class="grid-app-item">
-            <div class="app-icon-shape bg-phone" id="icon-home-phone" onclick="showToast('电话')">
+            <div class="app-icon-shape bg-phone" id="icon-home-phone" onclick="openApp('app-phone'); initPhoneApp();">
                 <svg class="app-svg" viewBox="0 0 24 24"><path d="M20.01 15.38c-1.23 0-2.42-.2-3.53-.56-.35-.12-.74-.03-1.01.24l-2.2 2.2c-3.23-1.61-5.81-4.19-7.41-7.41l2.2-2.2c.27-.27.35-.66.24-1.01-.36-1.11-.56-2.3-.56-3.53 0-.54-.45-1-1-1H4.39c-.55 0-1 .45-1 1 0 8.73 7.07 15.8 15.8 15.8.55 0 1-.45 1-1v-3.32c0-.54-.45-1-1-1z"/></svg>
             </div>
             <span class="app-label">电话</span>
@@ -9184,6 +9603,244 @@ body.light-theme .d-cmt-name { color: rgba(0,0,0,0.5); }
         </div>
 
         <div id="diary-char-timeline" class="diary-timeline-container">
+        </div>
+    </div>
+</div>
+
+<div class="app-window" id="app-wallet">
+
+    <div class="app-header">
+        <div class="app-back-btn" onclick="closeApp('app-wallet')">
+            <svg style="width:20px;height:20px;fill:#2196F3" viewBox="0 0 24 24"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
+            主屏幕
+        </div>
+        <div class="app-title">数字钱包</div>
+        <div class="header-right-group" style="position:absolute; right:15px; bottom: 12px;">
+            <div class="header-text-btn" onclick="openWalletSubpage('sub-wallet-history')" style="font-size: 16px; font-weight: 500;">记录</div>
+        </div>
+    </div>
+
+    <div class="wallpaper-content" id="wallet-main-content">
+    </div>
+</div>
+
+<div class="sub-page" id="sub-wallet-recharge">
+</div>
+
+<div class="sub-page" id="sub-wallet-history">
+</div>
+
+<div class="app-window" id="app-shop">
+
+    <div class="app-header">
+        <div class="app-back-btn" onclick="closeApp('app-shop')">
+            <svg style="width:20px;height:20px;fill:#2196F3" viewBox="0 0 24 24"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
+            主屏幕
+        </div>
+        <div class="app-title">未来商店</div>
+
+        <div style="position: absolute; right: 15px; top: 55px; font-size:14px; font-weight:600; color:#4CD964; display:flex; align-items:center; gap:4px;">
+            <span style="font-size:10px; opacity:0.8;">余额:</span>
+            <span id="shop-balance-display">¥0.00</span>
+        </div>
+    </div>
+
+    <div class="wallpaper-content" style="padding: 0;">
+
+        <div style="padding: 10px 16px; overflow-x: auto; white-space: nowrap; scrollbar-width: none;">
+            <div class="shop-tab-scroll">
+                <div class="shop-tab active" onclick="filterShop('all', this)">全部</div>
+                <div class="shop-tab" onclick="filterShop('digital', this)">数码</div>
+                <div class="shop-tab" onclick="filterShop('food', this)">补给</div>
+                <div class="shop-tab" onclick="filterShop('gift', this)">礼物</div>
+                <div class="shop-tab" onclick="filterShop('virtual', this)">虚拟</div>
+            </div>
+        </div>
+
+        <div id="shop-grid-container" class="shop-grid">
+        </div>
+
+        <div style="height: 40px;"></div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="modal-buy-confirm">
+    <div class="modal-content" style="width: 280px; text-align: center; padding: 25px 20px;">
+        <div style="width:60px; height:60px; background:rgba(10,132,255,0.1); border-radius:12px; margin:0 auto 15px auto; background-size:cover; background-position:center;" id="buy-confirm-img"></div>
+
+        <div style="font-size: 18px; font-weight: 600; margin-bottom: 5px;" id="buy-confirm-title">商品名</div>
+        <div style="font-size: 24px; font-weight: 700; color:#FF3B30; margin-bottom: 20px;" id="buy-confirm-price">¥0.00</div>
+
+        <div style="font-size: 13px; color: rgba(255,255,255,0.6); margin-bottom: 25px;">
+            确定要购买吗？<br>将从数字钱包扣款。
+        </div>
+
+        <div style="display: flex; gap: 10px;">
+            <button class="modal-btn btn-cancel" onclick="closeBuyModal()">再想想</button>
+            <button class="modal-btn btn-save" onclick="confirmPurchase()">立即支付</button>
+        </div>
+    </div>
+</div>
+
+<div class="app-window" id="app-memo">
+
+    <div class="app-header">
+        <div class="app-back-btn" onclick="closeApp('app-memo')">
+            <svg style="width:20px;height:20px;fill:#2196F3" viewBox="0 0 24 24"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
+            主屏幕
+        </div>
+        <div class="app-title">灵感笔记</div>
+        <div style="position: absolute; right: 15px; top: 55px; color:#0a84ff; font-size:28px; font-weight:300; cursor: pointer;" onclick="openEditMemo()">
+            +
+        </div>
+    </div>
+
+    <div class="wallpaper-content" style="padding: 0;">
+
+        <div class="search-container">
+            <input type="text" class="settings-search" id="memo-search" placeholder="搜索笔记..." oninput="renderMemoList()">
+        </div>
+
+        <div id="memo-list-container" class="memo-list">
+        </div>
+
+        <div style="height: 40px;"></div>
+    </div>
+</div>
+
+<div class="sub-page" id="sub-memo-edit" style="background: #1c1c1e; z-index: 750;">
+
+    <div class="app-header" style="background: inherit; border-bottom: none;">
+        <div class="app-back-btn" onclick="saveAndCloseMemo()">
+            <svg style="width:20px;height:20px;fill:#2196F3" viewBox="0 0 24 24"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
+            列表
+        </div>
+        <div class="app-title" style="font-size:14px; opacity:0.6;" id="memo-edit-time">编辑中...</div>
+        <div style="position: absolute; right: 15px; top: 58px; cursor: pointer;" onclick="deleteCurrentMemo()">
+            <svg style="width:22px;height:22px;fill:#FF3B30;" viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+        </div>
+    </div>
+
+    <div class="wallpaper-content" style="padding: 0 20px;">
+        <textarea id="memo-textarea" class="memo-editor" placeholder="在此输入内容...&#10;第一行自动作为标题"></textarea>
+    </div>
+</div>
+
+<!-- 电话 App -->
+<div class="app-window" id="app-phone">
+
+    <!-- 头部 (内容动态变化) -->
+    <div class="app-header" id="phone-app-header">
+        <!-- 返回按钮 (仅拨号盘显示) -->
+        <div class="app-back-btn" id="phone-back-btn" onclick="closeApp('app-phone')" style="display:none;">
+            <svg style="width:20px;height:20px;fill:#2196F3" viewBox="0 0 24 24"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
+            主屏幕
+        </div>
+        <div class="app-title" id="phone-app-title">拨号</div>
+        <!-- 右上角占位，保持标题居中 -->
+        <div style="width: 60px;"></div>
+    </div>
+
+    <!-- 主内容区域 -->
+    <div class="wallpaper-content" style="padding: 0; display:flex; flex-direction:column; height:100%; overflow:hidden;">
+
+        <!-- 1. 通话记录 (Recents) -->
+        <div id="phone-view-recents" class="phone-view" style="display:none;">
+            <div style="padding: 10px 20px;">
+                <div class="ai-header-text">最近通话</div>
+                <div id="phone-recents-list">
+                    <!-- JS 填充 -->
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. 拨号盘 (Keypad) - 默认显示 -->
+        <div id="phone-view-keypad" class="phone-view" style="display:flex; flex-direction:column; align-items:center; justify-content:center; padding-bottom:80px;">
+
+            <!-- 显示输入的号码 -->
+            <div class="phone-display-area">
+                <input type="text" id="phone-number-display" readonly value="">
+                <div class="phone-backspace" onclick="phoneDeleteNumber()">
+                    <svg viewBox="0 0 24 24"><path d="M22 3H7c-.69 0-1.23.35-1.59.88L0 12l5.41 8.11c.36.53.9.89 1.59.89h15c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-3 12.59L17.59 17 12 11.41 6.41 17 5 15.59 10.59 10 5 4.41 6.41 3 12 8.59 17.59 3 19 4.41 13.41 10 19 15.59z"/></svg>
+                </div>
+            </div>
+
+            <!-- 数字键盘 grid -->
+            <div class="phone-keypad-grid">
+                <div class="phone-key" onclick="phonePress('1')">1<span class="sub"></span></div>
+                <div class="phone-key" onclick="phonePress('2')">2<span class="sub">ABC</span></div>
+                <div class="phone-key" onclick="phonePress('3')">3<span class="sub">DEF</span></div>
+                <div class="phone-key" onclick="phonePress('4')">4<span class="sub">GHI</span></div>
+                <div class="phone-key" onclick="phonePress('5')">5<span class="sub">JKL</span></div>
+                <div class="phone-key" onclick="phonePress('6')">6<span class="sub">MNO</span></div>
+                <div class="phone-key" onclick="phonePress('7')">7<span class="sub">PQRS</span></div>
+                <div class="phone-key" onclick="phonePress('8')">8<span class="sub">TUV</span></div>
+                <div class="phone-key" onclick="phonePress('9')">9<span class="sub">WXYZ</span></div>
+                <div class="phone-key" onclick="phonePress('*')">*</div>
+                <div class="phone-key" onclick="phonePress('0')">0<span class="sub">+</span></div>
+                <div class="phone-key" onclick="phonePress('#')">#</div>
+            </div>
+
+            <!-- 呼叫按钮 -->
+            <div class="phone-call-btn" onclick="makePhoneCall()">
+                <svg viewBox="0 0 24 24"><path d="M20.01 15.38c-1.23 0-2.42-.2-3.53-.56-.35-.12-.74-.03-1.01.24l-2.2 2.2c-3.23-1.61-5.81-4.19-7.41-7.41l2.2-2.2c.27-.27.35-.66.24-1.01-.36-1.11-.56-2.3-.56-3.53 0-.54-.45-1-1-1H4.39c-.55 0-1 .45-1 1 0 8.73 7.07 15.8 15.8 15.8.55 0 1-.45 1-1v-3.32c0-.54-.45-1-1-1z"/></svg>
+            </div>
+        </div>
+
+        <!-- 3. 联系人 & 信息 (Contacts) -->
+        <div id="phone-view-contacts" class="phone-view" style="display:none; flex-direction:column;">
+
+            <!-- 顶部子导航 (联系人 | 信息) -->
+            <div style="padding: 10px 20px;">
+                <div class="chat-top-tabs-container" style="margin:0; background:rgba(255,255,255,0.05);">
+                    <div class="chat-tab-btn active" onclick="switchContactSubTab('list', this)">通讯录</div>
+                    <div class="chat-tab-btn" onclick="switchContactSubTab('sms', this)">简讯</div>
+                </div>
+            </div>
+
+            <!-- 联系人列表 -->
+            <div id="phone-sub-list" class="phone-sub-view" style="flex:1; overflow-y:auto; padding: 0 20px;">
+                <!-- JS 填充 -->
+            </div>
+
+            <!-- 短信列表 -->
+            <div id="phone-sub-sms" class="phone-sub-view" style="display:none; flex:1; overflow-y:auto; padding: 0 20px;">
+                <!-- JS 填充 -->
+            </div>
+        </div>
+
+    </div>
+
+    <!-- 底部导航栏 (Recents | Keypad | Contacts) -->
+    <div class="chat-bottom-nav">
+        <div class="chat-nav-item" onclick="switchPhoneTab('recents', this)">
+            <svg class="chat-nav-icon" viewBox="0 0 24 24"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>
+            <span class="chat-nav-text">记录</span>
+        </div>
+        <div class="chat-nav-item active" onclick="switchPhoneTab('keypad', this)">
+            <svg class="chat-nav-icon" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/><path d="M0 0h24v24H0z" fill="none"/></svg>
+            <span class="chat-nav-text">拨号</span>
+        </div>
+        <div class="chat-nav-item" onclick="switchPhoneTab('contacts', this)">
+            <svg class="chat-nav-icon" viewBox="0 0 24 24"><path d="M20 0H4v2h16V0zM4 24h16v-2H4v2zM20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm-8 2.75c1.24 0 2.25 1.01 2.25 2.25s-1.01 2.25-2.25 2.25S9.75 9 9.75 7.75 10.76 5.25 12 5.25zM17 17H7v-.98c0-1.66 3.33-2.5 5-2.5s5 .84 5 2.5V17z"/></svg>
+            <span class="chat-nav-text">联系人</span>
+        </div>
+    </div>
+</div>
+
+<!-- 呼叫中弹窗 -->
+<div class="modal-overlay" id="modal-calling" style="z-index: 3000;">
+    <div class="modal-content" style="height:100%; width:100%; border-radius:0; background: linear-gradient(180deg, #1c1c1e 0%, #000 100%); align-items:center; justify-content:space-around; padding: 60px 20px;">
+        <div style="text-align:center;">
+            <div id="calling-avatar" style="width:120px; height:120px; border-radius:50%; background:#333; margin:0 auto 20px auto; background-size:cover; background-position:center; box-shadow:0 10px 40px rgba(0,0,0,0.5);"></div>
+            <div id="calling-name" style="font-size:32px; font-weight:700; color:white; margin-bottom:10px;">未知号码</div>
+            <div id="calling-status" style="font-size:16px; color:rgba(255,255,255,0.6);">正在呼叫...</div>
+        </div>
+
+        <div style="display:flex; gap:40px;">
+            <button onclick="endPhoneCall()" style="width:70px; height:70px; border-radius:50%; background:#FF3B30; border:none; display:flex; align-items:center; justify-content:center; box-shadow:0 5px 20px rgba(255, 59, 48, 0.4);">
+                <svg style="width:32px;height:32px;fill:white;transform:rotate(135deg);" viewBox="0 0 24 24"><path d="M20.01 15.38c-1.23 0-2.42-.2-3.53-.56-.35-.12-.74-.03-1.01.24l-2.2 2.2c-3.23-1.61-5.81-4.19-7.41-7.41l2.2-2.2c.27-.27.35-.66.24-1.01-.36-1.11-.56-2.3-.56-3.53 0-.54-.45-1-1-1H4.39c-.55 0-1 .45-1 1 0 8.73 7.07 15.8 15.8 15.8.55 0 1-.45 1-1v-3.32c0-.54-.45-1-1-1z"/></svg>
+            </button>
         </div>
     </div>
 </div>
@@ -18797,6 +19454,691 @@ ${lastDiary}
         btn.textContent = "✨ 偷看 TA 今天的心事 ";
         btn.style.opacity = "1";
     }
+}
+
+    // ================== 钱包 App 核心逻辑 (高级版) ==================
+
+let currentBalance = parseFloat(localStorage.getItem('wallet_balance') || '8848.00'); // 给个吉利的初始值
+const currencySymbol = '¥'; // 换成人民币或者 $
+
+// 1. 初始化和渲染主界面
+function renderWalletMain() {
+    const container = document.getElementById('wallet-main-content');
+    if (!container) return;
+
+    // 格式化余额 (每3位加逗号)
+    const formattedBalance = currentBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+    // 读取最近3条记录
+    let history = JSON.parse(localStorage.getItem('wallet_history') || '[]');
+    let recentHistoryHTML = '';
+
+    if (history.length === 0) {
+        recentHistoryHTML = '<div style="text-align:center; color:rgba(255,255,255,0.3); font-size:13px; margin-top:20px;">暂无交易记录</div>';
+    } else {
+        recentHistoryHTML = history.slice(0, 3).map(item => getTransItemHTML(item)).join('');
+    }
+
+    container.innerHTML = `
+        <div class="wallet-card-premium">
+            <div class="card-layer">
+                <div class="card-chip"></div>
+
+                <div>
+                    <div class="card-balance-label">Total Balance</div>
+                    <div class="card-balance-value">${currencySymbol} ${formattedBalance}</div>
+                </div>
+
+                <div class="card-number-mask">•••• •••• •••• 8848</div>
+            </div>
+        </div>
+
+        <div class="wallet-quick-actions">
+            <div class="w-action-item" onclick="openWalletSubpage('sub-wallet-recharge')">
+                <div class="w-icon-circle add">
+                    <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+                </div>
+                <span class="w-action-text">充值</span>
+            </div>
+
+            <div class="w-action-item" onclick="showToast('提现功能维护中')">
+                <div class="w-icon-circle">
+                    <svg viewBox="0 0 24 24"><path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z"/></svg>
+                </div>
+                <span class="w-action-text">转账</span>
+            </div>
+
+            <div class="w-action-item" onclick="showToast('账单功能开发中')">
+                <div class="w-icon-circle">
+                    <svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.89 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
+                </div>
+                <span class="w-action-text">账单</span>
+            </div>
+
+            <div class="w-action-item" onclick="openWalletSubpage('sub-wallet-history')">
+                <div class="w-icon-circle">
+                    <svg viewBox="0 0 24 24"><path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/></svg>
+                </div>
+                <span class="w-action-text">明细</span>
+            </div>
+        </div>
+
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; padding:0 5px;">
+            <span style="font-size:16px; font-weight:600; color:white;">最近交易</span>
+            <span style="font-size:12px; color:rgba(255,255,255,0.5); cursor:pointer;" onclick="openWalletSubpage('sub-wallet-history')">查看全部 ›</span>
+        </div>
+
+        <div class="trans-list">
+            ${recentHistoryHTML}
+        </div>
+    `;
+}
+
+// 辅助：生成单条记录 HTML
+function getTransItemHTML(item) {
+    const isPlus = item.type === '充值';
+    const colorClass = isPlus ? 'plus' : 'minus'; // minus 留给支出
+    const sign = isPlus ? '+' : '-';
+
+    // 图标判断
+    let iconSvg = '<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>'; // 默认
+    if (isPlus) iconSvg = '<path d="M4 12l1.41 1.41L11 7.83V20h2V7.83l5.59 5.58L20 12l-8-8-8 8z"/>'; // 向上箭头
+
+    return `
+        <div class="trans-item">
+            <div class="trans-left">
+                <div class="trans-icon-box">
+                    <svg style="width:20px;height:20px;fill:white;" viewBox="0 0 24 24">${iconSvg}</svg>
+                </div>
+                <div>
+                    <div class="trans-title">${item.type}</div>
+                    <div class="trans-date">${item.time}</div>
+                </div>
+            </div>
+            <div class="trans-amount ${colorClass}">${sign}${currencySymbol}${item.amount.toFixed(2)}</div>
+        </div>
+    `;
+}
+
+// 2. 充值页面渲染 (填数字的核心功能)
+function renderRechargePage() {
+    const page = document.getElementById('sub-wallet-recharge');
+    page.innerHTML = `
+        <div class="app-header" style="background:inherit; border-bottom:none;">
+            <div class="app-back-btn" onclick="closeSubPage('sub-wallet-recharge')">取消</div>
+            <div class="app-title">余额充值</div>
+        </div>
+
+        <div class="wallpaper-content" style="padding: 20px;">
+            <div style="text-align:center; margin-top:20px;">
+                <div style="font-size:14px; opacity:0.6; margin-bottom:5px;">存入金额</div>
+
+                <div class="recharge-input-wrapper">
+                    <span class="money-symbol">${currencySymbol}</span>
+                    <input type="number" id="recharge-input-real" placeholder="0.00">
+                </div>
+            </div>
+
+            <div style="display:flex; gap:10px; margin-top:20px;">
+                <button class="ai-btn ai-btn-secondary" onclick="setRechargeAmount(100)">100</button>
+                <button class="ai-btn ai-btn-secondary" onclick="setRechargeAmount(500)">500</button>
+                <button class="ai-btn ai-btn-secondary" onclick="setRechargeAmount(1000)">1000</button>
+            </div>
+
+            <button class="ai-btn ai-btn-primary"
+                    onclick="confirmRecharge()"
+                    style="margin-top: 40px; background: #34C759; box-shadow: 0 5px 20px rgba(52, 199, 89, 0.3);">
+                确认充值
+            </button>
+        </div>
+    `;
+}
+
+// 辅助：设置快捷金额
+function setRechargeAmount(val) {
+    document.getElementById('recharge-input-real').value = val;
+}
+
+// 3. 确认充值
+function confirmRecharge() {
+    const input = document.getElementById('recharge-input-real');
+    const amount = parseFloat(input.value);
+
+    if (isNaN(amount) || amount <= 0) {
+        showToast("请输入有效金额");
+        return;
+    }
+
+    currentBalance += amount;
+    localStorage.setItem('wallet_balance', currentBalance.toFixed(2));
+
+    // 记录历史
+    let history = JSON.parse(localStorage.getItem('wallet_history') || '[]');
+    history.unshift({
+        type: '充值',
+        amount: amount,
+        time: new Date().toLocaleString()
+    });
+    localStorage.setItem('wallet_history', JSON.stringify(history));
+
+    renderWalletMain();
+    closeSubPage('sub-wallet-recharge');
+    showToast(`成功充值 ${currencySymbol}${amount}`);
+}
+
+// 4. 全部记录页
+function renderHistoryPage() {
+    const page = document.getElementById('sub-wallet-history');
+    let history = JSON.parse(localStorage.getItem('wallet_history') || '[]');
+
+    const listHTML = history.length > 0
+        ? history.map(item => getTransItemHTML(item)).join('')
+        : '<div style="text-align:center; color:#666; padding-top:100px;">暂无记录</div>';
+
+    page.innerHTML = `
+        <div class="app-header" style="background:inherit; border-bottom:1px solid rgba(255,255,255,0.1);">
+            <div class="app-back-btn" onclick="closeSubPage('sub-wallet-history')">返回</div>
+            <div class="app-title">交易明细</div>
+        </div>
+        <div class="wallpaper-content" style="padding: 0;">
+            <div class="trans-list" style="padding-top:10px;">
+                ${listHTML}
+            </div>
+        </div>
+    `;
+}
+
+    // ================== 🚨 补全缺失的钱包跳转函数 🚨 ==================
+
+function openWalletSubpage(id) {
+    const page = document.getElementById(id);
+    if (page) {
+        // 1. 根据 ID 刷新对应页面的内容
+        if (id === 'sub-wallet-recharge') {
+            renderRechargePage(); // 刷新充值页
+        }
+        else if (id === 'sub-wallet-history') {
+            renderHistoryPage();  // 刷新记录页
+        }
+
+        // 2. 打开页面 (滑入动画)
+        // 强制设置 display flex 确保内容可见，然后再加 active 类触发动画
+        page.style.display = 'flex';
+        setTimeout(() => {
+            page.classList.add('active');
+        }, 10);
+    } else {
+        console.error("找不到子页面:", id);
+        showToast("页面未找到");
+    }
+}
+
+// 确保页面加载时渲染一次钱包主页，防止黑屏
+document.addEventListener('DOMContentLoaded', () => {
+    if(typeof renderWalletMain === 'function') renderWalletMain();
+});
+
+    // ================== 购物 App 逻辑 ==================
+
+// 1. 模拟商品数据
+const shopData = [
+    { id: 1, type: 'digital', name: '全息投影仪', desc: '桌面级 3D 显示设备', price: 2999.00, img: 'https://images.unsplash.com/photo-1535303311164-664fc9ec6532?auto=format&fit=crop&w=600&q=80' },
+    { id: 2, type: 'digital', name: '量子耳机', desc: '降噪效果提升 200%', price: 1299.00, img: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=600&q=80' },
+    { id: 3, type: 'food', name: '能量饮料', desc: '恢复 50 点体力', price: 15.00, img: 'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?auto=format&fit=crop&w=600&q=80' },
+    { id: 4, type: 'food', name: '深夜拉面', desc: '抚慰心灵的美食', price: 48.00, img: 'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?auto=format&fit=crop&w=600&q=80' },
+    { id: 5, type: 'gift', name: '机械玫瑰', desc: '送给仿生人的礼物', price: 520.00, img: 'https://images.unsplash.com/photo-1559563362-c667ba5f5480?auto=format&fit=crop&w=600&q=80' },
+    { id: 6, type: 'virtual', name: 'SVIP 月卡', desc: '解锁所有高级功能', price: 30.00, img: 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?auto=format&fit=crop&w=600&q=80' },
+    { id: 7, type: 'fashion', name: '赛博夹克', desc: '夜之城限定款', price: 888.00, img: 'https://images.unsplash.com/photo-1551028919-ac7edd05b6ea?auto=format&fit=crop&w=600&q=80' }
+];
+
+let currentShopFilter = 'all';
+let pendingItem = null; // 待支付的商品
+
+// 2. 初始化与渲染
+function initShop() {
+    renderShopGrid();
+    updateShopBalanceDisplay();
+}
+
+// 刷新右上角的余额显示
+function updateShopBalanceDisplay() {
+    const bal = parseFloat(localStorage.getItem('wallet_balance') || '0');
+    document.getElementById('shop-balance-display').textContent = `¥${bal.toLocaleString('en-US', {minimumFractionDigits: 2})}`;
+}
+
+// 渲染商品列表
+function renderShopGrid() {
+    const container = document.getElementById('shop-grid-container');
+    container.innerHTML = '';
+
+    const list = currentShopFilter === 'all'
+        ? shopData
+        : shopData.filter(item => item.type === currentShopFilter);
+
+    list.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'shop-item-card';
+        div.onclick = () => openBuyModal(item);
+
+        div.innerHTML = `
+            <div class="shop-img-box" style="background-image:url(${item.img})"></div>
+            <div class="shop-info-box">
+                <div class="shop-title">${item.name}</div>
+                <div class="shop-desc">${item.desc}</div>
+                <div class="shop-price-row">
+                    <div class="shop-price">¥${item.price}</div>
+                    <div class="shop-buy-btn">+</div>
+                </div>
+            </div>
+        `;
+        container.appendChild(div);
+    });
+}
+
+// 3. 筛选功能
+function filterShop(type, btn) {
+    currentShopFilter = type;
+    document.querySelectorAll('.shop-tab').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderShopGrid();
+}
+
+// 4. 购买流程
+function openBuyModal(item) {
+    pendingItem = item;
+
+    document.getElementById('buy-confirm-title').textContent = item.name;
+    document.getElementById('buy-confirm-price').textContent = `¥${item.price.toFixed(2)}`;
+    document.getElementById('buy-confirm-img').style.backgroundImage = `url(${item.img})`;
+
+    const modal = document.getElementById('modal-buy-confirm');
+    modal.style.display = 'flex';
+    setTimeout(() => modal.classList.add('active'), 10);
+}
+
+function closeBuyModal() {
+    const modal = document.getElementById('modal-buy-confirm');
+    modal.classList.remove('active');
+    setTimeout(() => modal.style.display = 'none', 300);
+    pendingItem = null;
+}
+
+// 核心：确认支付
+function confirmPurchase() {
+    if (!pendingItem) return;
+
+    // 1. 获取钱包余额
+    let balance = parseFloat(localStorage.getItem('wallet_balance') || '0');
+
+    // 2. 检查余额
+    if (balance >= pendingItem.price) {
+        // --- 支付成功逻辑 ---
+
+        // 扣款
+        balance -= pendingItem.price;
+        localStorage.setItem('wallet_balance', balance.toFixed(2));
+
+        // 写入交易记录 (调用 Wallet App 的逻辑，或者直接操作 storage)
+        let history = JSON.parse(localStorage.getItem('wallet_history') || '[]');
+        history.unshift({
+            id: Date.now(),
+            type: '消费', // 类型
+            amount: -pendingItem.price, // 负数代表支出
+            status: `购买 ${pendingItem.name}`,
+            time: new Date().toLocaleString()
+        });
+        localStorage.setItem('wallet_history', JSON.stringify(history));
+
+        // 刷新 UI
+        updateShopBalanceDisplay();
+        showToast("✅ 支付成功，商品已发货");
+        closeBuyModal();
+
+        // 刷新钱包主页 (如果它在后台开着)
+        if(typeof renderWalletMain === 'function') renderWalletMain();
+
+    } else {
+        // --- 余额不足 ---
+        showToast("❌ 余额不足，请去钱包充值");
+        // 还可以做一个抖动动画提示
+    }
+}
+
+// 初始化
+initShop();
+
+    // ================== 备忘录 App 逻辑 ==================
+
+let currentMemoId = null; // 当前编辑的笔记ID (null表示新建)
+
+// 1. 初始化与渲染列表
+function initMemo() {
+    renderMemoList();
+}
+
+function renderMemoList() {
+    const container = document.getElementById('memo-list-container');
+    const searchVal = document.getElementById('memo-search').value.toLowerCase().trim();
+    if (!container) return;
+
+    // 读取数据
+    let memos = JSON.parse(localStorage.getItem('memo_data') || '[]');
+
+    // 排序：按时间倒序 (新的在前面)
+    memos.sort((a, b) => b.time - a.time);
+
+    // 过滤
+    if (searchVal) {
+        memos = memos.filter(m => m.content.toLowerCase().includes(searchVal));
+    }
+
+    container.innerHTML = '';
+
+    if (memos.length === 0) {
+        container.innerHTML = `<div style="text-align:center; color:#666; padding-top:100px;">${searchVal ? '未找到笔记' : '暂无笔记<br>点击右上角 + 新建'}</div>`;
+        return;
+    }
+
+    memos.forEach(memo => {
+        // 智能提取标题：第一行
+        const lines = memo.content.split('\n');
+        const title = lines[0] || '无标题';
+        const preview = lines.slice(1).join(' ') || '无附加文本';
+        const dateStr = new Date(memo.time).toLocaleString('zh-CN', {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'});
+
+        const div = document.createElement('div');
+        div.className = 'memo-card';
+        div.onclick = () => openEditMemo(memo.id);
+
+        div.innerHTML = `
+            <div class="memo-card-title">${title}</div>
+            <div class="memo-card-preview">${preview}</div>
+            <div class="memo-card-date">${dateStr}</div>
+        `;
+        container.appendChild(div);
+    });
+}
+
+// 2. 打开编辑页
+function openEditMemo(id = null) {
+    currentMemoId = id;
+    const textarea = document.getElementById('memo-textarea');
+    const timeLabel = document.getElementById('memo-edit-time');
+
+    if (id) {
+        // 编辑已有
+        const memos = JSON.parse(localStorage.getItem('memo_data') || '[]');
+        const target = memos.find(m => m.id === id);
+        if (target) {
+            textarea.value = target.content;
+            timeLabel.textContent = "上次编辑: " + new Date(target.time).toLocaleString();
+        }
+    } else {
+        // 新建
+        textarea.value = '';
+        timeLabel.textContent = "新笔记";
+    }
+
+    openSubPage('sub-memo-edit');
+}
+
+// 3. 保存并关闭
+function saveAndCloseMemo() {
+    const content = document.getElementById('memo-textarea').value.trim();
+
+    let memos = JSON.parse(localStorage.getItem('memo_data') || '[]');
+
+    if (content) {
+        if (currentMemoId) {
+            // 更新旧的
+            const index = memos.findIndex(m => m.id === currentMemoId);
+            if (index > -1) {
+                memos[index].content = content;
+                memos[index].time = Date.now();
+            }
+        } else {
+            // 创建新的
+            memos.push({
+                id: Date.now(),
+                content: content,
+                time: Date.now()
+            });
+        }
+        localStorage.setItem('memo_data', JSON.stringify(memos));
+    } else {
+        // 如果内容为空且是旧笔记，询问是否删除？这里简单处理：不保存空笔记
+        // 也可以选择如果不写字就直接忽略
+    }
+
+    renderMemoList(); // 刷新列表
+    closeSubPage('sub-memo-edit');
+}
+
+// 4. 删除当前笔记
+function deleteCurrentMemo() {
+    if (!currentMemoId) {
+        // 如果是新建状态还没保存，直接关掉
+        closeSubPage('sub-memo-edit');
+        return;
+    }
+
+    openGenConfirmModal(
+        "删除笔记",
+        "确定要删除这条笔记吗？",
+        "删除",
+        () => {
+            let memos = JSON.parse(localStorage.getItem('memo_data') || '[]');
+            memos = memos.filter(m => m.id !== currentMemoId);
+            localStorage.setItem('memo_data', JSON.stringify(memos));
+
+            renderMemoList();
+            closeSubPage('sub-memo-edit');
+            showToast("已删除");
+            closeGenConfirmModal();
+        }
+    );
+}
+
+// 初始化
+initMemo();
+
+    // ================== 电话 App 逻辑 ==================
+
+let currentPhoneTab = 'keypad';
+let currentPhoneNumber = '';
+
+// 1. 启动初始化
+function initPhoneApp() {
+    switchPhoneTab('keypad'); // 默认进拨号
+}
+
+// 2. 底部导航切换 (核心：控制头部返回按钮)
+function switchPhoneTab(tab, btn) {
+    currentPhoneTab = tab;
+
+    // UI高亮
+    if(btn) {
+        document.querySelectorAll('#app-phone .chat-nav-item').forEach(el => el.classList.remove('active'));
+        btn.classList.add('active');
+    }
+
+    // 切换内容
+    document.querySelectorAll('.phone-view').forEach(el => el.style.display = 'none');
+    document.getElementById(`phone-view-${tab}`).style.display = (tab === 'keypad' || tab === 'contacts') ? 'flex' : 'block';
+
+    // 🚨 核心需求：只有 Keypad 显示返回按钮，其他隐藏
+    const backBtn = document.getElementById('phone-back-btn');
+    const title = document.getElementById('phone-app-title');
+
+    if (tab === 'keypad') {
+        backBtn.style.display = 'flex';
+        title.textContent = "拨号";
+    } else if (tab === 'recents') {
+        backBtn.style.display = 'none'; // 隐藏
+        title.textContent = "通话记录";
+        renderRecentsList();
+    } else if (tab === 'contacts') {
+        backBtn.style.display = 'none'; // 隐藏
+        title.textContent = "通讯录";
+        // 默认显示列表
+        switchContactSubTab('list', document.querySelector('#app-phone .chat-tab-btn:first-child'));
+    }
+}
+
+// 3. 拨号盘逻辑
+function phonePress(key) {
+    if (currentPhoneNumber.length < 15) {
+        currentPhoneNumber += key;
+        updatePhoneDisplay();
+    }
+}
+
+function phoneDeleteNumber() {
+    currentPhoneNumber = currentPhoneNumber.slice(0, -1);
+    updatePhoneDisplay();
+}
+
+function updatePhoneDisplay() {
+    const display = document.getElementById('phone-number-display');
+    const backspace = document.querySelector('.phone-backspace');
+    display.value = currentPhoneNumber;
+
+    if (currentPhoneNumber.length > 0) backspace.classList.add('show');
+    else backspace.classList.remove('show');
+}
+
+// 4. 模拟拨打
+function makePhoneCall(number = null, name = null, avatar = null) {
+    const targetNum = number || currentPhoneNumber;
+    if (!targetNum) return;
+
+    // 打开呼叫弹窗
+    const modal = document.getElementById('modal-calling');
+    document.getElementById('calling-name').textContent = name || targetNum;
+    document.getElementById('calling-status').textContent = "正在呼叫...";
+
+    // 头像处理
+    const avatarEl = document.getElementById('calling-avatar');
+    if (avatar) {
+        avatarEl.style.backgroundImage = `url(${avatar})`;
+    } else {
+        avatarEl.style.backgroundImage = 'none'; // 默认灰底
+    }
+
+    modal.style.display = 'flex';
+    setTimeout(()=>modal.classList.add('active'), 10);
+
+    // 记录历史
+    addRecentCall(name || targetNum, 'outgoing');
+}
+
+function endPhoneCall() {
+    const modal = document.getElementById('modal-calling');
+    modal.classList.remove('active');
+    setTimeout(()=>modal.style.display='none', 300);
+}
+
+// 5. 记录通话历史
+function addRecentCall(name, type) {
+    let recents = JSON.parse(localStorage.getItem('phone_recents') || '[]');
+    recents.unshift({
+        id: Date.now(),
+        name: name,
+        type: type, // 'outgoing', 'missed', 'incoming'
+        time: new Date().toLocaleString(),
+        label: '手机'
+    });
+    localStorage.setItem('phone_recents', JSON.stringify(recents));
+}
+
+function renderRecentsList() {
+    const container = document.getElementById('phone-recents-list');
+    const recents = JSON.parse(localStorage.getItem('phone_recents') || '[]');
+
+    if (recents.length === 0) {
+        container.innerHTML = '<div style="text-align:center; color:#666; padding-top:50px;">无通话记录</div>';
+        return;
+    }
+
+    container.innerHTML = recents.map(r => `
+        <div class="recent-call-item" onclick="makePhoneCall('${r.name}', '${r.name}')">
+            <div class="call-info-left">
+                <!-- 图标判断 -->
+                <svg class="call-type-icon ${r.type === 'missed' ? 'missed' : ''}" viewBox="0 0 24 24">
+                    ${r.type === 'outgoing'
+                        ? '<path d="M9 5v2h6.59L4 18.59 5.41 20 17 8.41V15h2V5z"/>' // 箭头右上
+                        : '<path d="M19 13h-2V9H9.36L20 19.64 18.64 21 8 10.36V15H6V5h10z"/>' // 箭头左下(模拟进来)
+                    }
+                </svg>
+                <div>
+                    <div class="call-name ${r.type === 'missed' ? 'missed' : ''}">${r.name}</div>
+                    <div class="call-label">${r.label}</div>
+                </div>
+            </div>
+            <div style="display:flex; align-items:center; gap:10px;">
+                <div class="call-time">${r.time.split(' ')[1]}</div>
+                <div class="call-info-btn">i</div>
+            </div>
+        </div>
+    `).join('');
+}
+
+// 6. 联系人子页面切换
+function switchContactSubTab(subTab, btn) {
+    document.querySelectorAll('#app-phone .chat-tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+
+    document.getElementById('phone-sub-list').style.display = subTab === 'list' ? 'block' : 'none';
+    document.getElementById('phone-sub-sms').style.display = subTab === 'sms' ? 'block' : 'none';
+
+    if (subTab === 'list') renderPhoneContacts();
+    else renderPhoneSMS();
+}
+
+// 渲染联系人 (读取角色书)
+async function renderPhoneContacts() {
+    const container = document.getElementById('phone-sub-list');
+    container.innerHTML = '';
+
+    const roles = JSON.parse(localStorage.getItem('role_list_meta') || '[]');
+
+    // 按首字母排序(略)，这里简单遍历
+    for (const role of roles) {
+        let avatarUrl = await getRoleChatAvatarUrl(role.id);
+
+        const div = document.createElement('div');
+        div.className = 'recent-call-item'; // 复用样式
+        div.onclick = () => makePhoneCall('10086', role.name, avatarUrl); // 模拟拨打
+
+        div.innerHTML = `
+            <div class="call-info-left">
+                <div style="width:40px; height:40px; border-radius:50%; background-image:url(${avatarUrl}); background-size:cover; background-position:center; background-color:#333;"></div>
+                <div class="call-name" style="font-size:16px;">${role.name}</div>
+            </div>
+            <div class="call-info-btn" style="border:none;">📞</div>
+        `;
+        container.appendChild(div);
+    }
+}
+
+// 渲染模拟短信
+function renderPhoneSMS() {
+    const container = document.getElementById('phone-sub-sms');
+    // 模拟数据
+    const smsData = [
+        { sender: "运营商", text: "【流量提醒】您本月流量已使用 80%...", time: "昨天" },
+        { sender: "快递", text: "您的包裹已放入丰巢柜，取件码 8848...", time: "10:30" }
+    ];
+
+    container.innerHTML = smsData.map(sms => `
+        <div class="sms-item" onclick="showToast('短信详情功能开发中')">
+            <div class="sms-header">
+                <span class="sms-sender">${sms.sender}</span>
+                <span class="sms-time">${sms.time}</span>
+            </div>
+            <div class="sms-preview">${sms.text}</div>
+        </div>
+    `).join('');
 }
 
 </script>
