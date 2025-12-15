@@ -3541,7 +3541,8 @@ body.light-theme .ai-btn-secondary { color: #000 !important; background: rgba(0,
 /* 如果是深色模式，为了看清文字，加一层淡淡的渐变遮罩 */
 #sub-chat-detail::before {
     content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-    background: linear-gradient(180deg, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0) 20%, rgba(0,0,0,0) 80%, rgba(0,0,0,0.4) 100%); [cite: 930]
+    /* ✅ 改好了：删掉了干扰字符 */
+    background: linear-gradient(180deg, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0) 20%, rgba(0,0,0,0) 80%, rgba(0,0,0,0.4) 100%);
     pointer-events: none; z-index: -1;
 }
 
@@ -4557,20 +4558,17 @@ body.light-theme .story-add-badge { border-color: #f2f2f7; }
 /* 左上角：发布者头像 (加大增强版) */
 .status-mini-avatar {
     position: absolute;
-    top: 6px; left: 6px; /* 稍微往边缘靠一点，显得更饱满 */
+    top: 6px; left: 6px;
 
-    /* 💥 核心修改：尺寸加大 */
     width: 36px; height: 36px;
 
     border-radius: 50%;
-    /* 边框加粗一点，更白一点 */
     border: 2px solid #ffffff;
 
-    style="background-image:url(...); background-size: contain; background-repeat: no-repeat;"
+    /* ✅ 改好了：删掉了那个 style="..." */
     z-index: 5;
     background-color: #333;
 
-    /* 加一点投影，让头像浮在背景图上面 */
     box-shadow: 0 2px 8px rgba(0,0,0,0.4);
 }
 
@@ -7031,6 +7029,1769 @@ body.light-theme .call-name.missed { color: #FF3B30; }
 body.light-theme .sms-item { background: white; border-color: rgba(0,0,0,0.05); border-left-color: #0a84ff; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
 body.light-theme .sms-sender { color: black; }
 body.light-theme .sms-preview { color: #666; }
+
+/* --- 聊天图片美化 --- */
+
+/* 图片本身的样式 */
+.chat-content-image {
+    max-width: 100%; /* 让图片宽度撑满气泡 */
+    height: auto;    /* 高度自动，保持比例 */
+    border-radius: 16px; /* 更大的圆角，看起来更柔和 */
+    display: block;  /* 消除图片底部的微小空隙 */
+    
+    /* 可选：给图片加一点点阴影，增加立体感 */
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* 重要：当气泡里包含图片时，我们需要调整气泡文本容器的样式。
+   我们可以通过 :has() 选择器来实现（现代浏览器支持）。
+   如果你的环境不支持 :has()，可能需要用 JS 给父级加类名，
+   但鉴于这是手机端项目，现代浏览器通常都支持。
+*/
+
+/* 当 .chat-bubble-text 内部直接包含 .chat-content-image 时 */
+.chat-bubble-text:has(> .chat-content-image) {
+    padding: 0 !important;       /* 移除内边距，让图片贴边 */
+    background: transparent !important; /* 移除背景色，只显示图片 */
+    box-shadow: none !important; /* 移除气泡本身的阴影 */
+    border: none !important;     /* 移除可能的边框 */
+}
+
+/* 备用方案：如果上面的 :has() 不起作用，
+   你可以尝试这种较老的方法，但效果可能略差，
+   因为它不能完美去除父级的背景和内边距。
+*/
+/*
+.chat-content-image {
+    max-width: 220px; 
+    border-radius: 16px;
+    margin: -8px;  /* 尝试抵消气泡的 padding 
+}
+*/
+
+/* ================== 语音条样式 ================== */
+
+/* 语音条容器 */
+.voice-bubble-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 60px; /* 最小宽度 */
+    cursor: pointer;
+    user-select: none;
+}
+
+/* 播放图标 (三角形) */
+.voice-icon-play {
+    width: 0; 
+    height: 0; 
+    border-top: 6px solid transparent;
+    border-bottom: 6px solid transparent;
+    border-left: 10px solid currentColor; /* 跟随文字颜色 */
+    opacity: 0.9;
+}
+
+/* 声波纹路容器 */
+.voice-wave-box {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    height: 16px;
+    flex: 1; /* 撑开中间 */
+}
+
+/* 单根声波条 */
+.voice-bar {
+    width: 2px;
+    background-color: currentColor; /* 跟随文字颜色 */
+    border-radius: 1px;
+    opacity: 0.6;
+    animation: none; /* 默认不动 */
+}
+
+/* 播放时的动画 */
+.voice-playing .voice-bar {
+    animation: voice-play-anim 0.8s infinite ease-in-out;
+}
+@keyframes voice-play-anim {
+    0%, 100% { height: 4px; opacity: 0.5; }
+    50% { height: 12px; opacity: 1; }
+}
+
+/* 给声波加随机高度 (模拟真实感) */
+.voice-bar:nth-child(1) { height: 6px; }
+.voice-bar:nth-child(2) { height: 10px; }
+.voice-bar:nth-child(3) { height: 5px; }
+.voice-bar:nth-child(4) { height: 8px; }
+.voice-bar:nth-child(5) { height: 12px; }
+.voice-bar:nth-child(6) { height: 4px; }
+.voice-bar:nth-child(7) { height: 9px; }
+
+/* 时长文字 */
+.voice-duration-text {
+    font-size: 13px;
+    font-weight: 500;
+    opacity: 0.8;
+}
+
+/* 隐藏的真实文本 (点击后显示) */
+.voice-real-text {
+    display: none; /* 默认隐藏 */
+    font-size: 14px;
+    line-height: 1.4;
+    border-top: 1px solid rgba(255,255,255,0.2);
+    margin-top: 8px;
+    padding-top: 8px;
+    opacity: 0.9;
+    white-space: pre-wrap; /* 允许换行 */
+    color: white; /* 确保文字是白色的 */
+}
+/* 浅色模式适配 */
+body.light-theme .voice-real-text {
+    color: black;
+    border-top-color: rgba(0,0,0,0.1);
+}
+
+/* --- 自定义表情包面板样式 --- */
+        #custom-sticker-panel {
+            position: absolute;
+            bottom: 70px; /* 在输入栏上方 */
+            left: 10px; right: 10px;
+            height: 220px; /* 固定高度 */
+            background: rgba(30, 30, 35, 0.95); /* 深色背景 */
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border-radius: 18px;
+            border: 1px solid rgba(255,255,255,0.1);
+            z-index: 50;
+            display: none; /* 默认隐藏 */
+            flex-direction: column;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            animation: slide-up 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+        #custom-sticker-panel.active { display: flex; }
+
+        .sticker-header-bar {
+            padding: 12px 15px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            display: flex; align-items: center; justify-content: space-between;
+            color: white;
+        }
+        .btn-close-sticker {
+            width: 24px; height: 24px; background: rgba(255,255,255,0.1);
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            cursor: pointer; color: #aaa;
+        }
+
+        .sticker-grid-container {
+            flex: 1; overflow-y: auto;
+            padding: 15px;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr); /* 4列 */
+            gap: 12px;
+        }
+        
+        /* 单个表情格子 */
+        .sticker-item {
+            aspect-ratio: 1/1;
+            border-radius: 12px;
+            background-color: rgba(255,255,255,0.05);
+            background-size: cover; background-position: center;
+            cursor: pointer;
+            position: relative;
+            transition: transform 0.1s;
+        }
+        .sticker-item:active { transform: scale(0.95); }
+
+        /* 加号按钮样式 */
+        .sticker-item.add-btn {
+            border: 2px dashed rgba(255,255,255,0.2);
+            background: transparent;
+            display: flex; align-items: center; justify-content: center;
+        }
+
+        /* 浅色模式适配 */
+        body.light-theme #custom-sticker-panel {
+            background: rgba(255, 255, 255, 0.95);
+            border-color: rgba(0,0,0,0.1);
+        }
+        body.light-theme .sticker-header-bar {
+            border-bottom-color: rgba(0,0,0,0.1); color: black;
+        }
+        body.light-theme .sticker-item.add-btn {
+            border-color: rgba(0,0,0,0.2);
+        }
+        body.light-theme .sticker-item.add-btn svg {
+            fill: rgba(0,0,0,0.4) !important;
+        }
+        
+        /* --- 表情面板强制修复样式 --- */
+#custom-sticker-panel {
+    position: absolute !important;
+    bottom: 80px !important; /* 在输入栏上方 */
+    left: 10px !important; 
+    right: 10px !important;
+    height: 240px !important;
+    background: rgba(30, 30, 35, 0.98) !important; /* 不透明一点，防止看不清 */
+    border-radius: 18px !important;
+    border: 1px solid rgba(255,255,255,0.2) !important;
+    z-index: 9999 !important; /* 提到最高层级 */
+    display: none; /* 默认隐藏，JS控制 flex */
+    flex-direction: column !important;
+    box-shadow: 0 10px 50px rgba(0,0,0,0.5) !important;
+}
+
+/* 头部样式 */
+.sticker-header-bar {
+    padding: 10px 15px !important;
+    border-bottom: 1px solid rgba(255,255,255,0.1) !important;
+    display: flex !important; 
+    justify-content: space-between !important;
+    align-items: center !important;
+    color: white !important;
+}
+
+/* 列表容器 */
+.sticker-grid-container {
+    flex: 1 !important;
+    overflow-y: auto !important;
+    padding: 15px !important;
+    display: grid !important;
+    grid-template-columns: repeat(4, 1fr) !important;
+    gap: 12px !important;
+}
+
+/* 每一项 */
+.sticker-item {
+    aspect-ratio: 1/1 !important;
+    border-radius: 12px !important;
+    background-color: rgba(255,255,255,0.1) !important;
+    background-size: cover !important; 
+    background-position: center !important;
+    cursor: pointer !important;
+}
+
+/* 浅色模式适配 */
+body.light-theme #custom-sticker-panel {
+    background: #ffffff !important;
+    border-color: rgba(0,0,0,0.1) !important;
+}
+body.light-theme .sticker-header-bar {
+    color: black !important;
+    border-bottom-color: rgba(0,0,0,0.1) !important;
+}
+
+/* --- 表情包专用样式 (终极无气泡版) --- */
+.sticker-wrapper {
+    /* 移除所有容器装饰 */
+    background: transparent !important;
+    padding: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    margin: 5px 0;
+}
+
+.chat-sticker-img {
+    /* 限制大小，表情包通常比照片小 */
+    max-width: 130px !important; 
+    height: auto !important;
+    display: block !important;
+    
+    /* 强制移除圆角和边框 */
+    border-radius: 0 !important; 
+    border: none !important;
+    box-shadow: none !important;
+    background-color: transparent !important;
+    
+    /* 👇【黑科技】👇：如果是深色背景，这行代码会让图片的白色背景变透明！ */
+    /* 这样你上传白底表情包看起来也像透明的 */
+    mix-blend-mode: multiply; 
+    
+    cursor: pointer;
+}
+
+/* 浅色模式下，multiply 会导致图片消失，所以要切回正常模式 */
+body.light-theme .chat-sticker-img {
+    mix-blend-mode: normal !important; 
+    /* 浅色模式下白底本来就看不出来，所以不用处理 */
+}
+
+/* ================== 表情面板最终修正样式 ================== */
+
+/* 1. 面板容器：调整高度和圆角 */
+#custom-sticker-panel {
+    position: absolute !important;
+    bottom: 80px !important;       /* 紧贴输入栏上方 */
+    left: 15px !important;         /* 左右留出空隙 */
+    right: 15px !important;
+    height: 320px !important;      /* 🟢 高度加高，方便上下滑动 */
+    background: rgba(30, 30, 35, 0.98) !important; /* 深色背景 */
+    backdrop-filter: blur(20px) !important;
+    -webkit-backdrop-filter: blur(20px) !important;
+    border-radius: 24px !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    z-index: 9999 !important;      /* 确保最顶层 */
+    display: none;                 /* 默认隐藏，JS控制 flex */
+    flex-direction: column !important;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6) !important;
+    overflow: hidden !important;   /* 防止圆角溢出 */
+}
+
+/* 2. 头部样式 */
+.sticker-header-bar {
+    padding: 15px 20px !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    color: white !important;
+    background: rgba(255, 255, 255, 0.02) !important;
+    flex-shrink: 0 !important; /* 防止头部被压缩 */
+}
+
+/* 3. 列表容器：强制 3 列 */
+.sticker-grid-container {
+    flex: 1 !important;
+    overflow-y: auto !important;   /* 🟢 开启上下滚动 */
+    padding: 20px !important;      /* 内边距加大 */
+    display: grid !important;
+    
+    /* 🟢 核心：强制一行 3 个 */
+    grid-template-columns: repeat(3, 1fr) !important; 
+    
+    /* 🟢 核心：加大间距，让布局更宽松 */
+    gap: 20px !important; 
+    
+    align-content: start !important; /* 内容从上往下排 */
+}
+
+/* 4. 单个表情格子：缩小图片显示 */
+.sticker-item {
+    aspect-ratio: 1/1 !important;  /* 保持正方形 */
+    border-radius: 16px !important;
+    background-color: rgba(255, 255, 255, 0.08) !important; /* 淡淡的底色框 */
+    border: 1px solid rgba(255, 255, 255, 0.05) !important;
+    
+    /* 🟢 核心：图片只显示 60% 大小，并居中 */
+    background-size: 60% !important; 
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+    
+    cursor: pointer !important;
+    transition: transform 0.1s, background-color 0.2s !important;
+}
+
+/* 点击反馈 */
+.sticker-item:active {
+    transform: scale(0.92) !important;
+    background-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+/* 5. 加号按钮特殊处理 */
+.sticker-item.add-btn {
+    border: 2px dashed rgba(255, 255, 255, 0.3) !important;
+    background-color: transparent !important;
+    background-image: none !important; /* 加号不需要背景图 */
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+.sticker-item.add-btn svg {
+    width: 28px !important;
+    height: 28px !important;
+    fill: rgba(255, 255, 255, 0.5) !important;
+}
+
+/* 6. 浅色模式适配 */
+body.light-theme #custom-sticker-panel {
+    background: #ffffff !important;
+    border-color: rgba(0,0,0,0.1) !important;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.15) !important;
+}
+body.light-theme .sticker-header-bar {
+    color: black !important;
+    border-bottom-color: rgba(0,0,0,0.05) !important;
+    background: #f9f9f9 !important;
+}
+body.light-theme .sticker-item {
+    background-color: #f2f2f7 !important;
+    border-color: rgba(0,0,0,0.05) !important;
+}
+body.light-theme .sticker-item.add-btn {
+    border-color: rgba(0,0,0,0.2) !important;
+}
+body.light-theme .sticker-item.add-btn svg {
+    fill: rgba(0,0,0,0.3) !important;
+}
+
+/* ================== 表情包终极样式 (去气泡 + 去白底) ================== */
+
+/* 1. 外层容器：彻底隐形 */
+.sticker-wrapper {
+    background: transparent !important; /* 去掉背景色 */
+    padding: 0 !important;              /* 去掉内边距 */
+    border: none !important;            /* 去掉边框 */
+    box-shadow: none !important;        /* 去掉阴影 */
+    margin: 5px 0;
+}
+
+/* 2. 图片本体：混合模式去白底 */
+.chat-sticker-img {
+    /* 大小调整：你觉得太大，这里改小一点，比如 120px */
+    max-width: 120px !important; 
+    height: auto !important;
+    display: block !important;
+    
+    /* 去掉图片的圆角和边框，让它看起来像贴纸 */
+    border-radius: 0 !important; 
+    border: none !important;
+    box-shadow: none !important;
+    background-color: transparent !important;
+    
+    /* 👇👇👇【核心黑科技】👇👇👇 */
+    /* 这行代码会让图片里的“白色”变成“透明”，透出底下的聊天背景！ */
+    /* 注意：如果表情包本身有大面积白色(比如Hello Kitty的脸)，脸也会变半透明，这是纯代码处理的唯一代价 */
+    mix-blend-mode: multiply !important; 
+    
+    cursor: pointer;
+}
+
+/* 浅色模式下不需要混合模式 (因为背景本来就是白的) */
+body.light-theme .chat-sticker-img {
+    mix-blend-mode: normal !important; 
+}
+
+/* --- 表情包终极补丁：强制去白底 --- */
+.chat-sticker-img {
+    /* 1. 确保没有圆角和边框 */
+    border-radius: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    background-color: transparent !important;
+
+    /* 2. 核心：正片叠底 (让白色变透明) */
+    /* 无论深色还是浅色模式，都开启这个，这样白底图片就能透出聊天背景 */
+    mix-blend-mode: multiply !important; 
+    
+    /* 3. 稍微调整对比度，让表情更清晰 */
+    filter: contrast(1.05);
+}
+
+/* 修复：确保浅色模式下也生效 (覆盖之前的 normal 设置) */
+body.light-theme .chat-sticker-img {
+    mix-blend-mode: multiply !important; 
+}
+
+/* 优化：表情面板里的预览图也去白底 */
+.sticker-item {
+    /* 让面板里的预览图也把白色变透明，融入格子背景 */
+    background-blend-mode: multiply !important;
+}
+
+/* ================== 表情包专用样式 (终极修复版) ================== */
+
+/* 1. 外层容器：彻底隐形，没有任何背景色和边框 */
+.sticker-wrapper {
+    background: transparent !important;
+    padding: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    margin: 5px 0;
+}
+
+/* 2. 图片本体：去白底核心代码 */
+.chat-sticker-img {
+    max-width: 130px !important;
+    height: auto !important;
+    display: block !important;
+    
+    /* 强制去掉圆角和边框 */
+    border-radius: 0 !important; 
+    border: none !important;
+    box-shadow: none !important;
+    background-color: transparent !important;
+    
+    /* 🔥【核心】正片叠底：这行代码会让白底变透明！ */
+    mix-blend-mode: multiply !important; 
+    
+    cursor: pointer;
+}
+
+/* 浅色模式下修正 */
+body.light-theme .chat-sticker-img {
+    mix-blend-mode: multiply !important; 
+}
+
+/* 3. 表情面板右上角的删除小按钮 */
+.sticker-item {
+    position: relative !important;
+    overflow: visible !important; /* 允许按钮超出格子一点点 */
+}
+.sticker-del-btn {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    width: 20px;
+    height: 20px;
+    background-color: #FF3B30; /* 红色 */
+    border: 2px solid #333;    /* 深色描边，防止看不清 */
+    border-radius: 50%;
+    color: white;
+    font-size: 14px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+}
+/* 浅色模式下描边变白 */
+body.light-theme .sticker-del-btn {
+    border-color: #fff;
+}
+
+/* ================== 表情包终极修复样式 (请复制到 <style> 最底部) ================== */
+
+/* 1. 表情面板：容器 */
+#custom-sticker-panel {
+    position: absolute !important;
+    bottom: 80px !important;
+    left: 10px !important;
+    right: 10px !important;
+    height: 240px !important;
+    background: rgba(30, 30, 35, 0.98) !important;
+    backdrop-filter: blur(20px) !important;
+    -webkit-backdrop-filter: blur(20px) !important;
+    border-radius: 18px !important;
+    border: 1px solid rgba(255,255,255,0.15) !important;
+    z-index: 9999 !important;
+    display: none; /* 默认隐藏 */
+    flex-direction: column !important;
+    box-shadow: 0 10px 50px rgba(0,0,0,0.5) !important;
+    overflow: hidden !important;
+}
+
+/* 2. 表情面板：列表格子 */
+.sticker-grid-container {
+    flex: 1 !important;
+    overflow-y: auto !important;
+    padding: 15px !important;
+    display: grid !important;
+    grid-template-columns: repeat(4, 1fr) !important;
+    gap: 12px !important;
+    align-content: start !important;
+}
+
+/* 3. 单个表情项 */
+.sticker-item {
+    aspect-ratio: 1/1 !important;
+    border-radius: 12px !important;
+    background-color: rgba(255,255,255,0.08) !important;
+    background-size: cover !important;
+    background-position: center !important;
+    cursor: pointer !important;
+    position: relative !important; /* 关键：为了定位删除按钮 */
+    overflow: visible !important;  /* 关键：允许删除按钮超出格子 */
+}
+
+/* 4. 删除按钮 (红色小叉) */
+.sticker-del-btn {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    width: 22px;
+    height: 22px;
+    background-color: #FF3B30;
+    border: 2px solid #333; /* 深色描边 */
+    border-radius: 50%;
+    color: white;
+    font-size: 14px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+/* 5. 聊天气泡：表情包专用 (去气泡+去白底) */
+.sticker-wrapper {
+    background: transparent !important;
+    padding: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    margin: 5px 0;
+}
+
+.chat-sticker-img {
+    max-width: 130px !important;
+    height: auto !important;
+    display: block !important;
+    border-radius: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    background-color: transparent !important;
+    
+    /* 核心：正片叠底去白底 */
+    mix-blend-mode: multiply !important; 
+    filter: contrast(1.05); /*稍微增加对比度*/
+    cursor: pointer;
+}
+
+/* 浅色模式适配 */
+body.light-theme .sticker-del-btn { border-color: #fff; }
+/* 浅色模式下也要保持 multiply，让白底透明 */
+body.light-theme .chat-sticker-img { mix-blend-mode: multiply !important; }
+
+/* ================== 最终修复补丁 (请粘贴到 style 最下方) ================== */
+
+/* 1. 修复表情包显示：取消透明，恢复白底 */
+.chat-sticker-img {
+    /* 改回 normal，这样白色背景就会显示出来，不会变成透明 */
+    mix-blend-mode: normal !important; 
+    
+    /* 保持原来的大小限制 */
+    max-width: 130px !important;
+    height: auto !important;
+    
+    /* 给图片加一点圆角，看起来不那么生硬 */
+    border-radius: 8px !important;
+    
+    /* 加一点阴影，让它和聊天背景区分开 */
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important;
+}
+
+/* 2. 修复删除按钮不显示的问题 */
+.sticker-item {
+    /* 关键：允许子元素超出格子显示 (解决被切掉的问题) */
+    overflow: visible !important; 
+    position: relative !important;
+    z-index: 10;
+}
+
+.sticker-del-btn {
+    /* 调整位置：为了保险起见，稍微往里挪一点点，确保不被边缘遮挡 */
+    position: absolute !important;
+    top: -8px !important; 
+    right: -8px !important;
+    
+    /* 样式美化 */
+    width: 22px !important;
+    height: 22px !important;
+    background-color: #FF3B30 !important; /* 鲜艳的红色 */
+    color: white !important;
+    border: 2px solid #2c2c2e !important; /* 加个深色描边，防止和背景混色 */
+    border-radius: 50% !important;
+    font-size: 16px !important;
+    font-weight: bold !important;
+    
+    /* 居中叉号 */
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    
+    /* 确保层级最高，点得到 */
+    z-index: 100 !important;
+    cursor: pointer !important;
+    
+    /* 加个阴影 */
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3) !important;
+}
+
+/* 3. 确保表情面板容器层级够高 */
+#custom-sticker-panel {
+    z-index: 9999 !important;
+    overflow: visible !important; /* 防止面板本身切掉边缘的按钮 */
+}
+
+/* ================== 表情包：多选模式选中框样式 ================== */
+
+/* 1. 表情面板顶部多选按钮样式 (垃圾桶) */
+#btn-sticker-delete-mode {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+#btn-sticker-delete-mode:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+#btn-sticker-delete-mode.active {
+    background: #FF3B30; /* 选中时变红色 */
+}
+
+/* 2. 单个表情项：多选状态容器 */
+.sticker-item {
+    position: relative; /* 确保选中框能定位 */
+    /* 保持原来的 overflow: hidden 或不设置，确保删除按钮不外溢 */
+}
+
+/* 3. 选中框的样式 (默认隐藏) */
+.sticker-checkbox {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 2px solid #aaa;
+    background: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 20;
+    pointer-events: none; /* 允许点击穿透 */
+    opacity: 0; /* 默认隐藏 */
+    transition: opacity 0.2s, background 0.2s;
+}
+
+/* 4. 多选模式激活时，显示选中框 */
+#custom-sticker-panel.multi-select-mode .sticker-checkbox {
+    opacity: 1; 
+}
+
+/* 5. 选中状态样式 */
+.sticker-item.selected .sticker-checkbox {
+    background: #FF3B30;
+    border-color: #FF3B30;
+}
+.sticker-item.selected .sticker-checkbox::after {
+    content: '✔';
+    font-size: 14px;
+    color: white;
+    font-weight: bold;
+}
+
+/* ================== 沉浸式视频通话样式 (修复顶部空白) ================== */
+
+/* 确保子页面在视频模式下全屏且无padding */
+.sub-page.immersive-mode {
+    padding: 0 !important; /* 强制去除内边距 */
+    background: #000;
+}
+
+/* 1. 全屏背景层 */
+#video-remote-container-fullscreen {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    z-index: 1; overflow: hidden;
+}
+/* 极光背景全屏铺满 */
+.aurora-bg.full {
+    position: absolute; top: -10%; left: -10%; width: 120%; height: 120%;
+    background: linear-gradient(45deg, #ff9a9e 0%, #fad0c4 99%, #fad0c4 100%);
+    background-image: linear-gradient(120deg, #a1c4fd 0%, #c2e9fb 100%);
+    filter: blur(60px); opacity: 0.7;
+    animation: aurora-spin 15s infinite linear;
+}
+@keyframes aurora-spin { from {transform: rotate(0deg);} to {transform: rotate(360deg);}}
+
+/* 视频上的渐变蒙版，让顶部和底部的白色文字更清晰 */
+.video-overlay-gradient {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    background: linear-gradient(to bottom, rgba(0,0,0,0.6) 0%, transparent 20%, transparent 80%, rgba(0,0,0,0.8) 100%);
+    pointer-events: none; z-index: 2;
+}
+
+/* 2. 顶部悬浮栏 */
+.video-top-bar {
+    position: absolute; top: 20px; /* 留出一点状态栏空间，可根据需要调整为 0 */
+    left: 20px; right: 20px;
+    display: flex; align-items: center;
+    z-index: 50; color: white;
+}
+.video-top-btn {
+    width: 40px; height: 40px; background: rgba(255,255,255,0.2);
+    backdrop-filter: blur(10px); border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; margin-right: 15px;
+}
+.video-top-btn svg { width: 24px; }
+.video-top-info { font-size: 16px; font-weight: 500; text-shadow: 0 1px 3px rgba(0,0,0,0.5); }
+
+/* 3. 右上角本地小窗 (PIP) */
+.video-local-pip {
+    position: absolute; top: 80px; right: 20px;
+    width: 90px; height: 144px; /* 9:16 */
+    background: #333; border-radius: 12px;
+    overflow: hidden; z-index: 60;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+    border: 2px solid rgba(255,255,255,0.2);
+    transition: all 0.2s; cursor: pointer;
+}
+.video-local-pip:active { transform: scale(0.95); }
+
+/* 4. 底部控制区容器 */
+.video-bottom-area {
+    position: absolute; bottom: 0; left: 0; width: 100%;
+    z-index: 50; padding-bottom: 30px;
+    display: flex; flex-direction: column; align-items: center;
+}
+
+/* 底部按钮栏 (Dock) */
+.video-controls-dock {
+    display: flex; align-items: center; gap: 25px;
+    padding: 10px 30px;
+    background: rgba(0,0,0,0.3); backdrop-filter: blur(20px);
+    border-radius: 40px;
+}
+.v-dock-btn {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    color: white; font-size: 12px; cursor: pointer;
+    width: 60px; height: 60px; border-radius: 50%;
+    transition: transform 0.1s;
+}
+.v-dock-btn:active { transform: scale(0.9); }
+.v-dock-btn svg { width: 28px; height: 28px; margin-bottom: 4px; }
+.v-dock-btn.blur { background: rgba(255,255,255,0.15); }
+.v-dock-btn.red { background: #ff3b30; width: 70px; height: 70px; box-shadow: 0 5px 15px rgba(255,59,48,0.5); }
+.v-dock-btn.red svg { width: 32px; height: 32px; margin: 0; }
+
+/* 悬浮输入框 */
+.video-input-float {
+    width: 85%; margin-bottom: 20px;
+    display: flex; gap: 10px;
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(20px); padding: 10px 15px;
+    border-radius: 25px; transition: all 0.3s;
+}
+.video-input-float.hidden { opacity: 0; transform: translateY(30px); pointer-events: none; }
+#video-chat-input {
+    flex: 1; background: transparent; border: none; outline: none;
+    color: white; font-size: 16px;
+}
+#video-chat-input::placeholder { color: rgba(255,255,255,0.6); }
+.video-input-float button {
+    background: #0a84ff; color: white; border: none;
+    padding: 8px 20px; border-radius: 20px; font-size: 14px;
+}
+
+/* 5. 浮动字幕 (AI回复) */
+.video-subtitle-float {
+    position: absolute; bottom: 160px; /* 在输入框上面 */
+    width: 100%; display: flex; justify-content: center;
+    z-index: 40; transition: all 0.3s;
+}
+.video-subtitle-float.hidden { opacity: 0; transform: translateY(20px); }
+.subtitle-card {
+    display: flex; align-items: center; gap: 10px;
+    background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(10px);
+    padding: 10px 20px; border-radius: 30px;
+    max-width: 80%;
+}
+.subtitle-avatar {
+    width: 36px; height: 36px; border-radius: 50%; background: #ddd;
+    background-size: cover; flex-shrink: 0;
+}
+.subtitle-content { color: white; font-size: 16px; line-height: 1.4; }
+
+/* 6. 全屏呼叫遮罩 */
+.fullscreen-overlay {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    z-index: 100; background: rgba(0,0,0,0.75); backdrop-filter: blur(25px);
+    display: flex; justify-content: center; align-items: center;
+    transition: opacity 0.5s;
+}
+.fullscreen-overlay.connected { opacity: 0; pointer-events: none; }
+.calling-center { text-align: center; color: white; }
+.calling-avatar-box { position: relative; width: 120px; height: 120px; margin: 0 auto 30px; }
+.calling-avatar-img {
+    width: 100%; height: 100%; border-radius: 50%;
+    background-size: cover; background-position: center;
+    position: relative; z-index: 2; border: 3px solid white;
+}
+.calling-ripple {
+    position: absolute; top: -10%; left: -10%; width: 120%; height: 120%;
+    border-radius: 50%; border: 2px solid rgba(255,255,255,0.5);
+    animation: ripple-big 2s infinite ease-out; z-index: 1;
+}
+.calling-ripple.delay { animation-delay: 1s; }
+@keyframes ripple-big {
+    0% { transform: scale(1); opacity: 1; }
+    100% { transform: scale(2); opacity: 0; }
+}
+.calling-name-txt { font-size: 28px; font-weight: 700; margin-bottom: 10px; }
+.calling-status-txt { font-size: 16px; opacity: 0.8; }
+
+/* 视频通话记录样式 */
+.video-log-item {
+    background: rgba(255,255,255,0.05);
+    border-radius: 12px;
+    padding: 12px;
+    margin-bottom: 10px;
+    border: 1px solid rgba(255,255,255,0.05);
+}
+.v-log-header {
+    display: flex; justify-content: space-between; margin-bottom: 6px;
+    font-size: 12px; color: rgba(255,255,255,0.4);
+}
+.v-log-content {
+    font-size: 14px; color: white; line-height: 1.4;
+}
+.v-log-role { color: #0a84ff; font-weight: bold; margin-right: 5px; }
+.v-log-me { color: #34C759; font-weight: bold; margin-right: 5px; }
+
+/* 浅色模式适配 */
+body.light-theme #sub-video-history-log { background: #f2f2f7 !important; }
+body.light-theme .video-log-item { background: white; border-color: rgba(0,0,0,0.05); }
+body.light-theme .v-log-content { color: #333; }
+
+/* ================== 补全缺失的动画 (视频聊天气泡) ================== */
+@keyframes slide-up-fade {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* ================== 修复补丁：视频记录页层级 ================== */
+#sub-video-history-log {
+    z-index: 900 !important; /* 必须比设置页(850)高 */
+}
+
+/* 优化记录列表的样式，防止太挤 */
+.video-log-item {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 12px;
+    margin-bottom: 8px;
+}
+
+/* ================== 赛博 3D 雷达地图 (最终还原版) ================== */
+
+/* 1. 地图容器 */
+.map-simulation-container {
+    width: 100%;
+    /* 核心修复：如果是查看页，高度设为 100% 填满屏幕；如果是选择页，固定 350px */
+    height: 100%; 
+    min-height: 350px;
+    background: #0b0f19 !important; /* 深黑底色 */
+    position: relative;
+    overflow: hidden;
+    perspective: 800px; /* 3D 透视 */
+    z-index: 1;
+}
+
+/* 2. 3D 网格 */
+.cyber-grid-plane {
+    position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+    background-image: 
+        linear-gradient(rgba(10, 132, 255, 0.2) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(10, 132, 255, 0.2) 1px, transparent 1px);
+    background-size: 60px 60px;
+    transform: rotateX(60deg) translateY(-100px);
+    mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 80%);
+    -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 80%);
+    animation: grid-move 20s linear infinite;
+    pointer-events: none;
+}
+@keyframes grid-move { 0% {background-position: 0 0;} 100% {background-position: 0 60px;} }
+
+/* 3. 雷达 */
+.map-radar-scan {
+    position: absolute; top: 50%; left: 50%; width: 500px; height: 500px;
+    transform: translate(-50%, -50%) rotateX(60deg);
+    border-radius: 50%; border: 1px solid rgba(10, 132, 255, 0.1);
+    background: conic-gradient(from 0deg, transparent 0%, transparent 80%, rgba(10, 132, 255, 0.3) 100%);
+    animation: radar-spin 4s infinite linear;
+    pointer-events: none;
+}
+@keyframes radar-spin { from {transform: translate(-50%, -50%) rotateX(60deg) rotate(0deg);} to {transform: translate(-50%, -50%) rotateX(60deg) rotate(360deg);} }
+
+/* 4. 中心红点 (查看页专用样式) */
+.map-center-pin.viewer-mode .pin-point {
+    width: 20px; height: 20px;
+    box-shadow: 0 0 30px #FF3B30; /* 更强的光晕 */
+}
+
+/* 5. 装饰点 (周边POI) */
+.deco-point {
+    position: absolute; width: 6px; height: 6px;
+    background: #0a84ff; border-radius: 50%;
+    box-shadow: 0 0 5px #0a84ff;
+}
+.p1 { top: 30%; left: 20%; opacity: 0.6; }
+.p2 { top: 60%; left: 80%; opacity: 0.8; }
+.p3 { top: 20%; left: 70%; opacity: 0.5; }
+.p4 { top: 75%; left: 30%; opacity: 0.7; }
+
+/* 6. UI 文字装饰 */
+.map-ui-overlay {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;
+}
+.ui-top-left { position: absolute; top: 15px; left: 15px; font-size: 10px; color: rgba(255,255,255,0.5); font-family: monospace; }
+.ui-top-right { position: absolute; top: 15px; right: 15px; font-size: 10px; color: #34C759; font-weight: bold; animation: blink 2s infinite; }
+.ui-bottom-left { position: absolute; bottom: 15px; left: 15px; font-size: 10px; color: rgba(255,255,255,0.4); font-family: monospace; }
+.ui-crosshair {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    width: 200px; height: 200px;
+    border: 1px dashed rgba(255,255,255,0.1);
+    border-radius: 50%;
+    pointer-events: none;
+}
+@keyframes blink { 0%,100% {opacity:1} 50% {opacity:0.3} }
+
+/* 7. 浅色模式适配 */
+body.light-theme .map-simulation-container {
+    background: #f0f2f5 !important;
+}
+body.light-theme .cyber-grid-plane {
+    background-image: 
+        linear-gradient(rgba(0,0,0,0.1) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,0,0,0.1) 1px, transparent 1px);
+    mask-image: none; -webkit-mask-image: none; 
+}
+body.light-theme .map-radar-scan {
+    background: conic-gradient(from 0deg, transparent 0%, transparent 80%, rgba(0, 0, 0, 0.1) 100%);
+    border-color: rgba(0,0,0,0.05);
+}
+body.light-theme .ui-top-left, body.light-theme .ui-bottom-left { color: #666; }
+
+/* ================== 地理位置 & 赛博地图完整样式 ================== */
+
+/* 1. 地图容器 (3D 视窗) */
+.map-simulation-container {
+    width: 100%;
+    height: 350px; /* 固定高度 */
+    background: #050505; /* 深黑底色 */
+    position: relative;
+    overflow: hidden;
+    perspective: 800px; /* 3D 透视核心 */
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    flex-shrink: 0;
+}
+
+/* 2. 3D 地面网格 (无限滚动) */
+.cyber-grid-plane {
+    position: absolute;
+    top: 0; left: -50%; width: 200%; height: 200%;
+    background-image: 
+        linear-gradient(rgba(10, 132, 255, 0.2) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(10, 132, 255, 0.2) 1px, transparent 1px);
+    background-size: 60px 60px;
+    transform: rotateX(60deg) translateY(-100px);
+    mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 80%);
+    -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 80%);
+    animation: grid-flow 20s linear infinite;
+}
+@keyframes grid-flow {
+    0% { background-position: 0 0; }
+    100% { background-position: 0 60px; }
+}
+
+/* 3. 雷达扫描圈 */
+.map-radar-scan {
+    position: absolute;
+    top: 50%; left: 50%;
+    width: 500px; height: 500px;
+    transform: translate(-50%, -50%) rotateX(60deg);
+    border-radius: 50%;
+    border: 1px solid rgba(10, 132, 255, 0.1);
+    background: conic-gradient(from 0deg, transparent 0%, transparent 70%, rgba(10, 132, 255, 0.3) 100%);
+    animation: radar-spin 4s infinite linear;
+    pointer-events: none;
+    z-index: 2;
+}
+@keyframes radar-spin {
+    from { transform: translate(-50%, -50%) rotateX(60deg) rotate(0deg); }
+    to { transform: translate(-50%, -50%) rotateX(60deg) rotate(360deg); }
+}
+
+/* 4. 中心定位点 (呼吸灯) */
+.map-center-pin {
+    position: absolute; top: 45%; left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 10;
+    display: flex; flex-direction: column; align-items: center;
+}
+.pin-core {
+    width: 12px; height: 12px; background: #FF3B30;
+    border-radius: 50%; box-shadow: 0 0 15px #FF3B30;
+    position: relative; z-index: 2; border: 2px solid white;
+}
+.pin-ring {
+    position: absolute; top: -14px; left: -14px;
+    width: 40px; height: 40px;
+    border: 1px solid #FF3B30; border-radius: 50%;
+    opacity: 0; animation: pin-ripple 2s infinite;
+}
+.pin-label {
+    margin-top: 8px; font-size: 10px; font-weight: bold; 
+    color: #FF3B30; letter-spacing: 1px;
+    text-shadow: 0 0 5px rgba(255, 59, 48, 0.5);
+}
+@keyframes pin-ripple {
+    0% { transform: scale(0.1); opacity: 1; }
+    100% { transform: scale(1.2); opacity: 0; }
+}
+
+/* 5. 装饰光点 */
+.deco-point {
+    position: absolute; width: 4px; height: 4px;
+    background: #0a84ff; border-radius: 50%;
+    box-shadow: 0 0 8px #0a84ff; animation: blink 3s infinite;
+}
+.p1 { top: 30%; left: 20%; animation-delay: 0s; }
+.p2 { top: 60%; left: 80%; animation-delay: 1s; }
+.p3 { top: 20%; left: 70%; animation-delay: 2s; }
+.p4 { top: 75%; left: 30%; animation-delay: 0.5s; }
+@keyframes blink { 0%,100% {opacity:1} 50% {opacity:0.3} }
+
+/* 6. UI 文字覆盖 */
+.map-ui-overlay {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;
+}
+.ui-top-left { position: absolute; top: 15px; left: 15px; font-size: 10px; color: rgba(255,255,255,0.5); font-family: monospace; }
+.ui-top-right { position: absolute; top: 15px; right: 15px; font-size: 10px; color: #34C759; font-weight: bold; animation: blink 2s infinite; }
+.ui-bottom-left { position: absolute; bottom: 15px; left: 15px; font-size: 10px; color: rgba(255,255,255,0.4); font-family: monospace; }
+.ui-crosshair {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    width: 200px; height: 200px;
+    border: 1px dashed rgba(255,255,255,0.1); border-radius: 50%; pointer-events: none;
+}
+
+/* 7. 地点列表样式 */
+.location-list-container {
+    flex: 1; overflow-y: auto; background: #1c1c1e;
+}
+.poi-item {
+    padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,0.05);
+    cursor: pointer; display: flex; align-items: flex-start; gap: 12px;
+}
+.poi-item:active { background: rgba(255,255,255,0.05); }
+.poi-icon {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: rgba(255,255,255,0.1);
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.poi-icon svg { width: 20px; height: 20px; fill: white; opacity: 0.7; }
+.poi-info { flex: 1; }
+.poi-name { font-size: 15px; font-weight: 600; color: white; margin-bottom: 4px; }
+.poi-addr { font-size: 12px; color: rgba(255,255,255,0.5); }
+
+/* 选中状态 */
+.poi-item.selected .poi-name { color: #0a84ff; }
+.poi-item.selected .poi-icon { background: #0a84ff; }
+.poi-item.selected .poi-icon svg { fill: white; opacity: 1; }
+
+/* 8. 聊天气泡里的地图卡片 */
+.msg-location-card {
+    width: 220px; border-radius: 12px; overflow: hidden;
+    background: #2c2c2e; border: 1px solid rgba(255,255,255,0.1);
+    cursor: pointer;
+}
+.loc-card-map {
+    height: 100px; width: 100%;
+    background: #0b0f19;
+    background-image: 
+        linear-gradient(rgba(10, 132, 255, 0.2) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(10, 132, 255, 0.2) 1px, transparent 1px);
+    background-size: 20px 20px;
+    position: relative; display: flex; align-items: center; justify-content: center;
+}
+.loc-card-info { padding: 10px; }
+.loc-card-title { font-size: 14px; font-weight: 600; color: white; margin-bottom: 2px; }
+.loc-card-addr { font-size: 11px; color: rgba(255,255,255,0.5); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* 底部详情卡 */
+.location-detail-card {
+    position: absolute; bottom: 30px; left: 15px; right: 15px;
+    background: rgba(30,30,35,0.95); backdrop-filter: blur(20px);
+    border-radius: 20px; padding: 20px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+}
+
+/* 9. 浅色模式适配 */
+body.light-theme .map-simulation-container { background: #f0f2f5; }
+body.light-theme .cyber-grid-plane {
+    background-image: 
+        linear-gradient(rgba(0,0,0,0.1) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,0,0,0.1) 1px, transparent 1px);
+    mask-image: none; -webkit-mask-image: none;
+}
+body.light-theme .map-radar-scan {
+    background: conic-gradient(from 0deg, transparent 0%, transparent 80%, rgba(0, 0, 0, 0.1) 100%);
+    border-color: rgba(0,0,0,0.05);
+}
+body.light-theme .location-list-container { background: #f2f2f7; }
+body.light-theme .poi-item { background: white; border-bottom-color: rgba(0,0,0,0.05); }
+body.light-theme .poi-name { color: black; }
+body.light-theme .poi-addr { color: rgba(0,0,0,0.5); }
+body.light-theme .poi-icon { background: #f2f2f7; }
+body.light-theme .poi-icon svg { fill: #666; }
+body.light-theme .msg-location-card { background: white; border-color: rgba(0,0,0,0.1); }
+body.light-theme .loc-card-title { color: black; }
+body.light-theme .loc-card-addr { color: rgba(0,0,0,0.5); }
+body.light-theme .loc-card-map { background: #e5e5ea; background-image: linear-gradient(rgba(0,0,0,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.05) 1px, transparent 1px); }
+body.light-theme .location-detail-card { background: rgba(255,255,255,0.95); box-shadow: 0 10px 40px rgba(0,0,0,0.1); }
+
+/* ================== 赛博高密度地图样式 (High-Density City) ================== */
+
+/* 1. 地图主容器 */
+.map-simulation-container {
+    width: 100%;
+    /* 默认高度，查看页会覆盖为 100% */
+    height: 350px; 
+    background-color: #0E1013; /* 深色地基 */
+    position: relative;
+    overflow: hidden;
+    /* 取消强透视，改用俯视视角，更像地图 */
+    z-index: 1;
+}
+
+/* 2. 城市肌理 (街区 + 小路) */
+.map-layer-blocks {
+    position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+    /* 利用重复渐变模拟密集的建筑块 */
+    background-image: 
+        linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+    background-size: 20px 20px; /* 小格子大小 */
+    transform: rotate(15deg); /* 整体稍微倾斜，更有设计感 */
+}
+
+/* 3. 城市主干道 (粗线) */
+.map-layer-roads {
+    position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+    background-image: 
+        linear-gradient(rgba(255,255,255,0.08) 4px, transparent 4px),
+        linear-gradient(90deg, rgba(255,255,255,0.08) 4px, transparent 4px);
+    background-size: 120px 120px; /* 大格子间距 */
+    transform: rotate(15deg); /* 与街区保持一致 */
+    pointer-events: none;
+}
+
+/* 4. 河流 (贯穿城市的蓝色带子) */
+.map-layer-river {
+    position: absolute;
+    top: 20%; left: -20%; width: 140%; height: 120px;
+    background: linear-gradient(180deg, rgba(10, 132, 255, 0.1), rgba(10, 132, 255, 0.3), rgba(10, 132, 255, 0.1));
+    transform: rotate(-25deg);
+    filter: blur(5px);
+    pointer-events: none;
+}
+
+/* 5. 绿地公园 (绿色块) */
+.map-layer-park {
+    position: absolute;
+    background-color: rgba(52, 199, 89, 0.15);
+    border: 1px dashed rgba(52, 199, 89, 0.3);
+    border-radius: 8px;
+    pointer-events: none;
+}
+
+/* 6. 路名/地名标签 */
+.map-label-group {
+    position: absolute; width: 100%; height: 100%; pointer-events: none;
+}
+.map-street-name {
+    position: absolute;
+    font-size: 10px; color: rgba(255,255,255,0.4);
+    font-family: monospace; letter-spacing: 1px;
+    transform: rotate(15deg); /* 沿着路的方向 */
+}
+.map-poi-name {
+    position: absolute;
+    font-size: 11px; color: #fff; font-weight: 600;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+    display: flex; align-items: center; gap: 4px;
+}
+.map-poi-name::before {
+    content: ''; display: block; width: 6px; height: 6px; 
+    background: #0a84ff; border-radius: 50%;
+}
+
+/* 7. 中心主角 (呼吸光标) */
+.map-center-pin {
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 10; pointer-events: none;
+    display: flex; flex-direction: column; align-items: center;
+}
+.pin-core {
+    width: 16px; height: 16px; background: #FF3B30;
+    border: 3px solid white; border-radius: 50% 50% 50% 0;
+    transform: rotate(-45deg);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+}
+.pin-ripple {
+    position: absolute; bottom: -5px;
+    width: 40px; height: 40px;
+    background: rgba(255, 59, 48, 0.4);
+    border-radius: 50%;
+    transform: scaleX(2); /* 压扁一点更有立体感 */
+    animation: map-pulse 2s infinite;
+    z-index: -1;
+}
+@keyframes map-pulse {
+    0% { transform: scaleX(2) scaleY(0.5) scale(0.5); opacity: 1; }
+    100% { transform: scaleX(2) scaleY(0.5) scale(2); opacity: 0; }
+}
+
+/* 浅色模式适配 */
+body.light-theme .map-simulation-container { background: #f2f2f7; }
+body.light-theme .map-layer-blocks { 
+    background-image: linear-gradient(rgba(0,0,0,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.05) 1px, transparent 1px); 
+}
+body.light-theme .map-layer-roads {
+    background-image: linear-gradient(rgba(255,255,255,0.8) 4px, transparent 4px), linear-gradient(90deg, rgba(255,255,255,0.8) 4px, transparent 4px);
+}
+body.light-theme .map-street-name { color: rgba(0,0,0,0.4); }
+body.light-theme .map-poi-name { color: #333; text-shadow: 0 1px 0 rgba(255,255,255,0.8); }
+
+/* ================== 赛博地图终极版样式 ================== */
+
+/* 1. 地图视窗 */
+.cyber-map-visual {
+    width: 100%;
+    height: 300px; /* 发送页高度 */
+    background: #0b0f19; /* 深空黑 */
+    position: relative;
+    overflow: hidden;
+    perspective: 1000px;
+    flex-shrink: 0;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+.cyber-map-visual.full-screen {
+    height: 100%; /* 查看页全屏 */
+}
+
+/* 2. 地面网格 (透视效果) */
+.cyber-grid-floor {
+    position: absolute;
+    top: -50%; left: -50%; width: 200%; height: 200%;
+    background-image: 
+        linear-gradient(rgba(10, 132, 255, 0.3) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(10, 132, 255, 0.3) 1px, transparent 1px);
+    background-size: 50px 50px;
+    transform: rotateX(60deg); /* 倒伏 */
+    mask-image: linear-gradient(to bottom, black 20%, transparent 80%);
+    -webkit-mask-image: linear-gradient(to bottom, black 20%, transparent 80%);
+    transition: background-position 0.5s ease-out; /* 移动时的平滑过渡 */
+    z-index: 1;
+}
+
+/* 3. 雷达圈 */
+.cyber-radar-ring {
+    position: absolute; top: 50%; left: 50%;
+    width: 400px; height: 400px;
+    transform: translate(-50%, -50%) rotateX(60deg);
+    border: 2px solid rgba(10, 132, 255, 0.2);
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(10,132,255,0.1) 0%, transparent 60%);
+    box-shadow: 0 0 30px rgba(10, 132, 255, 0.1);
+    z-index: 2;
+    pointer-events: none;
+}
+
+/* 4. 中心大头针 */
+.cyber-pin-center {
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -100%); /* 针尖对准中心 */
+    display: flex; flex-direction: column; align-items: center;
+    z-index: 100; /* 🌟 保证在最上层 */
+}
+.pin-head {
+    width: 32px; height: 32px;
+    background: #0a84ff;
+    border: 3px solid white;
+    border-radius: 50% 50% 50% 0;
+    transform: rotate(-45deg);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+}
+.pin-head.red { background: #FF3B30; }
+
+.pin-pulse {
+    width: 10px; height: 10px; background: #0a84ff;
+    border-radius: 50%; position: absolute; bottom: -5px;
+    opacity: 0.5; animation: pin-pulse 1.5s infinite;
+}
+.pin-pulse.red { background: #FF3B30; }
+
+/* 5. 核心：大头针上方的文字标签 */
+.pin-tooltip {
+    position: absolute; top: -35px; 
+    background: rgba(255,255,255,0.9); color: black;
+    padding: 4px 10px; border-radius: 6px;
+    font-size: 12px; font-weight: bold;
+    white-space: nowrap;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+}
+.pin-tooltip::after { /* 小三角 */
+    content: ''; position: absolute; bottom: -4px; left: 50%; margin-left: -4px;
+    border-width: 4px 4px 0; border-style: solid;
+    border-color: rgba(255,255,255,0.9) transparent transparent transparent;
+}
+
+/* 6. 地图上的装饰文字 (强制显示) */
+.map-label-item {
+    position: absolute;
+    color: rgba(255,255,255,0.4);
+    font-size: 12px; font-weight: 700; letter-spacing: 1px;
+    font-family: monospace;
+    z-index: 5;
+    pointer-events: none;
+    text-shadow: 0 1px 2px black;
+}
+
+/* 7. 动画 */
+@keyframes pin-pulse { 0% {transform: scale(1); opacity:0.8;} 100% {transform: scale(3); opacity:0;} }
+
+/* ================== 地图细节装饰包 (追加样式) ================== */
+
+/* 1. 虚拟建筑块 (半透明方块，模拟楼房) */
+.cyber-building {
+    position: absolute;
+    background: rgba(10, 132, 255, 0.15); /* 淡蓝色 */
+    border: 1px solid rgba(10, 132, 255, 0.3);
+    box-shadow: 0 0 10px rgba(10, 132, 255, 0.1);
+    transform: translateZ(0); /* 开启硬件加速 */
+    pointer-events: none;
+}
+
+/* 2. 街道名称 (像印在地面上一样) */
+.cyber-street-text {
+    position: absolute;
+    color: rgba(255, 255, 255, 0.3);
+    font-size: 10px;
+    font-family: monospace;
+    font-weight: bold;
+    letter-spacing: 2px;
+    transform: rotate(-15deg); /* 稍微倾斜，配合网格 */
+    pointer-events: none;
+    white-space: nowrap;
+}
+
+/* 3. 动态扫描线 (上下移动的光条) */
+.cyber-scan-line {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 2px;
+    background: linear-gradient(90deg, transparent, #0a84ff, transparent);
+    opacity: 0.5;
+    animation: scan-move 3s linear infinite;
+    pointer-events: none;
+    z-index: 3;
+}
+@keyframes scan-move {
+    0% { top: 0%; opacity: 0; }
+    20% { opacity: 0.8; }
+    80% { opacity: 0.8; }
+    100% { top: 100%; opacity: 0; }
+}
+
+/* 4. 警告区域 (红色禁区) */
+.cyber-danger-zone {
+    position: absolute;
+    background: repeating-linear-gradient(
+        45deg,
+        rgba(255, 59, 48, 0.1),
+        rgba(255, 59, 48, 0.1) 10px,
+        rgba(255, 59, 48, 0.2) 10px,
+        rgba(255, 59, 48, 0.2) 20px
+    );
+    border: 1px dashed rgba(255, 59, 48, 0.4);
+    pointer-events: none;
+}
+
+/* ================== 🌌 赛博地图终极样式 v3.0 ================== */
+
+/* 1. 地图视窗 */
+.cyber-map-visual {
+    width: 100%;
+    height: 350px;
+    background: #05070a; /* 极深蓝黑 */
+    position: relative;
+    overflow: hidden;
+    perspective: 1200px; /* 增强透视感 */
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    flex-shrink: 0;
+}
+/* 查看页全屏容器 */
+.map-container-placeholder {
+    width: 100%; height: 100%;
+    background: #05070a;
+    position: relative;
+    overflow: hidden;
+    perspective: 1200px;
+}
+
+/* 2. 地面网格 (流光效果) */
+.cyber-grid-floor {
+    position: absolute;
+    top: -50%; left: -50%; width: 200%; height: 200%;
+    /* 蓝色 + 紫色微光 */
+    background-image: 
+        linear-gradient(rgba(10, 132, 255, 0.3) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(10, 132, 255, 0.3) 1px, transparent 1px);
+    background-size: 60px 60px;
+    transform: rotateX(60deg) translateY(0);
+    /* 远处渐隐 */
+    mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 20%, rgba(0,0,0,0) 80%);
+    -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 20%, rgba(0,0,0,0) 80%);
+    animation: grid-scroll 20s linear infinite;
+    z-index: 1;
+}
+@keyframes grid-scroll {
+    0% { background-position: 0 0; }
+    100% { background-position: 0 60px; }
+}
+
+/* 3. 动态扫描线 (新功能) */
+.cyber-scan-line {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 2px;
+    background: linear-gradient(90deg, transparent, #34C759, transparent);
+    box-shadow: 0 0 10px #34C759;
+    opacity: 0.8;
+    z-index: 3;
+    animation: scan-down 3s ease-in-out infinite;
+    pointer-events: none;
+}
+@keyframes scan-down {
+    0% { top: 0%; opacity: 0; }
+    10% { opacity: 1; }
+    90% { opacity: 1; }
+    100% { top: 100%; opacity: 0; }
+}
+
+/* 4. 雷达圈 (加大加亮) */
+.cyber-radar-ring {
+    position: absolute; top: 50%; left: 50%;
+    width: 450px; height: 450px;
+    transform: translate(-50%, -50%) rotateX(60deg);
+    border: 2px solid rgba(10, 132, 255, 0.15);
+    border-radius: 50%;
+    /* 扫描扇区 */
+    background: conic-gradient(from 0deg, transparent 0%, transparent 60%, rgba(10, 132, 255, 0.4) 100%);
+    box-shadow: 0 0 50px rgba(10, 132, 255, 0.1);
+    z-index: 2;
+    animation: radar-rotate 4s infinite linear;
+    pointer-events: none;
+}
+@keyframes radar-rotate {
+    from { transform: translate(-50%, -50%) rotateX(60deg) rotate(0deg); }
+    to { transform: translate(-50%, -50%) rotateX(60deg) rotate(360deg); }
+}
+
+/* 5. 中心大头针 */
+.cyber-pin-center {
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -100%);
+    display: flex; flex-direction: column; align-items: center;
+    z-index: 100;
+}
+.pin-head {
+    width: 36px; height: 36px;
+    background: #34C759; /* 默认绿色 */
+    border: 3px solid white;
+    border-radius: 50% 50% 50% 0;
+    transform: rotate(-45deg);
+    box-shadow: 0 5px 20px rgba(0,0,0,0.6);
+    transition: background 0.3s;
+}
+.pin-head.red { background: #FF3B30; }
+
+.pin-pulse {
+    width: 14px; height: 7px; background: #34C759;
+    border-radius: 50%; position: absolute; bottom: -8px;
+    opacity: 0.6; filter: blur(2px);
+    animation: pin-breath 1.5s infinite;
+}
+.pin-pulse.red { background: #FF3B30; }
+
+.pin-tooltip {
+    position: absolute; top: -45px; 
+    background: rgba(255,255,255,0.95); color: black;
+    padding: 6px 12px; border-radius: 8px;
+    font-size: 13px; font-weight: bold; white-space: nowrap;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    transition: all 0.2s;
+}
+.pin-tooltip::after {
+    content: ''; position: absolute; bottom: -5px; left: 50%; margin-left: -5px;
+    border-width: 5px 5px 0; border-style: solid;
+    border-color: rgba(255,255,255,0.95) transparent transparent transparent;
+}
+
+/* 6. 装饰文字 */
+.map-label-item {
+    position: absolute; color: rgba(255,255,255,0.3);
+    font-size: 10px; font-family: monospace; letter-spacing: 1px;
+    font-weight: 700; text-shadow: 0 1px 2px black;
+}
+@keyframes pin-breath { 0%,100% {transform: scale(1); opacity:0.6;} 50% {transform: scale(1.5); opacity:0.3;} }
+
+/* ================== 💸 Ins 风转账卡片 (终极美化版) ================== */
+/* Ins 风转账卡片 */
+.msg-transfer-card {
+    min-width: 220px; height: 72px;
+    border-radius: 18px; display: flex; align-items: center; padding: 0 16px;
+    cursor: pointer; position: relative; overflow: hidden;
+    /* 核心：橙紫渐变 */
+    background: linear-gradient(135deg, #833AB4 0%, #FD1D1D 50%, #FCB045 100%);
+    box-shadow: 0 4px 15px rgba(253, 29, 29, 0.3);
+    border: 1px solid rgba(255,255,255,0.1);
+}
+.msg-transfer-card.received {
+    background: #3a3a3c !important; /* 领完变灰 */
+    box-shadow: none;
+}
+.trans-amount-text { font-size: 20px; font-weight: 700; color: white; }
+.trans-desc-text { font-size: 12px; color: rgba(255,255,255,0.9); }
+.trans-icon-area { width: 40px; height: 40px; background: rgba(255,255,255,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 12px; }
+.trans-svg { width: 20px; height: 20px; fill: white; }
+
+/* 左侧图标容器 */
+.trans-icon-area {
+    width: 40px; height: 40px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    margin-right: 14px;
+    backdrop-filter: blur(5px);
+}
+.trans-svg {
+    width: 22px; height: 22px; fill: white;
+}
+
+/* 右侧文字区 */
+.trans-info-area {
+    display: flex; flex-direction: column; justify-content: center;
+    color: white;
+}
+
+/* 金额文字 */
+.trans-amount-text {
+    font-size: 20px; font-weight: 700;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    line-height: 1.1;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+/* 描述文字 */
+.trans-desc-text {
+    font-size: 12px; opacity: 0.9;
+    margin-top: 2px;
+    font-weight: 500;
+}
+
+/* 浅色模式适配 */
+body.light-theme .msg-transfer-card.received {
+    background: #e5e5ea !important; /* 浅灰 */
+}
+body.light-theme .msg-transfer-card.received .trans-amount-text,
+body.light-theme .msg-transfer-card.received .trans-desc-text {
+    color: rgba(0,0,0,0.4);
+}
+body.light-theme .msg-transfer-card.received .trans-svg {
+    fill: rgba(0,0,0,0.3);
+}
+
+/* ================== ❤️ 读心术 UI (杂志级排版) ================== */
+
+/* 1. 弹窗卡片主体 */
+.heart-modal-card {
+    width: 85%; max-width: 340px;
+    background: rgba(20, 20, 25, 0.85); /* 深色磨砂 */
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 32px;
+    padding: 40px 30px 90px 30px; /* 底部留空间给按钮 */
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+    display: flex; flex-direction: column; align-items: center;
+}
+
+/* 2. 背景光效 */
+.heart-bg-glow {
+    position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+    background: radial-gradient(circle, rgba(255, 46, 99, 0.2) 0%, transparent 70%);
+    animation: slow-rotate 15s infinite linear;
+    pointer-events: none; z-index: 0;
+}
+
+/* 3. 头部信息 */
+.heart-header { position: relative; z-index: 2; text-align: center; margin-bottom: 30px; }
+.heart-avatar-wrap { position: relative; width: 88px; height: 88px; margin: 0 auto 15px; }
+.heart-avatar {
+    width: 100%; height: 100%; border-radius: 50%;
+    background-size: cover; background-position: center;
+    border: 3px solid rgba(255,255,255,0.15);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+}
+.heart-beat-icon {
+    position: absolute; bottom: 0; right: 0;
+    width: 32px; height: 32px; background: white; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    animation: heartbeat 1.5s infinite ease-in-out;
+}
+.heart-role-name { font-size: 22px; font-weight: 700; color: white; letter-spacing: 0.5px; }
+.heart-role-label { font-size: 10px; color: rgba(255,255,255,0.4); letter-spacing: 2px; margin-top: 4px; text-transform: uppercase; }
+
+/* 4. 心声文本区 (核心：CSS引号) */
+.heart-quote-box {
+    position: relative; z-index: 2; width: 100%;
+    margin-bottom: 30px;
+}
+/* 使用伪元素做超大引号，不用担心乱码 */
+.heart-quote-box::before {
+    content: "“";
+    position: absolute; top: -20px; left: -10px;
+    font-family: Georgia, serif; font-size: 60px; line-height: 1;
+    color: rgba(255,255,255,0.15);
+}
+.heart-quote-box::after {
+    content: "”";
+    position: absolute; bottom: -40px; right: -10px;
+    font-family: Georgia, serif; font-size: 60px; line-height: 1;
+    color: rgba(255,255,255,0.15);
+}
+.heart-content-text {
+    font-size: 17px; line-height: 1.6; color: rgba(255,255,255,0.9);
+    text-align: center; font-style: italic; font-weight: 300;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    min-height: 60px; display: flex; align-items: center; justify-content: center;
+}
+
+/* 5. 底部数据行 */
+.heart-stats-row {
+    display: flex; align-items: center; justify-content: center; gap: 20px;
+    position: relative; z-index: 2; width: 100%;
+}
+.stat-box { text-align: center; }
+.stat-num { font-size: 18px; font-weight: 700; font-family: monospace; }
+.stat-name { font-size: 10px; color: rgba(255,255,255,0.4); margin-top: 2px; }
+.stat-line { width: 1px; height: 20px; background: rgba(255,255,255,0.1); }
+
+/* 6. 关闭按钮 (圆形悬浮) */
+.heart-close-btn {
+    position: absolute; bottom: 25px; left: 50%; transform: translateX(-50%);
+    width: 50px; height: 50px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.1);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; z-index: 10;
+    transition: all 0.2s ease;
+}
+.heart-close-btn:active { transform: translateX(-50%) scale(0.9); background: rgba(255,255,255,0.2); }
+
+/* 动画 */
+@keyframes heartbeat { 0%,100%{transform:scale(1);} 50%{transform:scale(1.1);} }
+@keyframes slow-rotate { 0%{transform:translate(-50%,-50%) rotate(0deg);} 100%{transform:translate(-50%,-50%) rotate(360deg);} }
+
+/* 浅色模式适配 */
+body.light-theme .heart-modal-card { background: rgba(255,255,255,0.85); box-shadow: 0 20px 50px rgba(0,0,0,0.1); }
+body.light-theme .heart-role-name { color: #000; }
+body.light-theme .heart-content-text { color: #333; }
+body.light-theme .heart-quote-box::before, 
+body.light-theme .heart-quote-box::after { color: rgba(0,0,0,0.05); }
+body.light-theme .heart-close-btn { background: rgba(0,0,0,0.05); border-color: rgba(0,0,0,0.05); }
+body.light-theme .heart-close-btn svg { stroke: #333; }
     </style>
 </head>
 <body>
@@ -7088,7 +8849,7 @@ body.light-theme .sms-preview { color: #666; }
         </div>
 
         <div class="widget-photo" onclick="triggerPhotoUpload()">
-
+    
             <div class="photo-placeholder" id="photo-placeholder">
                 <span class="plus-icon">+</span>
                 <span class="add-text">添加照片</span>
@@ -8877,6 +10638,13 @@ body.light-theme .sms-preview { color: #666; }
                 <span class="pill-text">Voice</span>
             </div>
 
+            <div class="menu-pill-card" onclick="handleMenuAction('emoji')">
+                <svg class="pill-icon" viewBox="0 0 24 24">
+                    <path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S9.33 8 8.5 8 7 8.67 7 9.5 7.67 11 8.5 11zm3.5 6.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z"/>
+                </svg>
+                <span class="pill-text">Emoji</span>
+            </div>
+
             <div class="menu-pill-card" onclick="handleMenuAction('video')">
                 <svg class="pill-icon" viewBox="0 0 24 24"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>
                 <span class="pill-text">Video</span>
@@ -8919,6 +10687,29 @@ body.light-theme .sms-preview { color: #666; }
 
         </div>
     </div>
+
+    <div id="custom-sticker-panel" style="display:none;">
+        <div class="sticker-header-bar">
+            <span style="font-weight:600; font-size:14px;">我的表情</span>
+
+            <div style="display: flex; gap: 10px;">
+                <div id="btn-sticker-delete-mode" onclick="toggleStickerMultiSelect()" title="多选删除">
+                    <svg style="width:20px;height:20px;fill:currentColor" viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+                </div>
+
+                <div class="btn-close-sticker" onclick="toggleStickerPanel()">×</div>
+            </div>
+        </div>
+        
+        <div class="sticker-grid-container" id="sticker-grid-view">
+            <div class="sticker-item add-btn" onclick="document.getElementById('sticker-file-input').click()">
+                <svg viewBox="0 0 24 24" style="width:24px;height:24px;fill:rgba(255,255,255,0.5)"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+            </div>
+        </div>
+        <input type="file" id="sticker-file-input" accept="image/*" style="display:none;" onchange="handleStickerUpload(this)">
+    </div>
+    <div class="chat-detail-footer">
+        </div>
 
     <div class="chat-detail-header">
         <div class="glass-circle-btn" onclick="closeSubPage('sub-chat-detail')">
@@ -9170,6 +10961,10 @@ body.light-theme .sms-preview { color: #666; }
         </div>
 
         <div class="group-header">记录与管理</div>
+
+            <button class="btn-danger-outline" style="color:white; border-color:rgba(255,255,255,0.3); margin-bottom:15px;" onclick="openVideoHistoryLog()">
+                    📹 查看视频通话记录
+            </button>
 
         <div class="search-container" style="border-radius:12px; padding:0; margin-bottom:10px;">
             <input type="text" class="settings-search" id="chat-history-search" placeholder="🔍 搜索聊天记录..." oninput="searchChatHistory(this.value)">
@@ -9845,6 +11640,185 @@ body.light-theme .sms-preview { color: #666; }
     </div>
 </div>
 
+<input type="file" id="chat-photo-input" accept="image/*" style="display: none;" onchange="handleChatPhotoUpload(this)">
+
+
+<div class="sub-page immersive-mode" id="sub-video-call" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 2000; background: #000;">
+    
+    <div id="video-remote-container-fullscreen">
+        <div class="aurora-bg full"></div>
+        <video id="video-remote-player" loop muted playsinline style="display:none; position:absolute; top:0; left:0; width:100%; height:100%; object-fit:cover;"></video>
+        <div class="video-overlay-gradient"></div>
+    </div>
+
+    <div id="video-timer-display" style="
+        position: absolute; top: 50px; left: 50%; transform: translateX(-50%);
+        font-size: 18px; font-weight: 500; color: rgba(255,255,255,0.9);
+        text-shadow: 0 1px 2px rgba(0,0,0,0.5); z-index: 50;
+        font-feature-settings: 'tnum'; font-variant-numeric: tabular-nums;
+    ">00:00</div>
+
+    <div class="video-local-pip" onclick="triggerLocalPhotoUpload()">
+        <div id="video-local-image-bg" style="width:100%; height:100%; background-size:cover; background-position:center; background-color:#555;"></div>
+        <input type="file" id="input-local-photo" accept="image/*" hidden onchange="handleLocalPhotoUpload(this)">
+    </div>
+
+    <div id="video-chat-overlay-container" style="
+        position: absolute; bottom: 180px; left: 20px; right: 20px; 
+        height: 250px; 
+        overflow-y: auto; 
+        display: flex; flex-direction: column; justify-content: flex-end; 
+        gap: 8px; z-index: 15; pointer-events: none; 
+        mask-image: linear-gradient(to top, transparent 0%, black 20%, black 100%);
+        -webkit-mask-image: linear-gradient(to top, transparent 0%, black 20%, black 100%);
+    "></div>
+
+    <div id="video-call-overlay" class="fullscreen-overlay">
+        <div class="calling-center">
+            <div class="calling-avatar-box">
+                <div class="calling-avatar-img" id="video-call-avatar"></div>
+                <div class="calling-ripple"></div>
+                <div class="calling-ripple delay"></div>
+            </div>
+            <div class="calling-name-txt" id="video-call-name">对方名字</div>
+            <div class="calling-status-txt" id="video-call-status">正在等待对方接受邀请...</div>
+        </div>
+    </div>
+
+    <div class="video-bottom-area">
+        <div id="video-chat-input-bar" class="video-input-float hidden">
+            <input type="text" id="video-chat-input" placeholder="输入文字与 TA 对话..." onkeydown="if(event.key==='Enter') sendVideoChatMessage()">
+            <button onclick="sendVideoChatMessage()">发送</button>
+        </div>
+
+        <div class="video-controls-dock">
+            <div class="v-dock-btn blur" onclick="toggleVideoChatInput()">
+                <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z" fill="#fff"/></svg>
+                <span>对话</span>
+            </div>
+            
+            <div class="v-dock-btn red big" onclick="endVideoCall()">
+                 <svg viewBox="0 0 24 24"><path d="M12 9c-1.6 0-3.15.25-4.6.72v3.1c0 .39-.23.74-.56.9-.98.49-1.87 1.12-2.66 1.85-.18.18-.43.28-.7.28-.28 0-.53-.11-.71-.29L.29 13.08c-.18-.17-.29-.42-.29-.7 0-.28.11-.53.29-.71C3.34 8.52 7.46 7 12 7s8.66 1.52 11.71 4.67c.18.18.29.43.29.71 0 .28-.11.53-.29.7l-2.48 2.48c-.18.18-.43.29-.71.29-.27 0-.52-.11-.7-.28-.79-.74-1.69-1.36-2.67-1.85-.33-.16-.56-.5-.56-.9v-3.1C15.15 9.25 13.6 9 12 9z" fill="#fff"/></svg>
+            </div>
+
+            <div class="v-dock-btn blur" onclick="triggerRemoteVideoUpload()">
+                 <svg viewBox="0 0 24 24"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>
+                 <span>换背景</span>
+            </div>
+            <input type="file" id="input-remote-video" accept="video/*" hidden onchange="handleRemoteVideoUpload(this)">
+        </div>
+    </div>
+</div>
+
+<div class="sub-page" id="sub-video-history-log" style="background: #1c1c1e;">
+    <div class="app-header" style="background: inherit; border-bottom: 1px solid rgba(255,255,255,0.05);">
+        <div class="app-back-btn" onclick="closeSubPage('sub-video-history-log')">返回</div>
+        <div class="app-title">视频通话记录</div>
+        <div style="position:absolute; right:15px; font-size:14px; color:#FF3B30;" onclick="clearVideoHistory()">清空</div>
+    </div>
+    <div class="wallpaper-content" style="padding: 0;">
+        <div id="video-history-list" style="padding: 15px;"></div>
+    </div>
+</div>
+
+<div class="sub-page" id="sub-location-picker" style="background: #0b0f19; z-index: 1000;">
+    <div class="app-header" style="background: rgba(11, 15, 25, 0.9); backdrop-filter: blur(10px);">
+        <div class="app-back-btn" onclick="closeSubPage('sub-location-picker')">取消</div>
+        <div class="app-title">发送位置</div>
+        <div style="position: absolute; right: 15px; color: #34C759; font-weight: 600; cursor: pointer;" onclick="confirmSendLocation()">发送</div>
+    </div>
+
+    <div class="wallpaper-content" style="padding: 0; display:flex; flex-direction:column; height:100%;">
+        
+        <div style="padding: 10px 15px; background: #0b0f19; z-index: 20;">
+            <div style="background: rgba(255,255,255,0.1); border-radius: 10px; display: flex; align-items: center; padding: 8px 12px;">
+                <svg style="width:16px; height:16px; fill:#888; margin-right:8px;" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+                <input type="text" id="location-search-input" placeholder="搜索地点或街道..." 
+                       style="background: transparent; border: none; color: white; flex: 1; outline: none; font-size: 14px;"
+                       oninput="handleLocationSearch(this.value)">
+            </div>
+        </div>
+
+        <div class="cyber-map-visual" id="picker-map-visual">
+            <div class="cyber-grid-floor" id="picker-grid"></div>
+            <div class="cyber-radar-ring"></div>
+            
+            <div class="cyber-pin-center">
+                <div class="pin-head"></div>
+                <div class="pin-pulse"></div>
+                <div class="pin-tooltip" id="picker-pin-label">正在定位...</div>
+            </div>
+
+            <div class="cyber-labels">
+                <div class="map-label-item" style="top:20%; left:10%;">SECTOR 7</div>
+                <div class="map-label-item" style="bottom:30%; right:10%;">ZONE B</div>
+                <div class="map-label-item" style="top:15%; right:20%;">DATA HUB</div>
+            </div>
+        </div>
+
+        <div class="location-list-container">
+            <div id="poi-list">
+                </div>
+        </div>
+    </div>
+</div>
+
+<div class="sub-page" id="sub-location-viewer" style="background: #0b0f19; z-index: 1100;">
+    <div class="app-header" style="background: rgba(11, 15, 25, 0.9); backdrop-filter: blur(10px); position:absolute; top:0; width:100%; z-index:50;">
+        <div class="app-back-btn" onclick="closeSubPage('sub-location-viewer')">返回</div>
+        <div class="app-title">位置详情</div>
+    </div>
+
+    <div class="map-container-placeholder" style="width: 100%; height: 100%; position: relative;">
+        </div>
+    
+    <div class="location-detail-card" style="z-index: 60;">
+        <div class="loc-card-title" id="viewer-loc-name" style="font-size: 18px;">地点名称</div>
+        <div class="loc-card-addr" id="viewer-loc-addr" style="font-size: 13px; opacity: 0.7; margin-top: 5px;">详细地址信息...</div>
+        <button class="ai-btn ai-btn-primary" style="margin-top:20px; height:48px;" onclick="showToast('正在打开导航...')">
+            <svg style="width:20px; height:20px; fill:white; margin-right:8px;" viewBox="0 0 24 24"><path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71z"/></svg> 
+            开始导航
+        </button>
+    </div>
+</div>
+
+<div class="modal-overlay" id="modal-heart-link" style="backdrop-filter: blur(40px); background: rgba(0,0,0,0.4);">
+    <div class="heart-modal-card">
+        
+        <div class="heart-bg-glow"></div>
+
+        <div class="heart-header">
+            <div class="heart-avatar-wrap">
+                <div class="heart-avatar" id="heart-target-avatar"></div>
+                <div class="heart-beat-icon">❤️</div>
+            </div>
+            <div class="heart-role-name" id="heart-target-name">Character</div>
+            <div class="heart-role-label">INNER VOICE / 心声</div>
+        </div>
+
+        <div class="heart-quote-box">
+            <div class="heart-content-text" id="heart-content-text">
+                正在连接对方潜意识...
+            </div>
+        </div>
+
+        <div class="heart-stats-row">
+            <div class="stat-box">
+                <div class="stat-num" style="color:#ff2e63">98%</div>
+                <div class="stat-name">同步率</div>
+            </div>
+            <div class="stat-line"></div>
+            <div class="stat-box">
+                <div class="stat-num" style="color:#08d9d6">波动</div>
+                <div class="stat-name">情绪值</div>
+            </div>
+        </div>
+
+        <div class="heart-close-btn" onclick="closeModal('modal-heart-link')">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </div>
+    </div>
+</div>
 <script>
 
     // 🚨 全局头像 URL 助手：兼容 Base64/Blob，解决头像不显示的问题
@@ -14190,16 +16164,12 @@ async function renderChatSessionList() {
 
     let currentChatId = null; // 当前正在聊天的 ID
 
-    // 4. 气泡上屏工具 (适配引用显示)
-// ================== 气泡上屏工具 (支持快拍卡片版) ==================
-// ================== 气泡上屏工具 (卡片渲染修复版) ==================
-// ⚠️ 注意：函数必须是 async 的，因为它需要等待图片加载
+    // ================== 气泡上屏工具 (修复版) ==================
 async function appendChatBubble(side, text, doScroll = true, explicitId = null, quoteData = null, extraOptions = null) {
     const box = document.getElementById('chat-detail-msgs');
     if (!box) return;
 
     const msgId = explicitId || (Date.now().toString() + Math.random().toString(36).substr(2, 5));
-
     const div = document.createElement('div');
     div.className = `chat-msg ${side}`;
     div.id = `msg-node-${msgId}`;
@@ -14213,96 +16183,52 @@ async function appendChatBubble(side, text, doScroll = true, explicitId = null, 
         const avatarHtml = `<div class="chat-msg-avatar" style="background-image: var(--avatar-${side})"></div>`;
         let contentHtml = '';
 
-        // ➤ 分支 A: 渲染快拍卡片
-        if (extraOptions && extraOptions.isStoryShare && extraOptions.storyData) {
-            const sData = extraOptions.storyData;
-
-            // 1. 获取发布者头像
-            let miniAvatarUrl = '';
-            if (sData.ownerId === 'user_me') {
-                miniAvatarUrl = await getSafeUrl('userAvatar_main');
-            } else {
-                miniAvatarUrl = await getRoleChatAvatarUrl(sData.ownerId);
-            }
-            // 默认头像兜底
-            if (!miniAvatarUrl || miniAvatarUrl === 'null') {
-                miniAvatarUrl = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI2ZmZiI+PGNpcmNsZSBjeD0iMTIiIGN5PSIxMiIgcj0iMTIiIGZpbGwtb3BhY2l0eT0iMC4zIi8+PC9zdmc+';
-            }
-
-            // 2. 准备内容样式
-            let bodyStyle = '';
-            let textOverlay = '';
-
-            if (sData.type === 'image' && sData.mediaKey) {
-                // 图片模式
-                const imgUrl = await getSafeUrl(sData.mediaKey);
-                bodyStyle = `background-image: url(${imgUrl});`;
-            } else {
-                // 文字模式：根据 class 映射颜色
-                const colorMap = {
-                    'color-1': 'linear-gradient(135deg, #FF9A9E 0%, #FAD0C4 100%)',
-                    'color-2': 'linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%)',
-                    'color-3': 'linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%)',
-                    'color-4': 'linear-gradient(135deg, #f7ff00 0%, #db36a4 100%)',
-                    'color-5': 'linear-gradient(135deg, #232526 0%, #414345 100%)'
-                };
-                // 默认为 color-1
-                const bg = colorMap[sData.bgClass] || colorMap['color-1'];
-                bodyStyle = `background: ${bg};`;
-                textOverlay = `<div class="story-card-text">${sData.content || ''}</div>`;
-            }
-
-            // ... (前面的代码不变) ...
-
-            // 3. 生成卡片 HTML (修改版：增加 onclick)
-            // 使用 encodeURIComponent 确保对象转字符串后 HTML 格式安全
-            const safeDataStr = encodeURIComponent(JSON.stringify(sData));
-
-            contentHtml = `
-                <div class="msg-story-card" onclick="viewSharedStory(event, '${safeDataStr}')">
-                    <div class="story-card-body" style="${bodyStyle}">
-                        ${textOverlay}
-                    </div>
-                    <div class="story-card-footer">
-                        <div class="story-card-icon" style="background-image: url(${miniAvatarUrl})"></div>
-                        <div class="story-card-label">
-                            快拍
-                            <span>点击查看</span>
-                        </div>
-                    </div>
-                </div>
-            `;
+        // ➤ 1. 转账卡片 (Money) - [这里是你缺失的!]
+        if (extraOptions && extraOptions.isTransfer) {
+            const isReceived = extraOptions.isReceived || false;
+            const amt = extraOptions.amount || '0.00';
+            const desc = isReceived ? "已存入钱包" : (extraOptions.desc || '转账');
+            // 调用 HTML 生成器
+            contentHtml = getTransferCardHTML(amt, desc, isReceived);
         }
-        // ➤ 分支 B: 普通文本气泡
+        // ➤ 2. 位置卡片 (Location)
+        else if (extraOptions && extraOptions.isLocation) {
+            const locData = { name: extraOptions.name, address: extraOptions.address };
+            const safeLocStr = encodeURIComponent(JSON.stringify(locData));
+            contentHtml = `
+                <div class="msg-location-card" onclick="viewLocation(event, '${safeLocStr}')">
+                    <div class="loc-card-map"><div class="pin-head" style="transform: scale(0.6) rotate(-45deg);"></div></div>
+                    <div class="loc-card-info">
+                        <div class="loc-card-title">${extraOptions.name}</div>
+                        <div class="loc-card-addr">${extraOptions.address}</div>
+                    </div>
+                </div>`;
+        }
+        // ➤ 3. 表情包/快拍
+        else if (extraOptions && extraOptions.isSticker) {
+             contentHtml = `<div class="sticker-wrapper"><img src="${extraOptions.imgUrl}" class="chat-sticker-img"></div>`;
+        }
+        else if (extraOptions && extraOptions.isStoryShare) {
+             const safeDataStr = encodeURIComponent(JSON.stringify(extraOptions.storyData));
+             const bg = extraOptions.storyData.bgClass || '#333';
+             contentHtml = `<div class="msg-story-card" onclick="viewSharedStory(event, '${safeDataStr}')"><div class="story-card-body" style="background:${bg}"><div class="story-card-text">${extraOptions.storyData.text}</div></div></div>`;
+        }
+        // ➤ 4. 普通文字
         else {
             let quoteHtml = '';
             if (quoteData && quoteData.text) {
-                quoteHtml = `
-                    <div class="msg-quote-block">
-                        <div class="msg-quote-sender">${quoteData.name}:</div>
-                        <div class="msg-quote-text">${quoteData.text}</div>
-                    </div>
-                `;
+                quoteHtml = `<div class="msg-quote-block"><div class="msg-quote-sender">${quoteData.name}:</div><div class="msg-quote-text">${quoteData.text}</div></div>`;
             }
             contentHtml = `<div class="msg-bubble-listen">${quoteHtml}${text}</div>`;
         }
 
-        // 组合头像和内容
-        if (side === 'left') {
-            div.innerHTML = avatarHtml + contentHtml;
-        } else {
-            div.innerHTML = contentHtml + avatarHtml;
-        }
+        if (side === 'left') div.innerHTML = avatarHtml + contentHtml;
+        else div.innerHTML = contentHtml + avatarHtml;
     }
 
     box.appendChild(div);
-
-    if (doScroll) {
-        setTimeout(() => { box.scrollTop = box.scrollHeight; }, 50);
-    }
+    if (doScroll) setTimeout(() => { box.scrollTop = box.scrollHeight; }, 50);
 }
-    applyChatSettingsToView(); // 应用高级设置
-
     // ================== 输入栏功能菜单逻辑 ==================
 
     function toggleInputMenu() {
@@ -14326,10 +16252,227 @@ async function appendChatBubble(side, text, doScroll = true, explicitId = null, 
         }
     }
 
+    // ================== 表情包逻辑 (新增) ==================
+    
+    // 1. 切换表情面板显示/隐藏
+    function toggleStickerPanel() {
+        const panel = document.getElementById('custom-sticker-panel');
+        // 如果输入栏菜单开着，先关掉
+        const menu = document.getElementById('chat-input-menu');
+        if (menu.classList.contains('active')) toggleInputMenu();
+
+        if (panel.classList.contains('active')) {
+            panel.classList.remove('active');
+        } else {
+            panel.classList.add('active');
+            renderStickerGrid(); // 每次打开都刷新一下列表
+        }
+    }
+
+    // ================== 2. 渲染表情列表 (多选模式支持) ==================
+let isStickerMultiSelect = false;
+let selectedStickerIds = new Set();
+
+// 2. 渲染表情列表 (最终修复：确保按钮被创建且动作正确)
+// 注意：isStickerMultiSelect, selectedStickerIds 必须在外部定义
+async function renderStickerGrid() {
+    const container = document.getElementById('sticker-grid-view');
+    if(!container) return;
+
+    // 清空内容并保留第一个加号按钮 (保持不变)
+    container.innerHTML = `
+        <div class="sticker-item add-btn" onclick="document.getElementById('sticker-file-input').click()" style="border: 2px dashed rgba(255,255,255,0.3); display:flex; align-items:center; justify-content:center;">
+            <svg viewBox="0 0 24 24" style="width:24px;height:24px;fill:rgba(255,255,255,0.5)"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+        </div>
+    `;
+    
+    // 更新面板的模式类名和按钮样式
+    const panel = document.getElementById('custom-sticker-panel');
+    panel.classList.toggle('multi-select-mode', isStickerMultiSelect);
+    const delBtn = document.getElementById('btn-sticker-delete-mode');
+    delBtn.classList.toggle('active', isStickerMultiSelect);
+
+    const stickers = JSON.parse(localStorage.getItem('user_stickers_list') || '[]');
+
+    for (const stickerId of stickers) {
+        try {
+            const blob = await dbHelper.get(stickerId);
+            if (blob) {
+                const url = URL.createObjectURL(blob);
+                const div = document.createElement('div');
+                // 检查是否已选中，添加选中类名
+                div.className = `sticker-item ${selectedStickerIds.has(stickerId) ? 'selected' : ''}`;
+                div.style.backgroundImage = `url(${url})`;
+                
+                // --- 核心修复：点击事件隔离 (防止发送) ---
+                div.onclick = (e) => {
+                    e.stopPropagation();
+                    if (isStickerMultiSelect) {
+                        toggleStickerSelection(stickerId, div); // 多选模式：选中/取消选中 
+                    } else {
+                        sendStickerMessage(stickerId); // 单选模式：发送
+                    }
+                };
+
+                // 添加选中框
+                const checkbox = document.createElement('div');
+                checkbox.className = 'sticker-checkbox';
+                div.appendChild(checkbox);
+
+                container.appendChild(div);
+            }
+        } catch (e) { console.error(e); }
+    }
+}
+
+    // 9. 智能表情包标签存储 (核心：只存储 ID 和用户输入的文字)
+function saveStickerTags(stickerId, text) {
+    const existingTags = JSON.parse(localStorage.getItem('sticker_tag_list') || '{}');
+    existingTags[stickerId] = {
+        text: text
+    };
+    localStorage.setItem('sticker_tag_list', JSON.stringify(existingTags));
+}
+
+// 3. 上传图片 (修改版：新增输入文字标签)
+async function handleStickerUpload(input) {
+    if (input.files && input.files[0]) {
+        const file = input.files[0];
+        const stickerId = `sticker_${Date.now()}`;
+        
+        await dbHelper.save(stickerId, file);
+        
+        let list = JSON.parse(localStorage.getItem('user_stickers_list') || '[]');
+        list.push(stickerId);
+        localStorage.setItem('user_stickers_list', JSON.stringify(list));
+        
+        // --- 🚨 关键新增逻辑：获取表情包上的文字 🚨 ---
+        // 弹出通用输入框，要求用户输入表情包上的文字
+        openGenInputModal(
+            "表情包文字", 
+            "请输入表情包上的主要文字/描述，供 AI 识别场景", 
+            "文字/描述 (如：收获, 心累)", 
+            (text) => {
+                // 回调函数：保存标签并刷新列表
+                saveStickerTags(stickerId, text); 
+                renderStickerGrid(); 
+            }
+        );
+        // ------------------------------------------
+
+        input.value = '';
+    }
+}
+
+    // 4. 发送表情 (修复版：正确触发无气泡+去白底模式)
+    async function sendStickerMessage(stickerId) {
+        // 关闭面板
+        const panel = document.getElementById('custom-sticker-panel');
+        if(panel) panel.style.display = 'none'; // 确保面板关闭
+
+        const blob = await dbHelper.get(stickerId);
+        if (!blob) return;
+
+        const msgId = Date.now().toString();
+        const msgImgKey = `msg_img_${msgId}`;
+        
+        // 保存图片数据
+        await dbHelper.save(msgImgKey, blob);
+
+        const imgUrl = URL.createObjectURL(blob);
+
+        // 🚨【核心修复点】🚨
+        // 之前这里传的是 imgHtml，导致它走了普通消息的逻辑（带气泡）。
+        // 现在传空字符串 ''，并把 info 放在第6个参数 extraOptions 里！
+        // 只有这样，appendChatBubble 才知道要用 "sticker-wrapper" (无气泡+去白底)
+        appendChatBubble('right', '', true, msgId, null, {
+            isSticker: true, 
+            imgUrl: imgUrl
+        });
+
+        // 存入历史记录
+        const history = await loadChatHistory(currentChatId);
+        history.push({
+            id: msgId,
+            sender: 'right',
+            text: '[表情]',
+            isSticker: true, // 🚨 标记为表情包，加载历史时也会无气泡
+            imgKey: msgImgKey,
+            timestamp: Date.now()
+        });
+        await saveChatHistory(currentChatId, history);
+        
+        updateChatLastMessage(currentChatId, '[表情]');
+    }
+    // 5. 删除表情 (核心逻辑：从列表和数据库移除)
+    async function deleteSticker(id) {
+        // 1. 从列表索引中删除 ID
+        let list = JSON.parse(localStorage.getItem('user_stickers_list') || '[]');
+        list = list.filter(item => item !== id);
+        localStorage.setItem('user_stickers_list', JSON.stringify(list));
+
+        // 2. 从 IndexedDB 数据库中删除图片 Blob
+        try {
+            await dbHelper.save(id, null); 
+        } catch(e) {
+            console.error("删除数据库文件失败:", e);
+        }
+        
+        // 3. 刷新表情列表，让 UI 上的格子消失
+        renderStickerGrid();
+
+        showToast("表情已删除");
+    }
+
+    // ================== 修改后的主菜单函数 ==================
     function handleMenuAction(action) {
-        toggleInputMenu(); // 点击任何功能都先收起菜单
-        showToast(`功能开发中：打开 [${action}] 界面`);
-        // 未来可以在这里编写逻辑，例如：if (action === 'photo') openPhotoSelector();
+        toggleInputMenu(); // 收起底部药丸菜单
+
+        if (action === 'photo') {
+            document.getElementById('chat-photo-input').click();
+        } 
+        else if (action === 'voice') {
+             openGenInputModal(
+                "发送语音", 
+                "请输入语音内容 (将转换为语音条)", 
+                "说点什么...", 
+                (text) => {
+                    sendVoiceMessage(text); 
+                }
+            );
+        }
+        // 👇👇👇 修改这里：打开表情面板 👇👇👇
+        else if (action === 'emoji') {
+            toggleStickerPanel();
+        }
+        // 👆👆👆 修改结束 👆👆👆
+        else if (action === 'video') {
+             startVideoCall(); // 调用新函数
+        }
+        else if (action === 'location') {
+             openLocationPicker();
+        }
+        else if (action === 'money') {
+            openMoneyModal();
+        }
+        else if (action === 'heart') {
+            openHeartModal(); // 👈 改成这个
+        }
+        else if (action === 'shop') {
+             openApp('app-shop');
+        }
+        else if (action === 'gift') {
+             showToast("礼物功能开发中...");
+        }
+        else if (action === 'game') {
+             showToast("游戏中心开发中...");
+        }
+        else if (action === 'phone') {
+             openApp('app-phone');
+        }
+        else {
+            showToast(`功能 [${action}] 开发中...`);
+        }
     }
 
     // 2. 发送消息 (修复版：强制带上引用数据)
@@ -14372,95 +16515,166 @@ async function sendChatDetailMsg() {
     }
 }
 
-    // ================== 3. AI 回复 (Logic 12.0: 引用生效 + 撤回可见) ==================
+    // ================== AI 回复 (最终版：增强回复条数、恢复世界观、支持多格式) ==================
 async function triggerChatDetailAI() {
     if (!currentChatId) return;
 
     // 1. 检查配置
     const aiConfig = JSON.parse(localStorage.getItem('ai_active_config') || '{}');
-    if (!aiConfig.key || !aiConfig.endpoint) {
-        showToast("请先配置 AI 模型 key");
+    if (!aiConfig.key || !aiConfig.endpoint || !aiConfig.model) {
+        showToast("请先在【设置 -> AI模型】中配置模型");
         return;
     }
 
-    // 2. 读取设定
+    // 2. 读取设定和历史
     const settings = JSON.parse(localStorage.getItem(`chat_settings_${currentChatId}`) || '{}');
     const charName = settings.charName || document.getElementById('chat-detail-name').textContent || "对方";
+    const history = await loadChatHistory(currentChatId);
+
+    // --- 🚨 关键新增：随机选择表情包 (30% 概率) 🚨 ---
+    const stickerList = JSON.parse(localStorage.getItem('user_stickers_list') || '[]');
+    
+    // 如果表情库有内容，且随机数满足条件，则发送表情包
+    if (stickerList.length > 0 && Math.random() < 0.3) { 
+        const randomIndex = Math.floor(Math.random() * stickerList.length);
+        const stickerToSendId = stickerList[randomIndex];
+        
+        // 发送随机选择的表情包
+        await sendStickerMessage(stickerToSendId, 'left'); 
+        showToast(`✅ ${charName} 随机回复了表情包!`);
+        return; // 立即返回，不进行文字回复
+    }
+    // ----------------------------------------------------
+    
+    // --- 3. 如果未发送表情包，执行文字回复流程 ---
+    
+    // 读取设定
     const charDesc = settings.charDesc || "暂无人设";
     const userName = settings.userName || "我";
     const userDesc = settings.userDesc || "暂无";
+    let messagesToSend = [];
 
-    // 3. 读取世界书
-    let worldContext = "";
+    // 读取世界观 (构建 worldContext)
     const allWorlds = JSON.parse(localStorage.getItem('world_book_data') || '[]');
+    let worldContext = "";
     if (settings.worldviews && settings.worldviews.length > 0) {
-        const contentList = settings.worldviews.map(tagName => {
-            const found = allWorlds.find(w => w.title === tagName);
-            if (found) return `【规则/设定：${found.title}】\n${found.content.trim()}`;
-            return "";
-        }).filter(item => item !== "");
-        worldContext = contentList.join('\n\n');
+        worldContext = allWorlds
+            .filter(w => settings.worldviews.includes(w.title))
+            .map(w => `[设定- ${w.title}]: ${w.content}`)
+            .join('\n\n');
     } else {
         worldContext = "背景：现代日常交流。";
     }
 
-    // 随机连发条数
-    const rand = Math.random();
-    let targetCount = 3;
-    if (rand < 0.3) targetCount = 2;
-    else if (rand < 0.7) targetCount = 3;
-    else targetCount = Math.floor(Math.random() * 2) + 4;
+    // 随机连发条数 (修正为 3~5 条)
+    const targetCount = Math.floor(Math.random() * 3) + 3; // 3, 4, 5 条
 
-    // --- System Prompt ---
+    // 1. 定义赛博地点库 (让 AI 随机选，或者根据人设选)
+    const cyberLocations = [
+        "荒坂塔 (Arasaka Tower)|企业广场 · 绝对控制区",
+        "来生酒吧 (Afterlife)|沃森区 · 地下二层",
+        "超级摩天楼 H10|威斯特布鲁克 · 居住区",
+        "维克多诊所|小唐人街 · 后巷",
+        "丽姿酒吧 (Lizzie's)|歌舞伎区 · 2077号街",
+        "月球基地 (Lunar Base)|第3轨道 · 宁静海",
+        "数据要塞 (Data Fortress)|深网 · 核心层",
+        "野狼酒吧 (El Coyote Cojo)|海伍德 · 谷底区"
+    ].join('\n');
+
+    if (history.length > 0) {
+        const lastMsg = history[history.length - 1];
+        if (lastMsg.sender === 'right' && lastMsg.extraOptions && lastMsg.extraOptions.isTransfer) {
+             // 视觉上：找到那个气泡，变成已领取
+             const bubble = document.getElementById(`msg-node-${lastMsg.id}`);
+             if (bubble) {
+                 const card = bubble.querySelector('.msg-transfer-card');
+                 if (card && !card.classList.contains('received')) {
+                     // 模拟点击领取
+                     card.click();
+                     showToast(`${charName} 领取了你的转账`);
+                 }
+             }
+        }
+    }
+
+    // --- System Prompt (已恢复完整的角色扮演模板) ---
     const systemPrompt = `
 【指令】
 你正在进行沉浸式语C，扮演"${charName}"与"${userName}"对话。
 
-=== 核心要素 A：角色灵魂 ===
+=== 核心要素 A：角色灵魂 (必须带入此身份) ===
 姓名：${charName}
 人设：${charDesc}
 
-=== 核心要素 B：当前世界与规则 ===
+=== 核心要素 B：世界观与规则 (请结合此设定回复) ===
 ${worldContext}
 
 === 交互对象 ===
 对象：${userName}
 信息：${userDesc}
 
-=== 输出格式铁律 ===
-1. 必须融合执行世界规则。
-2. 本次回复拆分为 ${targetCount} 条独立消息。
-3. ⚠️ **必须使用字符串 <<<SPLIT>>> 来分隔消息！** 严禁仅用换行符。
-4. 若涉及双语翻译，原文和翻译必须在同一个 <<<SPLIT>>> 区块内。
-5. 严禁扮演用户。
+【当前场景】
+${worldContext}
+
+【可用地点列表 (Cyberpunk Locations)】
+${cyberLocations}
+
+【特殊功能：读心术】
+用户有一个"读心"按钮。你需要实时生成你的【内心真实想法】，这可能与你嘴上说的话完全不同（比如嘴硬心软、暗自窃喜、或者腹诽）。
+
+【回复格式 (严格遵守)】
+请按照以下格式输出：
+<MIND>这里写你的内心独白(用户平时看不见，点击读心按钮才可见)</MIND>这里写你要直接发给用户的公开回复。
+
+【示例】
+用户：我走了。
+AI回复：<MIND>别走啊笨蛋，快回头看我一眼！</MIND>哦，慢走不送。
+
+【核心交互协议 (必须遵守)】
+1. **自动发位置**：如果用户问"你在哪"、"发个定位"、"去找你"等，**必须**回复一条位置消息。
+   - 格式：<LOC>地点名称|详细地址</LOC>
+   - 示例：<LOC>荒坂塔|企业广场</LOC>
+   - 注意：你可以从上面的列表里选一个符合你当前状态的地点
+
+2. **自动转账 (Money Protocol)**：
+   - 如果你想贿赂用户、还钱、给用户买东西的钱、或者表示感谢。
+   - **必须**使用格式：<MONEY>金额|备注文案</MONEY>
+   - 示例：<MONEY>5000|拿去买义体</MONEY>
+   - 金额请符合你的人设（富人发大额，穷人发小额）。
+=== 回复规则 (铁律) ===
+1. **不要**每句话都发位置或转账。
+2. **只有当**用户明确询问“你在哪”或剧情需要展示位置时，才回复：<LOC>地点名|地址</LOC>。
+3. **只有当**你想贿赂用户、还钱或表示感谢时，才回复：<MONEY>金额|备注</MONEY>。
+1. **多条回复**：本次回复**必须**拆分为 ${targetCount} 条独立消息。
+2. **分隔符**：**必须**使用字符串 <<<SPLIT>>> 来分隔每一条消息。
+3. **混合消息类型**：
+   - 纯文字和 emoji 直接输出。
+   - **发送语音（可选）**：使用 <VOICE>语音内容</VOICE> 指令。
+4. **纯对话模式**：只输出你要说的内容或指令，不要使用括号，不要出现动作描写。
+5. **口语化**：语气必须符合你的角色。
 `.trim();
 
-    // 4. 构建消息队列
-    let messagesToSend = [
+    // 4. 构建消息队列 (提取历史上下文)
+    const recentHistory = history.slice(-20);
+
+    messagesToSend = [
         { role: "system", content: systemPrompt }
     ];
 
-    const history = await loadChatHistory(currentChatId);
-    const recentHistory = history.slice(-20);
-
-    // --- 🚨 核心修改：构建历史记录逻辑 🚨 ---
     recentHistory.forEach(msg => {
+        if (msg.sender === 'system') return;
 
-        // 分支 A: 如果是系统消息 (撤回提示)
-        if (msg.sender === 'system') {
-            // 💡 这里的修改：不再 return 跳过，而是把提示发给 AI
-            // 我们用括号包起来，模拟系统显示的灰色小字
-            messagesToSend.push({
-                role: 'user', // 用 user 身份发，假装是用户界面产生的信息
-                content: `(系统提示：${msg.text})` // 例如：(系统提示：你撤回了一条消息)
-            });
-            return;
-        }
-
-        // 分支 B: 正常消息 (处理引用)
         let finalContent = msg.text;
 
-        // 如果有引用，拼接引用内容
+        // 🎤 语音消息：读取 rawText
+        if (msg.htmlContent && msg.rawText && msg.text === '[语音]') {
+            finalContent = `(用户发了一条语音说)："${msg.rawText}"`;
+        }
+        // 🖼️ 图片/表情消息
+        else if (msg.imgKey) {
+            finalContent = `(用户发了一张图片/表情)`;
+        }
+        // 💬 引用消息
         if (msg.quote && msg.quote.text) {
             finalContent = `「回复 ${msg.quote.name}: ${msg.quote.text}」\n${finalContent}`;
         }
@@ -14470,26 +16684,18 @@ ${worldContext}
             content: finalContent
         });
     });
-    // ------------------------------------------
-
-    if (messagesToSend.length > 0 && messagesToSend[messagesToSend.length - 1].role === 'assistant') {
-        messagesToSend.push({
-            role: "system",
-            content: `(System: 请继续扮演 ${charName}，输出 ${targetCount} 条新内容，用 <<<SPLIT>>> 分隔。)`
-        });
-    }
-
+    
     // UI Loading
     const loadingId = Date.now().toString();
     const box = document.getElementById('chat-detail-msgs');
     const loadingDiv = document.createElement('div');
     loadingDiv.id = loadingId;
     loadingDiv.className = 'chat-msg left';
-    loadingDiv.innerHTML = `<div class="msg-bubble-listen" style="opacity:0.7;">正在思考...</div>`;
+    loadingDiv.innerHTML = `<div class="msg-bubble-listen" style="opacity:0.7;">${charName} 正在输入...</div>`;
     box.appendChild(loadingDiv);
     box.scrollTop = box.scrollHeight;
 
-    // 5. 请求 API
+    // 5. 请求 API (发送文字/语音)
     try {
         let url = aiConfig.endpoint;
         if (url.endsWith('/')) url = url.slice(0, -1);
@@ -14515,7 +16721,12 @@ ${worldContext}
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
         const data = await response.json();
-        let rawText = data.choices[0].message.content;
+        let rawText = data.choices[0].message.content.trim();
+
+        // 强力清洗（防止 AI 依然带括号）
+        rawText = rawText.replace(/（[^）]*）/g, '')  
+                       .replace(/\([^)]*\)/g, '')    
+                       .replace(/【[^】]*】/g, '');   
 
         if (rawText.startsWith(`${charName}:`)) {
             rawText = rawText.replace(`${charName}:`, '').trim();
@@ -14525,15 +16736,18 @@ ${worldContext}
                              .map(s => s.trim())
                              .filter(s => s !== '');
 
-        processReplies(replies, 0);
+        if (typeof processAIReplies === 'function') {
+            processAIReplies(replies, 0);
+        } else {
+            appendChatBubble('left', rawText, true);  
+        }
 
     } catch (error) {
         console.error("AI Error:", error);
         const loadingEl = document.getElementById(loadingId);
-        if (loadingEl) loadingEl.innerHTML = `<div class="msg-bubble-listen" style="color:#FF3B30;">出错: ${error.message}</div>`;
+        if (loadingEl) loadingDiv.innerHTML = `<div class="msg-bubble-listen" style="color:#FF3B30;">出错: ${error.message}</div>`;
     }
 }
-
     // ================== 🚨 补回丢失的连发助手函数 🚨 ==================
     // 这个函数负责把 AI 的长回复切开，一条条地发出来，模拟真人打字
 
@@ -15561,7 +17775,7 @@ function applyChatBg(url) {
     }
 
     // 8. 应用设置到聊天视图 (Apply)
-    // ================== 进入聊天详情 (头像加载修复版) ==================
+    // ================== 进入聊天详情 (最终修复版：支持位置/表情/快拍历史回显) ==================
 async function openChatDetail(chatId, name, avatarBlobName) {
     currentChatId = chatId;
 
@@ -15569,53 +17783,41 @@ async function openChatDetail(chatId, name, avatarBlobName) {
     const nameEl = document.getElementById('chat-detail-name');
     if(nameEl) nameEl.textContent = name;
 
-    // 2. 🚨 核心修复：打开聊天时，强制应用一次该聊天的专属设置 (头像、背景、气泡)
-    // 这行代码会去读取数据库里的 user_avatar_xxx 并应用到 CSS 变量里
-    await applyChatSettingsToView();
+    // 2. 应用聊天背景设置
+    if (typeof applyChatSettingsToView === 'function') {
+        await applyChatSettingsToView();
+    }
 
-    // --- 以下是头部大图的 fallback 逻辑 (保持不变，作为双重保险) ---
+    // --- 头部头像逻辑 (保持不变) ---
     let currentLeftAvatarUrl = '';
-
-    // A. 尝试获取对方头像
     if (avatarBlobName) {
         try {
             const blob = await dbHelper.get(avatarBlobName);
-            if (blob) currentLeftAvatarUrl = (blob instanceof Blob || blob instanceof File) ? URL.createObjectURL(blob) : blob;
+            if (blob) currentLeftAvatarUrl = URL.createObjectURL(blob);
         } catch(e) {}
     }
-
-    // B. 更新头部 UI (大头像)
     const headerAvatar = document.getElementById('chat-detail-avatar');
-    if (headerAvatar) {
-        // 如果 applyChatSettingsToView 已经设置了头像，这里其实是多余的，但保留作为保险
-        // 优先显示 currentLeftAvatarUrl，如果没有则显示默认
-        if (currentLeftAvatarUrl) {
-            headerAvatar.style.backgroundImage = `url(${currentLeftAvatarUrl})`;
-        }
+    if (headerAvatar && currentLeftAvatarUrl) {
+        headerAvatar.style.backgroundImage = `url(${currentLeftAvatarUrl})`;
     }
 
-    // 3. 头部光圈逻辑
+    // --- 头部光圈逻辑 (保持不变) ---
     const stories = JSON.parse(localStorage.getItem('active_stories') || '{}');
     const readMap = JSON.parse(localStorage.getItem('read_stories_map') || '{}');
     const wrapEl = document.getElementById('chat-header-avatar-wrap');
-
     if (wrapEl) {
         wrapEl.className = 'chat-user-avatar-wrap';
         wrapEl.onclick = null;
-
         const storyTime = stories[chatId];
         if (storyTime && (Date.now() - storyTime < 86400000)) {
             const lastRead = readMap[chatId] || 0;
             const isRead = lastRead >= storyTime;
-
-            if (isRead) wrapEl.classList.add('read-story');
-            else wrapEl.classList.add('has-story');
-
+            wrapEl.classList.add(isRead ? 'read-story' : 'has-story');
             wrapEl.onclick = () => openStoryViewer(chatId);
         }
     }
 
-    // 4. 加载历史消息
+    // 3. 加载历史消息 (🔴 核心修复区域 🔴)
     const msgBox = document.getElementById('chat-detail-msgs');
     if(msgBox) {
         msgBox.innerHTML = '';
@@ -15624,17 +17826,62 @@ async function openChatDetail(chatId, name, avatarBlobName) {
         if (history.length === 0) {
             msgBox.innerHTML = `<div class="chat-msg system"><span>新会话已开启</span></div>`;
         } else {
+            // ... (在 openChatDetail 函数内，history.length check 之后)
+
             for (const msg of history) {
-                // 检查是否是快拍分享
-                let extra = null;
-                if (msg.isStoryShare && msg.storyData) {
-                    extra = {
-                        isStoryShare: true,
-                        storyData: msg.storyData
-                    };
+                let displayText = msg.text;
+                let extra = msg.extraOptions || null; 
+
+                // 1. 兼容旧数据
+                if (msg.isSticker) extra = { isSticker: true, imgKey: msg.imgKey };
+                
+                // A. 判断表情包
+                if (extra && extra.isSticker) {
+                    try {
+                        const blob = await dbHelper.get(extra.imgKey || msg.imgKey);
+                        if (blob) {
+                            const url = URL.createObjectURL(blob);
+                            displayText = ''; 
+                            extra.imgUrl = url; // 补全 URL
+                        }
+                    } catch(e) {}
+                }
+                // B. 判断普通图片
+                else if (msg.imgKey && !extra) { // 纯图片
+                    try {
+                        const blob = await dbHelper.get(msg.imgKey);
+                        if (blob) {
+                            const url = URL.createObjectURL(blob);
+                            displayText = `<img src="${url}" class="chat-content-image">`;
+                        }
+                    } catch(e) {}
+                }
+                // C. 判断语音
+                else if (msg.htmlContent && msg.text === '[语音]') {
+                    displayText = msg.htmlContent;
+                }
+                // D. 判断快拍
+                else if (msg.isStoryShare && msg.storyData) {
+                    displayText = '';
+                    extra = { isStoryShare: true, storyData: msg.storyData };
+                }
+                // E. 判断位置
+                else if (extra && extra.isLocation) {
+                    displayText = ''; 
+                }
+                // F. 🔴 判断转账 (这里是你之前缺的！)
+                else if (extra && extra.isTransfer) {
+                    displayText = ''; // 清空文字，强制渲染卡片
+                    // extra 已经包含了 amount, desc 等信息，直接透传即可
+                }
+                // G. 兼容旧版转账 (如果存的是 htmlContent)
+                else if (msg.htmlContent && msg.text.includes('[转账]')) {
+                    displayText = msg.htmlContent;
+                    extra = { isTransfer: true }; // 补全标记
                 }
 
-                await appendChatBubble(msg.sender, msg.text, false, msg.id, msg.quote, extra);
+                // 执行上屏
+                await appendChatBubble(msg.sender, displayText, false, msg.id, msg.quote, extra);
             }
         }
         setTimeout(() => { msgBox.scrollTop = msgBox.scrollHeight; }, 100);
@@ -20141,7 +22388,1417 @@ function renderPhoneSMS() {
     `).join('');
 }
 
+// --- 处理聊天图片上传 ---
+async function handleChatPhotoUpload(input) {
+    if (input.files && input.files[0]) {
+        const file = input.files[0];
+        // 1. 生成唯一ID
+        const msgId = Date.now().toString();
+        
+        // 2. 保存图片文件到 IndexedDB (防止刷新后丢失)
+        const imgKey = `msg_img_${msgId}`;
+        try {
+            await dbHelper.save(imgKey, file);
+            
+            // 3. 生成预览 URL
+            const imgUrl = URL.createObjectURL(file);
+            
+            // 4. 构建图片 HTML 代码
+            const imgHtml = `<img src="${imgUrl}" class="chat-content-image">`;
+
+            // 5. 立即上屏显示
+            appendChatBubble('right', imgHtml, true, msgId);
+
+            // 6. 存入历史记录
+            // 注意：我们额外存一个 imgKey 字段，方便下次加载时读取
+            const history = await loadChatHistory(currentChatId);
+            history.push({
+                id: msgId,
+                sender: 'right',
+                text: '[图片]',   // 列表预览时显示的文字
+                htmlContent: imgHtml, // 实际显示的 HTML
+                imgKey: imgKey,   // 数据库里的图片索引
+                timestamp: Date.now()
+            });
+            await saveChatHistory(currentChatId, history);
+
+            // 更新外部列表的预览文字
+            updateChatLastMessage(currentChatId, '[图片]');
+
+        } catch (e) {
+            console.error("图片发送失败", e);
+            showToast("图片保存失败");
+        }
+
+        input.value = ''; // 清空选择，以便下次能选同一张图
+    }
+}
+
+// --- 发送语音消息 (修复版：动态长度) ---
+async function sendVoiceMessage(text) {
+    // 1. 强制关闭弹窗
+    closeGenInputModal();
+
+    if (!text) return;
+    
+    // 2. 核心算法：
+    // 时长：每3个字1秒，最少2秒，最多60秒
+    const duration = Math.min(60, Math.max(2, Math.floor(text.length / 3)));
+    
+    // 宽度：基础宽度 70px + 每秒增加 6px，最大不超过 240px
+    // 这样短语音短，长语音长
+    const calcWidth = 70 + (duration * 6); 
+    const finalWidth = Math.min(calcWidth, 240); 
+
+    const msgId = Date.now().toString();
+
+    // 3. 构建语音条 HTML (注意看 style="width: ${finalWidth}px")
+    const voiceHtml = `
+        <div class="voice-wrapper" onclick="toggleVoiceContent(event, this)">
+            <div class="voice-bubble-container" style="width: ${finalWidth}px; justify-content: space-between;">
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <div class="voice-icon-play"></div>
+                    <div class="voice-wave-box">
+                        <div class="voice-bar"></div><div class="voice-bar"></div>
+                        <div class="voice-bar"></div><div class="voice-bar"></div>
+                        <div class="voice-bar"></div>
+                    </div>
+                </div>
+                <div class="voice-duration-text">${duration}"</div>
+            </div>
+            <div class="voice-real-text" style="display:none;">${text}</div>
+        </div>
+    `;
+
+    // 4. 立即上屏
+    appendChatBubble('right', voiceHtml, true, msgId);
+
+    // 5. 存入数据库
+    const history = await loadChatHistory(currentChatId);
+    history.push({
+        id: msgId,
+        sender: 'right',
+        text: '[语音]',
+        htmlContent: voiceHtml,
+        rawText: text,
+        timestamp: Date.now()
+    });
+    await saveChatHistory(currentChatId, history);
+
+    // 6. 更新列表预览
+    updateChatLastMessage(currentChatId, '[语音]');
+}
+
+// ================== 修复：通用输入弹窗逻辑 ==================
+
+// 1. 【补全缺失的函数】关闭输入弹窗
+function closeGenInputModal() {
+    const modal = document.getElementById('modal-general-input');
+    if (modal) {
+        modal.classList.remove('active');
+        setTimeout(() => modal.style.display = 'none', 300);
+    }
+}
+
+// 2. 确保打开函数也存在 (防止其他地方报错)
+function openGenInputModal(title, label, placeholder, callback) {
+    document.getElementById('gen-input-title').textContent = title;
+    document.getElementById('gen-input-label').textContent = label;
+    
+    const input = document.getElementById('gen-input-field');
+    input.value = '';
+    input.placeholder = placeholder;
+
+    // 将回调函数挂载到 window 对象上，确保全局可访问
+    window.currentGenInputCallback = callback;
+
+    const modal = document.getElementById('modal-general-input');
+    modal.style.display = 'flex';
+    modal.style.zIndex = '3000'; // 确保在最上层
+    setTimeout(() => modal.classList.add('active'), 10);
+    
+    input.focus();
+}
+
+// 3. 重新绑定确认按钮的点击事件 (确保能触发回调和关闭)
+const genConfirmBtn = document.getElementById('gen-input-confirm-btn');
+if (genConfirmBtn) {
+    genConfirmBtn.onclick = function() {
+        const val = document.getElementById('gen-input-field').value.trim();
+        
+        // 如果有回调函数，执行它 (把输入文字传回去)
+        if (typeof window.currentGenInputCallback === 'function') {
+            window.currentGenInputCallback(val);
+        }
+        
+        // 关窗
+        closeGenInputModal();
+    };
+}
+
+// ================== AI 连发助手 (逻辑修复版：优先识别指令) ==================
+async function processAIReplies(replies, index) {
+    if (index >= replies.length) return;
+
+    let content = replies[index].trim();
+    if (!content) {
+        processAIReplies(replies, index + 1);
+        return;
+    }
+
+    const msgId = Date.now().toString() + "_" + index;
+    
+    // --- 1. 正则匹配所有指令 ---
+    const locMatch = content.match(/<LOC>(.*?)<\/LOC>/i);
+    const moneyMatch = content.match(/<MONEY>(.*?)<\/MONEY>/i);
+    const stickerMatch = content.match(/<STICKER:(sticker_\d+)>/i);
+    const voiceMatch = content.match(/<VOICE>(.*?)<\/VOICE>/i);
+
+    // 🆕 新增：匹配心声
+    const mindMatch = content.match(/<MIND>(.*?)<\/MIND>/s); // s模式允许换行
+
+    let textForHistory = content; // 用于存入历史记录的预览文本
+
+    // --- 2. 优先处理特殊指令 (if ... else if ...) ---
+
+    // 🆕 处理心声 (提取并保存，然后从正文中删掉)
+    if (mindMatch) {
+        const mindText = mindMatch[1].trim();
+        // 存入当前会话的“最新心声”缓存
+        localStorage.setItem(`latest_mind_${currentChatId}`, mindText);
+        
+        // 从回复内容中剔除，不让用户在气泡里看到
+        content = content.replace(mindMatch[0], '').trim();
+    }
+
+    // ➤ 情况 A: 命中位置 (Location) - 修复版
+    if (locMatch) {
+        const [name, addr] = locMatch[1].split('|');
+        const extra = { 
+            isLocation: true, 
+            name: name || '未知地点', 
+            address: addr || '信号屏蔽区' 
+        };
+        
+        // 1. 上屏
+        appendChatBubble('left', '', true, msgId, null, extra);
+        
+        // 2. 存历史 (🔴 必须带上 extraOptions 才能持久化)
+        const history = await loadChatHistory(currentChatId);
+        history.push({ 
+            id: msgId, 
+            sender: 'left', 
+            text: '[位置]', 
+            timestamp: Date.now(), 
+            extraOptions: extra // 👈 加上这句就修好了！
+        });
+        await saveChatHistory(currentChatId, history);
+        
+        updateChatLastMessage(currentChatId, '[位置]');
+        
+        // 移除指令
+        content = content.replace(locMatch[0], '').trim();
+    }
+
+    // ➤ 情况 B: AI 发转账 (Money) - 🔴 提到前面来！
+    else if (moneyMatch) {
+        const [amt, desc] = moneyMatch[1].split('|');
+        const amount = amt || '88';
+        const text = desc || '转账';
+        
+        // 构造数据
+        const extra = { 
+            isTransfer: true, 
+            amount: amount, 
+            desc: text,
+            isReceived: false 
+        };
+        
+        // 生成 HTML 用于上屏 (不存入 extraOptions，由 appendChatBubble 生成)
+        // 但为了保险，我们让 appendChatBubble 根据 extra 自动生成
+        appendChatBubble('left', '', true, msgId, null, extra);
+        
+        // 存历史
+        const history = await loadChatHistory(currentChatId);
+        history.push({ 
+            id: msgId, 
+            sender: 'left', 
+            text: `[转账] ¥${amount}`, 
+            timestamp: Date.now(),
+            extraOptions: extra // 关键：存入 extra
+        });
+        await saveChatHistory(currentChatId, history);
+
+        content = content.replace(moneyMatch[0], '').trim();
+    }
+
+    // ➤ 情况 C: AI 发表情
+    else if (stickerMatch) {
+        const stickerId = stickerMatch[1];
+        // 调用发送函数 (内部已包含上屏和存历史)
+        await sendStickerMessage(stickerId, 'left');
+        content = content.replace(stickerMatch[0], '').trim();
+    }
+
+    // ➤ 情况 D: AI 发语音
+    else if (voiceMatch) {
+        const voiceText = voiceMatch[1]; 
+        const duration = Math.min(60, Math.max(2, Math.floor(voiceText.length / 3)));
+        const finalWidth = Math.min(70 + (duration * 6), 240);
+        
+        const voiceHtml = `
+            <div class="voice-wrapper" onclick="toggleVoiceContent(event, this)">
+                <div class="voice-bubble-container" style="width: ${finalWidth}px; justify-content: space-between;">
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <div class="voice-icon-play"></div>
+                        <div class="voice-wave-box">
+                            <div class="voice-bar"></div><div class="voice-bar"></div>
+                            <div class="voice-bar"></div><div class="voice-bar"></div>
+                        </div>
+                    </div>
+                    <div class="voice-duration-text">${duration}"</div>
+                </div>
+                <div class="voice-real-text" style="display:none;">${voiceText}</div>
+            </div>
+        `;
+
+        appendChatBubble('left', voiceHtml, true, msgId);
+
+        const history = await loadChatHistory(currentChatId);
+        history.push({
+            id: msgId, 
+            sender: 'left', 
+            text: '[语音]', 
+            htmlContent: voiceHtml, 
+            rawText: voiceText, 
+            timestamp: Date.now()
+        });
+        await saveChatHistory(currentChatId, history);
+
+        content = content.replace(voiceMatch[0], '').trim();
+    }
+
+    // --- 3. 最后处理普通文字 (保底) ---
+    // 只有当 content 里还有剩余文本时才执行
+    if (content && content.length > 0) {
+        appendChatBubble('left', content, true, msgId);
+
+        const history = await loadChatHistory(currentChatId);
+        history.push({
+            id: msgId, 
+            sender: 'left', 
+            text: content, 
+            timestamp: Date.now()
+        });
+        await saveChatHistory(currentChatId, history);
+        
+        updateChatLastMessage(currentChatId, content);
+    }
+    
+    // 递归处理下一条
+    const delay = 1000 + Math.random() * 1000;
+    setTimeout(() => {
+        processAIReplies(replies, index + 1);
+    }, Math.min(delay, 3000));
+}
+
+// 辅助：存历史的简写函数 (避免重复代码)
+async function saveMsgToHistory(id, sender, text, extra = null) {
+    const history = await loadChatHistory(currentChatId);
+    history.push({
+        id: id,
+        sender: sender,
+        text: text,
+        timestamp: Date.now(),
+        extraOptions: extra // 👈 关键：把 extra 存进去！
+    });
+    await saveChatHistory(currentChatId, history);
+    updateChatLastMessage(currentChatId, text);
+}
+// --- 语音条交互逻辑 (核心修复：解决点击报错) ---
+// 必须挂载到 window 上，HTML 中的 onclick 才能找到它
+window.toggleVoiceContent = function(event, wrapper) {
+    // 1. 如果用户点击的是【文字区域】
+    // 我们不阻止冒泡，让它触发外层 .chat-msg 的 onclick (从而打开删除/撤回菜单)
+    if (event.target.classList.contains('voice-real-text')) {
+        return; 
+    }
+
+    // 2. 如果用户点击的是【语音条区域】
+    // 阻止冒泡，防止误触菜单。只执行播放动画和展开/收起
+    event.stopPropagation(); 
+
+    const textBox = wrapper.querySelector('.voice-real-text');
+    const container = wrapper.querySelector('.voice-bubble-container');
+
+    // 切换播放状态
+    if (container.classList.contains('voice-playing')) {
+        // 停止播放，收起文字
+        container.classList.remove('voice-playing');
+        textBox.style.display = 'none'; 
+    } else {
+        // 开始播放，展开文字
+        container.classList.add('voice-playing');
+        textBox.style.display = 'block'; 
+        
+        // 3秒后自动停止动画 (模拟播放结束)，但保留文字显示方便阅读
+        setTimeout(() => {
+            if(container.classList.contains('voice-playing')) {
+                container.classList.remove('voice-playing');
+            }
+        }, 3000);
+    }
+};
+
+// ================== 表情包修复逻辑 ==================
+
+// 1. 开关面板
+function toggleStickerPanel() {
+    console.log("尝试切换表情面板...");
+    const panel = document.getElementById('custom-sticker-panel');
+    const menu = document.getElementById('chat-input-menu');
+
+    if (!panel) {
+        alert("错误：找不到 id='custom-sticker-panel' 的元素，请检查 HTML 位置！");
+        return;
+    }
+
+    // 如果药丸菜单开着，先关掉
+    if (menu && menu.classList.contains('active')) {
+        toggleInputMenu();
+    }
+
+    // 切换显示状态 (直接操作 style.display 最稳)
+    if (panel.style.display === 'flex') {
+        panel.style.display = 'none';
+    } else {
+        panel.style.display = 'flex';
+        renderStickerGrid(); // 刷新列表
+    }
+}
+
+// 2. 渲染表情列表 (最终修复：强制隔离发送和选中动作)
+// 注意：isStickerMultiSelect, selectedStickerIds 必须在外部定义
+async function renderStickerGrid() {
+    const container = document.getElementById('sticker-grid-view');
+    if(!container) return;
+
+    // 清空内容并保留第一个加号按钮 (保持不变)
+    container.innerHTML = `
+        <div class="sticker-item add-btn" onclick="document.getElementById('sticker-file-input').click()" style="border: 2px dashed rgba(255,255,255,0.3); display:flex; align-items:center; justify-content:center;">
+            <svg viewBox="0 0 24 24" style="width:24px;height:24px;fill:rgba(255,255,255,0.5)"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+        </div>
+    `;
+    
+    // 更新面板的模式类名和按钮样式
+    const panel = document.getElementById('custom-sticker-panel');
+    panel.classList.toggle('multi-select-mode', isStickerMultiSelect);
+    const delBtn = document.getElementById('btn-sticker-delete-mode');
+    delBtn.classList.toggle('active', isStickerMultiSelect);
+
+    const stickers = JSON.parse(localStorage.getItem('user_stickers_list') || '[]');
+
+    for (const stickerId of stickers) {
+        try {
+            const blob = await dbHelper.get(stickerId);
+            if (blob) {
+                const url = URL.createObjectURL(blob);
+                const div = document.createElement('div');
+                // 检查是否已选中，添加选中类名
+                div.className = `sticker-item ${selectedStickerIds.has(stickerId) ? 'selected' : ''}`;
+                div.style.backgroundImage = `url(${url})`;
+                
+                // --- 🚨 核心修复：点击事件隔离 🚨 ---
+                div.onclick = (e) => {
+                    e.stopPropagation();
+                    if (isStickerMultiSelect) {
+                        toggleStickerSelection(stickerId, div); // 多选模式：选中/取消选中
+                    } else {
+                        sendStickerMessage(stickerId); // 单选模式：发送
+                    }
+                };
+
+                // 🚨 移除长按/右键菜单 (防止电脑端冲突) 🚨
+                div.oncontextmenu = (e) => {
+                    e.preventDefault(); // 阻止浏览器右键菜单
+                    toggleStickerMultiSelect(); // 长按也进入多选模式
+                };
+
+                // 添加选中框
+                const checkbox = document.createElement('div');
+                checkbox.className = 'sticker-checkbox';
+                div.appendChild(checkbox);
+
+                container.appendChild(div);
+            }
+        } catch (e) { console.error(e); }
+    }
+}
+// 3. 上传图片
+async function handleStickerUpload(input) {
+    if (input.files && input.files[0]) {
+        const file = input.files[0];
+        const stickerId = `sticker_${Date.now()}`;
+        
+        await dbHelper.save(stickerId, file);
+        
+        let list = JSON.parse(localStorage.getItem('user_stickers_list') || '[]');
+        list.push(stickerId);
+        localStorage.setItem('user_stickers_list', JSON.stringify(list));
+        
+        renderStickerGrid(); // 刷新
+        input.value = '';
+    }
+}
+
+// 4. 发送表情 (最终版：允许 AI 指定 senderSide 为 'left')
+async function sendStickerMessage(stickerId, senderSide = 'right') {
+    // 关闭面板
+    const panel = document.getElementById('custom-sticker-panel');
+    if(panel && senderSide === 'right') panel.style.display = 'none'; // 只有用户自己发时才关面板
+
+    const blob = await dbHelper.get(stickerId);
+    if (!blob) return;
+
+    const msgId = Date.now().toString();
+    const msgImgKey = `msg_img_${msgId}`;
+    
+    // 保存图片数据
+    await dbHelper.save(msgImgKey, blob);
+
+    const imgUrl = URL.createObjectURL(blob);
+
+    // 🚨 核心修复：将发送方 side 设为变量 senderSide 🚨
+    appendChatBubble(senderSide, '', true, msgId, null, {
+        isSticker: true, 
+        imgUrl: imgUrl
+    });
+
+    // 存入历史记录
+    const history = await loadChatHistory(currentChatId);
+    history.push({
+        id: msgId,
+        sender: senderSide, // 🚨 关键：存入正确的发送方
+        text: '[表情]',
+        isSticker: true,
+        imgKey: msgImgKey,
+        timestamp: Date.now()
+    });
+    await saveChatHistory(currentChatId, history);
+    
+    updateChatLastMessage(currentChatId, '[表情]');
+}
+// ================== ⚠️ 必须重新覆盖这个主菜单函数 ⚠️ ==================
+// 请确保这段代码覆盖了之前那个报错的 handleMenuAction
+function handleMenuAction(action) {
+    toggleInputMenu(); // 收起底部药丸菜单
+
+    if (action === 'photo') {
+        document.getElementById('chat-photo-input').click();
+    } 
+    else if (action === 'voice') {
+         openGenInputModal(
+            "发送语音", "请输入内容", "说点什么...", 
+            (text) => sendVoiceMessage(text)
+        );
+    }
+    // 👇 关键：这里调用我们刚写的 toggleStickerPanel
+    else if (action === 'emoji') {
+        toggleStickerPanel();
+    }
+    // 👆
+    // 👇👇👇【这里改了！】把原来的 showToast 改成调用 startVideoCall 👇👇👇
+    else if (action === 'video') {
+         // 检查 startVideoCall 是否已定义
+         if (typeof startVideoCall === 'function') {
+             startVideoCall(); 
+         } else {
+             alert("错误：视频通话功能代码(startVideoCall)未找到，请检查是否已粘贴上一轮的 JS 代码！");
+         }
+    }
+    // 👇👇👇 修改这里：连接到新的位置选择页面 👇👇👇
+    else if (action === 'location') {
+        // 检查函数是否存在，防止报错
+        if (typeof openLocationPicker === 'function') {
+            openLocationPicker(); 
+        } else {
+            alert("错误：请确保你已经复制了上一条回复里的 JS 代码 (openLocationPicker函数)！");
+        }
+    }
+    else if (action === 'money') {
+        openMoneyModal(); 
+    }
+    else if (action === 'heart') {
+        openHeartModal(); // 👈 改成这个
+    }
+    else if (action === 'shop') openApp('app-shop');
+    else if (action === 'gift') showToast("礼物功能开发中...");
+    else if (action === 'game') showToast("游戏中心开发中...");
+    else if (action === 'phone') openApp('app-phone');
+    else showToast(`功能 [${action}] 开发中...`);
+}
+
+// 6. 切换多选模式 (最终版：确保模式切换和删除按钮联动)
+
+function toggleStickerMultiSelect() {
+    isStickerMultiSelect = !isStickerMultiSelect;
+    
+    // 如果进入多选模式，清空之前的选中项
+    if (isStickerMultiSelect) {
+        selectedStickerIds.clear();
+        showToast("已进入多选删除模式，点击表情选择");
+        
+        // 关键：设置垃圾桶按钮的点击事件为执行删除 (确认按钮)
+        document.getElementById('btn-sticker-delete-mode').onclick = confirmBatchStickerDelete; 
+
+    } else {
+        showToast("已退出多选模式");
+        
+        // 恢复垃圾桶按钮的点击事件为切换模式 (让下次点击继续切换)
+        document.getElementById('btn-sticker-delete-mode').onclick = toggleStickerMultiSelect; 
+    }
+
+    renderStickerGrid(); // 刷新 UI 状态
+}
+// 7. 切换表情的选中状态
+function toggleStickerSelection(id, el) {
+    if (selectedStickerIds.has(id)) {
+        selectedStickerIds.delete(id);
+        el.classList.remove('selected');
+    } else {
+        selectedStickerIds.add(id);
+        el.classList.add('selected');
+    }
+    
+    // 更新垃圾桶图标的提示
+    const delBtn = document.getElementById('btn-sticker-delete-mode');
+    delBtn.title = `删除选中 (${selectedStickerIds.size} 项)`;
+}
+
+// 8. 确认批量删除
+async function confirmBatchStickerDelete() {
+    if (selectedStickerIds.size === 0) {
+        showToast("请先选择要删除的表情");
+        return;
+    }
+
+    openGenConfirmModal(
+        "批量删除表情",
+        `确定要删除选中的 <span style="color:#FF3B30; font-weight:bold;">${selectedStickerIds.size}</span> 个表情包吗？`,
+        "确认删除",
+        async () => {
+            let list = JSON.parse(localStorage.getItem('user_stickers_list') || '[]');
+            
+            // 批量删除数据库中的文件，并从列表中移除
+            selectedStickerIds.forEach(async (id) => {
+                try { await dbHelper.save(id, null); } catch(e){}
+                list = list.filter(item => item !== id);
+            });
+            
+            localStorage.setItem('user_stickers_list', JSON.stringify(list));
+            
+            toggleStickerMultiSelect(); // 退出多选模式
+            renderStickerGrid(); // 刷新列表
+            showToast(`成功删除了 ${selectedStickerIds.size} 个表情`);
+        }
+    );
+}
+
+
+// ================== 视频通话逻辑 (最终版：持久化背景+计时器+历史记录) ==================
+
+let videoCallTimer = null;
+let callDurationTimer = null; // 通话时长计时器
+let callSeconds = 0;
+
+// 1. 发起视频通话
+async function startVideoCall() {
+    if (!currentChatId) { showToast("请先进入一个聊天窗口"); return; }
+
+    const settings = JSON.parse(localStorage.getItem(`chat_settings_${currentChatId}`) || '{}');
+    const charName = settings.charName || document.getElementById('chat-detail-name').textContent || "对方";
+    
+    // UI 初始化
+    document.getElementById('video-call-name').textContent = charName;
+    
+    // 加载头像
+    let avatarUrl = '';
+    try {
+        const blob = await dbHelper.get(`chat_avatar_${currentChatId}`);
+        if(blob) avatarUrl = URL.createObjectURL(blob);
+    } catch(e){}
+
+    const avatarEl = document.getElementById('video-call-avatar');
+    if(avatarUrl) avatarEl.style.backgroundImage = `url(${avatarUrl})`;
+    else avatarEl.style.backgroundImage = 'none';
+
+    // 清空聊天层
+    document.getElementById('video-chat-overlay-container').innerHTML = '';
+    
+    // 重置计时器 UI
+    document.getElementById('video-timer-display').textContent = "00:00";
+    document.getElementById('video-timer-display').style.display = 'none'; // 接通前隐藏
+
+    // 加载本地用户照片
+    loadLocalUserImage(); 
+
+    // 🔴 核心：加载持久化的背景视频 🔴
+    loadPersistentVideoBg();
+
+    // 重置状态
+    document.getElementById('video-call-overlay').classList.remove('connected');
+    document.getElementById('video-call-status').textContent = "正在等待对方接受邀请...";
+    document.getElementById('video-chat-input-bar').classList.add('hidden');
+
+    openSubPage('sub-video-call');
+
+    // 3秒后自动接通
+    if (videoCallTimer) clearTimeout(videoCallTimer);
+    videoCallTimer = setTimeout(connectVideoCall, 3000);
+}
+
+// 2. 接通
+function connectVideoCall() {
+    document.getElementById('video-call-overlay').classList.add('connected');
+    showToast("通话已接通");
+    
+    // 显示并启动计时器
+    document.getElementById('video-timer-display').style.display = 'block';
+    startCallTimer();
+
+    const remoteVideo = document.getElementById('video-remote-player');
+    if (remoteVideo.style.display !== 'none') remoteVideo.play().catch(e=>{});
+}
+
+// 3. 挂断
+function endVideoCall() {
+    if (videoCallTimer) clearTimeout(videoCallTimer);
+    stopCallTimer();
+
+    closeSubPage('sub-video-call');
+    
+    const remoteVideo = document.getElementById('video-remote-player');
+    remoteVideo.pause();
+
+    // 在主聊天界面添加系统消息
+    const msgId = Date.now().toString();
+    const durationStr = formatDuration(callSeconds);
+    appendChatBubble('system', `视频通话已结束，时长 ${durationStr}`, true, msgId);
+    
+    loadChatHistory(currentChatId).then(history => {
+        history.push({
+            id: msgId, sender: 'system', text: `视频通话已结束，时长 ${durationStr}`, timestamp: Date.now()
+        });
+        saveChatHistory(currentChatId, history);
+    });
+}
+
+// --- 计时器逻辑 ---
+function startCallTimer() {
+    callSeconds = 0;
+    if (callDurationTimer) clearInterval(callDurationTimer);
+    callDurationTimer = setInterval(() => {
+        callSeconds++;
+        document.getElementById('video-timer-display').textContent = formatDuration(callSeconds);
+    }, 1000);
+}
+
+function stopCallTimer() {
+    if (callDurationTimer) clearInterval(callDurationTimer);
+    callDurationTimer = null;
+}
+
+function formatDuration(sec) {
+    const m = Math.floor(sec / 60).toString().padStart(2, '0');
+    const s = (sec % 60).toString().padStart(2, '0');
+    return `${m}:${s}`;
+}
+
+// --- 背景视频持久化 ---
+function triggerRemoteVideoUpload() { document.getElementById('input-remote-video').click(); }
+
+async function handleRemoteVideoUpload(input) {
+    if (input.files && input.files[0]) {
+        const file = input.files[0];
+        // 1. 存入数据库
+        await dbHelper.save(`video_bg_${currentChatId}`, file);
+        // 2. 应用
+        applyVideoBg(file);
+        showToast("背景已更换并保存");
+    }
+}
+
+// 修复版：加载持久化背景
+async function loadPersistentVideoBg() {
+    const aurora = document.querySelector('.aurora-bg.full');
+    const videoEl = document.getElementById('video-remote-player');
+    
+    // 还没进聊天就别加载
+    if (!currentChatId) return;
+
+    try {
+        console.log("正在加载视频背景，ChatID:", currentChatId);
+        // 从数据库读取
+        const blob = await dbHelper.get(`video_bg_${currentChatId}`);
+        
+        if (blob) {
+            console.log("找到背景视频，正在应用...");
+            const url = URL.createObjectURL(blob);
+            
+            if(videoEl) {
+                videoEl.src = url;
+                videoEl.style.display = 'block';
+                videoEl.play().catch(e => console.error("自动播放失败(需交互):", e));
+            }
+            if(aurora) aurora.style.display = 'none';
+        } else {
+            console.log("未找到背景视频，使用默认极光");
+            // 没存过，恢复默认极光
+            if(videoEl) {
+                videoEl.style.display = 'none';
+                videoEl.src = "";
+            }
+            if(aurora) aurora.style.display = 'block';
+        }
+    } catch(e) {
+        console.error("加载视频背景失败:", e);
+        // 出错也恢复默认
+        if(aurora) aurora.style.display = 'block';
+    }
+}
+
+function applyVideoBg(blob) {
+    const url = URL.createObjectURL(blob);
+    const videoEl = document.getElementById('video-remote-player');
+    const aurora = document.querySelector('.aurora-bg.full');
+    
+    videoEl.src = url;
+    videoEl.style.display = 'block';
+    aurora.style.display = 'none';
+    
+    // 如果已经接通，立即播放
+    if (document.getElementById('video-call-overlay').classList.contains('connected')) {
+        videoEl.play();
+    }
+}
+
+// --- 视频内聊天 & 历史记录 ---
+
+function toggleVideoChatInput() {
+    const bar = document.getElementById('video-chat-input-bar');
+    bar.classList.toggle('hidden');
+    if (!bar.classList.contains('hidden')) document.getElementById('video-chat-input').focus();
+}
+
+function sendVideoChatMessage() {
+    const input = document.getElementById('video-chat-input');
+    const text = input.value.trim();
+    if (!text) return;
+
+    // A. 上屏
+    addVideoBubble('right', text);
+    // B. 🔴 存入视频通话记录
+    saveVideoChatLog('me', text);
+
+    input.value = '';
+    document.getElementById('video-chat-input-bar').classList.add('hidden');
+
+    // C. 触发 AI
+    fetchSimpleAIReply(text).then(reply => {
+        if (reply) {
+            addVideoBubble('left', reply);
+            saveVideoChatLog('ai', reply); // 存入记录
+        }
+    });
+}
+
+function addVideoBubble(side, text) {
+    const container = document.getElementById('video-chat-overlay-container');
+    if (!container) return;
+
+    const div = document.createElement('div');
+    const bgStyle = side === 'right' 
+        ? 'background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3); align-self: flex-end; border-bottom-right-radius: 4px;' 
+        : 'background: rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.1); align-self: flex-start; border-bottom-left-radius: 4px;';
+    
+    div.style.cssText = `
+        ${bgStyle}
+        padding: 8px 12px; border-radius: 16px; color: white; font-size: 14px;
+        max-width: 80%; backdrop-filter: blur(5px); pointer-events: auto;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.5); margin-bottom: 4px;
+    `;
+    div.textContent = text;
+    container.appendChild(div);
+    container.scrollTop = container.scrollHeight;
+}
+
+// --- 历史记录查看逻辑 ---
+
+// 保存单条记录
+function saveVideoChatLog(sender, text) {
+    const key = `video_log_${currentChatId}`;
+    let logs = JSON.parse(localStorage.getItem(key) || '[]');
+    
+    logs.push({
+        sender: sender, // 'me' or 'ai'
+        text: text,
+        time: new Date().toLocaleString()
+    });
+    
+    localStorage.setItem(key, JSON.stringify(logs));
+}
+
+// 打开记录页
+function openVideoHistoryLog() {
+    if(!currentChatId) return;
+    
+    const container = document.getElementById('video-history-list');
+    const key = `video_log_${currentChatId}`;
+    const logs = JSON.parse(localStorage.getItem(key) || '[]');
+    
+    const settings = JSON.parse(localStorage.getItem(`chat_settings_${currentChatId}`) || '{}');
+    const charName = settings.charName || "对方";
+
+    container.innerHTML = '';
+    
+    if (logs.length === 0) {
+        container.innerHTML = '<div style="text-align:center; color:#999; margin-top:50px;">暂无视频通话内的对话记录</div>';
+    } else {
+        // 倒序显示（新的在上面）
+        [...logs].reverse().forEach(log => {
+            const roleLabel = log.sender === 'me' 
+                ? `<span class="v-log-me">我:</span>` 
+                : `<span class="v-log-role">${charName}:</span>`;
+            
+            const div = document.createElement('div');
+            div.className = 'video-log-item';
+            div.innerHTML = `
+                <div class="v-log-header">
+                    <span>${log.time}</span>
+                </div>
+                <div class="v-log-content">
+                    ${roleLabel} ${log.text}
+                </div>
+            `;
+            container.appendChild(div);
+        });
+    }
+    
+    openSubPage('sub-video-history-log');
+}
+
+function clearVideoHistory() {
+    if(confirm("清空视频对话记录？")) {
+        localStorage.removeItem(`video_log_${currentChatId}`);
+        openVideoHistoryLog(); // 刷新
+        showToast("已清空");
+    }
+}
+
+// 本地照片加载逻辑 (复用之前的)
+async function loadLocalUserImage() {
+    const localImgBox = document.getElementById('video-local-image-bg');
+    try {
+        const callPhoto = await dbHelper.get('video_call_local_photo');
+        if (callPhoto) {
+             localImgBox.style.backgroundImage = `url(${URL.createObjectURL(callPhoto)})`;
+             return;
+        }
+        const avatar = await dbHelper.get('userAvatar_main');
+        if (avatar) localImgBox.style.backgroundImage = `url(${URL.createObjectURL(avatar)})`;
+    } catch(e) {}
+}
+function triggerLocalPhotoUpload() { document.getElementById('input-local-photo').click(); }
+function handleLocalPhotoUpload(input) {
+    if (input.files && input.files[0]) {
+        dbHelper.save('video_call_local_photo', input.files[0]).then(() => {
+            loadLocalUserImage(); showToast("形象已更新");
+        });
+    }
+}
+
+// 复用 fetchSimpleAIReply 
+async function fetchSimpleAIReply(userText) {
+    // ... (保持你现有的 fetchSimpleAIReply 逻辑不变，或者复制上一轮的) ...
+    // 为了节省篇幅，这里不重复写，请确保代码里有这个函数
+    const aiConfig = JSON.parse(localStorage.getItem('ai_active_config') || '{}');
+    if (!aiConfig.key) return "（点头微笑）"; 
+    try {
+        let url = aiConfig.endpoint;
+        if (url.endsWith('/')) url = url.slice(0, -1);
+        if (!url.endsWith('/v1')) url += '/v1';
+        const settings = JSON.parse(localStorage.getItem(`chat_settings_${currentChatId}`) || '{}');
+        const charName = settings.charName || "对方";
+        const response = await fetch(`${url}/chat/completions`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${aiConfig.key}` },
+            body: JSON.stringify({
+                model: aiConfig.model,
+                messages: [
+                    { role: "system", content: `你正在和用户进行视频通话。请用非常简短、口语化的句子回复。扮演：${charName}。字数限制：20字以内。` },
+                    { role: "user", content: userText }
+                ],
+                max_tokens: 60
+            })
+        });
+        const data = await response.json();
+        return data.choices[0].message.content.trim();
+    } catch (e) { console.error(e); return null; }
+}
+
+// ================== 📍 赛博地理位置系统 (终极修正版) ==================
+
+// 1. 纯虚构赛博地点库 (移除所有现实地名)
+const cyberPOIs = [
+    { name: "当前定位: 第七区 · 2077号街", address: "Sector 7, Night City Blvd 2077", type: "me" },
+    { name: "星际咖啡 (Starbase Coffee)", address: "中央枢纽区 - 3层甲板", type: "place" },
+    { name: "量子数据中心 (Quantum Data)", address: "北区 / 核心机房路 101号", type: "work" },
+    { name: "赛博夜市 (Neon Market)", address: "下城区 / 旧货街 4号入口", type: "life" },
+    { name: "全息艺术馆 (Holo Gallery)", address: "云端大道 / 虚拟现实中心", type: "art" },
+    { name: "地下中转站 (Metro Station)", address: "B2层 / 快速轨道连接点", type: "trans" },
+    { name: "天际线公寓 (Skyline Apt)", address: "上城区 / 观景台 88楼", type: "home" },
+    { name: "荒坂塔 (Arasaka Tower)", address: "企业广场 / 绝对控制区", type: "corp" },
+    { name: "义体维修站 (Ripperdoc)", address: "瓦森区 / 阴暗小巷 12号", type: "med" }
+];
+
+// 当前列表状态 (支持搜索)
+let currentDisplayPOIs = [...cyberPOIs];
+let selectedLocIndex = 0; // 当前选中的索引
+
+// 2. 打开位置选择器
+window.openLocationPicker = function() {
+    // 重置搜索
+    const searchInput = document.getElementById('location-search-input');
+    if(searchInput) searchInput.value = '';
+    
+    // 重置列表数据
+    currentDisplayPOIs = [...cyberPOIs];
+    
+    // 渲染 UI
+    renderPickerMapHTML(false); // 渲染地图 HTML
+    renderPickerList();         // 渲染列表
+    
+    openSubPage('sub-location-picker');
+    
+    // 默认选中第一项 (当前位置)
+    selectLocation(0);
+};
+
+// 3. 搜索功能 (本地过滤)
+window.handleLocationSearch = function(text) {
+    text = text.trim();
+    if (!text) {
+        currentDisplayPOIs = [...cyberPOIs];
+    } else {
+        // 搜索逻辑：保留匹配项，并允许自定义“搜索结果”
+        const matches = cyberPOIs.filter(p => p.name.includes(text) || p.address.includes(text));
+        // 如果想把用户的输入也当作一个临时地点：
+        currentDisplayPOIs = [
+            { name: text, address: "搜索结果 · 自定义坐标", type: "search" },
+            ...matches
+        ];
+    }
+    selectedLocIndex = 0; // 重置选中
+    renderPickerList();
+    selectLocation(0);
+};
+
+// 4. 渲染地点列表
+function renderPickerList() {
+    const container = document.getElementById('poi-list');
+    if (!container) return;
+    container.innerHTML = '';
+
+    currentDisplayPOIs.forEach((poi, index) => {
+        const div = document.createElement('div');
+        div.className = 'poi-item';
+        div.id = `picker-item-${index}`;
+        div.onclick = () => selectLocation(index);
+
+        // 根据类型分配图标
+        let iconStr = '📍';
+        if (poi.type === 'me') iconStr = '💠';
+        if (poi.type === 'place') iconStr = '☕';
+        if (poi.type === 'work') iconStr = '🏢';
+        if (poi.type === 'life') iconStr = '🛍️';
+
+        div.innerHTML = `
+            <div class="poi-icon">${iconStr}</div>
+            <div class="poi-info">
+                <div class="poi-name">${poi.name}</div>
+                <div class="poi-addr">${poi.address}</div>
+            </div>
+        `;
+        container.appendChild(div);
+    });
+}
+
+// 5. 选中逻辑 (联动地图)
+window.selectLocation = function(index) {
+    if (!currentDisplayPOIs[index]) return;
+    
+    selectedLocIndex = index;
+    const poi = currentDisplayPOIs[index];
+
+    // A. 列表高亮
+    document.querySelectorAll('.poi-item').forEach(el => el.classList.remove('selected'));
+    const item = document.getElementById(`picker-item-${index}`);
+    if(item) item.classList.add('selected');
+
+    // B. 地图联动 (核心视觉)
+    const pinLabel = document.getElementById('picker-pin-label');
+    if(pinLabel) {
+        // 如果是第一项(当前位置)，显示 YOU，否则显示地名
+        pinLabel.textContent = (poi.type === 'me') ? 'YOU' : 'TARGET';
+        pinLabel.style.color = (poi.type === 'me') ? '#34C759' : '#FF3B30';
+    }
+
+    // 切换地图中心点的颜色
+    const pinHead = document.querySelector('.cyber-pin-center .pin-head');
+    if(pinHead) {
+        if (poi.type === 'me') pinHead.classList.remove('red');
+        else pinHead.classList.add('red');
+    }
+
+    // 模拟地图移动效果 (随机偏移背景网格)
+    const grid = document.querySelector('.cyber-grid-floor');
+    if(grid) {
+        grid.style.backgroundPosition = `${Math.random() * 50}px ${Math.random() * 50}px`;
+    }
+};
+
+// 6. 确认发送 (修复数据源 Bug)
+window.confirmSendLocation = function() {
+    // 🚨 核心修复：从 currentDisplayPOIs 获取数据，而不是原始列表
+    // 这样搜索后的结果也能正确发送
+    const poi = currentDisplayPOIs[selectedLocIndex];
+    
+    if (!poi) {
+        showToast("请选择一个有效位置");
+        return;
+    }
+
+    const msgId = Date.now().toString();
+    
+    // 构造数据
+    const extra = {
+        isLocation: true,
+        name: poi.name,
+        address: poi.address
+    };
+
+    // 上屏
+    if (typeof appendChatBubble === 'function') {
+        appendChatBubble('right', '', true, msgId, null, extra);
+    }
+
+    // 存入历史
+    if (typeof loadChatHistory === 'function' && typeof currentChatId !== 'undefined') {
+        loadChatHistory(currentChatId).then(history => {
+            history.push({
+                id: msgId,
+                sender: 'right',
+                text: '[位置]',
+                timestamp: Date.now(),
+                extraOptions: extra
+            });
+            saveChatHistory(currentChatId, history);
+            updateChatLastMessage(currentChatId, '[位置]');
+        });
+    }
+
+    closeSubPage('sub-location-picker');
+    showToast("位置已发送");
+};
+
+// 7. 查看位置详情
+window.viewLocation = function(e, encodedData) {
+    if(e) e.stopPropagation();
+    if(typeof isMultiSelectMode !== 'undefined' && isMultiSelectMode) return;
+
+    try {
+        const data = JSON.parse(decodeURIComponent(encodedData));
+        
+        // 填充文字
+        document.getElementById('viewer-loc-name').textContent = data.name;
+        document.getElementById('viewer-loc-addr').textContent = data.address;
+        
+        // 渲染全屏地图
+        renderPickerMapHTML(true); 
+
+        openSubPage('sub-location-viewer');
+    } catch(err) {
+        console.error(err);
+    }
+};
+
+// 8. 动态注入地图 HTML (共用渲染器)
+function renderPickerMapHTML(isViewer) {
+    // 根据是“选择页”还是“查看页”决定注入到哪里
+    const containerSelector = isViewer ? 
+        '#sub-location-viewer .map-container-placeholder' : 
+        '#sub-location-picker .cyber-map-visual';
+        
+    const container = document.querySelector(containerSelector);
+    if (!container) return;
+
+    // 不同的样式类
+    const pinClass = isViewer ? 'red' : '';
+    const labelText = isViewer ? 'TARGET' : 'YOU';
+    const radarStyle = isViewer ? 'width:600px; height:600px; opacity:0.8;' : '';
+
+    container.innerHTML = `
+        <div class="cyber-grid-floor"></div>
+        
+        <div class="cyber-radar-ring" style="${radarStyle}"></div>
+        
+        <div class="cyber-deco"></div>
+
+        <div class="cyber-scan-line"></div>
+
+        <div class="cyber-labels" style="pointer-events:none;">
+            <div class="map-label-item" style="top:20%; left:10%;">SECTOR 09</div>
+            <div class="map-label-item" style="bottom:30%; right:10%;">DATA: OK</div>
+            <div class="map-label-item" style="top:15%; right:20%;">GPS: LOCK</div>
+        </div>
+
+        <div class="cyber-pin-center">
+            <div class="pin-head ${pinClass}"></div>
+            <div class="pin-pulse ${pinClass}"></div>
+            <div class="pin-tooltip" id="${isViewer ? 'viewer-pin-label' : 'picker-pin-label'}">
+                ${labelText}
+            </div>
+        </div>
+    `;
+}
+
+// ================== 💰 赛博转账系统 ==================
+
+// 1. 打开转账输入框 (点击 Money 菜单触发)
+function openMoneyModal() {
+    // 复用之前的通用输入框，稍微改下配置
+    openGenInputModal(
+        "转账金额", 
+        "请输入转账数额 (Credits)", 
+        "888", 
+        (amount) => {
+            // 验证输入是否为数字
+            if (isNaN(amount) || amount <= 0) {
+                showToast("请输入有效的数字");
+                return;
+            }
+            sendMoneyMessage(amount, "转账");
+        }
+    );
+    // 小技巧：把输入框类型临时改成 number，方便手机输入
+    const input = document.getElementById('gen-input-field');
+    if(input) input.type = 'number';
+}
+
+// 2. 发送转账消息 (核心)
+async function sendMoneyMessage(amount, desc = "转账") {
+    // 扣款逻辑 (模拟)
+    let balance = parseFloat(localStorage.getItem('wallet_balance') || '8848.00');
+    if (balance < amount) {
+        showToast("余额不足，交易驳回");
+        return;
+    }
+    balance -= parseFloat(amount);
+    localStorage.setItem('wallet_balance', balance.toFixed(2));
+    
+    // 刷新钱包余额显示 (如果在钱包页)
+    if(typeof updateShopBalanceDisplay === 'function') updateShopBalanceDisplay();
+
+    const msgId = Date.now().toString();
+    const formattedAmount = parseFloat(amount).toFixed(2);
+    
+    // 构建卡片 HTML
+    const html = getTransferCardHTML(formattedAmount, desc, false);
+
+    // 上屏
+    appendChatBubble('right', html, true, msgId, null, {
+        isTransfer: true,
+        amount: formattedAmount,
+        desc: desc
+    });
+
+    // 存历史
+    const history = await loadChatHistory(currentChatId);
+    history.push({
+        id: msgId,
+        sender: 'right',
+        text: `[转账] ¥${formattedAmount}`,
+        htmlContent: html, // 直接存 HTML 方便回显
+        isTransfer: true,
+        amount: formattedAmount,
+        timestamp: Date.now()
+    });
+    await saveChatHistory(currentChatId, history);
+    
+    updateChatLastMessage(currentChatId, `[转账] ¥${formattedAmount}`);
+    showToast(`已转账 ¥${formattedAmount}`);
+}
+
+// ================== 生成 Ins 风转账卡片 ==================
+function getTransferCardHTML(amount, desc, isReceived) {
+    const receivedClass = isReceived ? 'received' : '';
+    // 如果已收款，描述文字变一下
+    const displayDesc = isReceived ? '已存入钱包' : (desc || '转账');
+    
+    return `
+        <div class="msg-transfer-card ${receivedClass}" onclick="receiveMoney(this, ${amount})">
+            <div class="trans-icon-area">
+                <svg class="trans-svg" viewBox="0 0 24 24">
+                    <path d="M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4V8h16v10zm-2-6c0 1.1-.9 2-2 2h-2v2h-2v-2H8v-2h2v-2H8v-2h2v-2h2v2h2c1.1 0 2 .9 2 2v2zm-4 0h-2v2h2v-2zm0-4h-2v2h2V8z"/>
+                </svg>
+            </div>
+            <div class="trans-info-area">
+                <div class="trans-amount-text">¥ ${amount}</div>
+                <div class="trans-desc-text">${displayDesc}</div>
+            </div>
+        </div>
+    `;
+}
+
+// 4. 收款逻辑 (修复版：限制自己不能领)
+function receiveMoney(el, amount) {
+    // 1. 防止重复领取
+    if (el.classList.contains('received')) return; 
+
+    // 2. 🔴 判断是谁发的
+    // 找到卡片的父级气泡，检查是否有 'right' 类名
+    const chatMsg = el.closest('.chat-msg');
+    if (chatMsg && chatMsg.classList.contains('right')) {
+        showToast("这是你发出的红包，待对方领取");
+        return; // ❌ 终止执行
+    }
+
+    // 播放音效 (可选)
+    // new Audio('coin.mp3').play(); 
+
+    el.classList.add('received');
+    el.querySelector('.trans-desc-text').textContent = "已存入钱包";
+    
+    // 加余额
+    let balance = parseFloat(localStorage.getItem('wallet_balance') || '0');
+    balance += parseFloat(amount);
+    localStorage.setItem('wallet_balance', balance.toFixed(2));
+    
+    showToast(`收款成功 +${amount}`);
+}
+
+// ================== 3. 收款逻辑 (终极交互版：变色+系统提示+存历史) ==================
+window.receiveMoney = async function(el, amount) {
+    // 1. 防止重复领取
+    if (el.classList.contains('received')) return;
+
+    // 2. 找到消息ID (用于更新历史记录)
+    const msgNode = el.closest('.chat-msg');
+    if (!msgNode) return;
+    
+    // 3. 判断是谁发的
+    // 如果是 'right' (我发的)，禁止领取，并提示
+    if (msgNode.classList.contains('right')) {
+        showToast("这是你发出的红包，待对方领取");
+        return;
+    }
+
+    // --- 执行收款动画 ---
+    
+    // A. 卡片视觉变化 (原地变灰)
+    el.classList.add('received');
+    const descEl = el.querySelector('.trans-desc-text');
+    if (descEl) descEl.textContent = "已存入钱包";
+    const iconEl = el.querySelector('.trans-svg');
+    if (iconEl) iconEl.style.fill = "rgba(255,255,255,0.3)"; // 图标变暗
+
+    // B. 钱包加钱
+    let balance = parseFloat(localStorage.getItem('wallet_balance') || '0');
+    balance += parseFloat(amount);
+    localStorage.setItem('wallet_balance', balance.toFixed(2));
+    if(typeof updateShopBalanceDisplay === 'function') updateShopBalanceDisplay();
+
+    // C. 💥 关键：发送系统提示消息 (类似视频结束)
+    const sysId = Date.now().toString();
+    appendChatBubble('system', `你领取了 ¥${amount}`, true, sysId);
+    
+    // D. 💾 核心：更新数据库状态 (让刷新后也显示已领取)
+    const msgIdRaw = msgNode.id.replace('msg-node-', '');
+    const history = await loadChatHistory(currentChatId);
+    
+    // 找到这条转账消息
+    const targetMsg = history.find(m => String(m.id) === String(msgIdRaw));
+    if (targetMsg && targetMsg.extraOptions) {
+        targetMsg.extraOptions.isReceived = true; // 标记为已领取
+        targetMsg.extraOptions.desc = "已存入钱包"; // 更新文案
+    }
+    
+    // 把系统提示也存进去
+    history.push({
+        id: sysId,
+        sender: 'system',
+        text: `你领取了 ¥${amount}`,
+        timestamp: Date.now()
+    });
+
+    await saveChatHistory(currentChatId, history);
+    
+    showToast(`💰 已收款 +${amount}`);
+};
+
+// ================== ❤️ 读心术功能逻辑 ==================
+
+// 1. 打开心声弹窗 (点击菜单 Heart 触发)
+async function openHeartModal() {
+    toggleInputMenu(); // 关菜单
+
+    if (!currentChatId) { showToast("请先进入聊天"); return; }
+
+    const settings = JSON.parse(localStorage.getItem(`chat_settings_${currentChatId}`) || '{}');
+    const charName = settings.charName || "对方";
+    
+    // 获取头像
+    let avatarUrl = '';
+    try {
+        const blob = await dbHelper.get(`chat_avatar_${currentChatId}`);
+        if(blob) avatarUrl = URL.createObjectURL(blob);
+    } catch(e){}
+
+    // 读取最新心声
+    let mindText = localStorage.getItem(`latest_mind_${currentChatId}`);
+    
+    // 如果没有心声 (比如刚开始聊)，显示默认提示
+    if (!mindText) {
+        mindText = "（似乎在发呆，没有任何心事...）";
+    }
+
+    // 更新 UI
+    document.getElementById('heart-target-name').textContent = charName;
+    const avatarEl = document.getElementById('heart-target-avatar');
+    if (avatarUrl) avatarEl.style.backgroundImage = `url(${avatarUrl})`;
+    
+    // 模拟打字机效果显示文字
+    const textEl = document.getElementById('heart-content-text');
+    textEl.textContent = '';
+    typewriterEffect(textEl, mindText);
+
+    // 打开弹窗
+    openModal('modal-heart-link');
+}
+
+// 2. 打字机特效 helper
+function typewriterEffect(el, text, speed = 50) {
+    let i = 0;
+    el.textContent = '';
+    function type() {
+        if (i < text.length) {
+            el.textContent += text.charAt(i);
+            i++;
+            setTimeout(type, speed);
+        }
+    }
+    type();
+}
 </script>
 </body>
 </html>
-
