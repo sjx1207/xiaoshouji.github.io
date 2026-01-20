@@ -4513,6 +4513,890 @@
         0 1px 8px rgba(0, 0, 0, 0.6), 
         0 0 12px rgba(255, 255, 255, 0.4) !important;
 }
+/* --- 🍏 iOS 风格成功 HUD (黑白极简) --- */
+.ios-hud {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.8);
+    width: 140px;
+    height: 140px;
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    border-radius: 28px;
+    display: none; /* 默认隐藏 */
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 30000;
+    opacity: 0;
+    transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+    box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+}
+
+/* 激活状态 */
+.ios-hud.show {
+    display: flex;
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+}
+
+/* 成功的勾勾动画 */
+.hud-checkmark {
+    width: 60px;
+    height: 60px;
+    stroke: #1d1d1f; /* 极简黑 */
+    stroke-width: 3;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    fill: none;
+    stroke-dasharray: 100;
+    stroke-dashoffset: 100;
+}
+
+.ios-hud.show .hud-checkmark {
+    animation: dash 0.6s ease-in-out forwards 0.2s;
+}
+
+@keyframes dash {
+    to { stroke-dashoffset: 0; }
+}
+
+.hud-text {
+    margin-top: 15px;
+    font-size: 14px;
+    font-weight: 700;
+    color: #1d1d1f;
+    letter-spacing: 0.5px;
+}
+/* --- 1. 好友环专属：社交名片样式 --- */
+.social-card {
+    width: 280px;
+    background: #fff;
+    border-radius: 32px;
+    padding: 30px 20px;
+    text-align: center;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.15);
+}
+.social-online-tag {
+    font-size: 10px; color: #34C759; font-weight: 800; letter-spacing: 1.5px; margin: 8px 0;
+}
+.social-motto {
+    font-size: 13px; color: #666; background: #f2f2f7; padding: 12px; border-radius: 15px; margin: 15px 0 25px 0;
+}
+.social-actions {
+    display: flex; justify-content: space-around; border-top: 0.5px solid #eee; padding-top: 20px;
+}
+.social-btn-item { display: flex; flex-direction: column; align-items: center; gap: 6px; color: #007AFF; cursor: pointer; }
+.social-btn-item span { font-size: 10px; font-weight: 700; text-transform: uppercase; }
+
+/* --- 2. 设置页专属：高定档案卡片 --- */
+.aesthetic-preview-card {
+    width: 320px;
+    background: #ffffff;
+    border-radius: 40px;
+    overflow: hidden;
+    box-shadow: 0 40px 100px rgba(0,0,0,0.2);
+}
+.aes-pre-header { height: 100px; background: #1d1d1f; position: relative; } /* 黑白极简顶栏 */
+.aes-pre-avatar { width: 100px; height: 100px; border: 5px solid #fff; border-radius: 30px; position: absolute; bottom: -50px; left: 50%; transform: translateX(-50%) rotate(-3deg); object-fit: cover; }
+.aes-pre-body { padding: 60px 25px 30px 25px; text-align: center; }
+.aes-pre-name { font-family: serif; font-size: 26px; font-weight: 800; color: #000; }
+.aes-pre-desc-box { background: #f9f9f9; padding: 15px; border-radius: 18px; margin-top: 20px; text-align: left; max-height: 150px; overflow-y: auto; }
+.aes-pre-desc-box p { font-size: 13px; color: #444; line-height: 1.6; font-style: italic; }
+
+/* --- 3. 层级锁死 --- */
+.modal-top-layer {
+    position: fixed !important; inset: 0 !important;
+    z-index: 9995 !important; /* 仅低于状态栏 */
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(15px);
+    display: none; align-items: center; justify-content: center;
+}
+/* --- 🛠️ 社交卡片增强样式 --- */
+
+/* 1. 物理关闭按钮 */
+.social-close-trigger {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    width: 30px;
+    height: 30px;
+    background: #f2f2f7; /* 浅灰底 */
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #8e8e93;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.social-close-trigger:active {
+    transform: scale(0.9);
+    background: #e5e5ea;
+}
+
+/* 2. 让签名区域看起来“可点击” */
+.social-motto {
+    cursor: pointer;
+    position: relative;
+    transition: background 0.2s, transform 0.1s;
+    border: 1px solid transparent;
+}
+.social-motto:hover {
+    background: #ebebee;
+}
+.social-motto:active {
+    transform: scale(0.98);
+}
+
+/* 3. 确保社交卡片容器可以相对定位按钮 */
+.social-card {
+    position: relative; /* 必须加这一行 */
+    width: 290px !important;
+}
+/* --- 🚨 物理层级终极锁死补丁 --- */
+
+/* 1. 遮罩基础样式：确保是 fixed 且全屏 */
+.vibe-center-mask, .modal-top-layer {
+    position: fixed !important;
+    inset: 0 !important;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+}
+
+/* 2. 第一层：社交卡片与预览卡片 */
+#modal-social-card, 
+#modal-aes-preview {
+    z-index: 30000 !important; 
+}
+
+/* 3. 第二层：修改弹窗（必须盖过上面的卡片） */
+#modal-motto-edit {
+    z-index: 35000 !important; /* 👈 这里高出 5000 点，绝对压制 */
+}
+
+/* 4. 第三层：成功提示 HUD */
+#save-success-hud {
+    z-index: 40000 !important;
+}
+
+/* 5. 顶层：状态栏 */
+.status-bar {
+    z-index: 50000 !important;
+}
+/* --- 🚨 资料页布局终极修正：强制全屏拉伸 --- */
+
+#subpage-char-profile {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    background: #F2F2F7 !important; 
+    z-index: 9990 !important;
+    padding-top: 0px !important; /* 物理避开状态栏 */
+    display: flex !important;
+    flex-direction: column;
+    box-sizing: border-box !important;
+}
+
+/* 1. 强制主体区域撑满左右 */
+#subpage-char-profile .app-body {
+    width: 100% !important;
+    max-width: none !important;
+    padding: 10px 16px 120px 16px !important; /* 左右留 16px 标准 iOS 呼吸感 */
+    box-sizing: border-box !important;
+    display: block !important; /* 禁用 Flex 防止挤压 */
+}
+
+/* 2. 强制头像与名字区域居中 */
+.profile-edit-header {
+    width: 100% !important;
+    display: flex !important;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 25px !important;
+}
+
+/* 3. 【核心修复】强制文本域和列表组横向撑满 */
+#subpage-char-profile #edit-char-desc,
+#subpage-char-profile .ios-list-group {
+    width: 100% !important;        /* 物理宽度 100% */
+    max-width: none !important;    /* 拆除限宽墙 */
+    margin: 12px 0 !important;     /* 上下留空，左右不留 */
+    box-sizing: border-box !important;
+    display: block !important;
+}
+
+/* 4. 文本域细节调整：加高并优化内边距 */
+#edit-char-desc {
+    min-height: 180px !important;
+    padding: 18px !important;
+    border-radius: 18px !important;
+    border: none !important;
+    background: #fff !important;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.03) !important;
+}
+
+/* 5. 修正元数据列表项对齐 */
+#subpage-char-profile .ios-list-item {
+    width: 100% !important;
+    padding: 16px !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    box-sizing: border-box !important;
+}
+
+/* 6. 修正标题位置：靠左对齐卡片 */
+#subpage-char-profile .tz-group-title {
+    width: 100% !important;
+    text-align: left !important;
+    padding-left: 5px !important;
+    margin-top: 25px !important;
+}
+#subpage-char-profile .app-header {
+    /* ... 其他代码不变 ... */
+    /* 🚨 这里的 padding 改为下面这个，只在顶部留出 48px 避开状态栏 */
+    padding: 48px 16px 0 16px !important; 
+    height: auto !important; /* 让高度由内边距自然撑开 */
+}
+/* --- 🏛️ 世界书：高级感“添加”卡片重塑 --- */
+.world-add-btn {
+    /* 1. 物理尺寸锁定：确保它和普通的 world-card-item 一样大 */
+    grid-column: span 1; 
+    height: 140px !important; /* 增加一点高度，更显大气 */
+    width: 100% !important;
+    
+    /* 2. 背景与边框：黑白极简，虚线加粗 */
+    background: rgba(255, 255, 255, 0.6) !important; /* 半透明白 */
+    border: 2px dashed #d1d1d6 !important; /* 灰白虚线 */
+    border-radius: 28px !important; /* 超大圆角 */
+    
+    /* 3. 布局：纵向排列图标和文字 */
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 10px; /* 图标和文字的间距 */
+    
+    /* 4. 视觉修饰 */
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+    box-sizing: border-box;
+}
+
+/* 悬停/点击时的动态反馈 */
+.world-add-btn:hover {
+    background: #ffffff !important;
+    border-color: #007AFF !important; /* 悬停时虚线变蓝 */
+    transform: translateY(-2px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+}
+
+.world-add-btn:active {
+    transform: scale(0.96); /* 点击时的物理弹感 */
+}
+
+/* 内部图标美化 */
+.world-add-btn svg {
+    width: 32px;
+    height: 32px;
+    color: #c7c7cc;
+    transition: color 0.3s;
+}
+
+.world-add-btn:hover svg {
+    color: #007AFF; /* 悬停时图标变蓝 */
+}
+
+/* 内部文字补全（可选，如果你的 HTML 里没写字的话） */
+.world-add-btn::after {
+    content: "CREATE WORLD";
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 2px;
+    color: #d1d1d6;
+    text-transform: uppercase;
+}
+/* --- 🏛️ World 页面：彻底消灭左右空隙 --- */
+
+/* 1. 强制主体区域不居中，且宽度 100% */
+#worldApp .app-body {
+    display: block !important;     /* 核心：停用 Flex 居中，恢复块级流 */
+    width: 100% !important;
+    padding: 20px 16px !important; /* 左右保留 16px 的 iOS 标准呼吸边距 */
+    box-sizing: border-box !important;
+}
+
+/* 2. 强制网格容器占满屏幕 */
+#world-grid.char-grid {
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important; /* 强制 50/50 平分两列 */
+    gap: 15px !important; /* 卡片之间的间距 */
+}
+
+/* 3. 修正卡片和按钮的形状（解决那个细长丑样） */
+.world-add-btn, .world-card-item {
+    width: 100% !important;
+    /* 建议使用正方形或固定高度，更有画廊感 */
+    aspect-ratio: 1 / 1.1 !important; 
+    border-radius: 28px !important;
+    margin: 0 !important;
+    box-sizing: border-box !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+/* 4. 加强加号按钮的视觉存在感 */
+.world-add-btn svg {
+    width: 35px !important;
+    height: 35px !important;
+    margin-bottom: 8px;
+}
+/* --- 📜 绑定协议页：全屏拉伸与高级列表重塑 --- */
+
+/* 1. 物理环境重置：强制铺满 */
+#subpage-world-bind .app-body {
+    display: block !important;     /* 停用 Flex 居中 */
+    width: 100% !important;
+    padding: 20px 16px 100px 16px !important; /* 左右留 16px 呼吸感 */
+    box-sizing: border-box !important;
+}
+
+/* 2. 列表组重塑：变成横跨全屏的圆角卡片 */
+#subpage-world-bind .ios-list-group {
+    width: 100% !important;
+    max-width: none !important;
+    background: #ffffff !important;
+    border-radius: 14px !important;
+    margin-bottom: 25px !important;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    overflow: hidden;
+    display: block !important;
+}
+
+/* 3. 列表项（规则行）：文字左，勾选右 */
+#subpage-world-bind .ios-list-item {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important; /* 核心：撑开两头 */
+    padding: 14px 16px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    min-height: 52px;
+}
+
+/* 4. 衍生扩展入口美化 */
+#subpage-world-bind .ios-list-item[onclick*="openRelationsPage"] {
+    background: #ffffff !important;
+    cursor: pointer;
+}
+
+#subpage-world-bind .ios-list-item[onclick*="openRelationsPage"]:active {
+    background: #f2f2f7 !important; /* 点击反馈 */
+}
+
+/* 5. 标题靠左对齐 */
+#subpage-world-bind .tz-group-title {
+    width: 100% !important;
+    text-align: left !important;
+    padding-left: 4px !important;
+    margin-bottom: 8px !important;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+/* 6. Checkbox 样式微调：变圆润一点 */
+.world-checkbox {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 24px !important;
+    height: 24px !important;
+    border: 2px solid #C7C7CC;
+    border-radius: 50% !important; /* 变成圆形的勾选框 */
+    outline: none;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+}
+
+.world-checkbox:checked {
+    background-color: #007AFF;
+    border-color: #007AFF;
+}
+
+.world-checkbox:checked::after {
+    content: '';
+    position: absolute;
+    top: 4px; left: 8px;
+    width: 5px; height: 10px;
+    border: solid white;
+    border-width: 0 2.5px 2.5px 0;
+    transform: rotate(45deg);
+}
+/* --- 🌀 量子解析专用动效 --- */
+.quantum-loader-overlay {
+    position: absolute; inset: 0;
+    background: rgba(242, 242, 247, 0.9);
+    z-index: 1000; display: none;
+    flex-direction: column; align-items: center; justify-content: center;
+    backdrop-filter: blur(10px);
+}
+
+.quantum-spinner {
+    width: 60px; height: 60px;
+    border: 3px solid rgba(0, 122, 255, 0.1);
+    border-top: 3px solid #007AFF;
+    border-radius: 50%;
+    animation: qSpin 1s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+}
+
+.quantum-status-text {
+    margin-top: 20px; font-size: 13px; font-weight: 700;
+    color: #007AFF; letter-spacing: 1px;
+    font-family: monospace;
+}
+
+/* 进度条样式 */
+.q-progress-container {
+    width: 200px; height: 4px; background: #e5e5ea;
+    border-radius: 10px; margin-top: 15px; overflow: hidden;
+}
+.q-progress-bar {
+    width: 0%; height: 100%; background: #007AFF;
+    transition: width 0.4s ease;
+}
+
+@keyframes qSpin { to { transform: rotate(360deg); } }
+
+/* NPC 卡片滑入动效 */
+.npc-arrival {
+    animation: npcSlideIn 0.6s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+    opacity: 0; transform: translateY(20px);
+}
+@keyframes npcSlideIn { to { opacity: 1; transform: translateY(0); } }
+/* --- 🎭 NPC 详情资料卡 --- */
+.npc-detail-card {
+    width: 320px;
+    background: #fff;
+    border-radius: 36px;
+    overflow: hidden;
+    box-shadow: 0 40px 100px rgba(0,0,0,0.25);
+    animation: worldPopCenter 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+}
+
+.npc-pre-header {
+    height: 180px;
+    background: #1d1d1f;
+    position: relative;
+    overflow: hidden;
+}
+
+.npc-pre-banner {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    opacity: 0.5;
+    filter: blur(5px);
+}
+
+/* --- 修复后的头像样式 --- */
+.npc-pre-avatar {
+    width: 110px; height: 110px;
+    border: 5px solid #fff; /* 白边一定要厚，才能把深色背景隔开 */
+    border-radius: 32px;
+    position: absolute;
+    /* 🚨 核心修复：从 -40px 改为 -20px，把它往上提！ */
+    bottom: -20px !important; 
+    left: 30px;
+    object-fit: cover;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.3); /* 稍微加深一点阴影，增加立体感 */
+    transform: rotate(-3deg); /* 保持这个俏皮的倾斜角 */
+    z-index: 2; /* 确保它压在一切内容上面 */
+}
+
+.npc-pre-body {
+    padding: 55px 25px 30px 25px;
+}
+
+.npc-pre-name {
+    font-family: serif;
+    font-size: 24px;
+    font-weight: 800;
+    color: #000;
+}
+
+.npc-pre-role {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 800;
+    color: #007AFF;
+    background: rgba(0,122,255,0.08);
+    padding: 3px 10px;
+    border-radius: 20px;
+    margin-top: 5px;
+    letter-spacing: 1px;
+}
+
+.npc-pre-bio {
+    margin-top: 20px;
+    font-size: 14px;
+    color: #444;
+    line-height: 1.7;
+    background: #f9f9f9;
+    padding: 15px;
+    border-radius: 20px;
+    font-style: italic;
+}
+
+/* --- 🎭 NPC 底部工具栏：彻底融合版 --- */
+.npc-pre-footer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;           /* 按钮之间的间距 */
+    padding: 15px 20px;  /* 整体内边距 */
+    background: #ffffff; /* 👈 确保这里和你卡片的底色完全一样 */
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* 按钮基础：物理包裹逻辑 */
+.npc-btn-main {
+    flex: 1;             /* 平分宽度 */
+    height: 44px;        /* 标准 iOS 交互高度 */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;            /* 图标和文字的间距 */
+    border-radius: 22px; /* 胶囊形状，确保元素被完整包裹 */
+    border: none;
+    cursor: pointer;
+    overflow: hidden;    /* 🚨 核心：防止元素溢出 */
+    transition: all 0.2s ease;
+}
+
+/* 按钮内的文字设置 */
+.npc-btn-main span {
+    font-size: 13px;
+    font-weight: 700;
+    white-space: nowrap; /* 强制文字在一行，不乱跑 */
+}
+
+/* 按钮内的图标设置 */
+.npc-btn-main svg {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;      /* 防止图标被挤压变形 */
+}
+
+/* 1. 左侧：查看往事（低调融合色） */
+.npc-btn-main.past-btn {
+    background: #f2f2f7; /* iOS 系统次要色，和白色背景非常搭 */
+    color: #3a3a3c;
+}
+
+/* 2. 右侧：Add Friend（高亮对比色） */
+.npc-btn-main.add {
+    background: #1d1d1f; /* 纯深色，突出核心操作 */
+    color: #ffffff;
+}
+
+/* 状态切换：点击时的缩放反馈 */
+.npc-btn-main:active {
+    transform: scale(0.95);
+    background-opacity: 0.8;
+}
+
+/* 成功状态 */
+.npc-btn-main.sent {
+    background: #34C759 !important;
+    color: white !important;
+}
+/* --- 🚨 社交关系视觉区分补丁 --- */
+
+/* 核心纽带：带淡淡的呼吸蓝光 */
+.char-card.npc-core {
+    border: 2px solid rgba(0, 122, 255, 0.4) !important;
+    box-shadow: 0 10px 25px rgba(0, 122, 255, 0.15) !important;
+}
+.char-card.npc-core::before {
+    content: "CORE BOND";
+    position: absolute; top: 8px; left: 8px;
+    background: #007AFF; color: #fff;
+    font-size: 7px; font-weight: 900; padding: 2px 6px;
+    border-radius: 4px; z-index: 5;
+}
+
+/* 扩展关系卡片：普通白 */
+.char-card.npc-associate {
+    border: 1px solid rgba(0,0,0,0.05);
+}
+
+/* 底部“继续生成”按钮样式 */
+.relation-footer-tools {
+    width: 100%; padding: 20px 0 60px 0;
+    display: flex; justify-content: center;
+}
+.btn-extend-network {
+    background: #ffffff; color: #1d1d1f;
+    border: 1.5px solid #1d1d1f;
+    width: 180px; padding: 12px;
+    border-radius: 14px; font-size: 13px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+.btn-extend-network:active { transform: scale(0.95); }
+
+/* 故事查看器弹窗背景 */
+.story-reading-layer {
+    background: #fff; padding: 30px 25px; border-radius: 30px 30px 0 0;
+    height: 70vh; overflow-y: auto; text-align: justify;
+}
+/* --- 📡 好友申请：量子信号传输动效加固 --- */
+/* --- 📡 量子解析动效加固 --- */
+#npc-add-btn.sending {
+    background: #007AFF !important;
+    color: white !important;
+    pointer-events: none;
+    position: relative;
+    overflow: hidden;
+}
+
+#npc-add-btn.sending::after {
+    content: "";
+    position: absolute;
+    top: 0; left: -100%;
+    width: 200%; height: 100%;
+    background: linear-gradient(90deg, 
+        transparent 0%, 
+        rgba(255, 255, 255, 0.4) 50%, 
+        transparent 100%);
+    animation: signalScan 1.5s infinite linear;
+    z-index: 5;
+}
+
+@keyframes signalScan {
+    from { transform: translateX(-100%); }
+    to { transform: translateX(100%); }
+}
+
+/* 成功状态 */
+#npc-add-btn.sent {
+    background: #34C759 !important;
+    transition: background 0.5s ease;
+}
+/* --- 📜 往事解密容器 --- */
+#npc-past-container {
+    margin-top: 15px;
+    padding: 15px;
+    background: rgba(0, 0, 0, 0.3); /* 深色半透明背景 */
+    border-left: 3px solid #007AFF; /* 科技蓝边框 */
+    border-radius: 8px;
+    font-size: 14px;
+    line-height: 1.6;
+    color: #e0e0e0;
+    display: none; /* 默认隐藏 */
+    position: relative;
+    overflow: hidden;
+}
+
+/* 解密过程中的扫描线 */
+#npc-past-container.decrypting::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 2px;
+    background: #007AFF;
+    box-shadow: 0 0 10px #007AFF;
+    animation: scanDown 2s infinite linear;
+}
+
+@keyframes scanDown {
+    0% { top: 0; opacity: 0; }
+    20% { opacity: 1; }
+    100% { top: 100%; opacity: 0; }
+}
+
+/* 文字出现的打字机效果 */
+.typing-effect {
+    overflow: hidden; /* 保证文字不溢出 */
+    white-space: pre-wrap; /* 保留换行 */
+    animation: typing 0.05s steps(1) forwards;
+}
+
+/* 按钮加载时的脉冲 */
+.btn-pulsing {
+    animation: pulseBlue 1.5s infinite;
+    pointer-events: none; /* 加载时禁止点击 */
+    opacity: 0.8;
+}
+
+@keyframes pulseBlue {
+    0% { box-shadow: 0 0 0 0 rgba(0, 122, 255, 0.4); }
+    70% { box-shadow: 0 0 0 10px rgba(0, 122, 255, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(0, 122, 255, 0); }
+}
+/* 信号扫描状态 - 给原本的按钮加特效 */
+.npc-btn-main.scanning {
+    background: #1d1d1f !important;
+    color: #007AFF !important;
+    pointer-events: none;
+    position: relative;
+    overflow: hidden;
+}
+
+.npc-btn-main.scanning::after {
+    content: "";
+    position: absolute;
+    top: 0; left: -100%;
+    width: 200%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(0, 122, 255, 0.4), transparent);
+    animation: btnScan 1.2s infinite linear;
+}
+
+@keyframes btnScan {
+    from { transform: translateX(-100%); }
+    to { transform: translateX(100%); }
+}
+
+/* 故事文本解密打字机效果 */
+.decrypt-text {
+    font-family: serif;
+    line-height: 1.8;
+    color: #444;
+    white-space: pre-wrap;
+}
+/* --- 🏆 往事卡片终极层级置顶 --- */
+#modal-vibe-result {
+    display: none; 
+    position: fixed !important;
+    inset: 0 !important;
+    /* 🚨 关键：必须比 40000 还要大！ */
+    z-index: 99999 !important; 
+    background: rgba(0, 0, 0, 0.7) !important;
+    backdrop-filter: blur(15px) !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+/* 确保内部卡片样式正常 */
+#modal-vibe-result .aesthetic-card {
+    width: 90% !important;
+    max-width: 340px !important;
+    height: 75vh !important;
+    display: flex !important;
+    flex-direction: column !important;
+    background: #fff !important;
+    border-radius: 32px !important;
+    animation: worldPopCenter 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28) !important;
+}
+/* 档案卡片专属样式补丁 */
+.past-magazine-style {
+    border: 1px solid rgba(255, 255, 255, 0.5) !important;
+    background: #fff !important;
+    animation: magazinePop 0.5s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards;
+}
+
+@keyframes magazinePop {
+    from { opacity: 0; transform: scale(0.9) translateY(40px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* 解密中的按钮动态效果 */
+.npc-btn-main.decoding {
+    background: #1d1d1f !important;
+    color: #007AFF !important;
+    pointer-events: none;
+    position: relative;
+    overflow: hidden;
+}
+
+.npc-btn-main.decoding::after {
+    content: "";
+    position: absolute;
+    top: 0; left: -100%;
+    width: 200%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(0, 122, 255, 0.3), transparent);
+    animation: decodeScan 1.2s infinite linear;
+}
+
+@keyframes decodeScan {
+    from { transform: translateX(-100%); }
+    to { transform: translateX(100%); }
+}
+
+#past-text-body {
+    font-family: "SF Pro Display", serif;
+    font-size: 15px;
+    line-height: 1.8;
+    color: #333;
+    white-space: pre-wrap;
+    padding-bottom: 30px;
+}
+/* --- 🎭 NPC 详情卡：三按钮 UI 完美补丁 --- */
+.npc-pre-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px; 
+    padding: 5px 20px 35px 20px; /* 👈 顶部缩减，底部留白 */
+    background: transparent !important; /* 👈 核心：物理消除白色突兀方块 */
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* 按钮基础容器 */
+.npc-btn-action {
+    height: 40px;
+    border-radius: 12px;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    font-size: 11px;
+    font-weight: 800;
+    overflow: hidden; /* 确保内容被完美包裹 */
+}
+
+/* 往事 & 感兴趣：浅色样式 */
+.npc-btn-action.minor {
+    flex: 1;
+    background: #f2f2f7;
+    color: #1d1d1f;
+}
+
+/* 加密友：深色高对比样式 */
+.npc-btn-action.main {
+    flex: 2; /* 让加密友按钮宽一点，更有点击欲 */
+    background: #1d1d1f;
+    color: #ffffff;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+.npc-btn-action:active { transform: scale(0.95); opacity: 0.8; }
+
+/* 图标大小锁定 */
+.npc-btn-action svg { width: 16px; height: 16px; flex-shrink: 0; }
+
+/* 信号扫描效果 (加密友专用) */
+.npc-btn-action.syncing {
+    background: #007AFF !important;
+    pointer-events: none;
+}
+
 </style>
 </head>
 <body>
@@ -6000,65 +6884,6 @@
                 </div>
         </div>
 
-        <div id="modal-chat-profile" class="vibe-center-mask" style="display:none; z-index:9600;" onclick="this.style.display='none'">
-            <div class="chat-profile-card-aesthetic" onclick="event.stopPropagation()">
-    
-                <div class="aes-card-header-tools">
-                    <div class="aes-close-trigger" onclick="document.getElementById('modal-chat-profile').style.display='none'">
-                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                    </div>
-                </div>
-
-                <div class="aes-avatar-ring-wrapper">
-                    <div class="aes-breathing-ring"></div>
-                    <img id="profile-v-avatar" src="" alt="avatar">
-                </div>
-
-                <div class="aes-info-section">
-                    <h2 id="profile-v-name" class="aes-nickname-serif">Nickname</h2>
-                    <div class="aes-online-tag">ONLINE</div>
-                    
-                    <div class="aes-motto-box" onclick="openEditMotto()">
-                        <p id="profile-v-motto">“ 点击这里，书写此刻的灵魂余温... ”</p>
-                    </div>
-                </div>
-
-                <div class="aes-action-grid">
-                    <div class="aes-btn-item" onclick="showToast('Connecting to Message...')">
-                        <div class="aes-icon-circle">
-                            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
-                        </div>
-                        <span>Message</span>
-                    </div>
-                    <div class="aes-btn-item" onclick="showToast('Voice Call Initiating...')">
-                        <div class="aes-icon-circle">
-                            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-                        </div>
-                        <span>Call</span>
-                    </div>
-                    <div class="aes-btn-item" onclick="showToast('Video Stream Starting...')">
-                        <div class="aes-icon-circle">
-                            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
-                        </div>
-                        <span>Video</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div id="modal-motto-edit" class="vibe-center-mask" style="display:none; z-index:9700;">
-            <div class="ios-alert-box">
-                <div class="alert-title">修改签名</div>
-                <div style="padding: 15px;">
-                    <input type="text" id="motto-input" class="ios-input" placeholder="输入新的心情..." style="text-align:center;">
-                </div>
-                <div style="display:flex; border-top:0.5px solid #eee;">
-                    <div class="alert-btn" style="flex:1; border-right:0.5px solid #eee;" onclick="document.getElementById('modal-motto-edit').style.display='none'">取消</div>
-                    <div class="alert-btn" style="flex:1; font-weight:800;" onclick="saveMotto()">保存</div>
-                </div>
-            </div>
-        </div>
-
         <div id="chat-panel-list" class="chat-tab-panel">
             <div style="padding: 10px 16px; background:#F2F2F7;">
                 <div class="segment-control" style="margin-bottom:0;">
@@ -6378,25 +7203,30 @@
                     </div>
                 </div>
                 <div class="accordion-content">
-                    <div class="sub-setting-btn" onclick="openChatProfileFromSettings()">查看详细名片</div>
-                    <div class="sub-setting-btn" onclick="openEditMotto()">修改备注名</div>
+                    <div class="sub-setting-btn" onclick="openCharProfileEditPage()">编辑详细资料</div>
+                    <div class="sub-setting-btn" onclick="openChatProfileFromSettings()">查看预览名片</div>
                 </div>
             </div>
 
             <div class="ios-accordion-item">
                 <div class="accordion-header" onclick="toggleSettingItem(this)">
-                    <div class="item-icon" style="background: #FF9500;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></div>
-                    <div class="item-content">
-                        <span class="item-label">世界书绑定</span>
+                    <div class="item-icon" style="background: #AF52DE;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/><path d="M12 6v10M9 9l3-3 3 3"/></svg>
+                    </div>
+                    <div class="item-content" style="border:none;">
+                        <span class="item-label">世界书关联</span>
                         <div class="item-right">
-                            <span class="item-value" style="font-size:12px;">Default</span>
                             <svg class="accordion-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
                         </div>
                     </div>
                 </div>
                 <div class="accordion-content">
-                    <div class="sub-setting-btn" onclick="showToast('正在读取世界线列表...')">切换世界观</div>
-                    <div class="sub-setting-btn" onclick="showToast('记忆碎片已同步')">强制同步记忆</div>
+                    <div class="sub-setting-btn" onclick="openWorldBindPage()">世界书协议选定</div>
+                    <div class="sub-setting-btn" onclick="openRelationsPage()">构建人际关系网</div>
+                    
+                    <div style="font-size:10px; color:#bbb; text-align:center; margin-top:10px; padding:0 15px;">
+                        提示：先选定世界协议，AI 才能精准生成关系网。
+                    </div>
                 </div>
             </div>
 
@@ -6491,6 +7321,80 @@
         </div>
 
     </div>
+
+    <div id="subpage-world-bind" class="ios-sub-page">
+        <div class="app-header" style="padding-top: 48px !important; height: auto !important;">
+            <div onclick="closeSubPage('subpage-world-bind')" style="color:#007AFF;">取消</div>
+            <div style="font-weight:800;">绑定协议</div>
+            <div onclick="saveWorldBinding()" style="color:#007AFF; font-weight:800;">保存</div>
+        </div>
+        <div class="app-body" style="padding: 20px 16px;">
+            <div class="tz-group-title">选择注入的规则</div>
+            <div id="world-bind-list" class="ios-list-group"></div>
+            <div class="tz-group-title">衍生扩展</div>
+            <div class="ios-list-group">
+                <div class="ios-list-item" onclick="openRelationsPage()">
+                    <div class="item-content" style="border:none;">
+                        <span class="item-label" style="color:#007AFF; font-weight:700;">查看/构建人际关系网</span>
+                        <div class="item-right"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#007AFF" stroke-width="3"><polyline points="9 18 15 12 9 6"></polyline></svg></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="subpage-relations" class="ios-sub-page">
+        <div class="app-header" style="padding-top: 48px !important; height: auto !important;">
+            <div onclick="closeSubPage('subpage-relations')" style="color:#007AFF; cursor:pointer;">返回</div>
+            <div style="font-weight:800;">关系档案</div>
+            <div style="width:40px;"></div>
+        </div>
+        <div class="app-body" style="padding: 20px 16px;">
+            <div id="quantum-loader" class="quantum-loader-overlay">
+                <div class="quantum-spinner"></div>
+                <div class="quantum-status-text" id="q-status">INITIALIZING...</div>
+                <div class="q-progress-container">
+                    <div id="q-progress-bar" class="q-progress-bar"></div>
+                </div>
+            </div>
+            <div id="relation-empty-state" style="text-align:center; padding:60px 20px; display:none;">
+                <div style="font-size:50px; margin-bottom:20px; filter: grayscale(100%);">🌐</div>
+                <h3 style="color:#1d1d1f; margin-bottom:10px;">尚未解析关系网</h3>
+                <p style="color:#8e8e93; font-size:13px; line-height:1.6;">AI 需要根据已绑定的世界协议<br>为该角色编织底层社会关系。</p>
+                <button class="ios-btn primary" style="margin-top:30px; width:180px;" onclick="generateRelationsWithAI()">开始量子解析</button>
+            </div>
+            <div id="npc-grid" class="char-grid"></div>
+            <div id="subpage-relations" class="ios-sub-page">
+                <div class="app-header" style="padding-top: 48px !important; height: auto !important;">
+                    <div onclick="closeSubPage('subpage-relations')" style="color:#007AFF; cursor:pointer;">返回</div>
+                    <div style="font-weight:800;">关系档案</div>
+                    <div style="width:40px;"></div>
+                </div>
+                <div class="app-body" style="padding: 20px 16px;">
+                    <div id="relation-empty-state"> ... </div>
+
+                    <div id="npc-grid" class="char-grid"></div>
+
+                    <div id="relation-footer" class="relation-footer-tools" style="display:none;">
+                        <div class="btn-extend-network" onclick="generateRelationsWithAI(true)">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                            扩展关系圈
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="npc-pre-footer">              
+                <div class="npc-btn-main add" id="npc-add-btn" onclick="handleNPCFriendRequest()">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
+                        <line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/>
+                    </svg>
+                    <span id="npc-add-text">Add Friend</span>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 <div id="modal-universal-uploader" class="ios-alert-mask" style="align-items:flex-end; z-index:20000;">
     <div class="modal-content">
@@ -6515,7 +7419,245 @@
         <div style="height:30px;"></div>
     </div>
 </div>
+<div id="save-success-hud" class="ios-hud">
+    <svg class="hud-checkmark" viewBox="0 0 52 52">
+        <path d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
+    </svg>
+    <div class="hud-text">已保存</div>
+</div>
+<div id="subpage-char-profile" class="ios-sub-page">
+    <div class="app-header">
+        <div onclick="closeSubPage('subpage-char-profile')" style="color:#007AFF; font-size:17px; cursor:pointer;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg> 取消
+        </div>
+        <div style="font-size:17px; font-weight:600;">Ta的资料</div>
+        <div onclick="saveCharProfileChanges()" style="color:#007AFF; font-size:17px; font-weight:600; cursor:pointer;">保存</div>
+    </div>
 
+    <div class="app-body" style="padding: 20px 16px;">
+        <div class="profile-edit-header" style="text-align:center; margin-bottom:30px;">
+            <div class="char-upload-circle" style="width:100px; height:100px; margin:0 auto 15px auto; box-shadow:0 8px 25px rgba(0,0,0,0.1);" onclick="document.getElementById('edit-char-avatar-file').click()">
+                <img id="edit-char-avatar-pre" src="" style="width:100%; height:100%; object-fit:cover; border-radius:50%;">
+                <div class="bg-edit-badge" style="border-radius:0 0 50px 50px; font-size:8px;">CHANGE</div>
+            </div>
+            <input type="file" id="edit-char-avatar-file" hidden accept="image/*" onchange="previewProfileAvatar(this)">
+            <input type="text" id="edit-char-name" class="ios-input" style="text-align:center; font-size:24px; font-weight:800; background:transparent; border:none;" placeholder="输入昵称">
+        </div>
+
+        <div class="tz-group-title">人设背景 (BIOGRAPHY)</div>
+        <div class="ios-list-group">
+            <textarea id="edit-char-desc" class="ios-input" style="height:200px; padding:15px; background:#fff; border:none; margin:0; line-height:1.6;" placeholder="在这里定义角色的性格、背景、以及你们的故事..."></textarea>
+        </div>
+        <div class="tz-group-title">系统元数据 (METADATA)</div>
+            <div class="ios-list-group">
+                <div class="ios-list-item">
+                    <span class="item-label">角色 ID</span>
+                    <div class="item-right"><span class="item-value" id="meta-char-id">--</span></div>
+                </div>
+                <div class="ios-list-item" style="border:none;">
+                    <span class="item-label">核心协议</span>
+                    <div class="item-right"><span class="item-value">Encrypted v4.2</span></div>
+                </div>
+            </div>
+        
+        <div style="font-size:11px; color:#bbb; padding:10px 16px;">
+            提示：在此处修改的资料将同步至角色书、好友列表及 AI 记忆库。
+        </div>
+
+    </div>
+</div>
+<div id="modal-social-card" class="modal-top-layer" onclick="this.style.display='none'">
+    <div class="social-card" onclick="event.stopPropagation()">
+        
+        <div class="social-close-trigger" onclick="document.getElementById('modal-social-card').style.display='none'">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </div>
+
+        <img id="social-v-avatar" src="" style="width:100px; height:100px; border-radius:50%; object-fit:cover; border: 4px solid #fff; box-shadow: 0 5px 15px rgba(0,0,0,0.08);">
+        
+        <h2 id="social-v-name" style="margin-top:12px; font-size:24px; font-weight:800; color:#1d1d1f; letter-spacing:-0.5px;">Name</h2>
+        <div class="social-online-tag">ONLINE</div>
+
+        <div class="social-motto" id="social-v-motto" onclick="openEditMottoFromCard()">Signature goes here...</div>
+
+        <div class="social-actions">
+            <div class="social-btn-item" onclick="showToast('Message feature is encrypted...')">
+                <div class="menu-icon-circle"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg></div>
+                <span>Message</span>
+            </div>
+            <div class="social-btn-item" onclick="showToast('Voice protocol error...')">
+                <div class="menu-icon-circle"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg></div>
+                <span>Call</span>
+            </div>
+            <div class="social-btn-item" onclick="showToast('Video stream unavailable...')">
+                <div class="menu-icon-circle"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg></div>
+                <span>Video</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="modal-aes-preview" class="modal-top-layer" onclick="this.style.display='none'">
+    <div class="aesthetic-preview-card" onclick="event.stopPropagation()">
+        <div class="aes-pre-header"><img id="aes-v-avatar" class="aes-pre-avatar" src=""></div>
+        <div class="aes-pre-body">
+            <h2 id="aes-v-name" class="aes-pre-name">Character</h2>
+            <div class="aes-pre-desc-box"><p id="aes-v-desc">Description sync...</p></div>
+            <div style="display:flex; gap:12px; margin-top:30px;">
+                <div class="aes-footer-btn light" style="flex:1; padding:12px; border-radius:12px; background:#f2f2f7; text-align:center; font-weight:700;" onclick="document.getElementById('modal-aes-preview').style.display='none'">Close</div>
+                <div class="aes-footer-btn dark" style="flex:1; padding:12px; border-radius:12px; background:#1d1d1f; color:#fff; text-align:center; font-weight:700;" onclick="openCharProfileEditPage(); document.getElementById('modal-aes-preview').style.display='none';">Edit Profile</div>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="modal-motto-edit" class="vibe-center-mask" style="display:none; z-index:9700;">
+    <div class="ios-alert-box">
+        <div class="alert-title">修改签名</div>
+        <div style="padding: 15px;">
+            <input type="text" id="motto-input" class="ios-input" placeholder="输入新的心情..." style="text-align:center;">
+        </div>
+        <div style="display:flex; border-top:0.5px solid #eee;">
+            <div class="alert-btn" style="flex:1; border-right:0.5px solid #eee;" onclick="document.getElementById('modal-motto-edit').style.display='none'">取消</div>
+            <div class="alert-btn" style="flex:1; font-weight:800;" onclick="saveMotto()">保存</div>
+        </div>
+    </div>
+</div>
+<div id="subpage-world-bind" class="ios-sub-page">
+    <div class="app-header" style="padding-top: 48px !important; height: auto !important;">
+        <div onclick="closeSubPage('subpage-world-bind')" style="color:#007AFF;">取消</div>
+        <div style="font-weight:800;">绑定协议</div>
+        <div onclick="saveWorldBinding()" style="color:#007AFF; font-weight:800;">保存</div>
+    </div>
+    <div class="app-body" style="padding: 20px 16px;">
+        <div class="tz-group-title">选择注入的规则</div>
+        <div id="world-bind-list" class="ios-list-group">
+            </div>
+
+        <div class="tz-group-title">衍生扩展</div>
+        <div class="ios-list-group">
+            <div class="ios-list-item" onclick="openRelationsPage()">
+                <div class="item-content" style="border:none;">
+                    <span class="item-label" style="color:#007AFF; font-weight:700;">查看/构建人际关系网</span>
+                    <div class="item-right">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#007AFF" stroke-width="3"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div style="font-size:11px; color:#bbb; padding:10px; line-height:1.4;">
+            注意：构建关系网前请确保已勾选并保存上方世界协议，以便 AI 精准编织角色纽带。
+        </div>
+    </div>
+</div>
+
+<div id="subpage-relations" class="ios-sub-page"> 
+    </div>
+
+<div id="subpage-relations" class="ios-sub-page" style="background:#F2F2F7;">
+    <div class="app-header" style="padding-top: 48px !important; height: auto !important;">
+        <div onclick="closeSubPage('subpage-relations')" style="color:#007AFF; cursor:pointer;">返回</div>
+        <div style="font-weight:800;">关系档案</div>
+        <div style="width:40px;"></div>
+    </div>
+    
+    <div class="app-body" style="padding: 20px 16px;">
+        <div id="quantum-loader" class="quantum-loader-overlay">
+            <div class="quantum-spinner"></div>
+            <div class="quantum-status-text" id="q-status">INITIALIZING...</div>
+            <div class="q-progress-container">
+                <div id="q-progress-bar" class="q-progress-bar"></div>
+            </div>
+        </div>
+
+        <div id="relation-empty-state" style="text-align:center; padding:60px 20px; display:none;">
+            <div style="font-size:50px; margin-bottom:20px; filter: grayscale(100%);">🌐</div>
+            <h3 style="color:#1d1d1f; margin-bottom:10px;">尚未解析关系网</h3>
+            <p style="color:#8e8e93; font-size:13px; line-height:1.6;">AI 将根据已绑定的世界协议<br>为该角色编织底层社会关系。</p>
+            <button class="ios-btn primary" style="margin-top:30px; width:180px;" onclick="generateRelationsWithAI(false)">开始量子解析</button>
+        </div>
+
+        <div id="npc-grid" class="char-grid"></div>
+
+        <div id="relation-footer" class="relation-footer-tools" style="display:none;">
+            <div class="btn-extend-network" onclick="generateRelationsWithAI(true)">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                扩展关系圈
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="modal-npc-detail" class="vibe-center-mask" style="display:none; z-index:40000;" onclick="this.style.display='none'">
+    <div class="npc-detail-card" onclick="event.stopPropagation()">
+        <div class="aes-top-bar" style="position: absolute; top: 15px; right: 15px; z-index: 100;">
+            <div class="aes-icon-circle close" onclick="document.getElementById('modal-npc-detail').style.display='none'">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </div>
+        </div>
+
+        <div class="npc-pre-header">
+            <img id="npc-v-banner" class="npc-pre-banner" src="">
+            <img id="npc-v-avatar" class="npc-pre-avatar" src="">
+        </div>
+
+        <div class="npc-pre-body">
+            <div id="npc-v-name" class="npc-pre-name">NPC Name</div>
+            <div id="npc-v-role" class="npc-pre-role">RELATIONSHIP</div>
+            <div class="npc-pre-bio" id="npc-v-bio">Loading dossier...</div>
+        </div>
+
+        <div class="npc-pre-footer">
+            <button class="npc-btn-action minor" onclick="traceNPCStory()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                <span>往事</span>
+            </button>
+
+            <button class="npc-btn-action minor" onclick="handleLikeNPC()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                <span>感兴趣</span>
+            </button>
+            
+            <button class="npc-btn-action main" id="npc-add-btn" onclick="handleSocialSync()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 11h6m-3-3v6"/></svg>
+                <span id="npc-add-text">ADD CLOSE FRIEND</span>
+            </button>
+        </div>
+    </div>
+</div>
+<div id="modal-past-decoder" class="ios-alert-mask" style="display:none; z-index:99999;">
+    <div class="aesthetic-card past-magazine-style">
+        <div class="aes-top-bar">
+            <div class="aes-icon-circle close" onclick="closePastDecoder()">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </div>
+        </div>
+
+        <div class="aes-hero">
+            <div id="past-hero-blur" class="aes-blur-bg"></div>
+            <div class="aes-overlay" style="background: linear-gradient(to bottom, transparent, #fff);"></div>
+        </div>
+
+        <div class="aes-float-content">
+            <div class="aes-avatar-box">
+                <img id="past-avatar-img" src="" alt="avatar">
+            </div>
+            <div class="aes-title-group">
+                <div id="past-name-txt" class="aes-name">加载中...</div>
+                <div class="aes-tag">CLASSIFIED MEMORY</div>
+            </div>
+        </div>
+
+        <div class="aes-scroll-area">
+            <div id="past-text-body" class="aes-text-body">
+                </div>
+            <div class="aes-divider">THE END</div>
+        </div>
+
+        <div class="aes-control-bar">
+            <button class="aes-btn edit" onclick="closePastDecoder()">关闭档案</button>
+        </div>
+    </div>
+</div>
 <script>
     // 🚨 必须放在 <script> 标签的最顶部，不要放在任何 function 内部！
 var currentUploaderTarget = 'chat'; 
@@ -6523,6 +7665,7 @@ var tempBgData = {
     chat: { type: 'img', data: null },
     settings: { type: 'img', data: null }
 };
+var tempCharProfileData = { id: null, avatar: null };
 
 // ... 剩下的其他代码 ...
     // --- 1. 全局变量存储转发数据 ---
@@ -6845,19 +7988,19 @@ const storeName = "wallpapers";
 
 function openDB() {
     return new Promise((resolve, reject) => {
-        const req = indexedDB.open("WallDB", 2); // 这里的版本号要对应你现在的升级到版本 2
-        req.onsuccess = (e) => {
-            window.db = e.target.result; // 将数据库实例挂载到全局
-            console.log("数据库连接成功，开始恢复背景...");
-            
-            // ❗ 核心修改：数据库一开门，立刻执行恢复背景
-            if (typeof initBgSettings === 'function') {
-                initBgSettings(); 
-            }
-            window.db = e.target.result;
-            // ❗ 重点：在这里调用，确保 IndexedDB 可用时立刻回填预览
-            applyBackgroundsToUI();
+        // 提升版本号到 3，确保触发更新逻辑
+        const req = indexedDB.open("WallDB", 5); 
+
+        req.onupgradeneeded = (e) => {
+            const db = e.target.result;
+            // 确保这些“坑位”都存在
+            if (!db.objectStoreNames.contains("wallpapers")) db.createObjectStore("wallpapers", { keyPath: "id" });
+            if (!db.objectStoreNames.contains("chat_history")) db.createObjectStore("chat_history", { keyPath: "contactId" });
+            if (!db.objectStoreNames.contains("chat_list")) db.createObjectStore("chat_list", { keyPath: "id" });
+            if (!db.objectStoreNames.contains("world_list")) db.createObjectStore("world_list", { keyPath: "id" });
+            if (!db.objectStoreNames.contains("chat_friends")) db.createObjectStore("chat_friends", { keyPath: "id" });
         };
+
         req.onsuccess = () => resolve(req.result);
         req.onerror = () => reject(req.error);
     });
@@ -9239,10 +10382,12 @@ async function initChatMsgPanel() {
         const uniqueFriends = Array.from(friendMap.values());
 
         ring.innerHTML = "";
+        // 找到 initChatMsgPanel 函数内部生成好友环的地方
         uniqueFriends.forEach(f => {
             const item = document.createElement('div');
             item.className = 'friend-item';
-            item.onclick = () => openChatRoom(f);
+            // 🚨 修正：这里调用打开社交卡片的函数
+            item.onclick = () => openSocialCard(f); 
             item.innerHTML = `<div class="friend-avatar-ring"><img src="${f.avatar}"></div><span style="font-weight:700;">${f.name}</span>`;
             ring.appendChild(item);
         });
@@ -9354,27 +10499,45 @@ function renderMessageList(friends) {
 // ==========================================
 // 👤 打开社交名片详情
 // ==========================================
-function openChatProfile(char) {
+// --- 🏛️ 高定档案名片引擎 ---
+async function openChatProfile(char) {
     if (!char) return;
-    
-    // 1. 记录当前查看的人，方便修改签名
-    window.currentEditingCharId = char.id; 
 
-    // 2. 填充卡片数据
+    // 1. 获取元素
     const avatarEl = document.getElementById('profile-v-avatar');
     const nameEl = document.getElementById('profile-v-name');
     const mottoEl = document.getElementById('profile-v-motto');
+    const metaId = document.getElementById('profile-v-id');
     const modal = document.getElementById('modal-chat-profile');
 
-    if (avatarEl) avatarEl.src = char.avatar;
-    if (nameEl) nameEl.textContent = char.name;
+    if (!modal) return;
+
+    // 2. 获取数据库里最新的详细资料（为了同步 desc）
+    const charList = await loadFromDB('char_list') || [];
+    const fullChar = charList.find(c => c.id === char.id) || char;
+
+    // 3. 填充数据
+    if (avatarEl) avatarEl.src = fullChar.avatar;
+    if (nameEl) nameEl.textContent = fullChar.name;
+    if (metaId) metaId.textContent = "CORE ID: " + fullChar.id.substring(0, 12).toUpperCase();
     
-    // 3. 读取并展示该好友的个性签名 (从 localStorage 获取)
-    const savedMotto = localStorage.getItem('chat_motto_' + char.id) || "这人很懒，什么都没写...";
-    if (mottoEl) mottoEl.textContent = savedMotto;
+    // 填充简介
+    if (mottoEl) mottoEl.textContent = fullChar.desc || "此人格尚未写入底层叙事。";
+
+    // 4. 显示
+    modal.style.display = 'flex';
+    console.log("System: 高定档案已在 Settings 之上推入");
+}
+// 2. 桥接逻辑：从预览名片一键进入编辑页
+function goToEditFromPreview() {
+    // 1. 先把压在上面的预览卡片关掉
+    document.getElementById('modal-social-card').style.display = 'none';
+    document.getElementById('modal-aes-preview').style.display = 'none';
     
-    // 4. 显示弹窗
-    if (modal) modal.style.display = 'flex';
+    // 2. 稍微等一下（100ms），等卡片消失后再推入编辑页，视觉更顺滑
+    setTimeout(() => {
+        openCharProfileEditPage();
+    }, 100);
 }
 // 打开修改签名的小框
 function openEditMotto() {
@@ -9778,10 +10941,30 @@ async function triggerAiGenerate() {
     const capturedQuote = window.currentQuoteData ? { ...window.currentQuoteData } : null;
     if (capturedQuote) cancelQuote(); 
 
+    // --- 🧠 联觉读取补丁：Persona + World Rules ---
+    const charList = await loadFromDB('char_list') || [];
+    const currentChar = charList.find(c => c.id === contact.id);
+
+    // A. 读取绑定的世界书内容
+    const allWorlds = await loadFromDB('world_list') || [];
+    const boundIds = currentChar.boundWorldIds || [];
+    const boundContent = allWorlds.filter(w => boundIds.includes(w.id))
+                                .map(w => `【世界规则: ${w.name}】\n${w.content}`).join("\n");
+
+    // B. 读取已构建的关系网 NPC
+    const network = JSON.stringify(currentChar.relationNetwork || []);
+
     // --- 🎭 注入灵魂：不可预测的聊天节奏 ---
     const messages = [{ 
         role: "system", 
-        content: `你是${contact.name}。背景：${contact.desc}。
+        content: `你正在扮演: ${contact.name}。
+        身份背景: ${contact.desc}
+        
+        🚨【世界协议约束】🚨
+        ${boundContent || "遵循常规现实逻辑。"}
+        
+        【社交关系记忆】
+        你认识以下人员: ${network}
         【极致活人社交规范】：
         1. 你是活生生的人，聊天条数必须【完全随机】！严禁每轮都回复相同数量的消息。
         2. 节奏控制：
@@ -10644,13 +11827,26 @@ function closeChatSettings() {
 }
 
 // 3. 从设置页跳转到“Ta的资料”
-function openChatProfileFromSettings() {
-    // 复用已有的名片弹窗逻辑
-    if(window.currentChattingWith) {
-        openChatProfile(window.currentChattingWith);
-    } else {
-        showToast("数据加载异常");
+async function openChatProfileFromSettings() {
+    console.log("System: 尝试从设置页开启预览名片...");
+    
+    let contact = window.currentChattingWith;
+
+    // 🛡️ 安全锁：如果变量丢失，尝试从 URL 或上下文恢复
+    if (!contact) {
+        showToast("⚠️ 未能获取角色上下文");
+        return;
     }
+
+    // 核心：在展示名片前，先去数据库捞一下最新的资料
+    // 防止你在资料页改了名字，名片上还是旧的
+    const charList = await loadFromDB('char_list') || [];
+    const latestInfo = charList.find(c => c.id === contact.id) || contact;
+
+    console.log("System: 载入最新资料进行预览:", latestInfo.name);
+    
+    // 调用之前的高级名片显示函数
+    openChatProfile(latestInfo);
 }
 
 // 4. 触发“清空聊天记录” (带确认)
@@ -10682,37 +11878,16 @@ function triggerClearHistory() {
 
 // 5. 触发“删除好友” (带确认)
 function triggerDeleteFriend() {
-    if(!window.currentChattingWith) return;
+    const contact = window.currentChattingWith;
+    if (!contact) return;
 
-    // 复用之前的删除好友逻辑
-    // 这里我们稍微改一下，直接调用 deleteConversation，因为那个函数包含了确认弹窗和后续清理逻辑
-    // 但因为 deleteConversation 设计是在列表页用的，我们这里需要稍微封装一下
-    
+    // 使用我们之前写的 iOS 风格确认框
     showIOSConfirm(
-        "删除好友",
-        `确定要解除与 ${window.currentChattingWith.name} 的关系吗？这将同时删除所有记录。`,
-        "删除",
-        async function() {
-            // 1. 删记录
-            const db = await openDB();
-            {
-                const tx = db.transaction("chat_history", "readwrite");
-                await tx.objectStore("chat_history").delete(window.currentChattingWith.id);
-            }
-            // 2. 删好友 (从列表移除)
-            {
-                const list = await loadFromDB('chat_friends') || [];
-                const newList = list.filter(f => f.id !== window.currentChattingWith.id);
-                await saveToDB('chat_friends', newList);
-            }
-
-            showToast("好友已删除");
-            
-            // 3. 关闭所有相关页面，回到列表
-            closeChatSettings();
-            closeChatRoom(); // 退出聊天室
-            if(typeof renderChatList === 'function') renderChatList();
-            if(typeof initChatMsgPanel === 'function') initChatMsgPanel();
+        "切断社交纽带？", 
+        `这将删除与 ${contact.name} 的所有聊天记录和个性化设置，但会保留其在“角色书”中的原始档案。`, 
+        "彻底删除", 
+        () => {
+            executeMasterSocialDelete(contact.id);
         }
     );
 }
@@ -10818,37 +11993,32 @@ function applyTempBg(target, type, data) {
 
 // 5. 【核心保存】：写入 IndexedDB 并物理应用
 async function saveChatBackgroundSettings() {
-    // 1. 核心防御：检查当前聊天对象
+    showToast("正在保存设置...");
+
+    // A. 保存聊天背景 (只有在聊天室内才生效)
     const contact = window.currentChattingWith;
-    if (!contact) {
-        showToast("⚠️ 未检测到当前对话，请先选择好友");
-        return;
-    }
-
-    const contactId = contact.id;
-    showToast("正在物理写入背景数据...");
-
-    // A. 处理聊天窗口背景（基于 ID 隔离）
-    // 只有当 tempBgData 里面有新东西时才写入数据库
-    if (tempBgData.chat && tempBgData.chat.data) {
+    if (contact && tempBgData.chat.data) {
+        const contactId = contact.id;
         localStorage.setItem(`chat_bg_type_${contactId}`, tempBgData.chat.type);
         await saveToDB(`chat_bg_data_${contactId}`, tempBgData.chat.data);
-        // 关键：写完后清空缓存，防止重复写入
         tempBgData.chat.data = null; 
     }
 
-    // B. 处理全局设置页背景
-    if (tempBgData.settings && tempBgData.settings.data) {
+    // B. 保存全局设置背景 (这个不应该受 contact 限制！)
+    if (tempBgData.settings.data) {
         await saveToDB('settings_bg_data', tempBgData.settings.data);
         tempBgData.settings.data = null;
     }
-    
-    // 2. 核心补丁：强制延迟 100ms 确保数据库事务完成再读取
-    setTimeout(async () => {
-        await applyBackgroundsToUI(); 
-        showToast("✅ 背景同步成功");
-    }, 100);
+
+    // 重新应用
+    await applyBackgroundsToUI();
+    showToast("✅ 背景已同步");
+    // 🚨 重点：逻辑跑完后，弹出高级成功提示！
+    triggerSuccessHud("设置已同步");
 }
+
+// 兼容你 HTML 里的函数名调用
+window.saveBackgroundSettings = saveChatBackgroundSettings;
 
 // 6. 【核心应用】：将数据渲染到页面
 // ==========================================
@@ -10856,6 +12026,7 @@ async function saveChatBackgroundSettings() {
 // ==========================================
 async function applyBackgroundsToUI() {
     const chatRoom = document.getElementById('page-chat-room');
+    const chatSettings = document.getElementById('page-chat-settings'); // 加上这一行
     const contact = window.currentChattingWith;
 
     if (!chatRoom) return;
@@ -10865,11 +12036,11 @@ async function applyBackgroundsToUI() {
     if (!bgLayer) {
         bgLayer = document.createElement('div');
         bgLayer.id = 'chat-room-full-bg';
-        // 关键：初始状态设为默认色
         bgLayer.style = "position:absolute; inset:0; width:100%; height:100%; z-index:0; pointer-events:none; overflow:hidden; background-color:#F2F2F7;";
         chatRoom.prepend(bgLayer); 
     }
 
+    // --- A. 聊天室背景逻辑 (独立 ID) ---
     if (contact) {
         const contactId = contact.id;
         const chatType = localStorage.getItem(`chat_bg_type_${contactId}`) || 'img';
@@ -10877,7 +12048,6 @@ async function applyBackgroundsToUI() {
         const chatThumb = document.getElementById('preview-thumb-chat');
 
         if (chatData) {
-            // --- 有背景：渲染媒体，隐藏底色 ---
             bgLayer.style.backgroundColor = "transparent"; 
             if (chatType === 'vid') {
                 bgLayer.innerHTML = `<video src="${chatData}" autoplay loop muted playsinline style="width:100%;height:100%;object-fit:cover;"></video>`;
@@ -10885,20 +12055,31 @@ async function applyBackgroundsToUI() {
                 bgLayer.innerHTML = `<img src="${chatData}" style="width:100%;height:100%;object-fit:cover;">`;
             }
 
-            // 同步预览图
             if (chatThumb) {
                 chatThumb.innerHTML = chatType === 'vid' 
                     ? `<video src="${chatData}" autoplay loop muted style="width:100%;height:100%;object-fit:cover;"></video>` 
                     : `<img src="${chatData}" style="width:100%;height:100%;object-fit:cover;">`;
             }
         } else {
-            // --- 没背景：显示默认灰色底 ---
             bgLayer.innerHTML = ""; 
-            bgLayer.style.backgroundColor = "#F2F2F7"; // 恢复 iOS 灰
-            
-            if (chatThumb) {
-                chatThumb.innerHTML = `<div class="bg-preview-placeholder">DEFAULT</div>`;
-            }
+            bgLayer.style.backgroundColor = "#F2F2F7";
+            if (chatThumb) chatThumb.innerHTML = `<div class="bg-preview-placeholder">点击<br>设置</div>`;
+        }
+    }
+
+    // --- 🚨 B. 设置菜单背景逻辑 (全局) --- 这一块你之前漏掉了！
+    const settingsData = await loadFromDB('settings_bg_data');
+    const settingsThumb = document.getElementById('preview-thumb-settings');
+
+    if (settingsData && chatSettings) {
+        // 应用到真正的设置页背景
+        chatSettings.style.backgroundImage = `url(${settingsData})`;
+        chatSettings.style.backgroundSize = "cover";
+        chatSettings.style.backgroundPosition = "center";
+        
+        // 回填设置页里的小预览框
+        if (settingsThumb) {
+            settingsThumb.innerHTML = `<img src="${settingsData}" style="width:100%;height:100%;object-fit:cover;">`;
         }
     }
 }
@@ -10939,6 +12120,712 @@ window.openChatSettings = function() {
             const uid = document.getElementById('setting-uid-display');
             if(uid) uid.textContent = window.currentChattingWith.id.toUpperCase();
         }
+    }
+}
+// --- 🏆 触发 iOS 成功 HUD ---
+function triggerSuccessHud(text = "已保存") {
+    const hud = document.getElementById('save-success-hud');
+    const hudText = hud.querySelector('.hud-text');
+    
+    if (!hud) return;
+
+    hudText.textContent = text;
+    hud.style.display = 'flex';
+    
+    // 强制重绘触发动画
+    void hud.offsetWidth;
+    
+    hud.classList.add('show');
+
+    // 1.5秒后自动消失
+    setTimeout(() => {
+        hud.classList.remove('show');
+        setTimeout(() => {
+            hud.style.display = 'none';
+        }, 300); // 等待淡出动画结束
+    }, 1500);
+}
+// --- 🧠 角色资料临时暂存 ---
+var tempCharProfileData = { id: null, avatar: null };
+
+// 1. 进入编辑页面：加载当前角色的原始数据
+// ==========================================
+// 📝 资料编辑页：强力加载引擎
+// ==========================================
+async function openCharProfileEditPage() {
+    console.log("System: 准备读取角色资料...");
+    
+    // 1. 获取当前对话对象
+    const contact = window.currentChattingWith;
+    
+    // 🛡️ 安全检查
+    if (!contact || !contact.id) {
+        console.error("Error: 找不到当前联系人上下文");
+        showToast("⚠️ 请先选择一个好友");
+        return;
+    }
+
+    // 2. 锁定暂存变量，防止 undefined 报错
+    tempCharProfileData.id = contact.id;
+
+    // 3. 从数据库拉取最全的信息（包含背景故事 desc）
+    const charList = await loadFromDB('char_list') || [];
+    const charInfo = charList.find(c => c.id === contact.id) || contact;
+
+    // 4. 物理填值（增加空值判定，防止渲染中断）
+    const elAvatar = document.getElementById('edit-char-avatar-pre');
+    const elName = document.getElementById('edit-char-name');
+    const elDesc = document.getElementById('edit-char-desc');
+    const elMetaId = document.getElementById('meta-char-id');
+
+    if (elAvatar) elAvatar.src = charInfo.avatar || "";
+    if (elName) elName.value = charInfo.name || "";
+    if (elDesc) elDesc.value = charInfo.desc || "";
+    if (elMetaId) elMetaId.textContent = contact.id.substring(0, 16).toUpperCase();
+
+    // 5. 物理推入页面
+    const subPage = document.getElementById('subpage-char-profile');
+    if (subPage) {
+        subPage.classList.add('active'); // 加上 active 类触发滑动
+        console.log("System: 资料页已成功推入");
+    }
+}
+
+// 2. 头像预览逻辑
+function previewProfileAvatar(input) {
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            tempCharProfileData.avatar = e.target.result;
+            document.getElementById('edit-char-avatar-pre').src = e.target.result;
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+// 3. 【核心同步引擎】：保存并覆盖所有数据库
+async function saveCharProfileChanges() {
+    const id = tempCharProfileData.id;
+    const newName = document.getElementById('edit-char-name').value.trim();
+    const newDesc = document.getElementById('edit-char-desc').value.trim();
+    const newAvatar = tempCharProfileData.avatar;
+
+    if (!newName) { showToast("名称不能为空"); return; }
+
+    showToast("正在同步全域资料...");
+
+    // --- A. 同步到角色书 (char_list) ---
+    let charList = await loadFromDB('char_list') || [];
+    let charIdx = charList.findIndex(c => c.id === id);
+    if (charIdx !== -1) {
+        charList[charIdx].name = newName;
+        charList[charIdx].avatar = newAvatar;
+        charList[charIdx].desc = newDesc;
+        await saveToDB('char_list', charList);
+    }
+
+    // --- B. 同步到好友列表 (chat_friends) ---
+    let friendList = await loadFromDB('chat_friends') || [];
+    let friendIdx = friendList.findIndex(f => f.id === id);
+    if (friendIdx !== -1) {
+        friendList[friendIdx].name = newName;
+        friendList[friendIdx].avatar = newAvatar;
+        await saveToDB('chat_friends', friendList);
+    }
+
+    // --- C. 同步到当前正在进行的上下文 ---
+    window.currentChattingWith.name = newName;
+    window.currentChattingWith.avatar = newAvatar;
+
+    // --- D. 刷新当前 UI ---
+    // 刷新聊天室头部
+    document.getElementById('room-contact-name').textContent = newName;
+    document.getElementById('room-contact-avatar').src = newAvatar;
+    
+    // 强制驱动所有列表重绘
+    if (typeof renderChatList === 'function') renderChatList();
+    if (typeof initChatMsgPanel === 'function') initChatMsgPanel();
+    if (typeof renderCharList === 'function') renderCharList();
+
+    // 成功提示并退出
+    closeSubPage('subpage-char-profile');
+    triggerSuccessHud("资料已全域同步");
+}
+// A. 打开好友环社交卡
+function openSocialCard(char) {
+    window.currentEditingCharId = char.id; // 关键：记录当前正在看谁
+    
+    document.getElementById('social-v-avatar').src = char.avatar;
+    document.getElementById('social-v-name').textContent = char.name;
+    
+    // 从缓存读取签名
+    const savedMotto = localStorage.getItem('chat_motto_' + char.id) || "Hello! Let's chat.";
+    document.getElementById('social-v-motto').textContent = savedMotto;
+    
+    document.getElementById('modal-social-card').style.display = 'flex';
+}
+
+// 从卡片点击签名的入口
+function openEditMottoFromCard() {
+    const mottoEl = document.getElementById('social-v-motto');
+    const input = document.getElementById('motto-input');
+    const modal = document.getElementById('modal-motto-edit');
+    
+    if (input && mottoEl) {
+        input.value = mottoEl.textContent;
+        // 🚨 重点：只管显示自己，不要去碰底下的 modal-social-card
+        modal.style.display = 'flex'; 
+    }
+}
+
+// 修改后的保存函数
+function saveMotto() {
+    const input = document.getElementById('motto-input');
+    const val = input ? input.value.trim() : "";
+    const charId = window.currentEditingCharId;
+
+    if (val && charId) {
+        localStorage.setItem('chat_motto_' + charId, val);
+        
+        // 同步所有可能的 UI 元素
+        const els = ['social-v-motto', 'profile-v-motto'];
+        els.forEach(id => {
+            const el = document.getElementById(id);
+            if(el) el.textContent = val;
+        });
+
+        triggerSuccessHud("签名已同步");
+    }
+    
+    // 🚨 重点：只关闭修改框，不要误关底下的社交卡片
+    document.getElementById('modal-motto-edit').style.display = 'none';
+}
+
+// B. 打开设置页资料预览卡
+async function openChatProfileFromSettings() {
+    const contact = window.currentChattingWith;
+    if(!contact) return;
+    
+    // 获取最新最全的数据
+    const charList = await loadFromDB('char_list') || [];
+    const fullChar = charList.find(c => c.id === contact.id) || contact;
+
+    document.getElementById('aes-v-avatar').src = fullChar.avatar;
+    document.getElementById('aes-v-name').textContent = fullChar.name;
+    document.getElementById('aes-v-desc').textContent = fullChar.desc || "No description yet.";
+    
+    document.getElementById('modal-aes-preview').style.display = 'flex';
+}
+// 1. 打开世界绑定页
+async function openWorldBindPage() {
+    const contact = window.currentChattingWith;
+    const worldList = await loadFromDB('world_list') || [];
+    const charList = await loadFromDB('char_list') || [];
+    const currentChar = charList.find(c => c.id === contact.id);
+    
+    // 记住当前已绑定的
+    const boundIds = currentChar.boundWorldIds || [];
+    const container = document.getElementById('world-bind-list');
+    container.innerHTML = "";
+
+    worldList.forEach(w => {
+        const isChecked = boundIds.includes(w.id);
+        const item = document.createElement('div');
+        item.className = 'ios-list-item';
+        item.innerHTML = `
+            <div class="item-content">
+                <span class="item-label">${w.name}</span>
+                <input type="checkbox" class="world-checkbox" data-id="${w.id}" ${isChecked ? 'checked' : ''} style="width:22px; height:22px;">
+            </div>
+        `;
+        container.appendChild(item);
+    });
+    openSubPage('subpage-world-bind');
+}
+
+// 2. 保存绑定关系
+async function saveWorldBinding() {
+    const contact = window.currentChattingWith;
+    const checks = document.querySelectorAll('.world-checkbox:checked');
+    const selectedIds = Array.from(checks).map(c => c.dataset.id);
+
+    let charList = await loadFromDB('char_list') || [];
+    const idx = charList.findIndex(c => c.id === contact.id);
+    if (idx !== -1) {
+        charList[idx].boundWorldIds = selectedIds;
+        await saveToDB('char_list', charList);
+        document.getElementById('val-bound-count').textContent = selectedIds.length + " 个协议";
+        triggerSuccessHud("协议已绑定");
+        closeSubPage('subpage-world-bind');
+    }
+}
+
+// 3. 解析关系网 (创新点：AI 自动创造 NPC)
+// --- 🌌 核心：增量生成引擎 ---
+async function generateRelationsWithAI(isAppend = false) {
+    const contact = window.currentChattingWith;
+    const loader = document.getElementById('quantum-loader');
+    const statusText = document.getElementById('q-status');
+
+    loader.style.display = 'flex';
+    
+    // 1. 提取“已有人物名单”：这是防止 AI 生成重复角色的关键
+    const charList = await loadFromDB('char_list') || [];
+    const charIdx = charList.findIndex(c => c.id === contact.id);
+    const currentChar = charList[charIdx];
+    const existingNPCs = currentChar.relationNetwork || [];
+    const existingNames = existingNPCs.map(n => n.name).join('、'); // 👈 传给 AI 的“黑名单”
+
+    // 2. 提取世界观规则
+    const allWorlds = await loadFromDB('world_list') || [];
+    const boundIds = currentChar.boundWorldIds || [];
+    const worldContext = allWorlds.filter(w => boundIds.includes(w.id)).map(w => w.content).join("\n");
+
+    statusText.textContent = isAppend ? "正在拓宽社交象限..." : "正在构建初代网络...";
+
+    // 3. 构建 Prompt：明确要求区分 level
+    const prompt = `你是一台量子社交网络模拟器。基于角色[${currentChar.name}]和世界背景[${worldContext}]。
+    ${isAppend ? `目前已有角色: ${existingNames}。请【绝对避开】这些人名，新增 2-3 个性格迥异的人物。` : `请创造 3-5 个核心人物。`}
+    
+    要求：
+    - "level" 字段: 必须标注为 "core" (羁绊极深) 或 "associate" (普通往来)。
+    - "art_tag": 描述其厚涂风外貌关键词。
+    
+    格式: [{"name":"","role":"","bio":"","level":"core/associate","art_tag":""}]`;
+
+    try {
+        const apiKey = localStorage.getItem('gpt_key');
+        const apiUrl = (localStorage.getItem('gpt_url') || "").replace(/\/+$/, "");
+        
+        const res = await fetch(`${apiUrl}/chat/completions`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+            body: JSON.stringify({
+                model: localStorage.getItem('gpt_model'),
+                messages: [{ role: "user", content: prompt }],
+                temperature: 0.85
+            })
+        });
+
+        const data = await res.json();
+        const newNpcs = JSON.parse(data.choices[0].message.content.match(/\[.*\]/s)[0]);
+
+        // 4. 注入头像和 ID
+        newNpcs.forEach((n, index) => {
+            n.id = "npc_" + Date.now() + "_" + Math.random().toString(36).substr(2, 5);
+            n.avatar = `https://api.dicebear.com/7.x/lorelei/svg?seed=${n.art_tag + n.name}&backgroundColor=b6e3f4,c0aede,d1d4f9`;
+        });
+
+        // 5. 增量保存：把新生成的拼接到旧的后面
+        const updatedNetwork = isAppend ? [...existingNPCs, ...newNpcs] : newNpcs;
+        currentChar.relationNetwork = updatedNetwork;
+        await saveToDB('char_list', charList);
+
+        // 6. UI 刷新
+        renderNPCGrid(updatedNetwork);
+        document.getElementById('relation-empty-state').style.display = 'none';
+        document.getElementById('relation-footer').style.display = 'flex'; // 👈 确保扩展按钮可见
+        
+        loader.style.display = 'none';
+        triggerSuccessHud(isAppend ? "纽带已拓宽" : "关系网已就绪");
+
+    } catch(e) {
+        loader.style.display = 'none';
+        showToast("量子纠缠失败，请重试");
+    }
+}
+
+// --- 📖 剧情回溯：生成专属往事 ---
+// ==========================================
+// 📜 往事解密系统：全新推翻版
+// ==========================================
+
+async function traceNPCStory() {
+    const npc = window.currentViewingNPC; // 当前点的那个NPC
+    const mainChar = window.currentChattingWith; // 玩家当前正在玩的主角
+    const btn = document.querySelector('#modal-npc-detail .npc-btn-main:first-child');
+
+    if (!npc || !mainChar) {
+        showToast("⚠️ 无法识别角色链路");
+        return;
+    }
+
+    // --- 1. 检查是否已经解密过 (持久化读取) ---
+    if (npc.detailedPast) {
+        console.log("System: 档案已存在，正在直接打开...");
+        document.getElementById('modal-npc-detail').style.display = 'none'; // 关掉详情卡
+        openPastDecoderUI(npc, npc.detailedPast, false);
+        return;
+    }
+
+    // --- 2. 开启解密动画 ---
+    if (btn.classList.contains('decoding')) return;
+    btn.classList.add('decoding');
+    btn.textContent = "DECODING...";
+
+    try {
+        const apiKey = localStorage.getItem('gpt_key');
+        const apiUrl = (localStorage.getItem('gpt_url') || "https://api.openai.com/v1").replace(/\/+$/, "");
+        
+        // 增加一点仪式感的等待
+        await new Promise(r => setTimeout(r, 1500));
+
+        const prompt = `你正在回溯[${mainChar.name}]与[${npc.name}]的共同往事。
+        NPC背景: ${npc.bio}，两人的关系是: ${npc.role}。
+        请创作一段约 200-300 字的隐秘往事，要求文风高级、富有电影感。
+        直接输出正文。`;
+
+        const res = await fetch(`${apiUrl}/chat/completions`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+            body: JSON.stringify({
+                model: localStorage.getItem('gpt_model'),
+                messages: [{ role: "user", content: prompt }],
+                temperature: 0.8
+            })
+        });
+
+        const data = await res.json();
+        const story = data.choices[0].message.content.trim();
+
+        // --- 3. 核心：保存到数据库，防止刷新消失 ---
+        let charList = await loadFromDB('char_list') || [];
+        const charIdx = charList.findIndex(c => c.id === mainChar.id);
+        if (charIdx !== -1) {
+            const nIdx = charList[charIdx].relationNetwork.findIndex(n => n.id === npc.id);
+            if (nIdx !== -1) {
+                // 将往事存入数据库
+                charList[charIdx].relationNetwork[nIdx].detailedPast = story;
+                await saveToDB('char_list', charList);
+                // 也要更新当前内存里的 NPC 对象
+                window.currentViewingNPC.detailedPast = story;
+            }
+        }
+
+        // --- 4. 暴力切换界面 ---
+        btn.classList.remove('decoding');
+        document.getElementById('modal-npc-detail').style.display = 'none'; // 彻底关闭旧卡片
+        
+        setTimeout(() => {
+            openPastDecoderUI(npc, story, true); // 唤起新卡片并开启打字机
+        }, 150);
+
+    } catch (e) {
+        console.error("解密失败:", e);
+        btn.classList.remove('decoding');
+        btn.textContent = "解密失败，重试";
+        showToast("量子信号连接失败");
+    }
+}
+
+// 辅助：打开解密展示层
+function openPastDecoderUI(npc, content, isNew) {
+    const modal = document.getElementById('modal-past-decoder');
+    const textField = document.getElementById('past-text-body');
+    
+    // 填充基本信息
+    document.getElementById('past-name-txt').textContent = npc.name;
+    document.getElementById('past-avatar-img').src = npc.avatar;
+    document.getElementById('past-hero-blur').style.backgroundImage = `url(${npc.avatar})`;
+
+    // 显示弹窗
+    modal.style.display = 'flex';
+    
+    textField.textContent = "";
+    if (isNew) {
+        // 打字机效果
+        let i = 0;
+        function typing() {
+            if (i < content.length) {
+                textField.textContent += content.charAt(i);
+                i++;
+                // 滚动条自动跟随
+                const scroller = modal.querySelector('.aes-scroll-area');
+                scroller.scrollTop = scroller.scrollHeight;
+                setTimeout(typing, 25);
+            }
+        }
+        typing();
+    } else {
+        textField.textContent = content;
+    }
+}
+
+// 辅助：关闭函数
+function closePastDecoder() {
+    document.getElementById('modal-past-decoder').style.display = 'none';
+}
+
+// --- 🎨 渲染：动态区分关系权重 ---
+function renderNPCGrid(npcs) {
+    const grid = document.getElementById('npc-grid');
+    if (!grid) return;
+    grid.innerHTML = "";
+    
+    npcs.forEach((npc, i) => {
+        const card = document.createElement('div');
+        const isCore = npc.level === 'core';
+        card.className = `char-card npc-arrival npc-${npc.level || 'associate'}`;
+        card.style.animationDelay = (i * 0.1) + "s";
+        card.innerHTML = `
+            <img class="char-card-img" src="${npc.avatar}">
+            ${isCore ? '<div class="core-bond-badge" style="position:absolute; top:10px; left:10px; background:#007AFF; color:white; font-size:10px; padding:2px 6px; border-radius:4px; font-weight:900;">CORE</div>' : ''}
+            <div class="char-card-info">
+                <div class="char-card-name">${npc.name}</div>
+                <div class="char-card-desc" style="color:${isCore ? '#007AFF' : '#8e8e93'}; font-weight:700;">${npc.role}</div>
+            </div>`;
+        
+        // 🚨 核心修复：点击卡片时，把数据塞给全局变量，否则按钮找不到目标
+        card.onclick = () => {
+            console.log("System: Selecting NPC ->", npc.name);
+            window.currentViewingNPC = npc; 
+            openNPCDetail(npc);
+        };
+        grid.appendChild(card);
+    });
+}
+
+// --- 🎭 打开 NPC 资料卡 ---
+// --- 🎭 打开 NPC 资料卡 (纯净版，解决 style 报错) ---
+function openNPCDetail(npc) {
+    console.log("System: Opening Dossier for ->", npc.name);
+    window.currentViewingNPC = npc; 
+
+    // 1. 填充基础信息
+    const avatar = document.getElementById('npc-v-avatar');
+    const banner = document.getElementById('npc-v-banner');
+    const name = document.getElementById('npc-v-name');
+    const role = document.getElementById('npc-v-role');
+    const bio = document.getElementById('npc-v-bio');
+
+    if(avatar) avatar.src = npc.avatar;
+    if(banner) banner.src = npc.avatar; 
+    if(name) name.textContent = npc.name;
+    if(role) role.textContent = npc.role.toUpperCase();
+    if(bio) bio.textContent = npc.bio;
+    
+    // 2. 状态重置：确保按钮文字回归初始状态
+    const btn = document.querySelector('#modal-npc-detail .npc-btn-main:first-child');
+    if (btn) {
+        btn.classList.remove('scanning'); // 移除扫描动画类
+        btn.textContent = "查看往事";      // 恢复原本文字
+    }
+
+    // 3. 显示弹窗
+    const modal = document.getElementById('modal-npc-detail');
+    if(modal) modal.style.display = 'flex';
+}
+// --- 🚀 打开关系网子页面 ---
+async function openRelationsPage() {
+    const contact = window.currentChattingWith;
+    if (!contact) return;
+
+    // 1. 从数据库读取当前角色的最新数据
+    const charList = await loadFromDB('char_list') || [];
+    const currentChar = charList.find(c => c.id === contact.id);
+    
+    const emptyState = document.getElementById('relation-empty-state');
+    const npcGrid = document.getElementById('npc-grid');
+
+    // 2. 检查是否已经有了生成好的关系网
+    const network = currentChar.relationNetwork || [];
+    
+    if (network.length > 0) {
+        // 如果有数据，隐藏空状态，渲染网格
+        if (emptyState) emptyState.style.display = 'none';
+        renderNPCGrid(network); // 调用你之前写的渲染函数
+    } else {
+        // 如果没有数据，显示“量子解析”按钮
+        if (emptyState) emptyState.style.display = 'block';
+        if (npcGrid) npcGrid.innerHTML = "";
+    }
+
+    // 3. 滑入页面
+    openSubPage('subpage-relations');
+}
+// --- 🚑 修正 ID 冲突补丁 ---
+async function saveWorldBinding() {
+    const contact = window.currentChattingWith;
+    const checks = document.querySelectorAll('.world-checkbox:checked');
+    const selectedIds = Array.from(checks).map(c => c.dataset.id);
+
+    let charList = await loadFromDB('char_list') || [];
+    const idx = charList.findIndex(c => c.id === contact.id);
+    if (idx !== -1) {
+        charList[idx].boundWorldIds = selectedIds;
+        await saveToDB('char_list', charList);
+
+        // 🚨 核心修复：这里要把 'val-bound-count' 改为 'val-bound-status'
+        const statusEl = document.getElementById('val-bound-status');
+        if (statusEl) {
+            statusEl.textContent = selectedIds.length > 0 ? selectedIds.length + " 个协议" : "去绑定";
+        }
+
+        triggerSuccessHud("协议已绑定");
+        closeSubPage('subpage-world-bind');
+    }
+}
+// ==========================================
+// 📡 深度社交逻辑：带“仪式感”延迟的 AI 审核
+// ==========================================
+async function handleNPCFriendRequest() {
+    const btn = document.getElementById('npc-add-btn');
+    const text = document.getElementById('npc-add-text');
+    
+    // 1. 检查变量是否存在
+    const sourceNpc = window.currentViewingNPC;
+    const mainChar = window.currentChattingWith;
+
+    console.log("System: Requesting more relations for", sourceNpc ? sourceNpc.name : "NULL");
+
+    if (!btn || btn.classList.contains('sending')) return;
+    
+    if (!sourceNpc) {
+        showToast("⚠️ 未识别到目标 NPC");
+        return;
+    }
+
+    // --- 启动动效 ---
+    btn.classList.add('sending');
+    text.textContent = "SIGNALING...";
+
+    try {
+        const apiKey = localStorage.getItem('gpt_key');
+        const apiUrl = (localStorage.getItem('gpt_url') || "").replace(/\/+$/, "");
+        if (!apiKey) throw new Error("Missing API Key");
+
+        // 模拟扫描感
+        await new Promise(r => setTimeout(r, 1000));
+        text.textContent = "DECODING...";
+
+        // 2. 准备上下文
+        const charList = await loadFromDB('char_list') || [];
+        const charIdx = charList.findIndex(c => c.id === mainChar.id);
+        const currentCharData = charList[charIdx];
+        const existingNetwork = currentCharData.relationNetwork || [];
+        const existingNames = existingNetwork.map(n => n.name).join('、');
+
+        const prompt = `你是一台量子关系模拟器。
+        目前主角[${mainChar.name}]通过人物[${sourceNpc.name}](${sourceNpc.role})在深入社交圈。
+        请基于[${sourceNpc.name}]的背景[${sourceNpc.bio}]，再扩充 2 个与他有密切往来的新角色。
+        【要求】绝对避开已有人物：${existingNames}。
+        【输出】严格JSON数组格式: [{"name":"","role":"与${sourceNpc.name}的关系","bio":"","level":"associate","art_tag":""}]`;
+
+        // 3. AI 调用
+        const res = await fetch(`${apiUrl}/chat/completions`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+            body: JSON.stringify({
+                model: localStorage.getItem('gpt_model'),
+                messages: [{ role: "user", content: prompt }],
+                temperature: 0.8
+            })
+        });
+
+        const data = await res.json();
+        const content = data.choices[0].message.content;
+        const newNpcs = JSON.parse(content.match(/\[.*\]/s)[0]);
+
+        // 4. 处理新人
+        newNpcs.forEach(n => {
+            n.id = "npc_" + Date.now() + "_" + Math.random().toString(36).substr(2, 5);
+            n.avatar = `https://api.dicebear.com/7.x/lorelei/svg?seed=${encodeURIComponent(n.name)}&backgroundColor=b6e3f4,c0aede,d1d4f9`;
+        });
+
+        // 5. 增量保存
+        const updatedNetwork = [...existingNetwork, ...newNpcs];
+        charList[charIdx].relationNetwork = updatedNetwork;
+        await saveToDB('char_list', charList);
+
+        // 6. 视觉反馈
+        text.textContent = "SYNCED";
+        btn.classList.remove('sending');
+        btn.classList.add('sent');
+        btn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" style="margin-right:5px;"><polyline points="20 6 9 17 4 12"></polyline></svg><span>发现新脉络</span>`;
+
+        showToast(`已解析出 ${newNpcs.length} 个新人物`);
+
+        // 7. 刷新并退出
+        setTimeout(() => {
+            document.getElementById('modal-npc-detail').style.display = 'none';
+            btn.classList.remove('sent');
+            btn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg><span id="npc-add-text">Add Friend</span>`;
+            
+            if (typeof renderNPCGrid === 'function') renderNPCGrid(updatedNetwork);
+        }, 1500);
+
+    } catch (e) {
+        console.error("Critical Error:", e);
+        btn.classList.remove('sending');
+        text.textContent = "SIGNAL LOST";
+        showToast(e.message === "Missing API Key" ? "API Key 未配置" : "解析失败");
+    }
+}
+// ==========================================
+// 🧹 全域记忆抹除：彻底清理社交、设置、绑定及关系网
+// ==========================================
+async function executeMasterSocialDelete(contactId) {
+    if (!contactId) return;
+
+    showToast("正在执行高维记忆隔离...");
+
+    try {
+        const db = await openDB();
+        
+        // --- 1. 物理删除聊天记录 (DB: chat_history) ---
+        const txChat = db.transaction("chat_history", "readwrite");
+        await txChat.objectStore("chat_history").delete(contactId);
+        console.log("✅ 聊天记录已销毁");
+
+        // --- 2. 物理删除专属背景数据 (DB: wallpapers) ---
+        const txWall = db.transaction("wallpapers", "readwrite");
+        await txWall.objectStore("wallpapers").delete(`chat_bg_data_${contactId}`);
+        console.log("✅ 专属背景二进制数据已抹除");
+
+        // --- 3. 从好友列表移除 (DB: chat_friends) ---
+        let friendList = await loadFromDB('chat_friends') || [];
+        friendList = friendList.filter(f => f.id !== contactId);
+        await saveToDB('chat_friends', friendList);
+        console.log("✅ 好友名单已清理");
+
+        // --- 4. 【核心修复】抹除角色档案内的绑定与关系网 (DB: char_list) ---
+        let charList = await loadFromDB('char_list') || [];
+        const charIdx = charList.findIndex(c => c.id === contactId);
+        if (charIdx !== -1) {
+            // 保留核心档案（名、头、感），但清空所有衍生数据
+            charList[charIdx].boundWorldIds = [];    // 清空世界书绑定
+            charList[charIdx].relationNetwork = [];  // 清空关系网 NPC
+            await saveToDB('char_list', charList);
+            console.log("✅ 世界协议与关系网已重置");
+        }
+
+        // --- 5. 清理 LocalStorage 中的琐碎配置 ---
+        localStorage.removeItem(`chat_motto_${contactId}`);
+        localStorage.removeItem(`chat_bg_type_${contactId}`);
+        
+        // 移除置顶
+        let pinnedIds = JSON.parse(localStorage.getItem('chat_pinned_ids') || "[]");
+        pinnedIds = pinnedIds.filter(id => id !== contactId);
+        localStorage.setItem('chat_pinned_ids', JSON.stringify(pinnedIds));
+        console.log("✅ 本地偏好设置已清空");
+
+        // --- 6. UI 状态重置与刷新 ---
+        // 强行关闭当前可能打开的所有相关页面
+        closeChatSettings();
+        closeChatRoom();
+        if(document.getElementById('subpage-relations')) closeSubPage('subpage-relations');
+        if(document.getElementById('subpage-world-bind')) closeSubPage('subpage-world-bind');
+
+        // 刷新所有相关的列表
+        if (typeof renderChatList === 'function') renderChatList();
+        if (typeof initChatMsgPanel === 'function') initChatMsgPanel();
+        if (typeof renderCharList === 'function') renderCharList(); // 刷新角色书小卡片
+        
+        triggerSuccessHud("该人格已回归初始态");
+
+    } catch (e) {
+        console.error("❌ 全域清理失败:", e);
+        showToast("部分量子数据残留，请重试");
     }
 }
 </script>
