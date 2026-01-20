@@ -3528,6 +3528,991 @@
     justify-content: center !important; /* 水平居中 */
     z-index: 1000000 !important;
 }
+/* --- 💬 思考中：三点跳动动画 --- */
+.typing-dots {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    height: 20px;
+    padding: 4px 0;
+}
+
+.typing-dots span {
+    width: 6px;
+    height: 6px;
+    background: #8E8E93; /* iOS 标准灰色 */
+    border-radius: 50%;
+    display: inline-block;
+    animation: dotPulse 1.4s infinite ease-in-out both;
+}
+
+.typing-dots span:nth-child(1) { animation-delay: -0.32s; }
+.typing-dots span:nth-child(2) { animation-delay: -0.16s; }
+
+@keyframes dotPulse {
+    0%, 80%, 100% { transform: scale(0); opacity: 0.3; }
+    40% { transform: scale(1); opacity: 1; }
+}
+/* --- 🚑 布局急救：让输入框和消息贴近 --- */
+#page-chat-room .chat-scroll-area {
+    flex: 1 !important;
+    margin-top: 80px !important;    /* 避开顶部的距离 */
+    margin-bottom: 0 !important;   /* 🚨 核心修改：删掉原来的 90px 外边距 */
+    padding-bottom: 90px !important; /* 🚨 核心修改：内边距设为 90px，刚好给悬浮框留位置 */
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
+    display: block !important;
+}
+
+/* 确保聊天页面高度铺满，不产生断层 */
+#page-chat-room {
+    height: 100vh !important;
+    display: flex !important;
+    flex-direction: column !important;
+}
+/* --- 💎 气泡长按/点击菜单 --- */
+.bubble-context-menu {
+    position: fixed;
+    z-index: 10000;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    width: 260px; /* 宽度适配四列 */
+    animation: menuPop 0.2s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+}
+
+@keyframes menuPop {
+    from { opacity: 0; transform: scale(0.8) translateY(10px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* 菜单主体 */
+.menu-box {
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(25px) saturate(180%);
+    -webkit-backdrop-filter: blur(25px) saturate(180%);
+    border-radius: 20px;
+    padding: 12px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.15);
+    display: grid;
+    grid-template-columns: repeat(4, 1fr); /* 核心：四列布局 */
+    gap: 15px 10px;
+}
+
+/* 单个图标按钮 */
+.menu-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    transition: transform 0.1s;
+}
+.menu-item:active { transform: scale(0.9); }
+
+/* --- 🔳 黑白极简风菜单图标 --- */
+.menu-icon-circle {
+    width: 44px; height: 44px;
+    background: #f5f5f7; /* 底色改成更柔和的浅灰 */
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /* 统一图标颜色为深灰色 */
+    stroke: #333333 !important; 
+    transition: background 0.2s;
+}
+
+/* 鼠标放上去变深一点，增加交互感 */
+.menu-item:hover .menu-icon-circle {
+    background: #e5e5e7;
+}
+
+/* 强制所有 SVG 图标为黑白 */
+.menu-icon-circle svg {
+    stroke: #333333 !important;
+    fill: none !important; /* 确保没有填充色 */
+}
+
+/* 菜单文字颜色 */
+.menu-item span {
+    font-size: 10px;
+    font-weight: 500;
+    color: #666666; /* 文字也用柔和的灰色 */
+    letter-spacing: 0.5px;
+    margin-top: 4px;
+}
+.menu-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.2); /* 稍微深一点点，突出菜单 */
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    z-index: 9998; /* 必须在菜单 10000 的下面，但在其他元素上面 */
+    display: none;
+    cursor: default; /* 确保能捕捉到点击 */
+}
+/* --- 💬 引用功能专属样式 --- */
+/* 1. 输入框上方的预览条 */
+.quote-preview-bar {
+    display: none; /* 默认隐藏 */
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(10px);
+    border-top: 0.5px solid #eee;
+    padding: 10px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    animation: slideUp 0.3s ease;
+}
+
+.quote-content-wrapper {
+    border-left: 3px solid #007AFF; /* 引用蓝条 */
+    padding-left: 10px;
+    overflow: hidden;
+}
+
+.quote-user-name {
+    font-size: 11px;
+    font-weight: 700;
+    color: #007AFF;
+    margin-bottom: 2px;
+}
+
+.quote-text-preview {
+    font-size: 13px;
+    color: #666;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    max-width: 200px;
+}
+
+/* 2. 气泡内部的引用块 */
+.bubble-quote-box {
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 12px;
+    padding: 8px 12px;
+    margin-bottom: 8px;
+    border-left: 2px solid #ddd;
+    font-size: 12px;
+    color: #8e8e93;
+    line-height: 1.4;
+}
+/* --- 多选模式下的容器调整 --- */
+.msg-row.multi-selecting {
+    padding-left: 50px !important; /* 给左侧对勾留空间 */
+    transition: padding 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* 隐藏的对勾容器 */
+.msg-check-box {
+    position: absolute;
+    left: -40px; /* 初始藏在左边 */
+    top: 50%;
+    transform: translateY(-50%);
+    width: 24px;
+    height: 24px;
+    border: 1.5px solid #C7C7CC;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s;
+    background: #fff;
+    cursor: pointer;
+}
+
+/* 选中状态：背景变蓝，框变蓝 */
+.msg-row.selected .msg-check-box {
+    background: #007AFF;
+    border-color: #007AFF;
+}
+
+/* 选中后的对勾图标 (用 CSS 画一个白色的对勾) */
+.msg-row.selected .msg-check-box::after {
+    content: '';
+    width: 10px;
+    height: 5px;
+    border-left: 2px solid #fff;
+    border-bottom: 2px solid #fff;
+    transform: rotate(-45deg);
+    margin-top: -2px;
+}
+
+/* --- 多选底栏：浮动在输入框之上 --- */
+.multi-select-footer {
+    position: absolute;
+    bottom: 0; left: 0; width: 100%;
+    height: 85px;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border-top: 0.5px solid #eee;
+    display: none; /* 默认隐藏 */
+    justify-content: space-around;
+    align-items: center;
+    padding-bottom: 20px;
+    z-index: 200;
+    animation: slideUp 0.3s ease;
+}
+
+.multi-action-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    color: #007AFF;
+    cursor: pointer;
+}
+.multi-action-item span { font-size: 10px; font-weight: 600; }
+.multi-action-item.danger { color: #FF3B30; } /* 删除按钮用红色 */
+/* 选中后的整行背景微调，增加层次感 */
+.msg-row.multi-selecting.selected {
+    background-color: rgba(0, 122, 255, 0.05); 
+}
+
+/* 重点：选中的气泡底色变深，让人一眼看出选了谁 */
+.msg-row.selected .bubble {
+    box-shadow: 0 0 0 2px #007AFF inset !important; /* 蓝色内边框 */
+    background: rgba(0, 122, 255, 0.1) !important; /* 极淡的蓝色背景 */
+}
+
+/* 强制显示对勾容器，并增加动画 */
+.msg-check-box {
+    position: absolute;
+    left: 15px; /* 移到可见区域 */
+    top: 50%;
+    transform: translateY(-50%) scale(0.8);
+    width: 24px;
+    height: 24px;
+    border: 1.5px solid #C7C7CC;
+    border-radius: 50%;
+    background: #fff;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 10;
+}
+
+.msg-row.selected .msg-check-box {
+    transform: translateY(-50%) scale(1.1); /* 选中时稍微放大，有弹力感 */
+    background: #007AFF;
+    border-color: #007AFF;
+}
+/* --- 核心修复：对勾圆圈默认彻底隐藏 --- */
+.msg-check-box {
+    position: absolute;
+    left: -40px; /* 初始躲在屏幕外 */
+    top: 50%;
+    transform: translateY(-50%) scale(0.5);
+    width: 24px;
+    height: 24px;
+    border: 1.5px solid #C7C7CC;
+    border-radius: 50%;
+    background: #fff;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    opacity: 0; /* 默认透明 */
+    pointer-events: none; /* 非多选模式不可点击 */
+    z-index: 10;
+}
+
+/* --- 只有进入多选模式，圆圈才滑入并显形 --- */
+.msg-row.multi-selecting .msg-check-box {
+    left: 15px; 
+    opacity: 1;
+    transform: translateY(-50%) scale(1);
+    pointer-events: auto;
+}
+
+/* 选中后的样式（保持不变，但确保它只在 multi-selecting 下生效） */
+.msg-row.multi-selecting.selected .msg-check-box {
+    background: #007AFF;
+    border-color: #007AFF;
+}
+
+/* 选中后的气泡高亮：退出模式后由于去掉了 selected 类，这个会自动消失 */
+.msg-row.selected .bubble {
+    box-shadow: 0 0 0 2px #007AFF inset !important;
+    background: rgba(0, 122, 255, 0.05) !important;
+}
+/* 转发消息的特殊样式 */
+.is-forwarded .bubble {
+    border-left: 3.5px solid #C7C7CC !important; /* 左侧浅灰色粗线，区分原生消息 */
+    position: relative;
+}
+
+/* 转发标记小文字 */
+.forward-label {
+    font-size: 9px;
+    color: #8E8E93;
+    font-weight: 700;
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+.forward-label svg { width: 10px; height: 10px; }
+/* --- 专门针对转发选择页的避让逻辑 --- */
+
+#page-forward-picker {
+    /* 1. 核心修复：把层级调到 9000，确保低于状态栏的 9999 */
+    z-index: 9000 !important; 
+    
+    /* 2. 核心修复：顶部留出 48px 的物理空间，把页面顶下去，给状态栏留位子 */
+    padding-top: 48px !important; 
+    
+    /* 3. 强制背景铺满全屏，防止出现截图里那种缩水的情况 */
+    width: 100vw !important;
+    height: 100vh !important;
+    background: #F2F2F7 !important;
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+/* 4. 修复转发页面的头部：不再顶着屏幕边缘 */
+#page-forward-picker .app-header {
+    height: 60px !important;
+    padding: 0 16px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    background: #F2F2F7 !important;
+    border-bottom: 0.5px solid rgba(0,0,0,0.1);
+    flex-shrink: 0 !important;
+}
+
+/* 5. 修复截图 3 中列表缩成一团的问题：强制内容撑满 */
+#page-forward-picker .app-body {
+    flex: 1 !important;
+    width: 100% !important;
+    display: block !important; /* 禁用 Flex 防止内容水平挤压 */
+    overflow-y: auto !important;
+    padding: 10px 16px 80px 16px !important; /* 底部留出空间 */
+    box-sizing: border-box !important;
+}
+
+/* 6. 确保列表行也是满宽的 */
+#page-forward-picker .chat-contact-group {
+    width: 100% !important;
+    margin: 0 !important;
+}
+
+#page-forward-picker .contact-row {
+    width: 100% !important;
+    padding-right: 16px !important;
+    box-sizing: border-box !important;
+}
+/* 1. 撤回消息的系统提示样式 */
+.recalled-msg-hint {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 12px 0;
+    width: 100%;
+    animation: msgFadeUp 0.4s ease;
+}
+
+.recalled-msg-hint span {
+    background: rgba(0, 0, 0, 0.05);
+    backdrop-filter: blur(5px);
+    color: #8E8E93;
+    font-size: 11px;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.recalled-msg-hint span:active {
+    background: rgba(0, 0, 0, 0.1);
+}
+
+/* 2. 查阅撤回内容的精美卡片 */
+.recalled-content-card {
+    width: 80%;
+    max-width: 300px;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: saturate(180%) blur(25px);
+    border-radius: 30px;
+    padding: 30px 25px;
+    text-align: center;
+    box-shadow: 0 30px 60px rgba(0,0,0,0.15);
+    animation: worldPopCenter 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+}
+
+.recalled-v-label {
+    font-size: 10px;
+    color: #8E8E93;
+    letter-spacing: 2px;
+    font-weight: 800;
+    margin-bottom: 15px;
+}
+
+.recalled-v-text {
+    font-size: 16px;
+    color: #1d1d1f;
+    line-height: 1.6;
+    text-align: left;
+    margin-bottom: 25px;
+    max-height: 200px;
+    overflow-y: auto;
+    font-family: serif;
+    font-style: italic;
+}
+/* 确保菜单项默认是显示的 */
+.menu-item {
+    display: flex !important; /* 强制显示 */
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+}
+
+/* 针对撤回按钮的专属图标颜色 */
+#menu-recall .menu-icon-circle {
+    stroke: #333 !important;
+}
+
+/* 隐藏状态下的类名（备用） */
+.menu-item.hidden {
+    display: none !important;
+}
+/* --- ⚙️ 设置页：高级折叠交互样式 --- */
+
+/* 1. 折叠容器 */
+/* --- 替换方案：无横线，由间距分隔的独立卡片 --- */
+.ios-accordion-item {
+    background: #fff;
+    overflow: hidden;
+    transition: all 0.2s ease;
+    
+    /* 1. 去掉横线 */
+    border-bottom: none; 
+    
+    /* 2. 加上底部间距，让它们分开 */
+    margin-bottom: 1px; 
+}
+
+/* 3. 给最外层的容器加个背景色，这样间距就会透出背景色，形成自然的分割 */
+.ios-list-group {
+    background: #F2F2F7 !important; /* 确保底色是灰的 */
+    padding: 0 !important;
+    overflow: hidden;
+    gap: 1px; /* 备用方案 */
+}
+
+/* 2. 头部点击区 (保持原本的列表行样式，但增加了点击反馈) */
+.accordion-header {
+    display: flex;
+    align-items: center;
+    padding: 14px 16px;
+    cursor: pointer;
+    background: #fff;
+    position: relative;
+    z-index: 2;
+    transition: background 0.2s;
+}
+.accordion-header:active {
+    background: #F2F2F7;
+}
+
+/* 旋转的小箭头 */
+.accordion-chevron {
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    color: #C7C7CC;
+}
+/* 激活时箭头向下转 */
+.ios-accordion-item.active .accordion-chevron {
+    transform: rotate(90deg);
+    color: #007AFF;
+}
+
+/* 3. 内容展开区 (默认高度0，隐藏) */
+.accordion-content {
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    background: #F9F9F9; /* 展开后的底色稍微深一点，区分层级 */
+    transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
+}
+
+/* 激活时展开 */
+.ios-accordion-item.active .accordion-content {
+    max-height: 1000px; /* 给一个足够大的高度 */
+    opacity: 1;
+    padding-bottom: 15px; /* 底部留白 */
+    border-top: 0.5px solid #eee; /* 顶部加条线区分 */
+}
+
+/* 展开区域内的操作按钮 */
+.sub-setting-btn {
+    margin: 10px 16px 0 16px;
+    padding: 12px;
+    background: #fff;
+    border-radius: 10px;
+    text-align: center;
+    font-size: 14px;
+    font-weight: 600;
+    color: #007AFF;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    border: 0.5px solid rgba(0,0,0,0.05);
+    cursor: pointer;
+}
+.sub-setting-btn:active { transform: scale(0.98); }
+
+/* --- 🚫 底部独立按钮组 (Danger Zone) --- */
+.danger-zone-container {
+    margin-top: 30px;
+    padding: 0 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px; /* 按钮之间的间距 */
+}
+
+.standalone-btn {
+    width: 100%;
+    padding: 16px;
+    background: #fff;
+    border-radius: 14px; /* 更圆润的独立块 */
+    text-align: center;
+    font-size: 16px;
+    font-weight: 600;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.03); /* 淡淡的浮起感 */
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.standalone-btn:active {
+    transform: scale(0.98);
+    background: #f2f2f2;
+}
+
+/* 蓝色功能按钮 */
+.btn-blue-text { color: #007AFF; }
+/* 红色危险按钮 */
+.btn-red-text { color: #FF3B30; }
+/* ==========================================
+   🏴🖤 终极黑白·先锋极简风格补丁 🖤🏴
+   ========================================== */
+
+/* 1. 容器：彻底隐形，只留间距 */
+.ios-list-group {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 4px !important; /* 左右稍微留点呼吸感 */
+    overflow: visible !important;
+}
+
+/* 2. 卡片本体：纯白悬浮块，大圆角 */
+.ios-accordion-item {
+    background: #FFFFFF !important;
+    margin-bottom: 16px !important; /* 🟢 显著的间距，像漂浮的积木 */
+    border-radius: 24px !important; /* 更现代的超大圆角 */
+    border: 1px solid rgba(0,0,0,0.03) !important; /* 极细微的边框提升质感 */
+    box-shadow: 0 8px 20px rgba(0,0,0,0.04) !important; /* 高级柔光阴影 */
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
+}
+
+/* 激活状态（展开时）：稍微浮起一点 */
+.ios-accordion-item.active {
+    box-shadow: 0 12px 30px rgba(0,0,0,0.08) !important;
+    transform: translateY(-2px);
+}
+
+/* 3. 头部区域：加高，垂直居中 */
+.accordion-header {
+    padding: 18px 20px !important; /* 更大的点击区域 */
+    background: transparent !important;
+}
+
+/* 4. 图标重塑：强制黑白化 (核心！) */
+.item-icon {
+    /* 把原来的彩色背景全部干掉，换成极淡的灰色 */
+    background: #F2F2F7 !important; 
+    border-radius: 50% !important; /* 变成圆形 */
+    width: 44px !important;
+    height: 44px !important;
+    box-shadow: none !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    margin-right: 16px !important;
+}
+
+/* 强制所有 SVG 线条变黑 */
+.item-icon svg {
+    stroke: #1d1d1f !important; /* 苹果黑 */
+    fill: none !important;      /* 去掉填充色 */
+    width: 20px !important;
+    height: 20px !important;
+    stroke-width: 2.2 !important; /* 线条加粗一点点，更有力 */
+}
+
+/* 5. 文字排版：加粗，纯黑 */
+.item-label {
+    font-size: 16px !important;
+    font-weight: 700 !important; /* 加粗 */
+    color: #000000 !important;
+    letter-spacing: -0.5px !important; /* 紧凑一点更精致 */
+}
+
+/* 6. 右侧箭头：黑色极简 */
+.accordion-chevron {
+    color: #000 !important;
+    opacity: 0.3 !important;
+    width: 16px !important;
+    height: 16px !important;
+    stroke-width: 3 !important;
+}
+.ios-accordion-item.active .accordion-chevron {
+    opacity: 1 !important;
+    color: #000 !important; /* 激活也是黑色 */
+}
+
+/* 7. 展开内容区：黑白反转 */
+.accordion-content {
+    background: #fff !important;
+    padding: 0 20px 24px 20px !important; /* 底部留足空间 */
+    border-top: none !important;
+}
+
+/* 8. 内部操作按钮：黑底白字 (酷！) */
+.sub-setting-btn {
+    background: #1d1d1f !important; /* 纯黑底 */
+    color: #ffffff !important;      /* 纯白字 */
+    border-radius: 14px !important;
+    padding: 14px !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.5px !important;
+    border: none !important;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15) !important; /* 黑色按钮的投影 */
+    margin-top: 12px !important;
+}
+.sub-setting-btn:active {
+    transform: scale(0.97) !important;
+    opacity: 0.8 !important;
+}
+
+/* 9. 底部危险区按钮：保持黑白极简 */
+.standalone-btn {
+    border-radius: 18px !important;
+    background: #fff !important;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.03) !important;
+    border: 1px solid rgba(0,0,0,0.02) !important;
+}
+/* 危险按钮文字保留红色，其他的变黑 */
+.btn-blue-text { color: #1d1d1f !important; }
+/* --- 🖤 聊天背景设置高级黑白 UI --- */
+.bg-config-container {
+    padding: 20px;
+    background: #fff;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.bg-config-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #f9f9f9;
+    padding: 15px;
+    border-radius: 18px;
+    border: 1px solid #f0f0f0;
+}
+
+.bg-label-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.bg-main-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: #1d1d1f;
+}
+
+.bg-sub-hint {
+    font-size: 11px;
+    color: #8e8e93;
+}
+
+/* 预览框：强制 9:16 比例 */
+.bg-preview-box {
+    width: 60px;
+    height: 106px;
+    background: #eee;
+    border-radius: 10px;
+    overflow: hidden;
+    position: relative;
+    border: 2px solid #fff;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.bg-preview-box img, .bg-preview-box video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.bg-preview-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+    color: #bbb;
+    text-align: center;
+    font-weight: 600;
+    line-height: 1.2;
+}
+
+.bg-edit-badge {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    background: rgba(0,0,0,0.6);
+    color: #fff;
+    font-size: 8px;
+    text-align: center;
+    padding: 2px 0;
+    font-weight: 800;
+}
+
+/* 底部操作按钮 */
+.bg-action-group {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.bg-save-btn {
+    flex: 2;
+    background: #1d1d1f;
+    color: #fff;
+    padding: 14px;
+    border-radius: 14px;
+    text-align: center;
+    font-weight: 700;
+    font-size: 14px;
+}
+
+.bg-reset-btn {
+    flex: 1;
+    background: #f2f2f7;
+    color: #ff3b30;
+    padding: 14px;
+    border-radius: 14px;
+    text-align: center;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+/* --- 🌫️ 万能背景上传弹窗 (黑白版) --- */
+#modal-universal-uploader .modal-content {
+    background: #fff;
+    border-top: 1px solid #eee;
+}
+
+.uploader-type-tag {
+    display: inline-block;
+    padding: 4px 10px;
+    background: #1d1d1f;
+    color: #fff;
+    font-size: 10px;
+    border-radius: 6px;
+    margin-bottom: 10px;
+    font-weight: 800;
+}
+
+.url-input-wrapper {
+    margin-bottom: 20px;
+}
+.bg-preview-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    color: #1d1d1f; /* 纯黑文字 */
+    background: #f2f2f7; /* 浅灰底 */
+    text-align: center;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.bg-edit-badge {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    background: #1d1d1f; /* 纯黑底 */
+    color: #fff; /* 纯白字 */
+    font-size: 9px;
+    text-align: center;
+    padding: 3px 0;
+    font-weight: 900;
+    letter-spacing: 1px;
+}
+/* --- 🚨 核心：强制全屏透视补丁 --- */
+
+/* 3. 让头部也变透明（或者给个极淡的磨砂感） */
+#page-chat-room .chat-room-header {
+    background: rgba(255, 255, 255, 0.2) !important; /* 20% 透明白 */
+    backdrop-filter: blur(10px) !important; /* iOS 磨砂感 */
+}
+
+/* 4. 底部输入框背景也透明化 */
+#page-chat-room .chat-room-footer {
+    background: rgba(255, 255, 255, 0.4) !important;
+    backdrop-filter: blur(20px) !important;
+}
+
+/* 5. 专门的物理背景层样式 */
+#chat-room-full-bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1; /* 钉在最底层 */
+    pointer-events: none; /* 不干扰点击消息 */
+    overflow: hidden;
+}
+
+#chat-room-full-bg img, #chat-room-full-bg video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* 核心：强制裁切撑满 */
+}
+/* --- 🚨 1. 彻底通透补丁：解决顶部不透明问题 --- */
+#page-chat-room, 
+#page-chat-room .chat-room-header,
+#page-chat-room .chat-scroll-area,
+.status-bar {
+    background: transparent !important; /* 物理强制透明 */
+    background-color: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+/* 如果你的 app-window 有默认底色，也要干掉 */
+.ios-app-window.chat-room-layer {
+    background: transparent !important;
+}
+
+/* --- ✨ 2. 昵称发光补丁：解决深色背景看不清 --- */
+#room-contact-name {
+    color: #ffffff !important; /* 强制改为白色 */
+    /* 核心：双层投影。一层白色扩散光晕，一层黑色边缘描边，确保在任何背景都清晰 */
+    text-shadow: 
+        0 0 15px rgba(255, 255, 255, 0.6), 
+        0 2px 4px rgba(0, 0, 0, 0.8) !important;
+    font-weight: 800 !important;
+}
+
+/* --- ➕ 3. 加号按钮补丁：增加可见度 --- */
+.footer-add-btn {
+    color: #ffffff !important; /* 改为白色 */
+    background: rgba(255, 255, 255, 0.2) !important; /* 给按钮加个淡淡的圆形底色 */
+    width: 32px !important;
+    height: 32px !important;
+    border-radius: 50% !important;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(5px); /* 玻璃感 */
+    transition: all 0.2s;
+}
+
+.footer-add-btn:active {
+    background: rgba(255, 255, 255, 0.4) !important;
+    transform: scale(0.9);
+}
+
+/* --- 📱 4. 状态栏文字适配 --- */
+/* 如果背景太深，状态栏的 15:58 和电量也要变白 */
+#page-chat-room .status-bar,
+#page-chat-room .status-bar * {
+    color: white !important;
+    fill: white !important;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+}
+
+/* 顺便优化一下返回按钮 */
+.header-glass-btn.left {
+    background: rgba(255, 255, 255, 0.2) !important;
+    color: white !important;
+}
+/* --- 🚨 修改这一段 --- */
+#page-chat-room {
+    /* 删除原来的 background-color: transparent !important; */
+    background-color: #F2F2F7; /* 赋予默认的 iOS 系统灰 */
+    position: fixed !important;
+}
+
+/* 内部的滚动区域和头部依然保持透明，这样才能看到底下的背景舱 */
+#page-chat-room .chat-scroll-area {
+    background-color: transparent !important;
+}
+
+/* 背景舱层级稍微调高到 -1，确保它在容器底色之上，但在内容之下 */
+#chat-room-full-bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0; /* 调成 0 */
+    pointer-events: none;
+    overflow: hidden;
+}
+
+/* 消息行需要提到背景舱上面 */
+.chat-scroll-area {
+    position: relative;
+    z-index: 1; 
+}
+/* --- 🚨 彻底通透补丁：移除模糊，还原清晰背景 --- */
+
+/* 1. 移除头部的磨砂玻璃效果和背景色 */
+#page-chat-room .chat-room-header {
+    background: transparent !important;
+    background-color: transparent !important;
+    backdrop-filter: none !important;        /* 关键：撤销模糊 */
+    -webkit-backdrop-filter: none !important; /* 兼容 iOS */
+    border-bottom: none !important;           /* 移除细线 */
+    box-shadow: none !important;              /* 移除阴影 */
+}
+
+/* 2. 同时确保状态栏也是完全清澈透明的 */
+#page-chat-room .status-bar {
+    background: transparent !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+}
+
+/* 3. 确保背景层延伸到最顶部（防止顶部留白） */
+#chat-room-full-bg {
+    top: 0 !important;
+    height: 100vh !important;
+}
+
+/* 4. 再次加固昵称和状态栏文字的清晰度（发光外挂） */
+#room-contact-name, 
+#page-chat-room .status-bar, 
+#page-chat-room .status-bar * {
+    color: #ffffff !important;
+    text-shadow: 
+        0 1px 8px rgba(0, 0, 0, 0.6), 
+        0 0 12px rgba(255, 255, 255, 0.4) !important;
+}
 </style>
 </head>
 <body>
@@ -5197,8 +6182,12 @@
             </div>
         </div>
 
-        <div class="header-glass-btn right" onclick="showToast('Chat Settings...')">
-            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1-2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+        <div class="header-glass-btn right" onclick="openChatSettings()">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="1"></circle>
+                <circle cx="19" cy="12" r="1"></circle>
+                <circle cx="5" cy="12" r="1"></circle>
+            </svg>
         </div>
     </div>
 
@@ -5206,25 +6195,348 @@
         <div class="chat-time-divider">TODAY</div>
         </div>
 
-    <div class="chat-room-footer">
-        <div class="footer-add-btn">
-            <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+    <div class="chat-room-footer" style="flex-direction: column; height: auto; min-height: 56px; padding: 0;">
+        <div id="quote-preview" class="quote-preview-bar" style="display:none; width: 100%; border-radius: 20px 20px 0 0;">
+            <div class="quote-content-wrapper">
+                <div id="quote-preview-user" class="quote-user-name">Nickname</div>
+                <div id="quote-preview-text" class="quote-text-preview">Message content...</div>
+            </div>
+            <div onclick="cancelQuote()" style="cursor:pointer; padding:5px; color:#8e8e93;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </div>
+        </div>
+
+        <div style="display: flex; align-items: center; width: 100%; padding: 10px 15px; gap: 12px;">
+            <div class="footer-add-btn">
+                <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            </div>
+            <input type="text" id="chat-input-main" class="chat-room-input" placeholder="Type something...">
+            <div class="footer-action-btns">
+                <div class="action-btn ai" onclick="triggerAiGenerate()"><svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71z"/></svg></div>
+                <div class="action-btn send" onclick="handleSendMessage()"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg></div>
+            </div>
+        </div>
+    </div>
+    <div id="multi-select-count" style="position:absolute; top:-30px; left:0; width:100%; text-align:center; font-size:13px; color:#8e8e93; font-weight:600;">已选择 0 条消息</div>
+    <div id="multi-select-bar" class="multi-select-footer">
+        <div class="multi-action-item danger" onclick="batchDelete()">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+            <span>删除</span>
+        </div>
+        <div class="multi-action-item" onclick="batchScreenshot()">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+            <span>截图</span>
+        </div>
+        <div class="multi-action-item" onclick="batchForward()">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 10 20 15 15 20"></polyline><path d="M4 4v7a4 4 0 0 0 4 4h12"></path></svg>
+            <span>转发</span>
+        </div>
+        <div class="multi-action-item" style="color:#8e8e93;" onclick="exitMultiSelect()">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            <span>取消</span>
+        </div>
+    </div>
+</div>
+<div id="menu-overlay" class="menu-overlay" onclick="hideBubbleMenu()"></div>
+
+<div id="bubble-menu" class="bubble-context-menu">
+    <div class="menu-box">
+        <div class="menu-item" onclick="doAction('copy')">
+            <div class="menu-icon-circle"><svg width="20" height="20" viewBox="0 0 24 24" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></div>
+            <span>复制</span>
+        </div>
+        <div class="menu-item" onclick="doAction('quote')">
+            <div class="menu-icon-circle"><svg width="20" height="20" viewBox="0 0 24 24" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg></div>
+            <span>引用</span>
+        </div>
+        <div class="menu-item" onclick="doAction('fav')">
+            <div class="menu-icon-circle"><svg width="20" height="20" viewBox="0 0 24 24" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg></div>
+            <span>收藏</span>
+        </div>
+        <div class="menu-item" onclick="doAction('multi')">
+            <div class="menu-icon-circle"><svg width="20" height="20" viewBox="0 0 24 24" stroke-width="2"><polyline points="9 11 12 14 22 4"></polyline><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path></svg></div>
+            <span>多选</span>
         </div>
         
-        <input type="text" id="chat-input-main" class="chat-room-input" placeholder="Type something...">
-
-        <div class="footer-action-btns">
-            <div class="action-btn ai" onclick="triggerAiGenerate()" title="AI Reply">
-                <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71z"/></svg>
+        <div id="menu-recall" class="menu-item" onclick="doAction('recall')">
+            <div class="menu-icon-circle">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path><path d="M12 7v5l4 2"></path></svg>
             </div>
-            <div class="action-btn send" onclick="handleSendMessage()" title="Send">
-                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+            <span>撤回</span>
+        </div>
+        <div class="menu-item" onclick="doAction('forward')">
+            <div class="menu-icon-circle"><svg width="20" height="20" viewBox="0 0 24 24" stroke-width="2"><polyline points="15 10 20 15 15 20"></polyline><path d="M4 4v7a4 4 0 0 0 4 4h12"></path></svg></div>
+            <span>转发</span>
+        </div>
+        <div class="menu-item" onclick="doAction('delete')">
+            <div class="menu-icon-circle"><svg width="20" height="20" viewBox="0 0 24 24" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></div>
+            <span>删除</span>
+        </div>
+        <div class="menu-item" onclick="hideBubbleMenu()">
+            <div class="menu-icon-circle"><svg width="20" height="20" viewBox="0 0 24 24" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></div>
+            <span>取消</span>
+        </div>
+    </div>
+    <div class="menu-arrow"></div>
+</div>
+<div id="page-forward-picker" class="ios-app-window" style="z-index: 9999; transform: translateY(100%); background: #F2F2F7;">
+    <div class="app-header">
+        <div onclick="closeForwardPicker()" style="color:#007AFF; font-size:16px;">取消</div>
+        <div style="font-weight:700;">选择收件人</div>
+        <div style="width:40px;"></div>
+    </div>
+    
+    <div class="app-body" style="padding: 0;">
+        <div style="padding: 10px 16px; background:#F2F2F7;">
+            <div class="segment-control" style="margin-bottom:0;">
+                <div class="segment-btn active" id="fwd-tab-friends" onclick="switchForwardTab('friends')">最近联系人</div>
+                <div class="segment-btn" id="fwd-tab-groups" onclick="switchForwardTab('groups')">我的群聊</div>
             </div>
         </div>
+        
+        <div id="forward-list-content" style="padding: 0 16px; height: calc(100% - 60px); overflow-y: auto;">
+            </div>
+    </div>
+</div>
+<div id="modal-recalled-viewer" class="ios-alert-mask" style="display:none; align-items:center; z-index:10001;" onclick="this.style.display='none'">
+    <div class="recalled-content-card" onclick="event.stopPropagation()">
+        <div class="recalled-v-label">RECALLED TRACE</div>
+        <div id="recalled-v-text"></div>
+        <div class="alert-btn" style="border-top: 0.5px solid #eee; margin: 0 -25px -25px -25px; padding: 16px; color: #007AFF; font-weight: 700; cursor: pointer;" onclick="document.getElementById('modal-recalled-viewer').style.display='none'">Done</div>
+    </div>
+</div>
+<div id="page-chat-settings" class="ios-app-window" style="background: #F2F2F7; z-index: 9200; transform: translateX(100%);">
+    
+    <div class="app-header" style="background: transparent;">
+    
+        <div onclick="closeChatSettings()" style="color:#007AFF; font-size:16px; display:flex; align-items:center; cursor:pointer; width:60px; text-shadow: 0 0 10px rgba(255,255,255,0.9);">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-left:-5px; filter: drop-shadow(0 0 3px rgba(255,255,255,0.8));">
+                <polyline points="15 18 9 12 15 6"></polyline>
+            </svg>
+            Back
+        </div>
+
+        <div style="font-size:17px; font-weight:600; flex:1; text-align:center; color:#000; text-shadow: 0 0 15px rgba(255,255,255,1), 0 0 5px rgba(255,255,255,0.8);">
+            详细设置
+        </div>
+
+        <div style="width:60px;"></div>
+    </div>
+
+    <div class="app-body" style="padding: 20px 16px; display:block; overflow-y:auto; padding-bottom: 50px;">
+    
+        <div class="tz-group-title">GENERAL</div>
+        
+        <div class="ios-list-group" style="padding: 0; overflow: hidden;">
+
+            <div class="ios-accordion-item">
+                <div class="accordion-header" onclick="toggleSettingItem(this)">
+                    <div class="item-icon" style="background: #007AFF;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></div>
+                    <div class="item-content">
+                        <span class="item-label">背景设置</span>
+                        <div class="item-right"><svg class="accordion-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg></div>
+                    </div>
+                </div>
+                <div class="accordion-content" style="padding: 0;">
+                    <div class="bg-config-container">
+                        <div class="bg-config-row">
+                            <div class="bg-label-group">
+                                <span class="bg-main-title">聊天窗口背景</span>
+                                <span class="bg-sub-hint">支持图片、视频、网络链接</span>
+                            </div>
+                            <div class="bg-preview-box" onclick="openUniversalBgModal('chat')">
+                                <div id="preview-thumb-chat" class="bg-preview-placeholder">点击<br>设置</div>
+                                <div class="bg-edit-badge">CHAT</div>
+                            </div>
+                        </div>
+
+                        <div class="bg-config-row">
+                            <div class="bg-label-group">
+                                <span class="bg-main-title">设置菜单背景</span>
+                                <span class="bg-sub-hint">仅支持图片（文件/URL）</span>
+                            </div>
+                            <div class="bg-preview-box" onclick="openUniversalBgModal('settings')">
+                                <div id="preview-thumb-settings" class="bg-preview-placeholder">点击<br>设置</div>
+                                <div class="bg-edit-badge">MENU</div>
+                            </div>
+                        </div>
+
+                        <div class="bg-action-group">
+                            <div class="bg-reset-btn" onclick="resetChatBackgrounds()">重置</div>
+                            <div class="bg-save-btn" onclick="saveChatBackgroundSettings()">保存更改</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="ios-accordion-item">
+                <div class="accordion-header" onclick="toggleSettingItem(this)">
+                    <div class="item-icon" style="background: #34C759;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+                    <div class="item-content">
+                        <span class="item-label">Ta 的资料</span>
+                        <div class="item-right"><svg class="accordion-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg></div>
+                    </div>
+                </div>
+                <div class="accordion-content">
+                    <div class="sub-setting-btn" onclick="openChatProfileFromSettings()">查看详细名片</div>
+                    <div class="sub-setting-btn" onclick="openEditMotto()">修改备注名</div>
+                </div>
+            </div>
+
+            <div class="ios-accordion-item">
+                <div class="accordion-header" onclick="toggleSettingItem(this)">
+                    <div class="item-icon" style="background: #FF9500;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></div>
+                    <div class="item-content">
+                        <span class="item-label">世界书绑定</span>
+                        <div class="item-right">
+                            <span class="item-value" style="font-size:12px;">Default</span>
+                            <svg class="accordion-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                        </div>
+                    </div>
+                </div>
+                <div class="accordion-content">
+                    <div class="sub-setting-btn" onclick="showToast('正在读取世界线列表...')">切换世界观</div>
+                    <div class="sub-setting-btn" onclick="showToast('记忆碎片已同步')">强制同步记忆</div>
+                </div>
+            </div>
+
+            <div class="ios-accordion-item">
+                <div class="accordion-header" onclick="toggleSettingItem(this)">
+                    <div class="item-icon" style="background: #30B0C7;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg></div>
+                    <div class="item-content">
+                        <span class="item-label">我的资料</span>
+                        <div class="item-right"><svg class="accordion-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg></div>
+                    </div>
+                </div>
+                <div class="accordion-content">
+                    <div class="sub-setting-btn" onclick="showToast('正在打开本我档案...')">编辑我的形象</div>
+                    <div class="sub-setting-btn" onclick="showToast('隐私设置已更新')">聊天隐私设置</div>
+                </div>
+            </div>
+
+            <div class="ios-accordion-item">
+                <div class="accordion-header" onclick="toggleSettingItem(this)">
+                    <div class="item-icon" style="background: #AF52DE;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg></div>
+                    <div class="item-content">
+                        <span class="item-label">美化</span>
+                        <div class="item-right"><svg class="accordion-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg></div>
+                    </div>
+                </div>
+                <div class="accordion-content">
+                    <div class="sub-setting-btn" onclick="showToast('粒子特效：开')">开启氛围粒子</div>
+                    <div class="sub-setting-btn" onclick="showToast('气泡样式已切换')">切换气泡风格</div>
+                </div>
+            </div>
+
+            <div class="ios-accordion-item">
+                <div class="accordion-header" onclick="toggleSettingItem(this)">
+                    <div class="item-icon" style="background: #5856D6;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M1 1l22 22"/><path d="M1 23L23 1"/><path d="M12 6a6 6 0 0 0-6 6"/><path d="M18 12a6 6 0 0 0-6-6"/></svg></div>
+                    <div class="item-content">
+                        <span class="item-label">感知</span>
+                        <div class="item-right"><svg class="accordion-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg></div>
+                    </div>
+                </div>
+                <div class="accordion-content">
+                    <div class="sub-setting-btn" onclick="showToast('Haptic Touch：增强')">触感反馈强度</div>
+                    <div class="sub-setting-btn" onclick="showToast('传感器校准中...')">心跳同步校准</div>
+                </div>
+            </div>
+
+            <div class="ios-accordion-item">
+                <div class="accordion-header" onclick="toggleSettingItem(this)">
+                    <div class="item-icon" style="background: #8E8E93;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg></div>
+                    <div class="item-content">
+                        <span class="item-label">线下</span>
+                        <div class="item-right"><svg class="accordion-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg></div>
+                    </div>
+                </div>
+                <div class="accordion-content">
+                    <div class="sub-setting-btn" onclick="showToast('AR 投影需连接硬件')">AR 投影模式</div>
+                    <div class="sub-setting-btn" onclick="showToast('位置共享已请求')">发起位置共享</div>
+                </div>
+            </div>
+
+            <div class="ios-accordion-item">
+                <div class="accordion-header" onclick="toggleSettingItem(this)">
+                    <div class="item-icon" style="background: #FF2D55;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></div>
+                    <div class="item-content" style="border:none;">
+                        <span class="item-label">聊天记录</span>
+                        <div class="item-right"><svg class="accordion-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg></div>
+                    </div>
+                </div>
+                <div class="accordion-content">
+                    <div class="sub-setting-btn" onclick="showToast('正在搜索...')">查找内容</div>
+                    <div class="sub-setting-btn" onclick="showToast('记录已打包导出')">导出备份</div>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="danger-zone-container">
+            <div class="standalone-btn btn-blue-text" onclick="triggerClearHistory()">
+                清空聊天记录
+            </div>
+            
+            <div class="standalone-btn btn-blue-text" onclick="showToast('已拉黑该用户')">
+                拉黑好友
+            </div>
+            
+            <div class="standalone-btn btn-red-text" onclick="triggerDeleteFriend()">
+                删除好友
+            </div>
+        </div>
+
+        <div style="text-align:center; font-size:11px; color:#C7C7CC; margin-top:25px; padding-bottom:40px;">
+            SECURE CONNECTION v4.2<br>ID: <span id="setting-uid-display">UNKNOWN</span>
+        </div>
+
+    </div>
+</div>
+<div id="modal-universal-uploader" class="ios-alert-mask" style="align-items:flex-end; z-index:20000;">
+    <div class="modal-content">
+        <div class="modal-top">
+            <div style="display:flex; flex-direction:column;">
+                <span class="modal-h1" id="uploader-title">设置背景</span>
+                <span id="uploader-target-tag" class="uploader-type-tag">CHAT WINDOW</span>
+            </div>
+            <span class="modal-done" onclick="closeUniversalUploader()">取消</span>
+        </div>
+
+        <div class="url-input-wrapper">
+            <input type="text" id="universal-url-in" class="ios-input" placeholder="输入图片或视频的 URL...">
+            <button class="ios-btn secondary" style="margin-top:8px;" onclick="handleUniversalUrl()">使用此链接</button>
+        </div>
+
+        <div style="text-align:center; color:#ccc; font-size:12px; margin-bottom:15px; font-weight:800;">或</div>
+
+        <input type="file" id="universal-file-in" hidden onchange="handleUniversalFile(this)">
+        <button class="ios-btn primary" onclick="document.getElementById('universal-file-in').click()">从相册选择文件</button>
+        
+        <div style="height:30px;"></div>
     </div>
 </div>
 
 <script>
+    // 🚨 必须放在 <script> 标签的最顶部，不要放在任何 function 内部！
+var currentUploaderTarget = 'chat'; 
+var tempBgData = {
+    chat: { type: 'img', data: null },
+    settings: { type: 'img', data: null }
+};
+
+// ... 剩下的其他代码 ...
+    // --- 1. 全局变量存储转发数据 ---
+window.pendingForwardData = []; 
+window.forwardTabMode = 'friends';
+    var currentQuoteData = null; // 存储当前引用的数据
+
+function cancelQuote() {
+    window.currentQuoteData = null;
+    const preview = document.getElementById('quote-preview');
+    if (preview) preview.style.display = 'none';
+}
+    // --- 🚨 物理置顶：全局操作变量 ---
+var currentActiveBubble = null;
     // 确保这一行在所有函数（如 initChatMsgPanel）的上方
 var isMsgPanelRendering = false;
     // 在 script 脚本开头添加
@@ -5533,16 +6845,18 @@ const storeName = "wallpapers";
 
 function openDB() {
     return new Promise((resolve, reject) => {
-        const req = indexedDB.open(dbName, 2); // 升级到版本 2
-        req.onupgradeneeded = (e) => {
-            const db = e.target.result;
-            if (!db.objectStoreNames.contains(storeName)) {
-                db.createObjectStore(storeName, { keyPath: "id" });
+        const req = indexedDB.open("WallDB", 2); // 这里的版本号要对应你现在的升级到版本 2
+        req.onsuccess = (e) => {
+            window.db = e.target.result; // 将数据库实例挂载到全局
+            console.log("数据库连接成功，开始恢复背景...");
+            
+            // ❗ 核心修改：数据库一开门，立刻执行恢复背景
+            if (typeof initBgSettings === 'function') {
+                initBgSettings(); 
             }
-            // 核心：创建聊天记录仓库，以联系人 ID 为键
-            if (!db.objectStoreNames.contains("chat_history")) {
-                db.createObjectStore("chat_history", { keyPath: "contactId" });
-            }
+            window.db = e.target.result;
+            // ❗ 重点：在这里调用，确保 IndexedDB 可用时立刻回填预览
+            applyBackgroundsToUI();
         };
         req.onsuccess = () => resolve(req.result);
         req.onerror = () => reject(req.error);
@@ -5638,6 +6952,7 @@ async function loadFromDB(key) {
         renderHistory();
         await initCharApp();
         await initWorldApp();
+        applyBackgroundsToUI();
     }
 
     // ==========================================
@@ -6033,8 +7348,6 @@ function switchTab(tab) {
             t.textContent = msg;
             t.classList.add('show');
             setTimeout(() => t.classList.remove('show'), 2000);
-        } else {
-            alert(msg); // 如果找不到toast元素，用原生弹窗兜底
         }
     }
 
@@ -6062,73 +7375,63 @@ function switchTab(tab) {
     // 3. 渲染历史记录列表
     // === 渲染历史记录列表 (修复 type is not defined 报错) ===
     async function renderHistory() {
-        const grid = document.getElementById('wall-history-grid');
-        if(!grid) return;
+    const grid = document.getElementById('wall-history-grid');
+    if(!grid) return;
+    
+    // 从数据库读壁纸列表
+    let history = await loadFromDB('history_list') || [];
+    grid.innerHTML = ""; 
+
+    history.forEach((item) => {
+        const div = document.createElement('div');
+        div.className = 'history-item';
         
-        let history = await loadFromDB('history_list') || [];
-        grid.innerHTML = ""; 
-
-        history.forEach((item) => {
-            const div = document.createElement('div');
-            div.className = 'history-item';
-            
-            let badge = '';
-            let content = '';
-            
-            if(item.type === 'vid') {
-                badge = `<div class="vid-badge">LIVE</div>`;
-                // 优先使用缩略图，没有则用视频兜底
-                if(item.thumb && item.thumb.startsWith('data:image')) {
-                     content = `<img src="${item.thumb}" style="opacity:0.8;">`;
-                } else {
-                     content = `<video src="${item.data}" autoplay loop muted playsinline style="width:100%; height:100%; object-fit:cover; pointer-events:none;"></video>`;
-                }
+        let badge = '';
+        let content = '';
+        
+        // 渲染视频或图片预览
+        if(item.type === 'vid') {
+            badge = `<div class="vid-badge">LIVE</div>`;
+            // 如果有缩略图用缩略图，没有就用视频预览
+            if(item.thumb && item.thumb.startsWith('data:image')) {
+                 content = `<img src="${item.thumb}" style="opacity:0.8;">`;
             } else {
-                content = `<img src="${item.data}">`;
+                 content = `<video src="${item.data}" autoplay loop muted playsinline style="width:100%; height:100%; object-fit:cover; pointer-events:none;"></video>`;
             }
+        } else {
+            content = `<img src="${item.data}">`;
+        }
 
-            div.innerHTML = `${content}${badge}`;
+        div.innerHTML = `${content}${badge}`;
 
-            // --- 点击历史记录应用壁纸 ---
-            div.onclick = () => {
-                // 1. 恢复预览图
-                if(item.type === 'img') {
-                    tempImg = item.data;
-                    document.getElementById('preview-img').src = item.data;
-                } else {
-                    tempVid = item.data;
-                    document.getElementById('preview-vid').src = item.data;
-                }
-                
-                // 2. 切换 Tab
-                switchWallTab(item.type);
-                
-                // 3. 应用壁纸 (核心修复：这里全部改用 item.type 和 item.data)
+        // 点击应用壁纸的逻辑
+        div.onclick = () => {
+            if(item.type === 'img') {
+                tempImg = item.data;
+                document.getElementById('preview-img').src = item.data;
+                document.body.style.background = `url(${item.data}) no-repeat center center fixed`;
+                document.body.style.backgroundSize = "cover";
                 const bgVid = document.getElementById('bg-video');
-                if(item.type === 'img') {
-                    document.body.style.background = `url(${item.data}) no-repeat center center fixed`;
-                    document.body.style.backgroundSize = "cover";
-                    if(bgVid) { bgVid.style.display = 'none'; bgVid.src = ""; }
-                    
-                    // 👇👇👇 重点修改了这里 👇👇👇
-                    localStorage.setItem('user_wall_type', item.type); 
-                    saveToDB('current_wall_data', item.data);
-                } else {
-                    if(bgVid) {
-                        bgVid.src = item.data;
-                        bgVid.style.display = 'block';
-                        bgVid.play();
-                    }
-                    // 👇👇👇 重点修改了这里 👇👇👇
-                    localStorage.setItem('user_wall_type', item.type);
-                    saveToDB('current_wall_data', item.data);
+                if(bgVid) { bgVid.style.display = 'none'; bgVid.src = ""; }
+            } else {
+                tempVid = item.data;
+                document.getElementById('preview-vid').src = item.data;
+                const bgVid = document.getElementById('bg-video');
+                if(bgVid) {
+                    bgVid.src = item.data;
+                    bgVid.style.display = 'block';
+                    bgVid.play();
                 }
-                showToast("Restored!");
-            };
+            }
+            switchWallTab(item.type);
+            localStorage.setItem('user_wall_type', item.type);
+            saveToDB('current_wall_data', item.data);
+            showToast("Restored!");
+        };
 
-            grid.appendChild(div);
-        });
-    }
+        grid.appendChild(div);
+    });
+}
 
     // 4. 初始化加载一次历史
     setTimeout(renderHistory, 1000);
@@ -6490,9 +7793,7 @@ function switchTab(tab) {
         const val = parseFloat(el.value);
         const min = parseFloat(el.min) || 0;
         const max = parseFloat(el.max) || 100;
-        // 计算百分比 (0 - 100)
         const percent = ((val - min) / (max - min)) * 100;
-        // 告诉 CSS 现在的百分比是多少
         el.style.setProperty('--percent', percent + '%');
     }
 
@@ -7946,8 +9247,8 @@ async function initChatMsgPanel() {
             ring.appendChild(item);
         });
 
-        // B. 渲染消息预览列表 (修复重复问题)
-        msgList.innerHTML = ""; // 彻底清空！
+        // B. 渲染消息预览列表
+        msgList.innerHTML = ""; 
         let conversationData = [];
         const pinnedIds = JSON.parse(localStorage.getItem('chat_pinned_ids') || "[]");
 
@@ -7956,7 +9257,7 @@ async function initChatMsgPanel() {
             if (history && history.length > 0) {
                 conversationData.push({
                     contact: f,
-                    lastMsg: history[history.length - 1],
+                    lastMsg: history[history.length - 1], // 拿到最后一条
                     isPinned: pinnedIds.includes(f.id)
                 });
             }
@@ -7967,7 +9268,7 @@ async function initChatMsgPanel() {
             return;
         }
 
-        // 排序并生成列表
+        // 排序：置顶优先，其次按时间倒序
         conversationData.sort((a, b) => {
             if (a.isPinned !== b.isPinned) return a.isPinned ? -1 : 1;
             return b.lastMsg.timestamp - a.lastMsg.timestamp;
@@ -7978,9 +9279,19 @@ async function initChatMsgPanel() {
         groupWrapper.style.margin = "0 16px";
 
         conversationData.forEach(item => {
-            // 时间处理 (2026-01-19 16:00 格式)
+            // 时间处理
             const d = new Date(item.lastMsg.timestamp);
             const fullTimeStr = `${d.getFullYear()}-${(d.getMonth()+1).toString().padStart(2,'0')}-${d.getDate().toString().padStart(2,'0')} ${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`;
+
+            // --- 🌈 核心修改：计算预览文字 ---
+            let previewText = "";
+            if (item.lastMsg.recalled) {
+                // 如果最后一条是撤回的
+                previewText = item.lastMsg.role === 'user' ? "你撤回了一条消息" : "对方撤回了一条消息";
+            } else {
+                // 如果是正常消息
+                previewText = (item.lastMsg.role === 'user' ? '你: ' : '') + item.lastMsg.text;
+            }
 
             const wrapper = document.createElement('div');
             wrapper.className = `swipe-item-wrapper ${item.isPinned ? 'is-pinned' : ''}`;
@@ -7999,7 +9310,7 @@ async function initChatMsgPanel() {
                                 <span style="font-size:9px; color:#8E8E93; white-space:nowrap;">${fullTimeStr}</span>
                             </div>
                             <span class="contact-preview" style="font-size:13px; opacity:0.7;">
-                                ${item.lastMsg.role === 'user' ? '你: ' : ''}${item.lastMsg.text}
+                                ${previewText} 
                             </span>
                         </div>
                     </div>
@@ -8307,15 +9618,28 @@ function openChatRoom(contact) {
     const page = document.getElementById('page-chat-room');
     if (!page) return;
 
+    // 1. 设置当前聊天对象（物理锁定 ID）
     window.currentChattingWith = contact;
+    
+    // 2. 填充基础资料
     document.getElementById('room-contact-name').textContent = contact.name;
     document.getElementById('room-contact-avatar').src = contact.avatar;
     
-    renderMessages(); // 渲染消息列表
+    // 3. 渲染历史消息
+    renderMessages(); 
 
-    page.style.display = 'flex'; // 1. 显形
-    void page.offsetWidth;        // 2. 强制触发重绘 (关键点！)
-    page.classList.add('active-room'); // 3. 触发 CSS 动画
+    // 4. 执行滑入动画
+    page.style.display = 'flex';
+    void page.offsetWidth; 
+    page.classList.add('active-room');
+
+    // 🚨 【关键修复】：只要进房间，就必须强制驱动背景引擎渲染一次
+    // 这样即便刷新了，只要你点进来，背景就会从 IndexedDB 重新冒出来
+    if(typeof applyBackgroundsToUI === 'function') {
+        applyBackgroundsToUI();
+    }
+    
+    console.log("System: 已进入对话窗口，背景引擎同步中...");
 }
 
 // 对应的关闭函数也要改
@@ -8333,32 +9657,21 @@ function closeChatRoom() {
 // 3. 处理发送消息
 async function handleSendMessage() {
     const input = document.getElementById('chat-input-main');
-    const container = document.getElementById('chat-messages-container');
     const text = input.value.trim();
     if (!text || !window.currentChattingWith) return;
 
-    // 1. 创建消息对象
     const msgObj = { 
         role: "user", 
         text: text, 
-        timestamp: Date.now() 
+        timestamp: Date.now(),
+        quote: window.currentQuoteData 
     };
 
-    // 2. 物理保存到数据库
     await saveChatMessage(window.currentChattingWith.id, msgObj);
-
-    // 3. 立即渲染界面气泡
-    const userMsg = document.createElement('div');
-    userMsg.className = "msg-row user";
-    userMsg.innerHTML = `<div class="bubble">${text}<div class="star-decor-css"></div></div>`;
-    container.appendChild(userMsg);
-    
+    cancelQuote();
+    renderMessages(); 
     input.value = "";
     input.focus();
-    container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
-
-    // 4. 重要：同步刷新消息列表的“最后一条消息”预览
-    initChatMsgPanel(); 
 }
 
 // 4. 联觉：从聊天室直接点头像看名片
@@ -8390,31 +9703,60 @@ async function renderMessages() {
     if (!container || !window.currentChattingWith) return;
 
     const contact = window.currentChattingWith;
-    // 1. 从数据库读取该角色的历史
     const history = await getChatHistory(contact.id);
 
-    // 2. 清空容器并根据第一条消息显示时间戳
-    const tz = localStorage.getItem('user_timezone');
-    const startTime = history.length > 0 ? new Date(history[0].timestamp) : new Date();
-    const datePart = startTime.toLocaleDateString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit', timeZone: tz || undefined });
-    const timePart = startTime.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: tz || undefined });
-    
-    container.innerHTML = `<div class="chat-time-divider">${datePart} ${timePart}</div>`;
+    container.innerHTML = `<div class="chat-time-divider">TODAY</div>`;
 
-    // 3. 如果没历史，存入一条初始欢迎语
-    if (history.length === 0) {
-        const welcomeText = `Hey! This is ${contact.name}. How can I help you today?`;
-        const welcomeMsg = { role: "opponent", text: welcomeText, timestamp: Date.now() };
-        await saveChatMessage(contact.id, welcomeMsg);
-        history.push(welcomeMsg);
-    }
+    history.forEach(msg => { // 这里的变量名是 msg
+        // --- 1. 撤回消息处理 (灰色小字条) ---
+        // 在 renderMessages 的 history.forEach(msg => { ... }) 内部最上方插入：
+        if (msg.recalled) {
+            const hintDiv = document.createElement('div');
+            hintDiv.className = 'recalled-msg-hint';
+            const sender = msg.role === 'user' ? "你" : contact.name;
+            
+            // 💡 重点：使用 encodeURIComponent 处理内容，防止特殊字符搞崩代码
+            const safeContent = encodeURIComponent(msg.text);
+            
+            hintDiv.innerHTML = `
+                <span>${sender} 撤回了一条消息 
+                    <i style="color:#007AFF; font-style:normal; margin-left:4px; cursor:pointer;" 
+                    onclick="viewRecalledTrace(decodeURIComponent('${safeContent}'))">查看</i>
+                </span>`;
+            
+            container.appendChild(hintDiv);
+            return; // 结束当前循环，不画气泡
+        }
 
-    // 4. 循环历史记录渲染所有气泡
-    history.forEach(msg => {
+        // --- 2. 正常消息气泡处理 ---
         const msgDiv = document.createElement('div');
         msgDiv.className = `msg-row ${msg.role === 'user' ? 'user' : 'opponent'}`;
-        let inner = msg.role === 'opponent' ? `<img src="${contact.avatar}" class="chat-avatar-img">` : "";
-        inner += `<div class="bubble">${msg.text}<div class="star-decor-css"></div></div>`;
+        
+        let quoteHtml = "";
+        if (msg.quote) {
+            quoteHtml = `<div class="bubble-quote-box">
+                <div style="font-weight:700; font-size:10px;">Reply to ${msg.quote.user}</div>
+                <div style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; opacity:0.8;">${msg.quote.text}</div>
+            </div>`;
+        }
+
+        const isFwdClass = msg.isForwarded ? 'is-forwarded' : '';
+        const fwdLabel = msg.isForwarded ? `<div class="forward-label"><svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="3"><polyline points="15 10 20 15 15 20"></polyline><path d="M4 4v7a4 4 0 0 0 4 4h12"></path></svg> 转发</div>` : '';
+
+        let inner = "";
+        if (msg.role === 'opponent') {
+            inner += `<img src="${contact.avatar}" class="chat-avatar-img">`;
+        }
+
+        inner += `
+            <div class="bubble ${isFwdClass}" data-ts="${msg.timestamp}" onclick="showBubbleMenu(this, event)">
+                ${fwdLabel}
+                ${quoteHtml}
+                <div class="msg-text-main">${msg.text}</div>
+                <div class="star-decor-css"></div>
+            </div>
+        `;
+
         msgDiv.innerHTML = inner;
         container.appendChild(msgDiv);
     });
@@ -8423,15 +9765,222 @@ async function renderMessages() {
 }
 
 // --- 🚑 补全：缺失的 AI 生成占位函数 (防止报错) ---
-function triggerAiGenerate() {
-    const input = document.getElementById('chat-input-main');
-    if(input.value) {
-        showToast("AI is analyzing context...");
-        // 这里后续对接你的 GPT 逻辑
-    } else {
-        showToast("Please type something first");
+// --- 🤖 AI 联动核心：支持多条消息连续回复版 ---
+async function triggerAiGenerate() {
+    const container = document.getElementById('chat-messages-container');
+    const contact = window.currentChattingWith;
+
+    if (!contact) { showToast("💡 请先选择聊天对象"); return; }
+    const apiKey = localStorage.getItem('gpt_key');
+    const apiUrl = (localStorage.getItem('gpt_url') || "https://api.openai.com/v1").replace(/\/+$/, "");
+    if (!apiKey) { showToast("🔑 请先保存 API Key"); return; }
+
+    const capturedQuote = window.currentQuoteData ? { ...window.currentQuoteData } : null;
+    if (capturedQuote) cancelQuote(); 
+
+    // --- 🎭 注入灵魂：不可预测的聊天节奏 ---
+    const messages = [{ 
+        role: "system", 
+        content: `你是${contact.name}。背景：${contact.desc}。
+        【极致活人社交规范】：
+        1. 你是活生生的人，聊天条数必须【完全随机】！严禁每轮都回复相同数量的消息。
+        2. 节奏控制：
+           - 有时候你很有表达欲，会连续弹出 3-5 条短促的轰炸式消息。
+           - 有时候你只是随口一说，仅仅回复 1 条简洁的消息。
+           - 有时候你会发一个长段落。
+        3. 【禁令】：绝对不允许出现动作描写，严禁使用括号 ( ) 或星号 * * 描述行为。只输出对话文本。
+        4. 语言风格：极致 E 人/话痨（除非人设要求），多用语气词和Emoji。
+        5. 【引用】：只在必要时针对回复，格式为 [QUOTE: 文本]，不要滥用。
+        6.像真实人类在微信/QQ聊天一样。
+        7. 【严禁使用引号】：绝对不要给你的消息加双引号或单引号！
+        8. 【严禁书面语】：不要用“首先、其次”，要口语化，可以使用空格分隔短句。
+        9. 回复简短，不要长篇大论。`
+    }];
+
+    const contextLimit = parseInt(localStorage.getItem('gpt_context') || "10");
+    let history = await getChatHistory(contact.id) || [];
+    history.slice(-contextLimit).forEach(msg => {
+        if (!msg.recalled) { 
+            messages.push({ role: msg.role === 'user' ? 'user' : 'assistant', content: msg.text });
+        }
+    });
+
+    // 这一步是把用户的引用发给 AI，让 AI 知道用户引用了啥
+    let userPrompt = window.currentQuoteData ? `[针对回复: "${window.currentQuoteData.text}"]` : "(继续找话题聊)";
+    if (window.currentQuoteData) cancelQuote(); // 发送后清除引用状态
+    messages.push({ role: "user", content: userPrompt });
+
+    try {
+        const response = await fetch(`${apiUrl}/chat/completions`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+            body: JSON.stringify({ 
+                model: localStorage.getItem('gpt_model') || "gpt-3.5-turbo", 
+                messages: messages, 
+                temperature: 0.88, // 稍微提高一点创造力      
+                presence_penalty: 0.6 
+            })
+        });
+
+        const data = await response.json();
+        if (data.error) throw new Error(data.error.message);
+
+        let fullReply = data.choices[0].message.content.trim();
+        
+        // 🚨 暴力清洗引号 (双保险)
+        fullReply = fullReply.replace(/^["“]|["”]$/g, '').replace(/“|”|"/g, '');
+
+        const segments = fullReply.split(/\n+/).filter(s => s.trim().length > 0);
+        const typos = ["那啥", "e", "不是", "那个", "wait", "。。", "emm", "1", "啊"];
+        
+        // 🛑【新增】撤回锁：确保一轮回复中最多只撤回一次
+        let hasTriggeredRecall = false;
+
+        for (let i = 0; i < segments.length; i++) {
+            let textPart = segments[i].trim();
+            
+            // --- 解析 AI 返回的引用格式 ---
+            let aiQuote = null;
+            // 正则匹配 [QUOTE: ...]
+            const quoteMatch = textPart.match(/\[QUOTE:\s*(.*?)\s*\]/);
+            if (quoteMatch) {
+                // 如果 AI 决定引用，我们提取出来
+                aiQuote = { user: "You", text: quoteMatch[1] };
+                // 把指令部分从正文中删掉，只保留回复内容
+                textPart = textPart.replace(quoteMatch[0], "").trim();
+            }
+
+            // 再次清洗单句引号
+            textPart = textPart.replace(/['"“‘”’]/g, ""); 
+            
+            if (!textPart) continue; 
+
+            // 🌟【核心逻辑优化】：手滑撤回概率控制
+            // 条件：
+            // 1. 随机数 < 0.15 (15%概率)
+            // 2. 本轮还没撤回过 (!hasTriggeredRecall)
+            // 3. 句子长度 > 1 (只有一个字就算了，撤回没意义)
+            if (Math.random() < 0.15 && !hasTriggeredRecall && textPart.length > 1) {
+                
+                hasTriggeredRecall = true; // 🔒 上锁，后面几句不许再撤回了
+
+                let fakeContent;
+                // 情况A：话没说完 (模拟打字一半发出)
+                if (textPart.length > 3 && Math.random() > 0.4) {
+                    const cutIndex = Math.ceil(textPart.length / 2);
+                    fakeContent = textPart.substring(0, cutIndex);
+                } 
+                // 情况B：发错词了
+                else {
+                    fakeContent = typos[Math.floor(Math.random() * typos.length)];
+                }
+
+                // 1. 发送【残次品】
+                const fakeMsg = { 
+                    role: "opponent", 
+                    text: fakeContent, 
+                    timestamp: Date.now() + i, 
+                    recalled: false 
+                };
+                
+                await saveChatMessage(contact.id, fakeMsg);
+                appendMessageToUI(fakeMsg, contact); 
+                container.scrollTop = container.scrollHeight;
+
+                // 2. 停顿 (真人反应时间)
+                await new Promise(r => setTimeout(r, 800 + Math.random() * 600));
+
+                // 3. 执行撤回
+                await updateMessageRecallStatus(contact.id, fakeMsg.timestamp, true);
+                
+                // 视觉刷新：替换为灰色撤回条
+                const lastBubble = container.lastElementChild;
+                if(lastBubble) {
+                    const safeContent = encodeURIComponent(fakeContent);
+                    lastBubble.outerHTML = `
+                        <div class="recalled-msg-hint" style="animation: msgFadeUp 0.3s ease;">
+                            <span>${contact.name} 撤回了一条消息 
+                                <i style="color:#007AFF; font-style:normal; margin-left:4px; cursor:pointer;" 
+                                onclick="viewRecalledTrace(decodeURIComponent('${safeContent}'))">查看</i>
+                            </span>
+                        </div>`;
+                }
+
+                // 4. 撤回后稍作停顿，再发正确的
+                await new Promise(r => setTimeout(r, 600));
+            }
+
+            // --- 发送【正确】的消息 ---
+            const typingId = "typing-" + Date.now();
+            renderTypingIndicator(typingId, contact.avatar, container);
+            
+            // 模拟打字耗时
+            await new Promise(res => setTimeout(res, 400 + textPart.length * 60)); 
+            
+            const typingNode = document.getElementById(typingId);
+            if (typingNode) typingNode.remove();
+
+            const msgObj = { 
+                role: "opponent", 
+                text: textPart, 
+                quote: aiQuote, // ✅ 这里传入 AI 的引用对象
+                timestamp: Date.now() 
+            };
+
+            await saveChatMessage(contact.id, msgObj);
+            appendMessageToUI(msgObj, contact);
+            container.scrollTop = container.scrollHeight;
+
+            if (i < segments.length - 1) await new Promise(res => setTimeout(res, 500));
+        }
+
+        if (typeof initChatMsgPanel === 'function') initChatMsgPanel();
+
+    } catch (e) {
+        console.error("AI Error:", e);
     }
 }
+
+// 辅助：渲染三点思考动画
+function renderTypingIndicator(id, avatar, container) {
+    const typingDiv = document.createElement('div');
+    typingDiv.className = "msg-row opponent";
+    typingDiv.id = id;
+    typingDiv.innerHTML = `
+        <img src="${avatar}" class="chat-avatar-img">
+        <div class="bubble" style="padding: 12px 20px;">
+            <div class="typing-dots"><span></span><span></span><span></span></div>
+        </div>
+    `;
+    container.appendChild(typingDiv);
+    container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
+}
+// 辅助：渲染消息气泡 (含引用、点击菜单、星星)
+function appendMessageToUI(msg, contact) {
+    const container = document.getElementById('chat-messages-container');
+    const msgDiv = document.createElement('div');
+    msgDiv.className = `msg-row ${msg.role === 'user' ? 'user' : 'opponent'}`;
+    
+    let quoteHtml = "";
+    if (msg.quote) {
+        quoteHtml = `
+            <div class="bubble-quote-box">
+                <div style="font-weight:700; font-size:10px; margin-bottom:2px;">Reply to ${msg.quote.user}</div>
+                <div style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${msg.quote.text}</div>
+            </div>
+        `;
+    }
+
+    let inner = msg.role === 'opponent' ? `<img src="${contact.avatar}" class="chat-avatar-img">` : "";
+    inner += `<div class="bubble" onclick="showBubbleMenu(this, event)">
+                ${quoteHtml}
+                <div class="msg-text-main">${msg.text}</div>
+                <div class="star-decor-css"></div>
+              </div>`;
+    msgDiv.innerHTML = inner;
+    container.appendChild(msgDiv);
+}
+
 // --- 🚑 滑动系统全局变量 ---
 let touchStartX = 0;
 let currentSwipeEl = null;
@@ -8629,6 +10178,767 @@ function confirmVibeOpponent(char) {
     if (typeof initVibeGrid === 'function') {
         initVibeGrid();
         showToast(`已连接到 ${char.name} 的意识流`);
+    }
+}
+
+// 1. 修改 renderMessages 和 handleSendMessage 逻辑
+// 在生成 bubble 的 HTML 时，统一加上 onclick="showBubbleMenu(this, event)"
+// 比如：inner += `<div class="bubble" onclick="showBubbleMenu(this, event)">...</div>`;
+
+function showBubbleMenu(el, e) {
+    if (e) e.stopPropagation();
+
+    // --- 🚨 核心修复：如果正在多选，不准弹出菜单，改为选择逻辑 ---
+    const row = el.closest('.msg-row');
+    if (row && row.classList.contains('multi-selecting')) {
+        row.classList.toggle('selected'); // 直接切换选中状态
+        return; // 立即返回，不执行下面的弹出菜单逻辑
+    }
+    if (row && row.classList.contains('multi-selecting')) {
+        row.classList.toggle('selected');
+        refreshMultiSelectCount(); // 👈 别忘了这里也要加
+        return;
+    }
+    
+    
+
+    window.currentActiveBubble = el; 
+    
+    const menu = document.getElementById('bubble-menu');
+    const overlay = document.getElementById('menu-overlay');
+    if (!menu || !overlay) return;
+
+    const isUser = el.closest('.msg-row').classList.contains('user');
+    const recallBtn = document.getElementById('menu-recall');
+    if (recallBtn) recallBtn.style.display = isUser ? 'flex' : 'none';
+
+    const rect = el.getBoundingClientRect();
+    menu.style.display = 'flex';
+    overlay.style.display = 'block';
+    
+    let left = rect.left + (rect.width / 2) - 130;
+    let top = rect.top - 140;
+
+    if (left < 10) left = 10;
+    if (left + 260 > window.innerWidth) left = window.innerWidth - 270;
+    if (top < 80) top = rect.bottom + 15;
+
+    menu.style.left = left + 'px';
+    menu.style.top = top + 'px';
+}
+
+function hideBubbleMenu() {
+    const menu = document.getElementById('bubble-menu');
+    const overlay = document.getElementById('menu-overlay');
+    
+    if (menu) menu.style.display = 'none';
+    if (overlay) overlay.style.display = 'none';
+    
+    // 清除全局引用的变量
+    window.currentActiveBubble = null;
+    
+    console.log("System: Context menu closed.");
+}
+
+// 2. 功能执行中心
+function doAction(type) {
+    var el = window.currentActiveBubble; 
+    if (!el) return;
+    
+    // 获取纯净文字
+    const textNode = el.querySelector('.msg-text-main') || el.querySelector('.msg-text-content') || el;
+    const textToCopy = textNode.innerText;
+    
+    const isUser = el.closest('.msg-row').classList.contains('user');
+    const senderName = isUser ? "You" : (window.currentChattingWith ? window.currentChattingWith.name : "Opponent");
+
+    switch(type) {
+        case 'copy':
+            copyToClipboard(textToCopy);
+            break;
+
+        case 'quote':
+            document.getElementById('quote-preview-user').textContent = senderName;
+            document.getElementById('quote-preview-text').textContent = textToCopy;
+            document.getElementById('quote-preview').style.display = 'flex';
+            window.currentQuoteData = { user: senderName, text: textToCopy };
+            document.getElementById('chat-input-main').focus();
+            break;
+
+        case 'multi':
+            // 🚨 核心：点击菜单中的“多选”会触发这里
+            enterMultiSelect(); 
+            break;
+
+        case 'delete':
+            el.closest('.msg-row').remove();
+            showToast("已删除");
+            break;
+        
+        case 'forward': 
+            const text = el.querySelector('.msg-text-main, .msg-text-content, .bubble').innerText;
+            openForwardPicker([{ text: text }]); 
+            break;
+        
+        case 'recall':
+            // 1. 获取当前气泡的时间戳
+            const ts = el.getAttribute('data-ts'); 
+            const contactId = window.currentChattingWith.id;
+
+            if(!ts) { showToast("定位失败"); return; }
+
+            // 2. 调用 iOS 确认弹窗
+            showIOSConfirm("撤回消息", "确定要撤回吗？", "撤回", async () => {
+                // 3. 更新数据库中的状态
+                await updateMessageRecallStatus(contactId, ts, true);
+                
+                // 4. 【核心修复】：立刻重新驱动渲染器，刷新聊天界面
+                await renderMessages(); 
+                
+                showToast("已撤回一条消息");
+                
+                // 5. 同步更新消息列表的预览（可选）
+                if (typeof initChatMsgPanel === 'function') initChatMsgPanel();
+            });
+            break;
+    }
+    hideBubbleMenu(); // 执行完任何动作都要关掉菜单
+}
+
+// --- 1. 进入多选模式 ---
+function enterMultiSelect() {
+    console.log("System: Entering Multi-select mode...");
+    const rows = document.querySelectorAll('.msg-row');
+    const footer = document.querySelector('.chat-room-footer');
+    const multiBar = document.getElementById('multi-select-bar');
+
+    if (!multiBar) return;
+
+    rows.forEach(row => {
+        row.classList.add('multi-selecting');
+        
+        // 动态插入勾选框
+        if (!row.querySelector('.msg-check-box')) {
+            const check = document.createElement('div');
+            check.className = 'msg-check-box';
+            // 点击圆圈直接选择
+            check.onclick = (e) => {
+                e.stopPropagation();
+                row.classList.toggle('selected');
+            };
+            row.appendChild(check);
+        }
+        
+        // 注意：这里不需要再给 row 绑定 onclick 了
+        // 因为气泡自带的 showBubbleMenu 已经被我们改成了“转发器”
+    });
+
+    if (footer) footer.style.display = 'none'; 
+    multiBar.style.display = 'flex'; 
+}
+
+// 修改你的 doAction 函数
+// 在 doAction 的 switch(type) 里找到 'multi':
+// case 'multi': enterMultiSelect(); break;
+
+// --- 2. 退出多选模式 ---
+function exitMultiSelect() {
+    console.log("System: Exiting Multi-select mode...");
+    const rows = document.querySelectorAll('.msg-row');
+    const footer = document.querySelector('.chat-room-footer');
+    const multiBar = document.getElementById('multi-select-bar');
+
+    rows.forEach(row => {
+        // 🚨 核心：移除所有相关的类名
+        row.classList.remove('multi-selecting', 'selected');
+        
+        // 彻底清空多选模式下的点击事件，恢复气泡原本的菜单功能
+        row.onclick = null; 
+    });
+
+    // 恢复底栏状态
+    if (footer) footer.style.display = 'flex';
+    if (multiBar) {
+        multiBar.style.display = 'none';
+        // 顺便重置计数文字
+        const countEl = document.getElementById('multi-select-count');
+        if (countEl) countEl.textContent = "已选择 0 条消息";
+    }
+    
+    showToast("已退出编辑");
+}
+
+// --- 3. 批量功能实现 ---
+
+// --- A. 批量删除 (不再使用原生 confirm) ---
+async function batchDelete() {
+    const selectedRows = document.querySelectorAll('.msg-row.selected');
+    if (selectedRows.length === 0) return showToast("请先勾选需要删除的消息");
+
+    // 调用咱们刚写的系统级弹窗
+    showIOSConfirm(
+        "批量删除", 
+        `确定要从记录中永久移除这 ${selectedRows.length} 条消息吗？`, 
+        "删除", 
+        async function() {
+            // 这里是确认后的执行代码
+            selectedRows.forEach(row => row.remove());
+            // 💡 可以在这里加入删除 IndexedDB 数据的逻辑
+            showToast("已成功删除选定内容");
+            exitMultiSelect();
+        }
+    );
+}
+
+// --- B. 批量截图 (不再使用原生 alert) ---
+function batchScreenshot() {
+    const selectedCount = document.querySelectorAll('.msg-row.selected').length;
+    if (selectedCount === 0) return showToast("请选择需要截图的消息");
+
+    showToast("正在通过联觉协议合成图像...");
+    
+    // 模拟处理时间
+    setTimeout(() => {
+        showIOSAlert("截图成功", `已成功将 ${selectedCount} 条消息合成长图并保存至模拟相册。`);
+        exitMultiSelect();
+    }, 1200);
+}
+
+// --- C. 批量转发 (逻辑优化) ---
+function batchForward() {
+    const selectedRows = document.querySelectorAll('.msg-row.selected');
+    if (selectedRows.length === 0) return showToast("请选择消息");
+
+    const messages = Array.from(selectedRows).map(row => {
+        const textNode = row.querySelector('.msg-text-main') || row.querySelector('.msg-text-content') || row.querySelector('.bubble');
+        return { text: textNode.innerText.trim() };
+    });
+
+    exitMultiSelect(); // 先退出多选模式
+    openForwardPicker(messages); // 弹出转发页面
+}
+// 实时更新选中数量的显示
+function refreshMultiSelectCount() {
+    const count = document.querySelectorAll('.msg-row.selected').length;
+    const countEl = document.getElementById('multi-select-count');
+    if (countEl) {
+        countEl.textContent = count > 0 ? `已选择 ${count} 条消息` : "选择消息";
+    }
+}
+
+// 修改进入函数，确保初始状态正确
+function enterMultiSelect() {
+    const rows = document.querySelectorAll('.msg-row');
+    const footer = document.querySelector('.chat-room-footer');
+    const multiBar = document.getElementById('multi-select-bar');
+
+    rows.forEach(row => {
+        row.classList.add('multi-selecting');
+        if (!row.querySelector('.msg-check-box')) {
+            const check = document.createElement('div');
+            check.className = 'msg-check-box';
+            check.onclick = (e) => {
+                e.stopPropagation();
+                row.classList.toggle('selected');
+                refreshMultiSelectCount(); // 👈 每次点击更新计数
+            };
+            row.appendChild(check);
+        }
+    });
+
+    if (footer) footer.style.display = 'none';
+    if (multiBar) {
+        multiBar.style.display = 'flex';
+        refreshMultiSelectCount(); // 👈 初始化计数
+    }
+}
+// ==========================================
+// 📱 iOS 全局页面弹窗调度中心 (核心工具箱)
+// ==========================================
+
+/**
+ * 替代 confirm() 的 iOS 风格确认框
+ * @param {string} title 标题
+ * @param {string} msg 描述文字
+ * @param {string} btnText 确认按钮的文字
+ * @param {function} action 点击确认后要执行的函数
+ */
+function showIOSConfirm(title, msg, btnText, action) {
+    console.log("System: Triggering IOS Confirm Modal...");
+    
+    const titleEl = document.getElementById('confirm-modal-title');
+    const msgEl = document.getElementById('confirm-modal-msg');
+    const btnEl = document.getElementById('confirm-modal-btn');
+    const modal = document.getElementById('iosConfirmModal');
+
+    if (!titleEl || !msgEl || !btnEl || !modal) {
+        console.error("System Error: 找不到 iosConfirmModal 相关的 HTML 元素！");
+        return;
+    }
+
+    // 1. 填充文字内容
+    titleEl.textContent = title;
+    msgEl.textContent = msg;
+    btnEl.textContent = btnText;
+
+    // 2. 危险操作（如删除）按钮变红，普通操作变蓝
+    btnEl.style.color = (btnText === "删除" || btnText === "撤回" || btnText === "抹除") ? "#FF3B30" : "#007AFF";
+
+    // 3. 将任务存入全局待处理动作中
+    window.pendingAction = action;
+
+    // 4. 显示弹窗
+    modal.style.display = 'flex';
+}
+
+/**
+ * 替代 alert() 的 iOS 风格成功提示框
+ * @param {string} title 标题
+ * @param {string} msg 描述文字
+ */
+function showIOSAlert(title, msg) {
+    const titleEl = document.getElementById('alert-title');
+    const msgEl = document.getElementById('alert-msg');
+    const modal = document.getElementById('successAlert');
+
+    if (titleEl && msgEl && modal) {
+        titleEl.textContent = title;
+        msgEl.textContent = msg;
+        modal.style.display = 'flex';
+    }
+}
+// --- 2. 触发转发入口 (单条和多条共用) ---
+function openForwardPicker(messages) {
+    // messages 格式: [{ text: "内容" }, ...]
+    window.pendingForwardData = messages;
+    
+    const page = document.getElementById('page-forward-picker');
+    page.style.transform = 'translateY(0)';
+    
+    switchForwardTab('friends'); // 默认显示好友
+}
+
+function closeForwardPicker() {
+    document.getElementById('page-forward-picker').style.transform = 'translateY(100%)';
+    window.pendingForwardData = [];
+}
+
+// --- 3. 渲染转发列表 (复用列表逻辑) ---
+async function switchForwardTab(mode) {
+    window.forwardTabMode = mode;
+    document.getElementById('fwd-tab-friends').classList.toggle('active', mode === 'friends');
+    document.getElementById('fwd-tab-groups').classList.toggle('active', mode === 'groups');
+    
+    const container = document.getElementById('forward-list-content');
+    const dbKey = (mode === 'friends') ? 'chat_friends' : 'chat_groups';
+    const list = await loadFromDB(dbKey) || [];
+    
+    container.innerHTML = "";
+    const groupWrapper = document.createElement('div');
+    groupWrapper.className = 'chat-contact-group';
+    groupWrapper.style.marginTop = "15px";
+
+    list.forEach(target => {
+        const row = document.createElement('div');
+        row.className = 'contact-row';
+        row.innerHTML = `
+            <img class="contact-avatar" src="${target.avatar}" style="width:40px; height:40px; border-radius:${mode==='friends'?'50%':'8px'}">
+            <div class="contact-info"><span class="contact-name" style="font-size:15px;">${target.name}</span></div>
+            <div style="color:#007AFF; font-size:13px; font-weight:600;">发送</div>
+        `;
+        row.onclick = () => confirmForwardTo(target);
+        groupWrapper.appendChild(row);
+    });
+    container.appendChild(groupWrapper);
+}
+
+// --- 4. 确认转发逻辑 (调用 iOS 弹窗) ---
+function confirmForwardTo(target) {
+    const count = window.pendingForwardData.length;
+    showIOSConfirm(
+        "确认转发", 
+        `将 ${count} 条消息转发给 ${target.name}？`, 
+        "发送", 
+        async function() {
+            // 执行真正的转发动作
+            for(let item of window.pendingForwardData) {
+                const msgObj = {
+                    role: "user", // 转发过去的消息默认作为“你”发送的
+                    text: item.text,
+                    timestamp: Date.now(),
+                    isForwarded: true // 🚨 标记为转发
+                };
+                await saveChatMessage(target.id, msgObj);
+            }
+            
+            showToast("已成功分发灵魂碎片");
+            closeForwardPicker();
+            
+            // 自动跳转到该聊天室（可选）
+            setTimeout(() => openChatRoom(target), 500);
+        }
+    );
+}
+async function updateMessageRecallStatus(contactId, timestamp, isRecalled) {
+    const db = await openDB();
+    const tx = db.transaction("chat_history", "readwrite");
+    const store = tx.objectStore("chat_history");
+    const req = store.get(contactId);
+    
+    return new Promise((resolve) => {
+        req.onsuccess = () => {
+            if (!req.result) return resolve();
+            let data = req.result.messages;
+            // 找到对应时间戳的消息
+            const idx = data.findIndex(m => m.timestamp == timestamp);
+            if (idx !== -1) {
+                data[idx].recalled = isRecalled;
+                store.put({ contactId: contactId, messages: data });
+            }
+            resolve();
+        };
+    });
+}
+// ==========================================
+// 👁️ 撤回内容查阅引擎 - 放在末尾专用版
+// ==========================================
+function viewRecalledTrace(content) {
+    console.log("System: Accessing recalled trace...");
+    
+    // 1. 尝试从各种可能的 ID 获取弹窗元素
+    const viewer = document.getElementById('modal-recalled-viewer');
+    const textZone = document.getElementById('recalled-v-text');
+
+    if (viewer && textZone) {
+        // 2. 填充内容
+        textZone.textContent = content;
+        // 3. 物理强制显示
+        viewer.style.setProperty('display', 'flex', 'important');
+        viewer.style.zIndex = "30000"; // 确保盖过所有页面
+    } else {
+        // 兜底方案：如果找不到你写的 HTML 弹窗，就用这个临时弹窗，防止没反应
+        alert("查阅撤回内容：\n\n" + content);
+    }
+}
+
+// 强制将其关联到 window，确保 HTML 里的 onclick 绝对能找到它
+window.viewRecalledTrace = viewRecalledTrace;
+// ==========================================
+// ⚙️ 聊天设置页面控制器
+// ==========================================
+
+// 1. 打开设置页
+function openChatSettings() {
+    const settingsPage = document.getElementById('page-chat-settings');
+    if(settingsPage) {
+        settingsPage.style.transform = 'translateX(0)';
+    }
+}
+
+// 2. 关闭设置页
+function closeChatSettings() {
+    const settingsPage = document.getElementById('page-chat-settings');
+    if(settingsPage) {
+        settingsPage.style.transform = 'translateX(100%)';
+    }
+}
+
+// 3. 从设置页跳转到“Ta的资料”
+function openChatProfileFromSettings() {
+    // 复用已有的名片弹窗逻辑
+    if(window.currentChattingWith) {
+        openChatProfile(window.currentChattingWith);
+    } else {
+        showToast("数据加载异常");
+    }
+}
+
+// 4. 触发“清空聊天记录” (带确认)
+function triggerClearHistory() {
+    if(!window.currentChattingWith) return;
+    
+    // 调用我们之前写的通用 iOS 确认框
+    showIOSConfirm(
+        "清空记录",
+        "确定要清空与该好友的所有聊天记录吗？此操作无法撤销。",
+        "清空",
+        async function() {
+            // 复用之前的删除逻辑，但只清空消息，不删人
+            const db = await openDB();
+            const tx = db.transaction("chat_history", "readwrite");
+            const store = tx.objectStore("chat_history");
+            
+            // 将该联系人的消息重置为空数组，保留联系人关系
+            await store.put({ contactId: window.currentChattingWith.id, messages: [] });
+            
+            showToast("记录已清空");
+            // 刷新聊天界面
+            if(typeof renderMessages === 'function') renderMessages();
+            // 关闭设置页
+            closeChatSettings();
+        }
+    );
+}
+
+// 5. 触发“删除好友” (带确认)
+function triggerDeleteFriend() {
+    if(!window.currentChattingWith) return;
+
+    // 复用之前的删除好友逻辑
+    // 这里我们稍微改一下，直接调用 deleteConversation，因为那个函数包含了确认弹窗和后续清理逻辑
+    // 但因为 deleteConversation 设计是在列表页用的，我们这里需要稍微封装一下
+    
+    showIOSConfirm(
+        "删除好友",
+        `确定要解除与 ${window.currentChattingWith.name} 的关系吗？这将同时删除所有记录。`,
+        "删除",
+        async function() {
+            // 1. 删记录
+            const db = await openDB();
+            {
+                const tx = db.transaction("chat_history", "readwrite");
+                await tx.objectStore("chat_history").delete(window.currentChattingWith.id);
+            }
+            // 2. 删好友 (从列表移除)
+            {
+                const list = await loadFromDB('chat_friends') || [];
+                const newList = list.filter(f => f.id !== window.currentChattingWith.id);
+                await saveToDB('chat_friends', newList);
+            }
+
+            showToast("好友已删除");
+            
+            // 3. 关闭所有相关页面，回到列表
+            closeChatSettings();
+            closeChatRoom(); // 退出聊天室
+            if(typeof renderChatList === 'function') renderChatList();
+            if(typeof initChatMsgPanel === 'function') initChatMsgPanel();
+        }
+    );
+}
+// --- ⚙️ 聊天设置页：折叠逻辑 ---
+function toggleSettingItem(headerEl) {
+    // 1. 找到对应的父容器
+    const item = headerEl.parentElement;
+    
+    // 2. 检查当前是否已经打开
+    const isActive = item.classList.contains('active');
+    
+    // 3. (可选) 如果你想实现“手风琴”效果（打开一个自动关闭其他的），就把这段加上：
+    document.querySelectorAll('.ios-accordion-item').forEach(el => {
+        el.classList.remove('active');
+    });
+
+    // 4. 切换当前状态
+    if(isActive) {
+        item.classList.remove('active');
+    } else {
+        item.classList.add('active');
+    }
+}
+
+// 稍微修改打开设置页的逻辑，顺便填一下底部的 ID
+var originalOpenChatSettings = openChatSettings;
+openChatSettings = function() {
+    originalOpenChatSettings(); // 调用之前的打开动画
+    // 填充底部的 ID
+    if(window.currentChattingWith) {
+        const uid = document.getElementById('setting-uid-display');
+        if(uid) uid.textContent = window.currentChattingWith.id.toUpperCase();
+    }
+}
+// --- 🧠 背景系统全局缓存 ---
+
+// 1. 打开万能上传器
+function openUniversalBgModal(target) {
+    currentUploaderTarget = target;
+    const modal = document.getElementById('modal-universal-uploader');
+    const title = document.getElementById('uploader-title');
+    const tag = document.getElementById('uploader-target-tag');
+    
+    title.textContent = target === 'chat' ? "设置聊天背景" : "设置菜单背景";
+    tag.textContent = target === 'chat' ? "SUPPORT IMG/VID" : "IMAGE ONLY";
+    document.getElementById('universal-url-in').value = "";
+    
+    modal.style.display = 'flex';
+}
+
+function closeUniversalUploader() {
+    document.getElementById('modal-universal-uploader').style.display = 'none';
+}
+
+// 2. 处理 URL 上传
+function handleUniversalUrl() {
+    const url = document.getElementById('universal-url-in').value.trim();
+    if(!url) return;
+    
+    // 简单的格式判定
+    const isVideo = url.match(/\.(mp4|webm|ogg)/i);
+    if(currentUploaderTarget === 'settings' && isVideo) {
+        showToast("菜单背景暂不支持视频");
+        return;
+    }
+    
+    applyTempBg(currentUploaderTarget, isVideo ? 'vid' : 'img', url);
+    closeUniversalUploader();
+}
+
+// 3. 处理本地文件上传
+function handleUniversalFile(input) {
+    if (input.files && input.files[0]) {
+        const file = input.files[0];
+        const isVideo = file.type.startsWith('video/');
+        
+        if(currentUploaderTarget === 'settings' && isVideo) {
+            showToast("菜单背景暂不支持视频");
+            return;
+        }
+
+        const reader = new FileReader();
+        showToast("正在读取文件...");
+        reader.onload = function(e) {
+            applyTempBg(currentUploaderTarget, isVideo ? 'vid' : 'img', e.target.result);
+            closeUniversalUploader();
+        };
+        reader.readAsDataURL(file);
+    }
+}
+
+// 4. 实时更新预览图（比例 9:16）
+function applyTempBg(target, type, data) {
+    tempBgData[target] = { type, data };
+    const thumb = document.getElementById(`preview-thumb-${target}`);
+    
+    if (type === 'vid') {
+        thumb.innerHTML = `<video src="${data}" autoplay loop muted></video>`;
+    } else {
+        thumb.innerHTML = `<img src="${data}">`;
+    }
+}
+
+// 5. 【核心保存】：写入 IndexedDB 并物理应用
+async function saveChatBackgroundSettings() {
+    // 1. 核心防御：检查当前聊天对象
+    const contact = window.currentChattingWith;
+    if (!contact) {
+        showToast("⚠️ 未检测到当前对话，请先选择好友");
+        return;
+    }
+
+    const contactId = contact.id;
+    showToast("正在物理写入背景数据...");
+
+    // A. 处理聊天窗口背景（基于 ID 隔离）
+    // 只有当 tempBgData 里面有新东西时才写入数据库
+    if (tempBgData.chat && tempBgData.chat.data) {
+        localStorage.setItem(`chat_bg_type_${contactId}`, tempBgData.chat.type);
+        await saveToDB(`chat_bg_data_${contactId}`, tempBgData.chat.data);
+        // 关键：写完后清空缓存，防止重复写入
+        tempBgData.chat.data = null; 
+    }
+
+    // B. 处理全局设置页背景
+    if (tempBgData.settings && tempBgData.settings.data) {
+        await saveToDB('settings_bg_data', tempBgData.settings.data);
+        tempBgData.settings.data = null;
+    }
+    
+    // 2. 核心补丁：强制延迟 100ms 确保数据库事务完成再读取
+    setTimeout(async () => {
+        await applyBackgroundsToUI(); 
+        showToast("✅ 背景同步成功");
+    }, 100);
+}
+
+// 6. 【核心应用】：将数据渲染到页面
+// ==========================================
+// 🎨 背景应用引擎：智能底色控制版
+// ==========================================
+async function applyBackgroundsToUI() {
+    const chatRoom = document.getElementById('page-chat-room');
+    const contact = window.currentChattingWith;
+
+    if (!chatRoom) return;
+
+    // 1. 确保背景舱存在
+    let bgLayer = document.getElementById('chat-room-full-bg');
+    if (!bgLayer) {
+        bgLayer = document.createElement('div');
+        bgLayer.id = 'chat-room-full-bg';
+        // 关键：初始状态设为默认色
+        bgLayer.style = "position:absolute; inset:0; width:100%; height:100%; z-index:0; pointer-events:none; overflow:hidden; background-color:#F2F2F7;";
+        chatRoom.prepend(bgLayer); 
+    }
+
+    if (contact) {
+        const contactId = contact.id;
+        const chatType = localStorage.getItem(`chat_bg_type_${contactId}`) || 'img';
+        const chatData = await loadFromDB(`chat_bg_data_${contactId}`);
+        const chatThumb = document.getElementById('preview-thumb-chat');
+
+        if (chatData) {
+            // --- 有背景：渲染媒体，隐藏底色 ---
+            bgLayer.style.backgroundColor = "transparent"; 
+            if (chatType === 'vid') {
+                bgLayer.innerHTML = `<video src="${chatData}" autoplay loop muted playsinline style="width:100%;height:100%;object-fit:cover;"></video>`;
+            } else {
+                bgLayer.innerHTML = `<img src="${chatData}" style="width:100%;height:100%;object-fit:cover;">`;
+            }
+
+            // 同步预览图
+            if (chatThumb) {
+                chatThumb.innerHTML = chatType === 'vid' 
+                    ? `<video src="${chatData}" autoplay loop muted style="width:100%;height:100%;object-fit:cover;"></video>` 
+                    : `<img src="${chatData}" style="width:100%;height:100%;object-fit:cover;">`;
+            }
+        } else {
+            // --- 没背景：显示默认灰色底 ---
+            bgLayer.innerHTML = ""; 
+            bgLayer.style.backgroundColor = "#F2F2F7"; // 恢复 iOS 灰
+            
+            if (chatThumb) {
+                chatThumb.innerHTML = `<div class="bg-preview-placeholder">DEFAULT</div>`;
+            }
+        }
+    }
+}
+
+// 7. 【初始化】：刷新后恢复
+// 在你原本的 window.onload 或 loadSavedData 结尾加入这一行：
+// applyBackgroundsToUI();
+
+// 8. 重置
+async function resetChatBackgrounds() {
+    if(!window.currentChattingWith) return;
+    const contactId = window.currentChattingWith.id;
+
+    showIOSConfirm("重置背景", "确定要清除该好友的专属背景吗？", "重置", async () => {
+        // 1. 删除当前好友的存储
+        localStorage.removeItem(`chat_bg_type_${contactId}`);
+        const db = await openDB();
+        const tx = db.transaction(storeName, "readwrite");
+        await tx.objectStore(storeName).delete(`chat_bg_data_${contactId}`);
+        
+        // 2. 刷新界面
+        applyBackgroundsToUI();
+        showToast("已恢复默认");
+    });
+}
+// 修改你之前的 openChatSettings 函数
+window.openChatSettings = function() {
+    const settingsPage = document.getElementById('page-chat-settings');
+    if(settingsPage) {
+        settingsPage.style.transform = 'translateX(0)';
+        
+        // 🚨 核心：在打开设置页时，立刻运行一次背景应用函数
+        // 这样预览框就会立刻显示当前这个好友的专属背景图
+        applyBackgroundsToUI();
+
+        // 填充底部的 ID
+        if(window.currentChattingWith) {
+            const uid = document.getElementById('setting-uid-display');
+            if(uid) uid.textContent = window.currentChattingWith.id.toUpperCase();
+        }
     }
 }
 </script>
