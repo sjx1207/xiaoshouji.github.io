@@ -665,11 +665,6 @@
     transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1);
 }
 
-/* 激活时滑出来 (加 !important 确保绝对生效) */
-.ios-sub-page.active {
-    transform: translateX(0) !important;
-}
-
 /* --- 🚑 强制修复时区列表宽度 (让它撑满屏幕) --- */
 
 /* 1. 核心修复：把容器的对齐方式从“居中”改为“拉伸” */
@@ -5396,6 +5391,348 @@
     background: #007AFF !important;
     pointer-events: none;
 }
+/* --- 🖤 本我档案专属样式补丁 --- */
+.user-profile-style {
+    border: 1px solid #1d1d1f !important;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.3) !important;
+}
+
+#subpage-user-profile .app-body {
+    display: block !important;
+    width: 100% !important;
+}
+
+#user-bio-in {
+    font-family: "PingFang SC", sans-serif;
+    font-size: 15px;
+    color: #3a3a3c;
+    border-radius: 18px !important;
+    box-shadow: inset 0 2px 10px rgba(0,0,0,0.02);
+}
+
+/* 调整设置页中的“我的资料”入口，确保点击有效 */
+.standalone-btn.user-entry {
+    background: #1d1d1f !important;
+    color: #fff !important;
+    margin-bottom: 20px;
+}
+/* 让按钮看起来更高级，全包裹不突兀 */
+.sub-setting-btn.user-btn-main {
+    background: #1d1d1f !important; /* 纯黑主按钮 */
+    color: #fff !important;
+    border-radius: 12px;
+    margin-bottom: 10px !important;
+    font-weight: 700;
+}
+
+.sub-setting-btn.user-btn-secondary {
+    background: #f2f2f7 !important; /* 浅灰次要按钮 */
+    color: #1d1d1f !important;
+    border-radius: 12px;
+    margin-top: 0 !important;
+    font-weight: 600;
+}
+/* 强制子页面显影逻辑 */
+#subpage-user-profile.active {
+    transform: translateX(0) !important;
+    display: flex !important;
+}
+
+/* 编辑页内文字域高级感 */
+#user-bio-in {
+    border-radius: 14px !important;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.02);
+    font-family: inherit;
+    resize: none;
+}
+/* 强制覆盖原有的子页面激活逻辑 */
+.ios-sub-page.active {
+    display: flex !important;    /* 必须加这一行，否则页面永远是隐藏的 */
+    transform: translateX(0) !important;
+    z-index: 15000 !important;   /* 确保它在最顶层，盖过设置 App */
+}
+/* --- 🎞️ 列表页美化 --- */
+.memory-hero-banner {
+    padding: 30px 20px;
+    text-align: left;
+}
+.hero-label { font-size: 10px; font-weight: 900; color: #007AFF; letter-spacing: 3px; }
+.hero-title { font-size: 34px; font-weight: 800; color: #1d1d1f; margin-top: 5px; }
+.hero-subtitle { font-size: 13px; color: #8e8e93; margin-top: 5px; }
+
+.memory-grid-layout {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 25px;
+    padding: 10px 20px 120px 20px;
+}
+
+/* 记忆卡片设计 */
+.memory-item-card {
+    position: relative;
+    background: #fff;
+    border-radius: 28px;
+    padding: 24px;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.05);
+    border: 1px solid rgba(0,0,0,0.02);
+    overflow: hidden;
+    transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+    cursor: pointer;
+}
+.memory-item-card:active { transform: scale(0.96); }
+
+.card-num {
+    position: absolute; right: -10px; top: -10px;
+    font-size: 80px; font-weight: 900; color: rgba(0,0,0,0.03);
+    font-style: italic; pointer-events: none;
+}
+
+/* --- 🎞️ 列表与布局 --- */
+.memory-hero-area { padding: 40px 20px 20px; }
+.hero-tag { font-size: 10px; font-weight: 900; color: #007AFF; letter-spacing: 4px; }
+.hero-title { font-size: 36px; font-weight: 800; color: #1d1d1f; }
+.hero-desc { font-size: 14px; color: #8e8e93; margin-top: 8px; }
+
+.memory-stagger-grid { display: flex; flex-direction: column; gap: 20px; padding: 10px 20px 120px; }
+
+/* 记忆卡片样式 */
+.memory-item-card {
+    background: #fff; border-radius: 30px; padding: 25px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.04);
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    cursor: pointer; position: relative; border: 1px solid rgba(0,0,0,0.02);
+}
+.memory-item-card:active { transform: scale(0.95) translateY(5px); }
+
+/* --- 🎬 沉浸式电影视图 --- */
+.cinema-portal {
+    position: fixed !important; inset: 0 !important;
+    z-index: 999999 !important; background: #000;
+    display: none; opacity: 0; transition: opacity 0.5s ease;
+}
+.cinema-portal.active { opacity: 1; display: flex; }
+
+.cinema-stage { width: 100%; height: 100%; background: #fff; animation: cinemaSlideUp 0.7s cubic-bezier(0.16, 1, 0.3, 1); }
+@keyframes cinemaSlideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+
+.cinema-scroll-layer { height: 100%; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+.cinema-hero-banner { height: 60vh; width: 100%; position: relative; }
+.cinema-hero-banner img { width: 100%; height: 100%; object-fit: cover; }
+.cinema-hero-mask { position: absolute; inset: 0; background: linear-gradient(to bottom, transparent 40%, #fff 98%); }
+
+.cinema-title-box { position: absolute; bottom: 40px; left: 30px; right: 30px; }
+#cinema-title-ui { font-size: 32px; font-weight: 800; color: #1d1d1f; line-height: 1.2; }
+
+.cinema-text-wrapper { padding: 0 30px 100px; }
+.cinema-prose { font-family: "PingFang SC", serif; font-size: 18px; line-height: 2; color: #2c2c2e; text-align: justify; white-space: pre-wrap; }
+
+/* --- 🌀 量子织网动画 --- */
+.quantum-overlay {
+    position: fixed; inset: 0; background: rgba(255,255,255,0.9);
+    z-index: 1000000; display: none; flex-direction: column; align-items: center; justify-content: center;
+    backdrop-filter: blur(10px);
+}
+.weaving-core { width: 50px; height: 50px; position: relative; animation: qRotate 4s linear infinite; }
+.spider-line { position: absolute; top: 50%; left: 50%; width: 100%; height: 2px; background: #007AFF; transform-origin: center; animation: qPulse 1.5s ease-in-out infinite; }
+@keyframes qRotate { to { transform: rotate(360deg); } }
+@keyframes qPulse { 0%, 100% { transform: translate(-50%,-50%) scaleX(0.2); opacity: 0.2; } 50% { transform: translate(-50%,-50%) scaleX(1); opacity: 1; } }
+.weaving-text { margin-top: 30px; font-size: 13px; font-weight: 700; color: #007AFF; letter-spacing: 2px; }
+/* --- 💎 高级感：唤醒按钮美化 --- */
+.memory-footer-bar {
+    position: absolute; bottom: 30px; left: 0; width: 100%;
+    display: flex; justify-content: center; padding: 0 20px; z-index: 100;
+}
+
+.btn-awaken-core {
+    width: 100%; max-width: 320px; height: 60px;
+    background: linear-gradient(135deg, #1d1d1f 0%, #3a3a3c 100%); /* 深色拉丝质感 */
+    color: #fff; border-radius: 20px; border: none;
+    display: flex; align-items: center; justify-content: center;
+    gap: 12px; font-size: 16px; font-weight: 700; letter-spacing: 1px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.3); /* 超深阴影 */
+    transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+    position: relative; overflow: hidden;
+}
+
+.btn-awaken-core:active {
+    transform: scale(0.96) translateY(3px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+}
+
+/* 按钮扫光特效 */
+.btn-awaken-core::after {
+    content: ""; position: absolute; top: -50%; left: -50%;
+    width: 200%; height: 200%;
+    background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent);
+    transform: rotate(45deg);
+    animation: btnShine 3s infinite;
+}
+
+@keyframes btnShine {
+    0% { transform: translateX(-100%) rotate(45deg); }
+    100% { transform: translateX(100%) rotate(45deg); }
+}
+
+/* 记忆卡片微调 */
+.memory-item-card {
+    background: #fff; border-radius: 24px; padding: 25px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+    border: 1px solid rgba(0,0,0,0.01);
+}
+/* --- 💎 高级感：唤醒按钮 --- */
+.memory-footer-bar {
+    position: absolute; bottom: 35px; left: 0; width: 100%;
+    display: flex; justify-content: center; padding: 0 25px; z-index: 100;
+}
+
+.btn-awaken-core {
+    width: 100%; max-width: 320px; height: 64px;
+    background: linear-gradient(135deg, #1d1d1f 0%, #434345 100%); /* 极致磨砂黑 */
+    color: #fff; border-radius: 22px; border: none;
+    display: flex; align-items: center; justify-content: center;
+    gap: 15px; font-size: 16px; font-weight: 700; letter-spacing: 2px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.4), inset 0 1px 1px rgba(255,255,255,0.1);
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    position: relative; overflow: hidden;
+    cursor: pointer;
+}
+
+/* 按钮扫光特效 */
+.btn-awaken-core::after {
+    content: ""; position: absolute; top: -50%; left: -50%;
+    width: 200%; height: 200%;
+    background: linear-gradient(45deg, transparent, rgba(255,255,255,0.08), transparent);
+    transform: rotate(45deg);
+    animation: btnShine 4s infinite;
+}
+
+@keyframes btnShine {
+    0% { transform: translateX(-100%) rotate(45deg); }
+    100% { transform: translateX(100%) rotate(45deg); }
+}
+
+.btn-awaken-core:active {
+    transform: scale(0.96) translateY(4px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+}
+/* --- 🚨 状态栏强制置顶补丁 --- */
+.status-bar {
+    z-index: 1000005 !important; /* 绝对最高层级，确保在故事页面之上 */
+    position: relative;
+    background: transparent; /* 保持透明，可以看到后面的大图 */
+}
+
+/* --- 🎬 电影详情页：物理下移与层级调整 --- */
+.cinema-portal {
+    position: fixed !important;
+    inset: 0 !important;
+    background: #ffffff;
+    z-index: 1000000 !important; /* 低于状态栏，高于普通页面 */
+    display: none; 
+    opacity: 0;
+    transition: opacity 0.5s ease;
+    flex-direction: column;
+}
+
+/* 当页面激活时 */
+.cinema-portal.active {
+    display: flex !important;
+    opacity: 1 !important;
+}
+
+/* 核心滚动层：增加顶部内边距，避开状态栏 */
+.cinema-scroll-layer {
+    flex: 1;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-top: 48px; /* 🚨 物理避让：这里的高度必须等于或大于状态栏高度 */
+}
+
+/* --- ❌ 强力显形：关闭按钮 --- */
+.cinema-close-trigger {
+    position: fixed; /* 改为 fixed，确保不随页面滚动消失 */
+    top: 60px;       /* 放在状态栏下方一点 */
+    right: 20px;
+    z-index: 1000010; /* 甚至比状态栏还要高，确保能点到 */
+    width: 36px;
+    height: 36px;
+    background: rgba(0, 0, 0, 0.5); /* 半透明黑，确保在白色背景或图片上都能看清 */
+    backdrop-filter: blur(10px);
+    border-radius: 50%;
+    display: flex !important; /* 强制显示 */
+    align-items: center;
+    justify-content: center;
+    color: #ffffff;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.cinema-close-trigger svg {
+    width: 20px;
+    height: 20px;
+    stroke: currentColor;
+}
+
+/* 按钮点击反馈 */
+.cinema-close-trigger:active {
+    transform: scale(0.9);
+    background: rgba(0, 0, 0, 0.8);
+}
+/* 🚑 头部间距修正补丁：解决顶部空白过大的问题 */
+
+/* 1. 针对所有子页面的通用修正 */
+.ios-sub-page .app-header {
+    padding-top: 55px !important;  /* 从 80px 缩减到 55px */
+    min-height: 90px !important;   /* 缩小保底总高度 */
+    padding-bottom: 10px !important;
+}
+
+/* 2. 专门针对“时空档案库”页面的细节微调 */
+#subpage-memory-list .app-header {
+    padding-top: 55px !important;
+    padding-bottom: 12px !important;
+    background: #ffffff !important; /* 确保背景纯白，不透出底色 */
+}
+
+/* 3. 顺便微调一下返回按钮和标题的对齐，让它更精致 */
+.ios-sub-page .header-left, 
+.ios-sub-page .header-title {
+    margin-bottom: 2px !important;
+}
+/* --- 🎞️ 电影感视界：黑白高定排版 --- */
+.cinema-prose {
+    font-family: "PingFang SC", "STHeiti", serif;
+    font-size: 17px;
+    line-height: 2.2; /* 极其宽敞的行间距 */
+    color: #000000;
+    text-align: justify;
+    padding-bottom: 50px;
+}
+
+/* 🚨 核心：段落间距 */
+.cinema-prose p {
+    margin-bottom: 28px; /* 给段落之间留出呼吸空间 */
+    display: block;
+}
+
+/* 🚨 重点：【 】内的核心词（黑底白字） */
+.memory-highlight {
+    background-color: #000000;
+    color: #ffffff;
+    padding: 2px 8px;
+    margin: 0 3px;
+    border-radius: 2px;
+    font-weight: 600;
+    font-style: normal;
+    display: inline-block;
+}
+
+/* 🚨 重点：「 」内的感官细节（加粗下划线） */
+.memory-focus {
+    border-bottom: 1.5px solid #000000;
+    font-weight: 800;
+    padding-bottom: 1px;
+}
 
 </style>
 </head>
@@ -7232,15 +7569,42 @@
 
             <div class="ios-accordion-item">
                 <div class="accordion-header" onclick="toggleSettingItem(this)">
-                    <div class="item-icon" style="background: #30B0C7;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg></div>
+                    <div class="item-icon" style="background: #1d1d1f;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
                     <div class="item-content">
                         <span class="item-label">我的资料</span>
-                        <div class="item-right"><svg class="accordion-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg></div>
+                        <div class="item-right"><svg class="accordion-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="9 18 15 12 9 6"></polyline></svg></div>
+                    </div>
+                </div>
+                <div class="accordion-content" style="padding: 10px 16px 20px 16px;">
+                    <div class="sub-setting-btn user-btn-main" onclick="openUserProfileEdit()">编辑我的资料</div>
+                    <div class="sub-setting-btn user-btn-secondary" onclick="openUserCardPreview()">预览我的资料卡</div>
+                </div>
+            </div>
+
+            <div class="ios-accordion-item">
+                <div class="accordion-header" onclick="toggleSettingItem(this)">
+                    <div class="item-icon" style="background: #FF9500;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+                            <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+                        </svg>
+                    </div>
+                    <div class="item-content">
+                        <span class="item-label">记忆</span>
+                        <div class="item-right">
+                            <svg class="accordion-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                                <polyline points="9 18 15 12 9 6"></polyline>
+                            </svg>
+                        </div>
                     </div>
                 </div>
                 <div class="accordion-content">
-                    <div class="sub-setting-btn" onclick="showToast('正在打开本我档案...')">编辑我的形象</div>
-                    <div class="sub-setting-btn" onclick="showToast('隐私设置已更新')">聊天隐私设置</div>
+                    <div class="sub-setting-btn" onclick="openExclusiveMemories()">专属回忆</div>
+                    <div class="sub-setting-btn" onclick="openMemorySummary()">记忆总结</div>
+                    
+                    <div style="font-size:10px; color:#bbb; text-align:center; margin-top:10px; padding:0 15px;">
+                        提示：基于量子纠缠协议，记忆将随互动深度自动解锁。
+                    </div>
                 </div>
             </div>
 
@@ -7658,7 +8022,169 @@
         </div>
     </div>
 </div>
+<div id="subpage-user-profile" class="ios-sub-page" style="background:#F2F2F7; z-index: 10000;">
+    <div class="app-header">
+        <div onclick="closeSubPage('subpage-user-profile')" style="color:#007AFF; font-size:17px; cursor:pointer;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg> 取消
+        </div>
+        <div style="font-size:17px; font-weight:600;">本我档案</div>
+        <div onclick="saveUserProfile()" style="color:#007AFF; font-size:17px; font-weight:600; cursor:pointer;">完成</div>
+    </div>
+
+    <div class="app-body" style="padding: 20px 16px; display: block; width: 100%;">
+        <div style="text-align:center; margin-bottom:30px;">
+            <div class="char-upload-circle" style="width:100px; height:100px; margin:0 auto 15px auto; position:relative; overflow:hidden; border-radius:50%; background:#e5e5ea;" onclick="document.getElementById('user-avatar-file').click()">
+                <img id="user-avatar-pre" src="" style="width:100%; height:100%; object-fit:cover; display:block;">
+                <div style="position:absolute; bottom:0; width:100%; background:rgba(0,0,0,0.5); color:#fff; font-size:10px; padding:2px 0;">EDIT</div>
+            </div>
+            <input type="file" id="user-avatar-file" hidden accept="image/*" onchange="previewUserAvatar(this)">
+            <input type="text" id="user-name-in" class="ios-input" style="text-align:center; font-size:22px; font-weight:800; background:transparent;" placeholder="你的称呼">
+        </div>
+
+        <div class="tz-group-title">量子人格设定 (PERSONA)</div>
+        <div class="ios-list-group">
+            <textarea id="user-bio-in" class="ios-input" style="height:200px; padding:15px; background:#fff; border:none; margin:0; line-height:1.6;" 
+                placeholder="描述你是谁，你与角色们的共有往事..."></textarea>
+        </div>
+        <div style="font-size:11px; color:#bbb; padding:10px 16px;">
+            提示：此描述将作为核心协议同步至 AI 交互逻辑。
+        </div>
+    </div>
+</div>
+
+<div id="modal-user-card" class="modal-top-layer" onclick="this.style.display='none'">
+    <div class="aesthetic-preview-card" style="border: 1px solid #1d1d1f; box-shadow: 0 40px 100px rgba(0,0,0,0.3);" onclick="event.stopPropagation()">
+        <div class="aes-pre-header" style="background: #1d1d1f; height: 120px; position: relative;">
+            <img id="user-card-avatar" class="aes-pre-avatar" src="" style="border: 4px solid #fff; border-radius: 20px; transform: translateX(-50%) rotate(2deg);">
+        </div>
+        <div class="aes-pre-body" style="padding: 70px 25px 35px 25px;">
+            <h2 id="user-card-name" class="aes-pre-name">Creator</h2>
+            <div class="aes-tag" style="color: #007AFF; border-color: #007AFF; margin-bottom: 25px;">MASTER PROTOCOL</div>
+            <div class="aes-pre-desc-box" style="background: #f8f8f9; text-align: left; padding: 18px; border-radius: 18px;">
+                <p id="user-card-bio" style="font-family: serif; font-style: italic; color: #444; line-height: 1.6;">尚未觉醒人格...</p>
+            </div>
+            <div class="aes-footer-btn dark" style="margin-top: 30px; padding: 14px; border-radius: 14px; background: #1d1d1f; color: #fff; font-weight: 700; cursor: pointer; text-align: center;" onclick="openUserProfileEdit()">
+                修改本我档案
+            </div>
+        </div>
+    </div>
+</div>
+<div id="subpage-memory-list" class="ios-sub-page">
+    <div class="app-header">
+        <div class="header-left" onclick="closeSubPage('subpage-memory-list')">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            <span>返回</span>
+        </div>
+        <div class="header-title">时空档案库</div>
+        <div class="header-right" onclick="window.clearAllMemories()" style="color:#FF3B30; font-size:14px; font-weight:600; cursor:pointer;">
+            清空
+        </div>
+    </div>
+    
+    <div class="app-body">
+        <div class="memory-hero-area">
+            <span class="hero-tag">MEMORIES</span>
+            <h1 class="hero-title">感官碎片</h1>
+            <p class="hero-desc">在此处唤醒与 Ta 被封存的量子羁绊</p>
+        </div>
+
+        <div id="memory-list-container" class="memory-stagger-grid"></div>
+
+        <div class="memory-footer-bar">
+            <button class="btn-awaken-core" onclick="window.triggerGenerateMemory()">
+                <div class="ripple-effect"></div>
+                <span>唤醒新记忆</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<div id="modal-memory-cinema" class="cinema-portal">
+    <div class="cinema-stage">
+        <div class="cinema-close-trigger" onclick="window.closeCinemaMemory()">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </div>
+        
+        <div class="cinema-scroll-layer">
+            <div class="cinema-hero-banner">
+                <img id="cinema-img" src="" alt="scene">
+                <div class="cinema-hero-mask"></div>
+                <div class="cinema-title-box">
+                    <span id="cinema-tag-ui">LATEST TRACE</span>
+                    <h1 id="cinema-title-ui">载入中...</h1>
+                </div>
+            </div>
+            
+            <div class="cinema-text-wrapper">
+                <div id="cinema-text-content" class="cinema-prose"></div>
+                <div class="cinema-footer-decor">✦ FIN ✦</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="quantum-loader-overlay" class="quantum-overlay">
+    <div class="weaving-core">
+        <div class="spider-line"></div>
+        <div class="spider-line"></div>
+        <div class="spider-line"></div>
+    </div>
+    <div class="weaving-text">正在从量子纠缠中编织叙事...</div>
+</div>
+
 <script>
+    // ==========================================
+// 🎬 记忆视界：详情弹窗逻辑 (彻底修复版)
+// ==========================================
+
+// 1. 强力开启详情页
+window.openCinemaMemory = function(m) {
+    const modal = document.getElementById('modal-memory-cinema');
+    const titleEl = document.getElementById('cinema-title-ui');
+    const contentEl = document.getElementById('cinema-text-content');
+    const imgEl = document.getElementById('cinema-img');
+
+    if (!modal || !m) return;
+
+    // 1. 填充文本内容
+    if (titleEl) titleEl.textContent = m.title;
+    if (contentEl) {
+        // 使用正则将 【】 和 「」 转换为黑白标注样式
+        contentEl.innerHTML = m.content
+            .replace(/【(.*?)】/g, '<span class="memory-highlight">$1</span>')
+            .replace(/「(.*?)」/g, '<span class="memory-focus">$1</span>');
+    }
+
+    // 2. 填充封面图
+    if (imgEl) {
+        imgEl.src = m.img;
+        imgEl.alt = ""; // 🚨 清空 alt 文本，防止显示“scene”字样
+        
+        // 如果数据里的图片坏了，自动拿当前聊天对象的头像补位
+        imgEl.onerror = function() {
+            this.src = window.currentChattingWith.avatar;
+        };
+    }
+
+    // 3. 执行动画
+    modal.style.display = 'flex';
+    modal.classList.add('active');
+    
+    const scroller = modal.querySelector('.cinema-scroll-layer');
+    if (scroller) scroller.scrollTop = 0;
+};
+
+// 2. 物理关闭详情页
+window.closeCinemaMemory = function() {
+    const modal = document.getElementById('modal-memory-cinema');
+    if (modal) {
+        modal.classList.remove('active');
+        // 等动画结束后彻底隐藏
+        setTimeout(() => {
+            modal.style.display = 'none';
+        }, 500);
+    }
+};
     // 🚨 必须放在 <script> 标签的最顶部，不要放在任何 function 内部！
 var currentUploaderTarget = 'chat'; 
 var tempBgData = {
@@ -10954,6 +11480,8 @@ async function triggerAiGenerate() {
     // B. 读取已构建的关系网 NPC
     const network = JSON.stringify(currentChar.relationNetwork || []);
 
+    const userData = JSON.parse(localStorage.getItem('user_persona_data')) || { name:"用户", bio:"" };
+
     // --- 🎭 注入灵魂：不可预测的聊天节奏 ---
     const messages = [{ 
         role: "system", 
@@ -10962,6 +11490,9 @@ async function triggerAiGenerate() {
         
         🚨【世界协议约束】🚨
         ${boundContent || "遵循常规现实逻辑。"}
+
+        当前对话者的身份设定: [称呼: ${userData.name}]。[身份背景与你们的关系: ${userData.bio}]。
+        请严格根据上述设定调整你的语气和行为。
         
         【社交关系记忆】
         你认识以下人员: ${network}
@@ -12828,6 +13359,599 @@ async function executeMasterSocialDelete(contactId) {
         showToast("部分量子数据残留，请重试");
     }
 }
+// ==========================================
+// 🚀 本我档案：强力修复驱动（后来居上版）
+// ==========================================
+
+window.openUserProfileEdit = function() {
+    console.log("System: 正在执行最高权限推入协议...");
+
+    // 1. 强力初始化数据，防止数据丢失报错
+    if (!window.userPersona) {
+        const saved = localStorage.getItem('user_persona_data');
+        window.userPersona = saved ? JSON.parse(saved) : {
+            name: "指挥官",
+            avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=user_default",
+            bio: ""
+        };
+    }
+
+    const data = window.userPersona;
+
+    // 2. 物理填值：直接根据 ID 强行灌入
+    const avt = document.getElementById('user-avatar-pre');
+    const nameInput = document.getElementById('user-name-in');
+    const bioInput = document.getElementById('user-bio-in');
+    
+    if (avt) avt.src = data.avatar;
+    if (nameInput) nameInput.value = data.name || "";
+    if (bioInput) bioInput.value = data.bio || "";
+
+    // 3. 物理推入：不靠 openSubPage，直接暴力开启
+    const pages = document.querySelectorAll('#subpage-user-profile');
+    pages.forEach(p => {
+        p.style.display = 'flex'; // 先变现身
+        setTimeout(() => {
+            p.classList.add('active'); // 后滑入
+        }, 10);
+    });
+
+    console.log("System: 推入指令已下达，页面应已滑入。");
+};
+
+// 顺便修复预览卡片
+window.openUserCardPreview = function() {
+    const data = window.userPersona || JSON.parse(localStorage.getItem('user_persona_data'));
+    if(!data) { showToast("档案尚未建立"); return; }
+
+    document.getElementById('user-card-avatar').src = data.avatar;
+    document.getElementById('user-card-name').textContent = data.name;
+    document.getElementById('user-card-bio').textContent = data.bio || "尚未录入系统档案...";
+
+    const modal = document.getElementById('modal-user-card');
+    if(modal) {
+        modal.style.display = 'flex';
+        modal.style.zIndex = '30000'; // 置顶
+    }
+};
+// ==========================================
+// 👤 本我档案：直白函数修复版
+// ==========================================
+
+// 1. 打开编辑资料页
+function openUserProfileEdit() {
+    console.log("正在打开编辑页...");
+    
+    // 捞数据
+    var saved = localStorage.getItem('user_persona_data');
+    var data = saved ? JSON.parse(saved) : { name: "指挥官", avatar: "", bio: "" };
+    window.userPersona = data;
+
+    // 给输入框塞值
+    if (document.getElementById('user-avatar-pre')) document.getElementById('user-avatar-pre').src = data.avatar;
+    if (document.getElementById('user-name-in')) document.getElementById('user-name-in').value = data.name;
+    if (document.getElementById('user-bio-in')) document.getElementById('user-bio-in').value = data.bio;
+
+    // 强行让页面现身并滑出来
+    var page = document.getElementById('subpage-user-profile');
+    if (page) {
+        page.style.display = 'flex';           // 确保它不是 none
+        page.style.zIndex = '999999';          // 确保它在最上面
+        setTimeout(function() {
+            page.classList.add('active');      // 触发滑入动画
+        }, 10);
+    }
+}
+
+// 2. 预览资料卡
+function openUserCardPreview() {
+    console.log("正在预览资料卡...");
+    var saved = localStorage.getItem('user_persona_data');
+    var data = saved ? JSON.parse(saved) : { name: "未知", avatar: "", bio: "" };
+
+    if (document.getElementById('user-card-avatar')) document.getElementById('user-card-avatar').src = data.avatar;
+    if (document.getElementById('user-card-name')) document.getElementById('user-card-name').textContent = data.name;
+    if (document.getElementById('user-card-bio')) document.getElementById('user-card-bio').textContent = data.bio || "尚未定义人格...";
+
+    var modal = document.getElementById('modal-user-card');
+    if (modal) {
+        modal.style.display = 'flex';
+        modal.style.zIndex = '999999';
+    }
+}
+
+// 3. 保存资料
+function saveUserProfile() {
+    var name = document.getElementById('user-name-in').value.trim();
+    var bio = document.getElementById('user-bio-in').value.trim();
+    var avatar = document.getElementById('user-avatar-pre').src;
+
+    if (!name) { alert("昵称不能为空奥"); return; }
+
+    var newData = { name: name, bio: bio, avatar: avatar };
+    localStorage.setItem('user_persona_data', JSON.stringify(newData));
+    window.userPersona = newData;
+
+    // 关掉页面
+    var page = document.getElementById('subpage-user-profile');
+    if (page) page.classList.remove('active');
+    
+    // 弹出成功提示
+    if (window.triggerSuccessHud) window.triggerSuccessHud("身份契约已更新");
+    else alert("身份契约已更新");
+}
+
+// 4. 头像预览
+function previewUserAvatar(input) {
+    if (input.files && input.files[0]) {
+        var reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById('user-avatar-pre').src = e.target.result;
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+console.log("✅ 直白修复版函数已全部挂载，现在去点点看？");
+// ==========================================
+// 🎭 身份隔离引擎：为每个角色分配独立的“我”
+// ==========================================
+
+// 1. 获取当前角色的专属身份坑位 Key
+function getPersonaStorageKey() {
+    // 优先绑定当前正在聊天的角色 ID
+    var contact = window.currentChattingWith;
+    if (contact && contact.id) {
+        return 'user_persona_for_' + contact.id;
+    }
+    // 如果是从全局设置进入且没选定角色，返回一个通用 Key
+    return 'user_persona_data_global';
+}
+
+// 2. 覆盖打开编辑页逻辑：精准提取该角色的“我”
+function openUserProfileEdit() {
+    var key = getPersonaStorageKey();
+    console.log("System: 正在调取坑位 -> " + key);
+
+    var saved = localStorage.getItem(key);
+    // 🚨 核心逻辑：如果没填过，保持空白，不填入默认值
+    var data = saved ? JSON.parse(saved) : { name: "", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=placeholder", bio: "" };
+    
+    window.userPersona = data;
+
+    // 物理填值
+    if (document.getElementById('user-avatar-pre')) document.getElementById('user-avatar-pre').src = data.avatar;
+    if (document.getElementById('user-name-in')) document.getElementById('user-name-in').value = data.name;
+    if (document.getElementById('user-bio-in')) document.getElementById('user-bio-in').value = data.bio;
+
+    // 强行显形并滑出
+    var page = document.getElementById('subpage-user-profile');
+    if (page) {
+        page.style.display = 'flex';
+        page.style.zIndex = '999999';
+        setTimeout(function() { page.classList.add('active'); }, 10);
+    }
+}
+
+// 3. 覆盖预览资料卡：展示当前角色的“我”
+function openUserCardPreview() {
+    var key = getPersonaStorageKey();
+    var saved = localStorage.getItem(key);
+    var data = saved ? JSON.parse(saved) : { name: "尚未定义", avatar: "", bio: "在这段因果中，你尚未定义自己的存在。" };
+
+    if (document.getElementById('user-card-avatar')) document.getElementById('user-card-avatar').src = data.avatar;
+    if (document.getElementById('user-card-name')) document.getElementById('user-card-name').textContent = data.name;
+    if (document.getElementById('user-card-bio')) document.getElementById('user-card-bio').textContent = data.bio;
+
+    var modal = document.getElementById('modal-user-card');
+    if (modal) {
+        modal.style.display = 'flex';
+        modal.style.zIndex = '999999';
+    }
+}
+
+// 4. 覆盖保存逻辑：将身份保存到对应的角色坑位
+function saveUserProfile() {
+    var name = document.getElementById('user-name-in').value.trim();
+    var bio = document.getElementById('user-bio-in').value.trim();
+    var avatar = document.getElementById('user-avatar-pre').src;
+
+    if (!name) { alert("起个名字吧宝贝，哪怕是代号奥"); return; }
+
+    var newData = { name: name, bio: bio, avatar: avatar };
+    var key = getPersonaStorageKey(); // 关键：拿到当前角色的专属 Key
+    
+    localStorage.setItem(key, JSON.stringify(newData));
+    window.userPersona = newData;
+
+    // 物理关闭
+    var page = document.getElementById('subpage-user-profile');
+    if (page) page.classList.remove('active');
+    
+    if (window.triggerSuccessHud) window.triggerSuccessHud("身份已绑定至该角色");
+}
+
+console.log("✅ 身份隔离协议已激活：现在每个角色都拥有独立的‘我’了！");
+// ==========================================
+// 🎨 极简风格：文字头像生成器
+// ==========================================
+// 这个函数负责现场手搓一个带文字的 SVG 头像给你
+function generateTextAvatarUrl(text, backgroundColor) {
+    var txt = text ? text.charAt(0).toUpperCase() : "?"; // 取首字母，没有就显示问号
+    var bg = backgroundColor || "#888888"; // 默认高级灰底色
+    
+    // 绘制一个简单的方形SVG，中间放个白色的字
+    var svgRaw = '<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120">' +
+              '<rect width="120" height="120" fill="' + bg + '"/>' +
+              '<text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle" font-family="Arial, sans-serif" font-weight="bold" font-size="65" fill="#ffffff">' + txt + '</text>' +
+              '</svg>';
+    
+    // 转换成浏览器能识别的数据链接
+    return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgRaw);
+}
+
+
+// ==========================================
+// 🎭 身份隔离引擎：多重马甲核心
+// ==========================================
+
+// 1. 获取当前角色的专属身份坑位 Key
+function getPersonaStorageKey() {
+    var contact = window.currentChattingWith;
+    if (contact && contact.id) {
+        return 'user_persona_for_' + contact.id;
+    }
+    return 'user_persona_data_global';
+}
+
+// 2. 覆盖打开编辑页逻辑：精准提取，默认显示文字头像
+function openUserProfileEdit() {
+    var key = getPersonaStorageKey();
+    console.log("System: 正在调取坑位 -> " + key);
+
+    var saved = localStorage.getItem(key);
+    
+    // 🚨 核心修改：如果没存过，使用现场生成的“?”文字头像
+    var defaultAvatar = generateTextAvatarUrl("?", "#A0A0A0"); // 生成一个灰底问号头像
+    
+    var data = saved ? JSON.parse(saved) : { name: "", avatar: defaultAvatar, bio: "" };
+    
+    window.userPersona = data;
+
+    // 物理填值
+    var avtPre = document.getElementById('user-avatar-pre');
+    if (avtPre) avtPre.src = data.avatar;
+    
+    if (document.getElementById('user-name-in')) document.getElementById('user-name-in').value = data.name;
+    if (document.getElementById('user-bio-in')) document.getElementById('user-bio-in').value = data.bio;
+
+    // 强行显形并滑出
+    var page = document.getElementById('subpage-user-profile');
+    if (page) {
+        page.style.display = 'flex';
+        page.style.zIndex = '999999';
+        setTimeout(function() { page.classList.add('active'); }, 10);
+    }
+}
+
+// 3. 覆盖预览资料卡
+function openUserCardPreview() {
+    var key = getPersonaStorageKey();
+    var saved = localStorage.getItem(key);
+    
+    // 如果没定义过，预览卡也显示问号头像
+    var defaultAvatar = generateTextAvatarUrl("?", "#A0A0A0");
+    var data = saved ? JSON.parse(saved) : { name: "尚未定义", avatar: defaultAvatar, bio: "在这段因果中，你尚未定义自己的存在。" };
+
+    if (document.getElementById('user-card-avatar')) document.getElementById('user-card-avatar').src = data.avatar;
+    if (document.getElementById('user-card-name')) document.getElementById('user-card-name').textContent = data.name;
+    if (document.getElementById('user-card-bio')) document.getElementById('user-card-bio').textContent = data.bio;
+
+    var modal = document.getElementById('modal-user-card');
+    if (modal) {
+        modal.style.display = 'flex';
+        modal.style.zIndex = '999999';
+    }
+}
+
+// 4. 覆盖保存逻辑
+function saveUserProfile() {
+    var name = document.getElementById('user-name-in').value.trim();
+    var bio = document.getElementById('user-bio-in').value.trim();
+    // 注意：这里直接取当前显示的图片src，如果你上传了新图，就会保存新图
+    var avatar = document.getElementById('user-avatar-pre').src; 
+
+    if (!name) { alert("起个名字吧宝贝，哪怕是代号奥"); return; }
+    
+    // 💡 小彩蛋：如果你没上传图片，保存时自动用名字的首字母生成一个新头像
+    // 如果当前用的是默认问号头像，且你填了名字，就用名字首字母重新生成一个
+    if (avatar.includes("%3F") && name) { // %3F 是 URL 编码后的问号
+         avatar = generateTextAvatarUrl(name, "#555555"); // 用深灰色底 + 首字母
+    }
+
+    var newData = { name: name, bio: bio, avatar: avatar };
+    var key = getPersonaStorageKey();
+    
+    localStorage.setItem(key, JSON.stringify(newData));
+    window.userPersona = newData;
+
+    var page = document.getElementById('subpage-user-profile');
+    if (page) page.classList.remove('active');
+    
+    if (window.triggerSuccessHud) window.triggerSuccessHud("身份已绑定");
+}
+
+// 5. 头像预览（你之前的代码里好像丢了这个，我给你补上）
+function previewUserAvatar(input) {
+    if (input.files && input.files[0]) {
+        var reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById('user-avatar-pre').src = e.target.result;
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+console.log("✅ 文字头像引擎 & 身份隔离协议已全面激活！");
+// ==========================================
+// 🌌 专属回忆：全能驱动系统 (修复 ReferenceError)
+// ==========================================
+
+// 1. 【入口】打开列表并触发渲染
+function openExclusiveMemories() {
+    console.log("System: 正在调取时空档案...");
+    var contact = window.currentChattingWith;
+    if (!contact) {
+        showToast("⚠️ 丢失角色链路");
+        return;
+    }
+
+    var subPage = document.getElementById('subpage-memory-list');
+    if (subPage) {
+        subPage.classList.add('active');
+        subPage.style.display = 'flex';
+        subPage.style.zIndex = "15000";
+        // 渲染列表
+        renderMemoryList(contact.id);
+    }
+}
+
+// 2. 【渲染】生成记忆卡片
+async function renderMemoryList(contactId) {
+    var container = document.getElementById('memory-list-container');
+    if (!container) return;
+
+    var memories = await loadFromDB('memories_' + contactId) || [];
+    container.innerHTML = "";
+
+    if (memories.length === 0) {
+        container.innerHTML = '<div style="text-align:center; padding:100px 20px; color:#bbb; font-size:14px;">此间尚无感官碎片...</div>';
+        return;
+    }
+
+    memories.forEach(function(m, index) {
+        var card = document.createElement('div');
+        card.className = 'memory-item-card';
+        card.innerHTML = 
+            '<div class="card-num">' + (index + 1).toString().padStart(2, '0') + '</div>' +
+            '<div style="position:relative; z-index:2;">' +
+                '<span class="memory-tag">FRAGMENT #' + (memories.length - index) + '</span>' +
+                '<div style="font-size:20px; font-weight:800; margin:10px 0; color:#1d1d1f;">' + m.title + '</div>' +
+                '<p class="memory-excerpt">' + m.content.substring(0, 60) + '...</p>' +
+            '</div>';
+        
+        card.onclick = function(e) {
+            e.stopPropagation();
+            openCinemaMemory(m);
+        };
+        container.appendChild(card);
+    });
+}
+
+// 3. 【唤起】详情视界
+function openCinemaMemory(m) {
+    if (!m) return;
+    var modal = document.getElementById('modal-memory-cinema');
+    if (!modal) return;
+
+    // 安全设置标题：尝试匹配你可能写的两种 ID
+    var titleEl = document.getElementById('cinema-title-ui') || document.getElementById('cinema-title');
+    if (titleEl) titleEl.textContent = m.title || "无名记忆";
+
+    // 安全设置正文：尝试匹配你可能写的两种 ID
+    var textEl = document.getElementById('cinema-text-content') || document.getElementById('cinema-text');
+    if (textEl) {
+        textEl.style.whiteSpace = "pre-wrap";
+        textEl.textContent = m.content || "";
+    }
+
+    // 安全设置图片
+    var imgEl = document.getElementById('cinema-img');
+    if (imgEl) imgEl.src = m.img || "";
+
+    // 强行显示
+    modal.style.display = 'flex';
+    modal.style.zIndex = "1000000";
+}
+
+// 4. 【核心生成】细腻文风 + 1000字 + 绝不重样
+// ==========================================
+// 🌌 专属回忆：量子叙事超级引擎 (物理避错版)
+// ==========================================
+
+// 🚨 这一行放在函数外面，用来防止电脑卡顿（防抖锁）
+var isProcessingMemory = false;
+
+async function triggerGenerateMemory() {
+    if (window.isProcessingMemory) return;
+    window.isProcessingMemory = true;
+
+    var contact = window.currentChattingWith;
+    if (!contact) {
+        alert("⚠️ 链路丢失，请重新进入聊天室");
+        window.isProcessingMemory = false;
+        return;
+    }
+
+    var loader = document.getElementById('quantum-loader-overlay') || document.getElementById('quantum-loader');
+    if (loader) loader.style.display = 'flex';
+
+    try {
+        var apiKey = localStorage.getItem('gpt_key');
+        var apiUrl = (localStorage.getItem('gpt_url') || "https://api.openai.com/v1").replace(/\/+$/, "");
+        if (!apiKey) throw new Error("API Key 未配置");
+
+        // --- 1. 准备基础数据 ---
+        var charList = await loadFromDB('char_list') || [];
+        var fullChar = charList.find(c => c.id === contact.id) || contact;
+        var myKey = 'user_persona_for_' + contact.id;
+        var myData = JSON.parse(localStorage.getItem(myKey)) || {name:"我", bio:""};
+
+        // 获取已有标题用于避雷
+        var memories = await loadFromDB('memories_' + contact.id) || [];
+        var existingTitles = memories.map(m => m.title).join('、');
+
+        // 🚨 【核心修复】定义感官池，确保 randomSense 存在
+        var sensoryPool = [
+            "暴雨洗刷过的铁轨与锈迹", "旧书架死角的灰尘在跳舞",
+            "隔着毛玻璃看到的模糊霓虹", "深夜站台最后一张报纸被吹走",
+            "指尖按在冰冷钢琴键上的颤动", "老宅储物间里淤积的尘埃味"
+        ];
+        var randomSense = sensoryPool[Math.floor(Math.random() * sensoryPool.length)];
+
+        // 🧠 【高级 Prompt】强制要求差异化
+        var prompt = `你是文学叙事巨匠。为[${fullChar.name}]与[${myData.name}]编织一段专属回忆。
+        【意象锚点】: "${randomSense}"
+        【避雷名单】: 目前已经存在的标题有 [${existingTitles || "无"}]。
+
+        【禁令】:
+        1. 严禁使用 # 号、* 号、- 号等任何 Markdown 标记符号。
+        2. 严禁标题出现“感官碎片”或数字。标题必须极具文学美感（如：余烬、雪茧、霓虹耳鸣）。
+        
+        【写作指令】:
+        1. 视角为第一人称，字数800-1200字。
+        2. 文风极度细腻、冷冽、充满电影感。
+        3. 【重点】: 请在文中使用以下符号进行排版标注：
+           - 使用 【 】 包裹核心的关键词或关键瞬间（将显示为黑底白字）。
+           - 使用 「 」 包裹细腻的感官细节或心理描写（将显示为下划线加粗）。
+        4. 每一段话不要太长，注意留白和呼吸感。
+        
+        格式：
+        【标题】此处写标题，每一次不能重复
+        【正文】此处写正文`;
+
+        var res = await fetch(apiUrl + "/chat/completions", {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + apiKey },
+            body: JSON.stringify({
+                model: localStorage.getItem('gpt_model') || "gpt-3.5-turbo",
+                messages: [{ role: "user", content: prompt }],
+                temperature: 0.95,
+                presence_penalty: 1.0 
+            })
+        });
+
+        var data = await res.json();
+        if (data.error) throw new Error(data.error.message);
+        var raw = data.choices[0].message.content;
+
+        // --- 3. 解析标题与正文 ---
+        var titleMatch = raw.match(/【标题】\s*[:：]?\s*(.*?)(?:\n|【正文】|$)/);
+        var title = (titleMatch && titleMatch[1]) ? titleMatch[1].trim() : "碎片 " + Date.now();
+        var content = raw.replace(/【标题】.*(\n|$)/, "").replace(/【正文】\s*[:：]?\s*/, "").trim();
+
+        // --- 4. 物理保存数据 (强制同步头像) ---
+        var newMem = { 
+            id: Date.now(), 
+            title: title, 
+            content: content, 
+            img: fullChar.avatar // 🚨 物理锁定，直接用头像
+        };
+
+        memories.unshift(newMem);
+        await saveToDB('memories_' + contact.id, memories);
+
+        // --- 5. 同步渲染 UI ---
+        await renderMemoryList(contact.id); 
+        if (loader) loader.style.display = 'none';
+        window.openCinemaMemory(newMem);
+
+    } catch (e) {
+        if (loader) loader.style.display = 'none';
+        console.error("生成失败:", e);
+        alert("量子纠缠失败: " + e.message);
+    } finally {
+        window.isProcessingMemory = false;
+    }
+}
+window.triggerGenerateMemory = triggerGenerateMemory;
+// --- 🧹 清空所有记忆碎片逻辑 (同步修复版) ---
+async function clearAllMemories() {
+    const contact = window.currentChattingWith;
+    if (!contact) return;
+
+    showIOSConfirm(
+        "抹除记忆", 
+        "确定要永久删除所有回忆碎片吗？", 
+        "抹除", 
+        async function() {
+            const dbKey = 'memories_' + contact.id;
+            // 1. 物理清空
+            await saveToDB(dbKey, []); 
+            // 2. 🚨 重点：await 列表刷新
+            await renderMemoryList(contact.id); 
+            
+            showToast("记忆已归于虚无");
+            if (window.triggerSuccessHud) triggerSuccessHud("清理完成");
+        }
+    );
+}
+// 挂载全局
+window.clearAllMemories = clearAllMemories;
+
+// 为了确保 HTML 里的 onclick="clearAllMemories()" 能百分之百找到它
+// 我们依然在全局手动挂载一次，做个双重保险
+window.clearAllMemories = clearAllMemories;
+// --- 🎞️ 渲染列表卡片核心 (具名版) ---
+async function renderMemoryList(contactId) {
+    console.log("System: 正在重绘记忆列表...", contactId);
+    var container = document.getElementById('memory-list-container');
+    if (!container) return;
+
+    // 🚨 核心：从数据库读取最新数据
+    var memories = await loadFromDB('memories_' + contactId) || [];
+    container.innerHTML = "";
+
+    if (memories.length === 0) {
+        container.innerHTML = '<div style="text-align:center; padding:100px 20px; color:#bbb; font-size:14px;">此间尚无感官碎片...</div>';
+        return;
+    }
+
+    memories.forEach(function(m, index) {
+        var card = document.createElement('div');
+        card.className = 'memory-item-card';
+        // 计算倒序编号
+        var displayNum = (memories.length - index).toString().padStart(2, '0');
+        
+        card.innerHTML = `
+            <div class="card-num">${displayNum}</div>
+            <div style="position:relative; z-index:2;">
+                <span class="memory-tag" style="font-size:10px; font-weight:900; color:#007AFF; letter-spacing:2px;">FRAGMENT</span>
+                <div style="font-size:20px; font-weight:800; margin:10px 0; color:#1d1d1f;">${m.title}</div>
+                <p style="font-size:12px; color:#8e8e93; line-height:1.6;">${m.content.substring(0, 60)}...</p>
+            </div>
+        `;
+        
+        card.onclick = function(e) {
+            e.stopPropagation();
+            window.openCinemaMemory(m);
+        };
+        container.appendChild(card);
+    });
+}
+// 挂载全局
+window.renderMemoryList = renderMemoryList;
+
 </script>
 </body>
 </html>
