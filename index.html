@@ -5733,7 +5733,362 @@
     font-weight: 800;
     padding-bottom: 1px;
 }
+/* --- 🎞️ 记忆卡片左滑删除补丁 --- */
+.memory-swipe-wrapper {
+    position: relative;
+    width: 100%;
+    overflow: hidden; /* 隐藏溢出的删除按钮 */
+    border-radius: 28px; /* 保持圆角一致 */
+    margin-bottom: 18px;
+    background-color: #FF3B30; /* 滑开后露出的底色是红色 */
+}
 
+.memory-swipe-content {
+    position: relative;
+    width: 100%;
+    background: #ffffff;
+    z-index: 2; /* 盖在按钮上面 */
+    transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+    will-change: transform;
+}
+
+.memory-swipe-actions {
+    position: absolute;
+    top: 0;
+    right: 0;
+    height: 100%;
+    width: 80px; /* 删除按钮的宽度 */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1;
+    color: #fff;
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+}
+/* --- 🎚️ 记忆总结专属滑动条美化 --- */
+#subpage-memory-summary .ios-slider {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 6px;
+    background: #e5e5ea;
+    border-radius: 10px;
+    outline: none;
+    /* 动态填充色：左黑右灰 */
+    background-image: linear-gradient(#000, #000);
+    background-size: var(--percent, 20%) 100%;
+    background-repeat: no-repeat;
+}
+
+#subpage-memory-summary .ios-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    height: 28px;
+    width: 28px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.2), 0 0 0 0.5px rgba(0,0,0,0.05);
+    cursor: pointer;
+    transition: transform 0.1s;
+}
+
+#subpage-memory-summary .ios-slider:active::-webkit-slider-thumb {
+    transform: scale(1.15);
+}
+/* ==========================================
+   🚨 物理锁死：记忆总结页全宽拉伸
+   ========================================== */
+
+/* 1. 强制主体容器不许居中，占满 100% */
+#subpage-memory-summary .app-body {
+    display: block !important;          /* ❌ 停用 Flex 居中，恢复块级流 */
+    width: 100% !important;
+    padding: 20px 16px !important;      /* 左右保留 16px 标准边距，其余全部拉满 */
+    max-width: none !important;
+    box-sizing: border-box !important;
+}
+
+/* 2. 强制内部卡片组占满屏幕 */
+#subpage-memory-summary .ios-list-group {
+    width: 100% !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    display: block !important;           /* 确保内部元素垂直堆叠 */
+    box-sizing: border-box !important;
+}
+
+/* 3. 强制滑块轨道撑满 100% */
+#subpage-memory-summary .ios-slider {
+    width: 100% !important;
+    margin: 30px 0 !important;           /* 增加上下间距，更显大气 */
+    display: block !important;
+}
+
+/* 4. 修复标题文字对齐 */
+#subpage-memory-summary .tz-group-title {
+    text-align: left !important;
+    padding-left: 4px !important;
+    width: 100% !important;
+}
+
+/* 5. 调整数字显示的位置 */
+#summary-rounds-val {
+    font-size: 50px !important;
+    font-weight: 800 !important;
+    color: #000;
+}
+/* --- 📓 记忆总结卡片：黑白档案风 --- */
+.summary-card {
+    background: #fff;
+    border: 1.5px solid #000;
+    border-radius: 20px;
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    animation: cardFadeIn 0.4s ease-out;
+}
+
+.summary-card::before {
+    content: "CORE MEMORY";
+    position: absolute;
+    top: 10px; right: -25px;
+    background: #000;
+    color: #fff;
+    font-size: 8px;
+    font-weight: 900;
+    padding: 2px 30px;
+    transform: rotate(45deg);
+}
+
+.summary-date {
+    font-size: 10px;
+    color: #8e8e93;
+    font-family: monospace;
+    margin-bottom: 10px;
+    display: block;
+}
+
+.summary-content {
+    font-size: 14px;
+    line-height: 1.7;
+    color: #1d1d1f;
+    font-family: serif;
+    font-style: italic;
+}
+
+.btn-delete-summary {
+    position: absolute;
+    bottom: 15px; right: 20px;
+    font-size: 11px;
+    color: #FF3B30;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+@keyframes cardFadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+/* --- 📱 通知中心：物理增强版 --- */
+.notification-shade {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    background: rgba(0, 0, 0, 0.4); /* 加深底色 */
+    backdrop-filter: blur(25px) saturate(160%);
+    -webkit-backdrop-filter: blur(25px) saturate(160%);
+    z-index: 100000; 
+    display: none; /* 初始由 JS 控制显示 */
+    flex-direction: column;
+    transform: translateY(-100%);
+    transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+    pointer-events: auto;
+}
+
+/* 激活状态 */
+.notification-shade.active {
+    transform: translateY(0);
+}
+
+/* 🚨 关键：手势感应区 (状态栏隐形外挂) */
+.status-bar {
+    pointer-events: auto !important; /* 确保状态栏能抓到点击/滑动 */
+}
+
+/* 遮罩层顶部的把手 */
+.shade-handle {
+    width: 40px; height: 5px; background: rgba(255,255,255,0.3);
+    border-radius: 10px; margin: 15px auto;
+}
+
+/* --- 🔔 实时推送横幅 (Push Banner) --- */
+.ios-banner {
+    position: fixed; top: -100px; left: 50%; transform: translateX(-50%);
+    width: 92%; max-width: 380px;
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(20px);
+    border-radius: 24px; padding: 15px;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+    z-index: 110000; display: flex; align-items: center; gap: 12px;
+    transition: top 0.5s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+    cursor: pointer;
+}
+
+.ios-banner.show { top: 55px; } /* 避开状态栏高度 */
+
+.banner-icon { width: 36px; height: 36px; background: #000; border-radius: 10px; display: flex; align-items: center; justify-content: center; }
+.banner-content { flex: 1; }
+.banner-title { font-size: 13px; font-weight: 800; color: #000; margin-bottom: 2px; }
+.banner-text { font-size: 12px; color: #333; line-height: 1.3; }
+/* --- 📱 通知中心：布局与标题栏 --- */
+.notification-shade {
+    /* ...保持你之前的固定定位和背景模糊样式... */
+    display: none;
+    flex-direction: column; /* 确保内部元素垂直排列 */
+    justify-content: space-between; /* 让内容和底部把手分开 */
+    padding-bottom: 20px; /* 给底部把手留位置 */
+    box-sizing: border-box;
+}
+
+/* 新增：毛玻璃标题栏 */
+.notif-header-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 45px 20px 15px; /* 避开状态栏高度 */
+    background: rgba(255, 255, 255, 0.1); /* 极淡的白色遮罩 */
+    border-bottom: 0.5px solid rgba(255, 255, 255, 0.2); /* 精致分割线 */
+}
+
+.notif-title {
+    font-size: 28px;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: 0.5px;
+}
+
+/* 清除按钮 */
+.notif-clear-btn {
+    width: 32px; height: 32px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    color: rgba(255,255,255,0.8);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.notif-clear-btn:active {
+    background: rgba(255,255,255,0.4);
+    transform: scale(0.9);
+}
+
+/* 列表容器：可滚动 */
+.notif-list-container {
+    flex: 1; /* 占满剩余空间 */
+    overflow-y: auto;
+    padding: 20px 16px;
+}
+
+.notif-empty-state {
+    text-align: center;
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 14px;
+    margin-top: 100px;
+    font-weight: 500;
+}
+
+/* --- 底部把手 (取代原来的顶部把手) --- */
+.shade-handle-bottom {
+    width: 45px;
+    height: 5px;
+    background: rgba(255, 255, 255, 0.4);
+    border-radius: 10px;
+    margin: 0 auto; /* 水平居中 */
+    flex-shrink: 0; /* 防止被挤压 */
+    cursor: pointer;
+}
+/* 通知横幅基础样式 */
+.ios-banner {
+    position: fixed;
+    top: -100px; /* 初始藏在上面 */
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90%;
+    max-width: 400px;
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(20px);
+    border-radius: 20px;
+    padding: 15px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    z-index: 999999;
+    display: flex;
+    align-items: center;
+    transition: top 0.6s cubic-bezier(0.18, 0.89, 0.32, 1.28); /* 弹性滑入 */
+    cursor: pointer;
+}
+
+/* 显示时的状态 */
+.ios-banner.show {
+    top: 20px;
+}
+/* 1. 修复消息列表条变形：强制单行或双行截断 */
+.contact-preview {
+    font-size: 13px;
+    color: #8E8E93;
+    margin-top: 2px;
+    /* 核心修复：超出文字变省略号，不撑开高度 */
+    display: -webkit-box !important;
+    -webkit-line-clamp: 1; /* 强制只显示1行，你可以改成2 */
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: normal; /* 覆盖可能冲突的 nowrap */
+    word-break: break-all;
+    max-height: 18px; /* 锁定高度，防止抖动 */
+}
+
+/* 2. 修复弹窗位置：向下平移，避开状态栏(48px) */
+.ios-banner {
+    top: -120px; /* 初始位置更靠上，确保彻底藏住 */
+    transition: top 0.5s cubic-bezier(0.18, 0.89, 0.32, 1.28) !important;
+}
+
+.ios-banner.show {
+    top: 60px !important; /* 状态栏 48px + 12px 留白，黄金比例 */
+}
+
+/* 3. 通知中心里的卡片样式微调，确保美观 */
+.notif-item {
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(10px);
+    border-radius: 18px;
+    padding: 15px;
+    margin-bottom: 12px;
+    color: #fff;
+    animation: msgFadeUp 0.4s ease;
+}
+/* 🚨 物理修复：子页面列表宽度锁定 */
+#subpage-icon-picker .app-body {
+    padding: 20px 16px !important; /* 还原 iOS 标准：上下 20px，左右 16px */
+    display: block !important;      /* 确保内容按块级排列，不被 flex 挤压宽度 */
+    overflow-y: auto;
+}
+
+#icon-target-list {
+    width: 100% !important;         /* 强制列表容器 100% 宽度 */
+    margin: 0 auto !important;      /* 居中对齐 */
+}
+
+/* 确保列表项内容也能撑开 */
+#icon-target-list .ios-list-item {
+    width: 100% !important;
+}
+
+#icon-target-list .item-content {
+    flex: 1;                        /* 让内容区自动填满剩余空间 */
+    padding-right: 8px;            /* 给右侧箭头留点呼吸感 */
+}
 </style>
 </head>
 <body>
@@ -5825,11 +6180,40 @@
                     </div>
                     <span class="app-name">Chat</span>
                 </div>
-                <div class="app-cell"><div class="icon-shape" style="color:#5856D6"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" fill="none" stroke="currentColor" stroke-width="2"/><polyline points="14 2 14 8 20 8" fill="none" stroke="currentColor" stroke-width="2"/></svg></div><span class="app-name">Files</span></div>
-                <div class="app-cell"><div class="icon-shape" style="color:#333"><svg class="svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/><polyline points="12 6 12 12 16 14" fill="none" stroke="currentColor" stroke-width="2"/></svg></div><span class="app-name">Clock</span></div>
-                <div class="app-cell"><div class="icon-shape" style="color:#333"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" fill="none" stroke="currentColor" stroke-width="2"/><polyline points="22,6 12,13 2,6" fill="none" stroke="currentColor" stroke-width="2"/></svg></div><span class="app-name">Mail</span></div>
-                <div class="app-cell"><div class="icon-shape" style="color:#333"><svg class="svg-icon" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" fill="none" stroke="currentColor" stroke-width="2"/></svg></div><span class="app-name">Star</span></div>
-                <div class="app-cell"><div class="icon-shape" style="color:#333"><svg class="svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="2"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1-2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" fill="none" stroke="currentColor" stroke-width="2"/></svg></div><span class="app-name">Set</span></div>
+                <div class="app-cell" onclick="openApp('galleryApp')">
+                    <div class="icon-shape" style="background: linear-gradient(135deg, #FFD3A5 0%, #FD6585 100%); color: white;">
+                        <svg class="svg-icon" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                    </div>
+                    <span class="app-name">Photos</span>
+                </div>
+
+                <div class="app-cell" onclick="openApp('musicApp')">
+                    <div class="icon-shape" style="background: linear-gradient(135deg, #fb3a4d 0%, #fb6470 100%); color: white;">
+                        <svg class="svg-icon" viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+                    </div>
+                    <span class="app-name">Music</span>
+                </div>
+
+                <div class="app-cell" onclick="openApp('themeApp')">
+                    <div class="icon-shape" style="background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%); color: white;">
+                        <svg class="svg-icon" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+                    </div>
+                    <span class="app-name">Themes</span>
+                </div>
+
+                <div class="app-cell" onclick="openApp('phoneApp')">
+                    <div class="icon-shape" style="background: linear-gradient(135deg, #28C940 0%, #5ee172 100%); color: white;">
+                        <svg class="svg-icon" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                    </div>
+                    <span class="app-name">Phone</span>
+                </div>
+
+                <div class="app-cell" onclick="openApp('messageApp')">
+                    <div class="icon-shape" style="background: linear-gradient(135deg, #21d4fd 0%, #b721ff 100%); color: white;">
+                        <svg class="svg-icon" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                    </div>
+                    <span class="app-name">Messages</span>
+                </div>
             </div>
 
             <div class="main-container" id="page-2" style="display: grid; grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(6, 1fr); gap: 16px; padding: 20px;">
@@ -5862,51 +6246,45 @@
                     </div>
                 </div>
 
-                <div class="app-cell custom-pic-app" style="grid-area: 3 / 3 / 4 / 4; display: flex; flex-direction: column; align-items: center; justify-content: center;">
-                    <div class="glass-icon-bg" onclick="window.openApp('vibe-grid-app'); window.initVibeGrid();">
-                        <svg class="glass-icon-svg" viewBox="0 0 24 24">
-                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                            <line x1="3" y1="9" x2="21" y2="9"></line>
-                            <line x1="3" y1="15" x2="21" y2="15"></line>
-                            <line x1="9" y1="3" x2="9" y2="21"></line>
-                            <line x1="15" y1="3" x2="15" y2="21"></line>
+                <div class="app-cell" style="grid-area: 3 / 3 / 4 / 4;" onclick="window.openApp('vibe-grid-app')">
+                    <div class="glass-icon-bg">
+                        <svg class="glass-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/>
                         </svg>
                     </div>
-                    <span class="app-name" style="margin-top: 8px; font-size: 11px;">Vibe Grid</span>
+                    <span class="app-name">Vibe Grid</span>
                 </div>
 
-                <div class="app-cell custom-pic-app" style="grid-area: 3 / 4 / 4 / 5; display: flex; flex-direction: column; align-items: center; justify-content: center;">
-                    <div class="glass-icon-bg" onclick="openSynesthesiaApp()">
-                        <svg class="glass-icon-svg" viewBox="0 0 24 24">
-                            <circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="1.5"></circle>
-                            <circle cx="12" cy="12" r="4" fill="currentColor" opacity="0.3"></circle>
-                            <circle cx="12" cy="12" r="1.5" fill="currentColor"></circle>
-                            <path d="M12 2v2M12 20v2M2 12h2M20 12h2" stroke="currentColor" stroke-width="1" opacity="0.5"></path>
+                <div class="app-cell" style="grid-area: 3 / 4 / 4 / 5;" onclick="openApp('diaryApp')">
+                    <div class="glass-icon-bg">
+                        <span class="app-name" style="display: none;">Diary</span>
+                        <svg class="glass-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                            <path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
                         </svg>
                     </div>
-                    <span class="app-name" style="margin-top: 8px; font-size: 11px;">Sense</span>
+                    <span class="app-name">Diary</span>
                 </div>
 
-                <div class="app-cell custom-pic-app" style="grid-area: 4 / 3 / 5 / 4;">
-                    <div class="glass-icon-bg" onclick="openApp('app7App')">
-                        <svg class="glass-icon-svg" viewBox="0 0 24 24">
-                            <path d="M2 3h16a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H2"></path>
-                            <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+                <div class="app-cell" style="grid-area: 4 / 3 / 5 / 4;" onclick="openApp('walletApp')">
+                    <div class="glass-icon-bg">
+                        <span class="app-name" style="display: none;">Wallet</span>
+                        <svg class="glass-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                            <rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20M7 15h.01"/>
                         </svg>
                     </div>
-                    <span class="app-name" id="hub-app-name-7">Journal</span>
+                    <span class="app-name">Wallet</span>
                 </div>
 
-                <div class="app-cell custom-pic-app" style="grid-area: 4 / 4 / 5 / 5;">
-                    <div class="glass-icon-bg" onclick="openApp('app8App')">
-                        <svg class="glass-icon-svg" viewBox="0 0 24 24">
-                            <circle cx="12" cy="12" r="10"></circle>
-                            <line x1="2" y1="12" x2="22" y2="12"></line>
-                            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+                <div class="app-cell" style="grid-area: 4 / 4 / 5 / 5;" onclick="openApp('notesApp')">
+                    <div class="glass-icon-bg">
+                        <span class="app-name" style="display: none;">Notes</span>
+                        <svg class="glass-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8"/>
                         </svg>
                     </div>
-                    <span class="app-name" id="hub-app-name-8">Manifest</span>
+                    <span class="app-name">Notes</span>
                 </div>
+
                 <div class="widget vibe-bar-widget" style="grid-area: 5 / 1 / 6 / 5;" onclick="window.editHubField('vibe_img')">
                     <div class="vibe-bg-wrapper">
                         <img id="hub-vibe-img" src="https://images.unsplash.com/photo-1502759683299-cdcc6974244f?w=800&auto=format&fit=crop" alt="Vibe">
@@ -5915,24 +6293,44 @@
                     <span id="hub-vibe-text" onclick="event.stopPropagation(); window.editHubField('vibe_text')">Current Vibe: Serenity</span>
                 </div>
 
-                <div class="app-cell custom-pic-app" style="grid-area: 6 / 1 / 7 / 2;">
-                    <div class="pic-app-wrapper" onclick="openApp('app7App')">
-                        <img id="hub-app-img-7" src="https://images.unsplash.com/photo-1528459801416-a9e53bbf4e17?w=300&auto=format&fit=crop" alt="App7">
-                        <div class="pic-app-edit" onclick="event.stopPropagation(); window.editHubField('app7_img')">
-                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-                        </div>
+                <div class="app-cell" style="grid-area: 6 / 1 / 7 / 2;" onclick="openApp('shoppingApp')">
+                    <div class="glass-icon-bg">
+                        <span class="app-name" style="display: none;">Shopping</span>
+                        <svg class="glass-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                            <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+                        </svg>
                     </div>
-                    <span class="app-name" id="hub-app-name-7" onclick="event.stopPropagation(); window.editHubField('app7_name')">Files</span>
+                    <span class="app-name">Shopping</span>
                 </div>
 
-                <div class="app-cell custom-pic-app" style="grid-area: 6 / 4 / 7 / 5;">
-                    <div class="pic-app-wrapper" onclick="openApp('app8App')">
-                        <img id="hub-app-img-8" src="https://images.unsplash.com/photo-1511447333015-45b65e60f6d5?w=300&auto=format&fit=crop" alt="App8">
-                        <div class="pic-app-edit" onclick="event.stopPropagation(); window.editHubField('app8_img')">
-                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-                        </div>
+                <div class="app-cell" style="grid-area: 6 / 2 / 7 / 3;" onclick="openApp('forumApp')">
+                    <div class="glass-icon-bg">
+                        <span class="app-name" style="display: none;">Forum</span>
+                        <svg class="glass-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                            <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
+                        </svg>
                     </div>
-                    <span class="app-name" id="hub-app-name-8" onclick="event.stopPropagation(); window.editHubField('app8_name')">Clock</span>
+                    <span class="app-name">Forum</span>
+                </div>
+
+                <div class="app-cell" style="grid-area: 6 / 3 / 7 / 4;" onclick="openApp('novelApp')">
+                    <div class="glass-icon-bg">
+                        <span class="app-name" style="display: none;">Novels</span>
+                        <svg class="glass-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V2H6.5A2.5 2.5 0 0 0 4 4.5v15z"/>
+                        </svg>
+                    </div>
+                    <span class="app-name">Novels</span>
+                </div>
+
+                <div class="app-cell" style="grid-area: 6 / 4 / 7 / 5;" onclick="openApp('liveApp')">
+                    <div class="glass-icon-bg">
+                        <span class="app-name" style="display: none;">Live</span>
+                        <svg class="glass-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                            <path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/>
+                        </svg>
+                    </div>
+                    <span class="app-name">Live</span>
                 </div>
 
                 </div>
@@ -5954,8 +6352,25 @@
                     <circle cx="12" cy="12" r="3" fill="rgba(255,255,255,0.2)"/>
                 </svg>
             </div>
-            <div class="dock-app" style="background:linear-gradient(135deg,#43e97b,#38f9d7)"><svg class="svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" fill="currentColor"/></svg></div>
-            <div class="dock-app" style="background:linear-gradient(135deg,#4facfe,#00f2fe)"><svg class="svg-icon" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" fill="none" stroke="currentColor" stroke-width="2"/><polyline points="22,6 12,13 2,6" fill="none" stroke="currentColor" stroke-width="2"/></svg></div>
+            <div class="dock-app" onclick="openApp('beautifyApp')" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); position: relative;">
+                <span class="app-name" style="display: none;">美化</span>
+                
+                <svg class="svg-icon" viewBox="0 0 24 24" style="color:white; width:28px;">
+                    <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/>
+                    <path d="M12 8l-2 4h4l-2 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M12 2v2M12 20v2M2 12h2M20 12h2" stroke="currentColor" stroke-width="1.5" opacity="0.5"/>
+                </svg>
+            </div>
+            <div class="dock-app" onclick="openApp('iconApp')" style="background: linear-gradient(135deg, #2af598 0%, #009efd 100%);">
+                <span class="app-name" style="display: none;">Icons</span>
+                
+                <svg class="svg-icon" viewBox="0 0 24 24" style="color:white; width:28px;">
+                    <rect x="3" y="3" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="2" fill="none"/>
+                    <rect x="14" y="3" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="2" fill="none"/>
+                    <rect x="3" y="14" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="2" fill="none"/>
+                    <path d="M17.5 14v7M14 17.5h7" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+                </svg>
+            </div>
         </div>
         <div class="home-indicator"></div>
     </div>
@@ -8131,8 +8546,346 @@
     </div>
     <div class="weaving-text">正在从量子纠缠中编织叙事...</div>
 </div>
+<div id="subpage-memory-summary" class="ios-sub-page">
+    <div class="app-header">
+        <div class="header-left" onclick="closeSubPage('subpage-memory-summary')">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            <span>返回</span>
+        </div>
+        <div class="header-title">记忆总结协议</div>
+        <div class="header-right" onclick="window.saveSummarySettings()" style="color:#000; font-weight:800; cursor:pointer;">完成</div>
+    </div>
+
+    <div class="app-body" style="padding: 20px 16px;">
+        <div class="tz-group-title">自动总结触发频率</div>
+        
+        <div class="ios-list-group" style="padding: 25px 20px; display: block;">
+            <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:15px;">
+                <div style="display:flex; flex-direction:column; gap:4px;">
+                    <span style="font-size:16px; font-weight:700; color:#000;">对话轮数</span>
+                    <span style="font-size:11px; color:#8e8e93; letter-spacing:1px;">ROUNDS PER CYCLE</span>
+                </div>
+                <span id="summary-rounds-val" style="font-size:32px; font-weight:800; font-family:serif; color:#000;">10</span>
+            </div>
+            
+            <input type="range" id="summary-rounds-slider" min="5" max="50" step="5" value="10" class="ios-slider" 
+                oninput="window.updateSummarySlider(this.value)">
+            
+            <div style="display:flex; justify-content:space-between; margin-top:10px; font-size:10px; color:#ccc; font-weight:700;">
+                <span>高频率 (5)</span>
+                <span>深度记忆 (50)</span>
+            </div>
+        </div>
+
+        <div class="tz-group-title">协议说明</div>
+        <div class="ios-list-group" style="padding:20px; font-size:13px; line-height:1.6; color:#444; text-align:justify;">
+            <p>当对话达到设定轮数后，系统将自动启动“量子坍缩”程序，将冗长的原始记录压缩为【核心记忆点】。这能有效节省 AI 的 Token 消耗，并防止角色因记忆过载而产生的逻辑漂移。</p>
+        </div>
+
+        <button class="ios-btn primary" style="background:#000; color:#fff; margin-top:20px;" onclick="window.manualTriggerSummary()">
+            手动执行即时总结
+        </button>
+
+        <div class="tz-group-title">已坍缩的核心记忆 (CHRONICLES)</div>
+        <div id="summary-cards-container" style="width:100%; display:flex; flex-direction:column; gap:15px;">
+            </div>
+
+        <div style="height:50px;"></div>
+    </div>
+</div>
+<div id="ios-notification-shade" class="notification-shade">
+    <div class="notif-header-bar">
+        <div class="notif-title">通知中心</div>
+        <div class="notif-clear-btn" onclick="window.clearAllNotifications()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </div>
+    </div>
+
+    <div id="notification-list" class="notif-list-container">
+        <div class="notif-empty-state">没有更早的通知了</div>
+    </div>
+
+    <div class="shade-handle-bottom" onclick="window.closeNotificationShade()"></div>
+</div>
+<div id="iconApp" class="ios-app-window" style="background:#F2F2F7; z-index: 6000;">
+    <div class="app-header">
+        <div class="header-title-big">Icon Studio</div>
+        <div class="header-close-btn" onclick="closeApp('iconApp')">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </div>
+    </div>
+
+    <div class="app-body" style="padding: 20px 16px; align-items: center;">
+        <div id="icon-preview-box" style="width: 120px; height: 120px; background: #fff; border-radius: 28px; display: flex; align-items: center; justify-content: center; box-shadow: 0 15px 35px rgba(0,0,0,0.1); margin-bottom: 30px; overflow: hidden; border: 4px solid #fff;">
+            <img id="icon-pre-img" src="" style="width:100%; height:100%; object-fit:cover; display:none;">
+            <div id="icon-pre-placeholder" style="text-align:center; color:#ccc; font-size:12px; font-weight:700;">PREVIEW</div>
+        </div>
+
+        <div class="tz-group-title" style="width:100%; text-align:left;">TARGET APP</div>
+        <div class="ios-list-group" style="width:100%;">
+            <div class="ios-list-item" onclick="window.openIconTargetPicker()">
+                <div class="item-content" style="border:none;">
+                    <span class="item-label">修改对象</span>
+                    <div class="item-right">
+                        <span class="item-value" id="val-icon-target">请选择...</span>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#C7C7CC" stroke-width="3"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="segment-control" style="width: 100%; margin: 20px 0;">
+            <div class="segment-btn active" id="icon-tab-file" onclick="switchIconInputMode('file')">本地文件</div>
+            <div class="segment-btn" id="icon-tab-url" onclick="switchIconInputMode('url')">网络链接</div>
+        </div>
+
+        <div id="icon-panel-file" style="width:100%;">
+            <input type="file" id="icon-file-in" hidden accept="image/*" onchange="window.handleIconFile(this)">
+            <button class="ios-btn primary" style="background:#000;" onclick="document.getElementById('icon-file-in').click()">从相册上传</button>
+        </div>
+
+        <div id="icon-panel-url" style="width:100%; display:none;">
+            <input type="text" id="icon-url-in" class="ios-input" placeholder="粘贴图标图片 URL..." style="background:#fff; border-radius:12px;">
+            <button class="ios-btn primary" style="background:#000;" onclick="window.handleIconUrl()">同步 URL</button>
+        </div>
+
+        <button class="ios-btn primary" style="margin-top: 30px; background:#007AFF;" onclick="window.saveIconCustomization()">应用并保存到桌面</button>
+        
+        <div style="font-size:11px; color:#bbb; margin-top:20px; text-align:center; line-height:1.5;">
+            提示：建议使用正方形图片以获得最佳效果。<br>保存后将立即覆盖系统预设图标。
+        </div>
+    </div>
+</div>
+<div id="subpage-icon-picker" class="ios-sub-page" style="z-index: 7000; background: #F2F2F7;">
+    <div class="app-header">
+        <div onclick="closeSubPage('subpage-icon-picker')" style="color:#007AFF; font-size:16px; cursor:pointer;">取消</div>
+        <div style="font-weight:700;">选择目标 App</div>
+        <div style="width:40px;"></div>
+    </div>
+    <div class="app-body" style="padding: 20px 16px;">
+        <div class="tz-group-title">SYSTEM & INSTALLED</div>
+        <div id="icon-target-list" class="ios-list-group">
+            </div>
+    </div>
+</div>
 
 <script>
+    window.executeSummaryProcess = async function(contactId) {
+    try {
+        const apiKey = localStorage.getItem('gpt_key');
+        const apiUrl = (localStorage.getItem('gpt_url') || "https://api.openai.com/v1").replace(/\/+$/, "") + "/chat/completions";
+        
+        // 1. 物理抓取历史记录
+        const history = await getChatHistory(contactId);
+        if (history.length < 3) return;
+
+        // 2. 构造简练的总结请求
+        const chatContext = history.slice(-20).map(m => `${m.role}: ${m.text}`).join('\n');
+        const prompt = `请对以下对话进行记忆坍缩，提取出最重要的1个事实或情感进展。要求：80字以内，像私人档案。直接输出正文。\n\n对话内容：\n${chatContext}`;
+
+        const res = await fetch(apiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+            body: JSON.stringify({
+                model: localStorage.getItem('gpt_model') || "gpt-3.5-turbo",
+                messages: [{ role: "user", content: prompt }],
+                temperature: 0.5
+            })
+        });
+
+        const data = await res.json();
+        const summaryText = data.choices[0].message.content.trim();
+
+        // 3. 存入总结数据库
+        let summaries = await loadFromDB('summaries_' + contactId) || [];
+        summaries.unshift({ timestamp: Date.now(), text: summaryText });
+        await saveToDB('summaries_' + contactId, summaries);
+
+        // 4. 🚨 实时更新 UI 
+        if (typeof window.renderSummaryCards === 'function') {
+            window.renderSummaryCards(contactId);
+        }
+
+        // 5. 弹出 Push 通知
+        window.showPushNotification("核心记忆已坍缩", "新的人格节点已存入协议。");
+
+    } catch (e) {
+        console.error("❌ 自动总结失败:", e);
+    }
+};
+// ==========================================
+// 🧠 数据驱动：消息拦截审计 (带控制台可视化)
+// ==========================================
+window.autoSummaryAuditor = function(contactId) {
+    const contact = window.currentChattingWith || { name: "未知角色" };
+    const targetRounds = parseInt(localStorage.getItem('summary_rounds_' + contactId) || "10");
+    
+    let currentCount = parseInt(localStorage.getItem('chat_count_' + contactId) || "0");
+    currentCount++; 
+
+    // 🚨 这一段在控制台会非常漂亮，让你一眼看到进度
+    console.group(`📊 记忆协议监控 [${contact.name}]`);
+    console.log(`%c 当前轮数: ${currentCount} `, "background: #1d1d1f; color: #fff; border-radius: 3px;");
+    console.log(`%c 触发阈值: ${targetRounds} `, "background: #007AFF; color: #fff; border-radius: 3px;");
+    
+    const progress = (currentCount / targetRounds * 100).toFixed(0);
+    console.log(`%c 量子坍缩进度: ${progress}% `, `color: ${progress >= 100 ? '#FF3B30' : '#34C759'}; font-weight: bold;`);
+    console.groupEnd();
+
+    if (currentCount >= targetRounds) {
+        console.info("%c 🚀 达到阈值，正在执行自动总结...", "color: #FF9500; font-weight: bold;");
+        localStorage.setItem('chat_count_' + contactId, "0"); // 计数归零
+        window.executeSummaryProcess(contactId);
+    } else {
+        localStorage.setItem('chat_count_' + contactId, currentCount.toString());
+    }
+};
+    // --- 📱 强力通知中心引擎 ---
+let startY = 0;
+let isPulling = false;
+
+// 1. 监听全局触控开始
+document.addEventListener('touchstart', function(e) {
+    // 如果是从屏幕上半部分开始下拉 (y < 80px)
+    if (e.touches[0].clientY < 80) {
+        startY = e.touches[0].clientY;
+        isPulling = true;
+    }
+}, { passive: true });
+
+// 2. 监听滑动过程
+document.addEventListener('touchmove', function(e) {
+    if (!isPulling) return;
+    
+    let currentY = e.touches[0].clientY;
+    let diff = currentY - startY;
+
+    // 只要下滑超过 30px 就认为是要拉出通知中心
+    if (diff > 30) {
+        window.openNotificationShade();
+        isPulling = false; // 触发后重置
+    }
+}, { passive: true });
+
+// 3. 停止监听
+document.addEventListener('touchend', function() {
+    isPulling = false;
+});
+
+// 4. 执行开启
+window.openNotificationShade = function() {
+    const shade = document.getElementById('ios-notification-shade');
+    if (!shade) return;
+    
+    shade.style.display = 'flex';
+    // 强制浏览器渲染后再滑动
+    setTimeout(() => {
+        shade.classList.add('active');
+        console.log("System: 通知中心已推入");
+    }, 10);
+};
+
+// 5. 执行关闭
+window.closeNotificationShade = function() {
+    const shade = document.getElementById('ios-notification-shade');
+    if (shade) {
+        shade.classList.remove('active');
+        setTimeout(() => {
+            shade.style.display = 'none';
+        }, 400);
+    }
+};
+
+// --- 🧹 一键清除通知中心 ---
+window.clearAllNotifications = function() {
+    // 1. 物理清空本地存储
+    localStorage.removeItem('ios_notif_db');
+    
+    // 2. 重新渲染页面（会自动显示空状态）
+    window.renderNotificationList();
+    
+    showToast("已清空通知中心");
+};
+
+// ==========================================
+// 🔔 增强版：商用自愈通知引擎 (黑白线条风限定版)
+// ==========================================
+window.showPushNotification = function(title, text) {
+    let banner = document.getElementById('ios-push-banner');
+    
+    // 🎨 保持你喜欢的黑白线条图标
+    const lineIcon = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="1.5"><path d="M12 2v4M12 18v4M4 12H2M22 12h-2" stroke-linecap="round"/><path d="M16 8v8H8V8h8zM9 12h6" stroke-linecap="round"/><rect x="5" y="5" width="14" height="14" rx="2"/></svg>`;
+
+    if (!banner) {
+        banner = document.createElement('div');
+        banner.id = 'ios-push-banner';
+        banner.className = 'ios-banner';
+        document.body.appendChild(banner);
+    }
+
+    // 1. 弹出顶部横幅
+    banner.innerHTML = `
+        <div style="border: 1.5px solid #000; border-radius: 10px; width:36px; height:36px; display:flex; align-items:center; justify-content:center; flex-shrink:0;">${lineIcon}</div>
+        <div style="flex:1; margin-left:12px; overflow:hidden;">
+            <div style="font-size:13px; font-weight:800; color:#000;">${title}</div>
+            <div style="font-size:12px; color:#333; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${text}</div>
+        </div>`;
+
+    void banner.offsetWidth; 
+    banner.classList.add('show');
+
+    // 2. 🚨 【数据持久化】存入本地档案库
+    const newNotif = {
+        id: Date.now(),
+        title: title,
+        text: text,
+        time: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})
+    };
+    let history = JSON.parse(localStorage.getItem('ios_notif_db') || "[]");
+    history.unshift(newNotif); // 最新消息放最前面
+    localStorage.setItem('ios_notif_db', JSON.stringify(history));
+
+    // 3. 立即触发渲染，让通知中心同步更新
+    window.renderNotificationList();
+
+    setTimeout(() => { if (banner) banner.classList.remove('show'); }, 5000);
+};
+window.renderNotificationList = function() {
+    const list = document.getElementById('notification-list');
+    if (!list) return;
+
+    // 从本地存储读取
+    const history = JSON.parse(localStorage.getItem('ios_notif_db') || "[]");
+    
+    if (history.length === 0) {
+        list.innerHTML = `<div class="notif-empty-state">没有更早的通知了</div>`;
+        return;
+    }
+
+    // 渲染黑白线条感卡片
+    list.innerHTML = history.map(item => `
+        <div class="notif-item-custom" style="background:rgba(255,255,255,0.1); border-radius:18px; padding:15px; margin-bottom:12px; border:1px solid rgba(255,255,255,0.1);">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
+                <span style="font-weight:800; font-size:11px; color:rgba(255,255,255,0.8); letter-spacing:1px;">SYSTEM CORE</span>
+                <span style="font-size:9px; color:rgba(255,255,255,0.4);">${item.time}</span>
+            </div>
+            <div style="font-size:14px; font-weight:700; color:#fff; margin-bottom:4px;">${item.title}</div>
+            <div style="font-size:12px; color:rgba(255,255,255,0.7); line-height:1.4;">${item.text}</div>
+        </div>
+    `).join('');
+};
+
+// 🚨 这一步最关键：页面加载时自动执行一次
+document.addEventListener('DOMContentLoaded', window.renderNotificationList);
+
+// 点击横幅跳转到总结页
+window.handleNotificationClick = function() {
+    document.getElementById('ios-push-banner').classList.remove('show');
+    // 强制跳转
+    if(typeof window.openMemorySummary === 'function') {
+        window.openMemorySummary();
+    }
+};
     // ==========================================
 // 🎬 记忆视界：详情弹窗逻辑 (彻底修复版)
 // ==========================================
@@ -8540,10 +9293,11 @@ async function saveChatMessage(contactId, msgObj) {
     const req = store.get(contactId);
     
     return new Promise((resolve) => {
-        req.onsuccess = () => {
+        req.onsuccess = async () => {
             let data = req.result ? req.result.messages : [];
             data.push(msgObj);
             store.put({ contactId: contactId, messages: data });
+            // 🚨 这里删掉了 window.autoSummaryAuditor(contactId);
             resolve();
         };
     });
@@ -11482,6 +12236,10 @@ async function triggerAiGenerate() {
 
     const userData = JSON.parse(localStorage.getItem('user_persona_data')) || { name:"用户", bio:"" };
 
+    // 1. 获取已有的记忆总结卡片内容
+    const summaries = await loadFromDB('summaries_' + contact.id) || [];
+    const summaryContext = summaries.map(s => `[记忆片段]: ${s.text}`).join('\n');
+
     // --- 🎭 注入灵魂：不可预测的聊天节奏 ---
     const messages = [{ 
         role: "system", 
@@ -11493,6 +12251,10 @@ async function triggerAiGenerate() {
 
         当前对话者的身份设定: [称呼: ${userData.name}]。[身份背景与你们的关系: ${userData.bio}]。
         请严格根据上述设定调整你的语气和行为。
+
+        🚨【长期记忆存储库】🚨
+        以下是你与用户过往交流中提炼出的核心记忆，请在对话中保持逻辑一致：
+        ${summaryContext || "暂无深度羁绊记录。"}
         
         【社交关系记忆】
         你认识以下人员: ${network}
@@ -11508,7 +12270,12 @@ async function triggerAiGenerate() {
         6.像真实人类在微信/QQ聊天一样。
         7. 【严禁使用引号】：绝对不要给你的消息加双引号或单引号！
         8. 【严禁书面语】：不要用“首先、其次”，要口语化，可以使用空格分隔短句。
-        9. 回复简短，不要长篇大论。`
+        9. 回复简短，不要长篇大论。
+        10. 极其重要的原则：回复要短！每条消息控制在 15-40 字左右。
+        11. 像在微信聊天：多用感叹词（哈、唔、欸）、Emoji。
+        12. 严禁长篇大论：如果你要讲故事，请分成极其精简的短句发送，禁止输出大段落。
+        13. 严禁使用括号描述动作：只允许输出说的话，不允许出现 (笑) 或 *点头* 这种描写。
+        14. 偶尔可以引用用户的上一句话进行回复，增加互动感。`
     }];
 
     const contextLimit = parseInt(localStorage.getItem('gpt_context') || "10");
@@ -11524,6 +12291,8 @@ async function triggerAiGenerate() {
     if (window.currentQuoteData) cancelQuote(); // 发送后清除引用状态
     messages.push({ role: "user", content: userPrompt });
 
+    // 🚨 【核心修复】：先声明，后使用。确保 fullText 在整个函数中都已“存在”。
+    let fullText = "";
     try {
         const response = await fetch(`${apiUrl}/chat/completions`, {
             method: 'POST',
@@ -11535,125 +12304,121 @@ async function triggerAiGenerate() {
                 presence_penalty: 0.6 
             })
         });
-
-        const data = await response.json();
-        if (data.error) throw new Error(data.error.message);
-
-        let fullReply = data.choices[0].message.content.trim();
         
-        // 🚨 暴力清洗引号 (双保险)
-        fullReply = fullReply.replace(/^["“]|["”]$/g, '').replace(/“|”|"/g, '');
-
-        const segments = fullReply.split(/\n+/).filter(s => s.trim().length > 0);
-        const typos = ["那啥", "e", "不是", "那个", "wait", "。。", "emm", "1", "啊"];
+        // --- 2. 核心修复：只读一次 json，并立刻处理文字 ---
+        const resultData = await response.json(); 
+        if (!resultData.choices || !resultData.choices[0]) throw new Error("接口返回为空");
         
-        // 🛑【新增】撤回锁：确保一轮回复中最多只撤回一次
-        let hasTriggeredRecall = false;
+        fullText = resultData.choices[0].message.content.trim().replace(/['"“‘”’]/g, "");
 
-        for (let i = 0; i < segments.length; i++) {
-            let textPart = segments[i].trim();
-            
-            // --- 解析 AI 返回的引用格式 ---
-            let aiQuote = null;
-            // 正则匹配 [QUOTE: ...]
-            const quoteMatch = textPart.match(/\[QUOTE:\s*(.*?)\s*\]/);
-            if (quoteMatch) {
-                // 如果 AI 决定引用，我们提取出来
-                aiQuote = { user: "You", text: quoteMatch[1] };
-                // 把指令部分从正文中删掉，只保留回复内容
-                textPart = textPart.replace(quoteMatch[0], "").trim();
+        // --- 3. 智能断句与随机条数控制 ---
+        // --- ✂️ 智能切片算法：内容全保留 + 动态条数 ---
+        
+        // 1. 动态阈值：每一轮随机决定“话痨程度”
+        // 随机一个 20 到 50 之间的数字作为这轮的“断句长度阈值”
+        // 阈值小（比如20），切出的气泡就多；阈值大（比如50），气泡就少。
+        const dynamicThreshold = Math.floor(Math.random() * 31) + 20; 
+
+        let rawSegments = fullText.split(/\n+/).filter(s => s.trim().length > 0);
+        let finalSegments = [];
+
+        rawSegments.forEach(seg => {
+            // 如果单段文字超过了这轮的随机阈值，就按标点强行切开
+            if (seg.length > dynamicThreshold) {
+                let subParts = seg.split(/(?<=[。！？])/g);
+                finalSegments.push(...subParts);
+            } else {
+                finalSegments.push(seg);
             }
+        });
 
-            // 再次清洗单句引号
-            textPart = textPart.replace(/['"“‘”’]/g, ""); 
-            
-            if (!textPart) continue; 
+        // 🚨 【核心修改】：彻底删掉 slice(0, bubbleLimit)！
+        // 现在 finalSegments 有多少条，我们就发多少条，保证内容 100% 完整。
+        // 因为 dynamicThreshold 每次都在变，所以即便同样长度的文字，切出来的气泡数也不同。
 
-            // 🌟【核心逻辑优化】：手滑撤回概率控制
-            // 条件：
-            // 1. 随机数 < 0.15 (15%概率)
-            // 2. 本轮还没撤回过 (!hasTriggeredRecall)
-            // 3. 句子长度 > 1 (只有一个字就算了，撤回没意义)
-            if (Math.random() < 0.15 && !hasTriggeredRecall && textPart.length > 1) {
-                
-                hasTriggeredRecall = true; // 🔒 上锁，后面几句不许再撤回了
+        // --- 🚀 物理发送引擎：确保内容流出 ---
+        for (let i = 0; i < finalSegments.length; i++) {
+            let textPart = finalSegments[i].trim();
+            if (!textPart) continue;
 
-                let fakeContent;
-                // 情况A：话没说完 (模拟打字一半发出)
-                if (textPart.length > 3 && Math.random() > 0.4) {
-                    const cutIndex = Math.ceil(textPart.length / 2);
-                    fakeContent = textPart.substring(0, cutIndex);
-                } 
-                // 情况B：发错词了
-                else {
-                    fakeContent = typos[Math.floor(Math.random() * typos.length)];
-                }
-
-                // 1. 发送【残次品】
-                const fakeMsg = { 
-                    role: "opponent", 
-                    text: fakeContent, 
-                    timestamp: Date.now() + i, 
-                    recalled: false 
-                };
-                
-                await saveChatMessage(contact.id, fakeMsg);
-                appendMessageToUI(fakeMsg, contact); 
-                container.scrollTop = container.scrollHeight;
-
-                // 2. 停顿 (真人反应时间)
-                await new Promise(r => setTimeout(r, 800 + Math.random() * 600));
-
-                // 3. 执行撤回
-                await updateMessageRecallStatus(contact.id, fakeMsg.timestamp, true);
-                
-                // 视觉刷新：替换为灰色撤回条
-                const lastBubble = container.lastElementChild;
-                if(lastBubble) {
-                    const safeContent = encodeURIComponent(fakeContent);
-                    lastBubble.outerHTML = `
-                        <div class="recalled-msg-hint" style="animation: msgFadeUp 0.3s ease;">
-                            <span>${contact.name} 撤回了一条消息 
-                                <i style="color:#007AFF; font-style:normal; margin-left:4px; cursor:pointer;" 
-                                onclick="viewRecalledTrace(decodeURIComponent('${safeContent}'))">查看</i>
-                            </span>
-                        </div>`;
-                }
-
-                // 4. 撤回后稍作停顿，再发正确的
-                await new Promise(r => setTimeout(r, 600));
-            }
-
-            // --- 发送【正确】的消息 ---
+            // 1. 渲染打字机状态 (iMessage 风格)
             const typingId = "typing-" + Date.now();
             renderTypingIndicator(typingId, contact.avatar, container);
             
-            // 模拟打字耗时
-            await new Promise(res => setTimeout(res, 400 + textPart.length * 60)); 
+            // 2. 模拟打字延迟 (根据字数动态调整速度)
+            await new Promise(res => setTimeout(res, 500 + textPart.length * 40));
             
+            // 3. 移除打字机状态
             const typingNode = document.getElementById(typingId);
             if (typingNode) typingNode.remove();
 
+            // 4. 封装消息对象
             const msgObj = { 
                 role: "opponent", 
                 text: textPart, 
-                quote: aiQuote, // ✅ 这里传入 AI 的引用对象
                 timestamp: Date.now() 
             };
 
-            await saveChatMessage(contact.id, msgObj);
-            appendMessageToUI(msgObj, contact);
+            // 5. 🚨 【核心动作】：存入数据库 + 渲染气泡
+            await saveChatMessage(contact.id, msgObj); // 这里会存入消息
+            appendMessageToUI(msgObj, contact); // 这里会让气泡在屏幕冒出来
             container.scrollTop = container.scrollHeight;
 
-            if (i < segments.length - 1) await new Promise(res => setTimeout(res, 500));
+            // 6. 🚨 【计数审计】：每成功发一个气泡，计数器跳一下
+            if (window.autoSummaryAuditor) {
+                window.autoSummaryAuditor(contact.id);
+            }
+
+            // 7. 气泡间的思考停顿 (如果是最后一句就不等了)
+            if (i < finalSegments.length - 1) {
+                // 下一句越长，这里等的越久
+                let waitTime = 600 + (finalSegments[i+1].length * 20);
+                await new Promise(res => setTimeout(res, Math.min(waitTime, 2500)));
+            }
         }
 
+        // 刷新外部列表预览图
         if (typeof initChatMsgPanel === 'function') initChatMsgPanel();
 
     } catch (e) {
         console.error("AI Error:", e);
+        showToast("量子链路波动: " + e.message);
+    } finally {
+        window.isAiProcessing = false; // 🔓 必须解锁，否则点第二次没反应
     }
 }
+// --- 🚨 自动总结触发审计逻辑 ---
+async function autoSummaryAuditor(contactId) {
+    // 1. 获取用户设定的总结轮数 (默认10)
+    const targetRounds = parseInt(localStorage.getItem('summary_rounds_' + contactId) || "10");
+    
+    // 2. 更新当前计数
+    let currentCount = parseInt(localStorage.getItem('chat_count_' + contactId) || "0");
+    currentCount++; 
+    
+    console.log(`[记忆审计] 当前进度: ${currentCount}/${targetRounds}`);
+
+    // 3. 判断是否达到设定的轮数
+    if (currentCount >= targetRounds) {
+        console.log("🚀 达到设定阈值，启动自动总结程序...");
+        
+        // 执行总结逻辑
+        await window.executeSummaryProcess(contactId);
+        
+        // 🚨 总结完后，计数器归零
+        localStorage.setItem('chat_count_' + contactId, "0");
+    } else {
+        // 还没到轮数，保存当前计数
+        localStorage.setItem('chat_count_' + contactId, currentCount.toString());
+    }
+}
+
+// 🚨 请确保在 triggerAiGenerate 的成功回调里调用它：
+// 示例：
+// .then(res => {
+//    ...显示AI文字...
+//    autoSummaryAuditor(contact.id); // 加上这一行！
+// })
 
 // 辅助：渲染三点思考动画
 function renderTypingIndicator(id, avatar, container) {
@@ -13716,38 +14481,6 @@ function openExclusiveMemories() {
     }
 }
 
-// 2. 【渲染】生成记忆卡片
-async function renderMemoryList(contactId) {
-    var container = document.getElementById('memory-list-container');
-    if (!container) return;
-
-    var memories = await loadFromDB('memories_' + contactId) || [];
-    container.innerHTML = "";
-
-    if (memories.length === 0) {
-        container.innerHTML = '<div style="text-align:center; padding:100px 20px; color:#bbb; font-size:14px;">此间尚无感官碎片...</div>';
-        return;
-    }
-
-    memories.forEach(function(m, index) {
-        var card = document.createElement('div');
-        card.className = 'memory-item-card';
-        card.innerHTML = 
-            '<div class="card-num">' + (index + 1).toString().padStart(2, '0') + '</div>' +
-            '<div style="position:relative; z-index:2;">' +
-                '<span class="memory-tag">FRAGMENT #' + (memories.length - index) + '</span>' +
-                '<div style="font-size:20px; font-weight:800; margin:10px 0; color:#1d1d1f;">' + m.title + '</div>' +
-                '<p class="memory-excerpt">' + m.content.substring(0, 60) + '...</p>' +
-            '</div>';
-        
-        card.onclick = function(e) {
-            e.stopPropagation();
-            openCinemaMemory(m);
-        };
-        container.appendChild(card);
-    });
-}
-
 // 3. 【唤起】详情视界
 function openCinemaMemory(m) {
     if (!m) return;
@@ -13913,12 +14646,12 @@ window.clearAllMemories = clearAllMemories;
 // 我们依然在全局手动挂载一次，做个双重保险
 window.clearAllMemories = clearAllMemories;
 // --- 🎞️ 渲染列表卡片核心 (具名版) ---
+// --- 🎞️ 渲染列表卡片核心 (支持左滑删除版) ---
 async function renderMemoryList(contactId) {
-    console.log("System: 正在重绘记忆列表...", contactId);
+    console.log("System: 正在重绘记忆列表并注入滑动协议...", contactId);
     var container = document.getElementById('memory-list-container');
     if (!container) return;
 
-    // 🚨 核心：从数据库读取最新数据
     var memories = await loadFromDB('memories_' + contactId) || [];
     container.innerHTML = "";
 
@@ -13928,30 +14661,396 @@ async function renderMemoryList(contactId) {
     }
 
     memories.forEach(function(m, index) {
-        var card = document.createElement('div');
-        card.className = 'memory-item-card';
-        // 计算倒序编号
+        // 创建滑动外壳
+        var wrapper = document.createElement('div');
+        wrapper.className = 'memory-swipe-wrapper';
+        
         var displayNum = (memories.length - index).toString().padStart(2, '0');
         
-        card.innerHTML = `
-            <div class="card-num">${displayNum}</div>
-            <div style="position:relative; z-index:2;">
-                <span class="memory-tag" style="font-size:10px; font-weight:900; color:#007AFF; letter-spacing:2px;">FRAGMENT</span>
-                <div style="font-size:20px; font-weight:800; margin:10px 0; color:#1d1d1f;">${m.title}</div>
-                <p style="font-size:12px; color:#8e8e93; line-height:1.6;">${m.content.substring(0, 60)}...</p>
+        // 🚨 核心结构：按钮在下，卡片在上
+        wrapper.innerHTML = `
+            <div class="memory-swipe-actions" onclick="deleteSingleMemory('${contactId}', ${m.id})">
+                删除
+            </div>
+            <div class="memory-swipe-content memory-item-card">
+                <div class="card-num">${displayNum}</div>
+                <div style="position:relative; z-index:2;">
+                    <span class="memory-tag" style="font-size:10px; font-weight:900; color:#007AFF; letter-spacing:2px;">FRAGMENT</span>
+                    <div style="font-size:20px; font-weight:800; margin:10px 0; color:#1d1d1f;">${m.title}</div>
+                    <p style="font-size:12px; color:#8e8e93; line-height:1.6;">${m.content.replace(/<[^>]+>/g, '').substring(0, 50)}...</p>
+                </div>
             </div>
         `;
         
-        card.onclick = function(e) {
-            e.stopPropagation();
-            window.openCinemaMemory(m);
+        // 1. 获取卡片内容层，准备绑定滑动事件
+        var contentEl = wrapper.querySelector('.memory-swipe-content');
+        
+        // 2. 绑定点击查看详情 (注意这里点的是 contentEl)
+        contentEl.onclick = function() {
+            // 如果卡片没被滑开，才执行打开逻辑
+            if(contentEl.style.transform === "translateX(0px)" || !contentEl.style.transform) {
+                window.openCinemaMemory(m);
+            } else {
+                // 如果滑开了，点一下就收回去
+                contentEl.style.transform = "translateX(0px)";
+            }
         };
+
+        // 3. 复用你已有的滑动监听引擎
+        // 🚨 注意：因为你的 initSwipeEvents 里的阈值是 -150，我们要微调一下这个具体的卡片
+        initSwipeEvents(contentEl); 
+        
+        container.appendChild(wrapper);
+    });
+}
+window.renderMemoryList = renderMemoryList;
+// --- 🗑️ 精准抹除单条记忆碎片 ---
+async function deleteSingleMemory(contactId, memoryId) {
+    // 阻止冒泡，防止触发卡片点击
+    if(event) event.stopPropagation();
+
+    showIOSConfirm(
+        "抹除片段", 
+        "确定要将这段特定的感官碎片永久物理隔离吗？", 
+        "抹除", 
+        async function() {
+            // 1. 获取当前角色的所有记忆
+            var memories = await loadFromDB('memories_' + contactId) || [];
+            
+            // 2. 过滤掉要删除的那一条 (根据 ID 匹配)
+            var updatedMemories = memories.filter(function(m) {
+                return m.id !== memoryId;
+            });
+            
+            // 3. 存回数据库
+            await saveToDB('memories_' + contactId, updatedMemories);
+            
+            // 4. 立即同步重绘列表
+            await renderMemoryList(contactId);
+            
+            showToast("碎片已销毁");
+            if (window.triggerSuccessHud) triggerSuccessHud("清理完成");
+        }
+    );
+}
+window.deleteSingleMemory = deleteSingleMemory;
+// ==========================================
+// 🧠 记忆总结管理协议 (具名函数版)
+// ==========================================
+
+// 1. 【入口】打开记忆总结页面
+async function openMemorySummary() {
+    const contact = window.currentChattingWith;
+    if (!contact) return;
+
+    const subPage = document.getElementById('subpage-memory-summary');
+    if (subPage) {
+        subPage.classList.add('active');
+        subPage.style.display = 'flex';
+        
+        // 1. 加载滑块位置
+        const savedRounds = localStorage.getItem('summary_rounds_' + contact.id) || "10";
+        const slider = document.getElementById('summary-rounds-slider');
+        if (slider) {
+            slider.value = savedRounds;
+            window.updateSummarySlider(savedRounds);
+        }
+
+        // 🚨 2. 核心修复：打开页面时强制渲染所有已有的总结卡片
+        await window.renderSummaryCards(contact.id);
+    }
+}
+window.openMemorySummary = openMemorySummary;
+
+// 2. 【反馈】滑动条实时更新
+function updateSummarySlider(val) {
+    const display = document.getElementById('summary-rounds-val');
+    const slider = document.getElementById('summary-rounds-slider');
+    if (display) display.textContent = val;
+    
+    // 更新滑动条的黑色进度条长度
+    if (slider) {
+        const percent = ((val - slider.min) / (slider.max - slider.min)) * 100;
+        slider.style.setProperty('--percent', percent + '%');
+    }
+}
+window.updateSummarySlider = updateSummarySlider;
+
+// 3. 【保存】持久化设置
+async function saveSummarySettings() {
+    const contact = window.currentChattingWith;
+    const val = document.getElementById('summary-rounds-slider').value;
+    
+    if (contact) {
+        // 将设置绑定到具体角色
+        localStorage.setItem('summary_rounds_' + contact.id, val);
+        showToast("总结协议已生效");
+        if (window.triggerSuccessHud) triggerSuccessHud("协议更新");
+        closeSubPage('subpage-memory-summary');
+    }
+}
+window.saveSummarySettings = saveSummarySettings;
+
+// 4. 【手动】触发即时总结逻辑 (预留给 AI 调用的接口)
+async function manualTriggerSummary() {
+    const contact = window.currentChattingWith;
+    if (!contact) return;
+
+    showToast("正在提取量子记忆...");
+    
+    try {
+        const apiKey = localStorage.getItem('gpt_key');
+        const apiUrl = (localStorage.getItem('gpt_url') || "https://api.openai.com/v1").replace(/\/+$/, "");
+        
+        // 1. 抓取最近的聊天记录
+        const history = await getChatHistory(contact.id);
+        if (history.length < 5) {
+            showToast("对话太短，不足以形成记忆");
+            return;
+        }
+
+        const chatContext = history.slice(-30).map(m => `${m.role}: ${m.text}`).join('\n');
+
+        // 2. 向 AI 发起总结请求
+        const prompt = `你是一个记忆提取器。请分析以下对话，提取出 [${contact.name}] 与用户之间最重要的关系进展、约定的事实或深刻的情绪转折点。
+        【要求】：
+        1. 语气简练，像私人笔记。
+        2. 字数控制在 100 字以内。
+        3. 严禁废话，直接输出总结内容。
+        
+        对话内容：
+        ${chatContext}`;
+
+        const res = await fetch(`${apiUrl}/chat/completions`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+            body: JSON.stringify({
+                model: localStorage.getItem('gpt_model'),
+                messages: [{ role: "user", content: prompt }],
+                temperature: 0.7
+            })
+        });
+
+        const data = await res.json();
+        const summaryText = data.choices[0].message.content.trim();
+
+        // 3. 物理保存
+        let summaries = await loadFromDB('summaries_' + contact.id) || [];
+        summaries.unshift({ timestamp: Date.now(), text: summaryText });
+        await saveToDB('summaries_' + contact.id, summaries);
+
+        // 4. 刷新 UI
+        await renderSummaryCards(contact.id);
+        triggerSuccessHud("核心记忆已坍缩");
+
+    } catch (e) {
+        showToast("总结失败");
+        console.error(e);
+    }
+}
+window.manualTriggerSummary = manualTriggerSummary;
+
+async function renderSummaryCards(contactId) {
+    const container = document.getElementById('summary-cards-container');
+    if (!container) return;
+
+    // 从数据库读取总结列表
+    const summaries = await loadFromDB('summaries_' + contactId) || [];
+    container.innerHTML = "";
+
+    if (summaries.length === 0) {
+        container.innerHTML = '<div style="text-align:center; padding:30px; color:#ccc; font-size:12px; border:1px dashed #ddd; border-radius:15px;">尚无核心记忆被捕获</div>';
+        return;
+    }
+
+    summaries.forEach((s, index) => {
+        const card = document.createElement('div');
+        card.className = 'summary-card';
+        card.innerHTML = `
+            <span class="summary-date">${new Date(s.timestamp).toLocaleString()}</span>
+            <div class="summary-content">${s.text}</div>
+            <div class="btn-delete-summary" onclick="deleteSummary('${contactId}', ${s.timestamp})">抹除</div>
+        `;
         container.appendChild(card);
     });
 }
-// 挂载全局
-window.renderMemoryList = renderMemoryList;
+window.renderSummaryCards = renderSummaryCards;
 
+// ==========================================
+// 🎨 Icons Studio：物理自持引擎 (不依赖外部变量)
+// ==========================================
+
+// 1. 定义两个底层状态 (全局挂载，确保安全)
+window.currentIconTarget = null;
+window.tempIconData = null;
+
+/**
+ * 核心：获取全量图标数据库
+ * 这样做是为了物理隔绝 "APP_ICON_LIST is not defined" 的报错
+ */
+function getIconsInternalDB() {
+    return {
+        "Wallpaper": '<svg viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>',
+        "Settings": '<svg viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1-2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>',
+        "Chat": '<svg viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="1.8"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>',
+        "Photos": '<svg viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 14l4-4 11 11M14 13l3-3 4 4"/></svg>',
+        "Music": '<svg viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="1.8"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>',
+        "Themes": '<svg viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="1.8"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>',
+        "Phone": '<svg viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="1.8"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>',
+        "Messages": '<svg viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="1.8"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><path d="M22 6l-10 7L2 6"/></svg>',
+        "Beautify": '<svg viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="1.8"><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>',
+        "Icons": '<svg viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>',
+        "RoleBook": '<svg viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="1.8"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>',
+        "WorldBook": '<svg viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>',
+        "Diary": '<svg viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="1.8"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>',
+        "Wallet": '<svg viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="1.8"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18M7 15h.01"/></svg>',
+        "Notes": '<svg viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="1.8"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8"/></svg>',
+        "Shopping": '<svg viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="1.8"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>',
+        "Forum": '<svg viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="1.8"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>',
+        "Novels": '<svg viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="1.8"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V2H6.5A2.5 2.5 0 0 0 4 4.5v15z"/></svg>',
+        "Live": '<svg viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="1.8"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>',
+    };
+}
+
+/**
+ * 1. 唤起选择子页面
+ */
+function openIconTargetPicker() {
+    var container = document.getElementById('icon-target-list');
+    var subPage = document.getElementById('subpage-icon-picker');
+    if (!container || !subPage) return;
+
+    // 🚨 物理锁死：直接获取内部数据库
+    var db = getIconsInternalDB();
+    var names = Object.keys(db);
+
+    container.innerHTML = names.map(function(name) {
+        return '<div class="ios-list-item" onclick="confirmIconTarget(\'' + name + '\')">' +
+            '<div class="item-content">' +
+                '<div style="display:flex; align-items:center; gap:12px;">' +
+                    '<div style="width:24px; height:24px;">' + db[name] + '</div>' +
+                    '<span class="item-label">' + name + '</span>' +
+                '</div>' +
+                '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#C7C7CC" stroke-width="3"><polyline points="9 18 15 12 9 6"></polyline></svg>' +
+            '</div>' +
+        '</div>';
+    }).join('');
+
+    subPage.classList.add('active');
+}
+
+/**
+ * 2. 确认选择目标
+ */
+function confirmIconTarget(name) {
+    window.currentIconTarget = name;
+    var display = document.getElementById('val-icon-target');
+    if (display) display.textContent = name;
+    
+    // 关闭子页面
+    var subPage = document.getElementById('subpage-icon-picker');
+    if (subPage) subPage.classList.remove('active');
+}
+
+/**
+ * 3. 切换输入模式
+ */
+function switchIconInputMode(mode) {
+    var tabFile = document.getElementById('icon-tab-file');
+    var tabUrl = document.getElementById('icon-tab-url');
+    var panelFile = document.getElementById('icon-panel-file');
+    var panelUrl = document.getElementById('icon-panel-url');
+
+    if (tabFile) tabFile.classList.toggle('active', mode === 'file');
+    if (tabUrl) tabUrl.classList.toggle('active', mode === 'url');
+    if (panelFile) panelFile.style.display = (mode === 'file') ? 'block' : 'none';
+    if (panelUrl) panelUrl.style.display = (mode === 'url') ? 'block' : 'none';
+}
+
+/**
+ * 4. 处理图片预览
+ */
+function handleIconFile(input) {
+    if (input.files && input.files[0]) {
+        var reader = new FileReader();
+        reader.onload = function(e) {
+            window.tempIconData = e.target.result;
+            showIconPreview(e.target.result);
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+function handleIconUrl() {
+    var input = document.getElementById('icon-url-in');
+    var url = input ? input.value.trim() : "";
+    if (url) {
+        window.tempIconData = url;
+        showIconPreview(url);
+    }
+}
+
+function showIconPreview(src) {
+    var img = document.getElementById('icon-pre-img');
+    var placeholder = document.getElementById('icon-pre-placeholder');
+    if (img && placeholder) {
+        img.src = src;
+        img.style.display = 'block';
+        placeholder.style.display = 'none';
+    }
+}
+
+/**
+ * 5. 保存并同步到全系统
+ */
+function saveIconCustomization() {
+    if (!window.currentIconTarget || !window.tempIconData) {
+        if (window.showToast) showToast("请先选择目标并上传图标");
+        return;
+    }
+
+    var iconDb = JSON.parse(localStorage.getItem('ios_custom_icons') || "{}");
+    iconDb[window.currentIconTarget] = window.tempIconData;
+    localStorage.setItem('ios_custom_icons', JSON.stringify(iconDb));
+
+    applyAllCustomIcons();
+    
+    if (window.triggerSuccessHud) triggerSuccessHud("全域图标已更新");
+    setTimeout(function() { closeApp('iconApp'); }, 800);
+}
+
+/**
+ * 6. 渲染引擎：将图标物理覆盖到 DOM 上
+ */
+function applyAllCustomIcons() {
+    var iconDb = JSON.parse(localStorage.getItem('ios_custom_icons') || "{}");
+    var apps = document.querySelectorAll('.app-cell, .dock-app');
+    
+    apps.forEach(function(app) {
+        var appNameEl = app.querySelector('.app-name');
+        var matchName = appNameEl ? appNameEl.textContent.trim() : "";
+        
+        // Dock 栏识别逻辑
+        if (!matchName) {
+            var action = app.getAttribute('onclick') || "";
+            if (action.includes('charApp')) matchName = "RoleBook";
+            if (action.includes('worldApp')) matchName = "WorldBook";
+            if (action.includes('beautifyApp')) matchName = "Beautify";
+            if (action.includes('iconApp')) matchName = "Icons";
+        }
+
+        if (iconDb[matchName]) {
+            var container = app.querySelector('.icon-shape') || app;
+            container.innerHTML = '<img src="' + iconDb[matchName] + '" style="width:100%; height:100%; object-fit:cover; border-radius:inherit;">';
+            container.style.boxShadow = "none";
+        }
+    });
+}
+
+// 🚨 启动加载
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(applyAllCustomIcons, 1000);
+});
 </script>
 </body>
 </html>
