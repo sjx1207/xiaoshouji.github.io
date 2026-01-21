@@ -8406,6 +8406,31 @@
         </div>
     </div>
 </div>
+<div id="subpage-npc-story" class="ios-sub-page" style="z-index: 50000; background: #F2F2F7;">
+    <div class="app-header">
+        <div onclick="document.getElementById('subpage-npc-story').classList.remove('active')" style="color:#007AFF; font-size:16px; cursor:pointer;">返回</div>
+        <div style="font-weight:700;">往事回溯</div>
+        <div style="width:40px;"></div>
+    </div>
+    
+    <div class="app-body" style="padding: 20px 16px;">
+        <div class="npc-story-header">
+            <h2 id="story-npc-name" style="margin-bottom:8px;">角色往事</h2>
+            <div id="story-npc-tag" style="font-size:12px; color:#8E8E93; margin-bottom:20px;">MEMORIES & RECORDS</div>
+        </div>
+        
+        <div class="ios-list-group">
+            <div class="ios-list-item">
+                <div class="item-content" style="flex-direction: column; align-items: flex-start; padding: 15px 0;">
+                    <span style="font-size:13px; color:#007AFF; margin-bottom:5px;">核心梗概</span>
+                    <p id="story-npc-content" style="font-size:15px; color:#333; line-height:1.6; margin:0;">
+                        正在读取档案数据...
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 <div id="modal-past-decoder" class="ios-alert-mask" style="display:none; z-index:99999;">
     <div class="aesthetic-card past-magazine-style">
         <div class="aes-top-bar">
@@ -13740,81 +13765,105 @@ async function generateRelationsWithAI(isAppend = false) {
 // 📜 往事解密系统：全新推翻版
 // ==========================================
 
+// ==========================================
+// 🕵️ NPC 往事追踪引擎：物理对齐与防崩坏版
+// ==========================================
 async function traceNPCStory() {
-    const npc = window.currentViewingNPC; // 当前点的那个NPC
-    const mainChar = window.currentChattingWith; // 玩家当前正在玩的主角
-    const btn = document.querySelector('#modal-npc-detail .npc-btn-main:first-child');
+    const npc = window.currentViewingNPC; 
+    const mainChar = window.currentChattingWith; 
+    
+    // 🚨 修正 1：精准定位按钮。使用 .npc-btn-action 匹配你的 HTML
+    // 我们直接抓取点击的那个“往事”按钮
+    const btn = document.querySelector('#modal-npc-detail .npc-btn-action:first-child');
+
+    // 🚨 修正 2：防御性逻辑，防止 null 导致 classList 报错
+    if (!btn) {
+        console.error("System Error: 找不到按钮元素，请检查 HTML 类名是否为 .npc-btn-action");
+        return;
+    }
 
     if (!npc || !mainChar) {
-        showToast("⚠️ 无法识别角色链路");
+        if (window.showToast) window.showToast("⚠️ 无法识别角色链路");
         return;
     }
 
-    // --- 1. 检查是否已经解密过 (持久化读取) ---
+    // 1. 检查是否已经解密过 (持久化读取)
     if (npc.detailedPast) {
         console.log("System: 档案已存在，正在直接打开...");
-        document.getElementById('modal-npc-detail').style.display = 'none'; // 关掉详情卡
-        openPastDecoderUI(npc, npc.detailedPast, false);
+        document.getElementById('modal-npc-detail').style.display = 'none';
+        if (window.openPastDecoderUI) openPastDecoderUI(npc, npc.detailedPast, false);
         return;
     }
 
-    // --- 2. 开启解密动画 ---
+    // 2. 开启解密动画
     if (btn.classList.contains('decoding')) return;
     btn.classList.add('decoding');
+    const originalText = btn.innerHTML; // 备份包含图标的 HTML
     btn.textContent = "DECODING...";
 
     try {
         const apiKey = localStorage.getItem('gpt_key');
         const apiUrl = (localStorage.getItem('gpt_url') || "https://api.openai.com/v1").replace(/\/+$/, "");
         
-        // 增加一点仪式感的等待
-        await new Promise(r => setTimeout(r, 1500));
+        await new Promise(r => setTimeout(r, 1200));
 
+        // 🎭 针对 BL 小说背景优化的电影感 Prompt
         const prompt = `你正在回溯[${mainChar.name}]与[${npc.name}]的共同往事。
-        NPC背景: ${npc.bio}，两人的关系是: ${npc.role}。
-        请创作一段约 200-300 字的隐秘往事，要求文风高级、富有电影感。
-        直接输出正文。`;
+        背景: ${npc.bio}，两人的关系现状: ${npc.role}。
+        请创作一段约 250 字的隐秘往事，要求：
+        1. 风格高级、富有电影感和破碎感。
+        2. 侧重于两人情感的暗流涌动或某个命运转折点。
+        3. 直接输出正文，不要有任何前缀。`;
 
         const res = await fetch(`${apiUrl}/chat/completions`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
             body: JSON.stringify({
-                model: localStorage.getItem('gpt_model'),
+                model: localStorage.getItem('gpt_model') || "gpt-3.5-turbo",
                 messages: [{ role: "user", content: prompt }],
                 temperature: 0.8
             })
         });
 
         const data = await res.json();
+        
+        // 增加安全提取逻辑
+        if (!data.choices || !data.choices[0]) throw new Error("API 返回数据异常");
         const story = data.choices[0].message.content.trim();
 
-        // --- 3. 核心：保存到数据库，防止刷新消失 ---
+        // 3. 核心：保存到 IndexedDB 数据库，防止刷新消失
+        // 假设你已经定义了全局的 loadFromDB 和 saveToDB 函数
         let charList = await loadFromDB('char_list') || [];
         const charIdx = charList.findIndex(c => c.id === mainChar.id);
+        
         if (charIdx !== -1) {
-            const nIdx = charList[charIdx].relationNetwork.findIndex(n => n.id === npc.id);
+            const relationNetwork = charList[charIdx].relationNetwork || [];
+            const nIdx = relationNetwork.findIndex(n => n.id === npc.id);
             if (nIdx !== -1) {
-                // 将往事存入数据库
                 charList[charIdx].relationNetwork[nIdx].detailedPast = story;
                 await saveToDB('char_list', charList);
-                // 也要更新当前内存里的 NPC 对象
                 window.currentViewingNPC.detailedPast = story;
             }
         }
 
-        // --- 4. 暴力切换界面 ---
+        // 4. 暴力切换界面
         btn.classList.remove('decoding');
-        document.getElementById('modal-npc-detail').style.display = 'none'; // 彻底关闭旧卡片
+        btn.innerHTML = originalText; // 还原图标
+        
+        const modal = document.getElementById('modal-npc-detail');
+        if (modal) modal.style.display = 'none'; 
         
         setTimeout(() => {
-            openPastDecoderUI(npc, story, true); // 唤起新卡片并开启打字机
+            if (window.openPastDecoderUI) {
+                openPastDecoderUI(npc, story, true); // 唤起新卡片并开启打字机
+            }
         }, 150);
 
     } catch (e) {
         console.error("解密失败:", e);
         btn.classList.remove('decoding');
-        btn.textContent = "解密失败，重试";
-        showToast("量子信号连接失败");
+        btn.innerHTML = originalText;
+        if (window.showToast) window.showToast("量子信号连接失败");
     }
 }
 
