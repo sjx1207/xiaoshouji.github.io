@@ -6340,30 +6340,33 @@
 
     <div class="dock-container">
         <div class="dock-bar">
-            <div class="dock-app" onclick="openApp('charApp')" style="background: linear-gradient(135deg, #FF9A9E 0%, #FECFEF 100%);">
+            <div class="dock-app" data-app="RoleBook" onclick="openApp('charApp')" style="background: linear-gradient(135deg, #FF9A9E 0%, #FECFEF 100%);">
+                <span class="app-name" style="display: none;">RoleBook</span>
                 <svg class="svg-icon" viewBox="0 0 24 24" style="color:white;">
                     <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" stroke="currentColor" stroke-width="2" fill="none"/>
                     <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" stroke="currentColor" stroke-width="2" fill="none"/>
                 </svg>
             </div>
-            <div class="dock-app" onclick="openApp('worldApp')" style="background: linear-gradient(135deg, #2c3e50 0%, #000000 100%);">
+
+            <div class="dock-app" data-app="WorldBook" onclick="openApp('worldApp')" style="background: linear-gradient(135deg, #2c3e50 0%, #000000 100%);">
+                <span class="app-name" style="display: none;">WorldBook</span>
                 <svg class="svg-icon" viewBox="0 0 24 24" style="color:white; width:28px;">
                     <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="currentColor" stroke-width="1.5" fill="none"/>
                     <circle cx="12" cy="12" r="3" fill="rgba(255,255,255,0.2)"/>
                 </svg>
             </div>
-            <div class="dock-app" onclick="openApp('beautifyApp')" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); position: relative;">
-                <span class="app-name" style="display: none;">美化</span>
-                
+
+            <div class="dock-app" data-app="Beautify" onclick="openApp('beautifyApp')" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); position: relative;">
+                <span class="app-name" style="display: none;">Beautify</span>
                 <svg class="svg-icon" viewBox="0 0 24 24" style="color:white; width:28px;">
                     <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/>
                     <path d="M12 8l-2 4h4l-2 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                     <path d="M12 2v2M12 20v2M2 12h2M20 12h2" stroke="currentColor" stroke-width="1.5" opacity="0.5"/>
                 </svg>
             </div>
-            <div class="dock-app" onclick="openApp('iconApp')" style="background: linear-gradient(135deg, #2af598 0%, #009efd 100%);">
+
+            <div class="dock-app" data-app="Icons" onclick="openApp('iconApp')" style="background: linear-gradient(135deg, #2af598 0%, #009efd 100%);">
                 <span class="app-name" style="display: none;">Icons</span>
-                
                 <svg class="svg-icon" viewBox="0 0 24 24" style="color:white; width:28px;">
                     <rect x="3" y="3" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="2" fill="none"/>
                     <rect x="14" y="3" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="2" fill="none"/>
@@ -14886,17 +14889,100 @@ var currentIconTarget = null;
 var tempIconData = null;
 var iconDb = null;
 
-// 2. 初始化大容量存储 (解决手机换不了图标的问题)
+// ==========================================
+// 🚀 终极物理覆盖引擎：解决刷新“闪回”原样问题
+// ==========================================
+
+var iconDb = null;
+
+// 1. 初始化数据库：开启即渲染
 function initDatabase() {
     var request = indexedDB.open("IconSystemDB", 1);
+    
     request.onupgradeneeded = function(e) {
-        e.target.result.createObjectStore("icons", { keyPath: "name" });
+        var db = e.target.result;
+        if (!db.objectStoreNames.contains("icons")) {
+            db.createObjectStore("icons", { keyPath: "name" });
+        }
     };
+
     request.onsuccess = function(e) {
         iconDb = e.target.result;
-        applyAllCustomIcons(); // 启动时应用已存图标
+        console.log("System: 数据库链接成功，执行初始化强制渲染");
+        
+        // 🚨 核心：数据库链接成功瞬间，执行物理覆盖
+        applyAllCustomIcons();
     };
 }
+
+// 2. 物理级渲染引擎：强制擦除默认样式
+function applyAllCustomIcons() {
+    if (!iconDb) return;
+
+    var transaction = iconDb.transaction("icons", "readonly");
+    var store = transaction.objectStore("icons");
+    var request = store.getAll();
+
+    request.onsuccess = function(e) {
+        var savedData = e.target.result;
+        if (!savedData || savedData.length === 0) return;
+
+        var iconMap = {};
+        savedData.forEach(function(item) { iconMap[item.name] = item.data; });
+
+        // 3. 扫描所有潜在目标 (桌面 App 与 Dock 栏)
+        var allTargets = document.querySelectorAll('.app-cell, .dock-app');
+        
+        allTargets.forEach(function(app) {
+            // 身份识别优先级
+            var name = app.getAttribute('data-app');
+            if (!name) {
+                var nameEl = app.querySelector('.app-name');
+                name = nameEl ? nameEl.textContent.trim() : "";
+            }
+            if (!name) {
+                var act = app.getAttribute('onclick') || "";
+                if (act.includes('charApp')) name = "RoleBook";
+                if (act.includes('worldApp')) name = "WorldBook";
+                if (act.includes('beautifyApp')) name = "Beautify";
+                if (act.includes('iconApp')) name = "Icons";
+            }
+
+            // 4. 命中的图标执行【物理破坏性】替换
+            if (name && iconMap[name]) {
+                var box = app.querySelector('.icon-shape') || 
+                          app.querySelector('.glass-icon-bg') || 
+                          app;
+
+                // 🚨 强制重置样式：物理移除背景渐变，注入 !important 样式
+                box.style.cssText = "background: transparent !important; box-shadow: none !important; border: none !important; overflow: hidden !important;";
+                
+                // 注入图片：增加 onload 监听，确保图片加载完后再隐藏 SVG
+                box.innerHTML = '<img src="' + iconMap[name] + '" style="width:100%; height:100%; object-fit:cover; border-radius:inherit; display:block;">';
+                
+                console.log("Fixed: 物理覆盖成功 -> " + name);
+            }
+        });
+    };
+}
+
+// 5. 启动入口：多时机物理触发
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initDatabase);
+} else {
+    initDatabase();
+}
+
+// 针对手机端滑动返回、唤醒时的缓存问题，执行强制刷新渲染
+window.addEventListener('pageshow', function() {
+    if (iconDb) applyAllCustomIcons();
+});
+
+// 🚨 终极绝招：如果你的页面有复杂的动态加载，开启这个观察器
+var observer = new MutationObserver(function() {
+    if (iconDb) applyAllCustomIcons();
+});
+observer.observe(document.body, { childList: true, subtree: true });
 
 // 3. 唤起选择器
 function openIconTargetPicker() {
@@ -14904,8 +14990,14 @@ function openIconTargetPicker() {
     var subPage = document.getElementById('subpage-icon-picker');
     if (!list || !subPage) return;
 
-    // 最新全量名单
-    var apps = ["Wallpaper", "Settings", "Chat", "Photos", "Music", "Themes", "Phone", "Messages", "Beautify", "Icons", "Diary", "Wallet", "Notes", "Shopping", "Forum", "Novels", "Live"];
+    // 🚨 物理补全：确保所有 App 都在名单里
+    var apps = [
+        "Wallpaper", "Settings", "Chat", "Photos", 
+        "Music", "Themes", "Phone", "Messages", 
+        "Beautify", "Icons", "Diary", "Wallet", 
+        "Notes", "Shopping", "Forum", "Novels", "Live",
+        "RoleBook", "WorldBook" // 👈 补上了！
+    ];
     
     list.innerHTML = apps.map(function(name) {
         return '<div class="ios-list-item" onclick="confirmIconTarget(\'' + name + '\')">' +
@@ -14999,34 +15091,6 @@ function saveIconCustomization() {
     }
 }
 
-// 7. 渲染引擎：物理替换桌面图标
-function applyAllCustomIcons() {
-    if (!iconDb) return;
-    
-    iconDb.transaction("icons").objectStore("icons").getAll().onsuccess = function(e) {
-        var saved = e.target.result;
-        var map = {};
-        saved.forEach(function(item) { map[item.name] = item.data; });
-
-        document.querySelectorAll('.app-cell, .dock-app').forEach(function(app) {
-            var nameEl = app.querySelector('.app-name');
-            var name = nameEl ? nameEl.textContent.trim() : "";
-            
-            // 针对 Dock 栏识别
-            if (!name) {
-                var act = app.getAttribute('onclick') || "";
-                if (act.includes('beautifyApp')) name = "Beautify";
-                if (act.includes('iconApp')) name = "Icons";
-            }
-
-            if (map[name]) {
-                var box = app.querySelector('.icon-shape') || app.querySelector('.glass-icon-bg') || app;
-                box.innerHTML = '<img src="' + map[name] + '" style="width:100%; height:100%; object-fit:cover; border-radius:inherit;">';
-            }
-        });
-    };
-}
-
 // 物理启动
 initDatabase();
 // 把这个放进你的 JS 逻辑里
@@ -15041,4 +15105,3 @@ function triggerFileSelect() {
 </script>
 </body>
 </html>
-
