@@ -15051,6 +15051,107 @@ function applyAllCustomIcons() {
 document.addEventListener('DOMContentLoaded', function() {
     setTimeout(applyAllCustomIcons, 1000);
 });
+// ==========================================
+// 🚀 物理进化：大容量图标存储引擎 (IndexedDB)
+// ==========================================
+
+// 1. 初始化大容量数据库 (不限照片大小)
+var dbInstance = null;
+function initIconDB(callback) {
+    var request = indexedDB.open("IconStudioDB", 1);
+    request.onupgradeneeded = function(e) {
+        var db = e.target.result;
+        if (!db.objectStoreNames.contains("icons")) {
+            db.createObjectStore("icons", { keyPath: "name" });
+        }
+    };
+    request.onsuccess = function(e) {
+        dbInstance = e.target.result;
+        if (callback) callback();
+    };
+}
+
+// 2. 物理保存函数 (带自动压缩，防止页面卡顿)
+function saveIconToStorage(name, data) {
+    if (!dbInstance) return;
+    
+    // 压缩逻辑：将高清图转为 512px 的高质量图标，既清晰又不占内存
+    var img = new Image();
+    img.src = data;
+    img.onload = function() {
+        var canvas = document.createElement('canvas');
+        var size = 512; // 图标标准尺寸
+        canvas.width = size;
+        canvas.height = size;
+        var ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, size, size);
+        
+        var optimizedData = canvas.toDataURL('image/webp', 0.9); // 转为更轻量的 webp 格式
+        
+        var transaction = dbInstance.transaction(["icons"], "readwrite");
+        var store = transaction.objectStore("icons");
+        store.put({ name: name, data: optimizedData });
+        
+        transaction.oncomplete = function() {
+            applyAllCustomIcons(); // 保存成功后立即同步全桌面
+            if (window.triggerSuccessHud) triggerSuccessHud("全域同步成功");
+            setTimeout(function() { closeApp('iconApp'); }, 800);
+        };
+    };
+}
+
+// 3. 【核心修复】：保存按钮点击事件
+function saveIconCustomization() {
+    if (!window.currentIconTarget || !window.tempIconData) {
+        if (window.showToast) showToast("请先选择目标并上传图标");
+        return;
+    }
+    // 调用大容量保存
+    saveIconToStorage(window.currentIconTarget, window.tempIconData);
+}
+
+// 4. 【渲染引擎】：从大容量库读取并物理替换图标
+function applyAllCustomIcons() {
+    if (!dbInstance) {
+        initIconDB(applyAllCustomIcons);
+        return;
+    }
+
+    var transaction = dbInstance.transaction(["icons"], "readonly");
+    var store = transaction.objectStore("icons");
+    var request = store.getAll();
+
+    request.onsuccess = function(e) {
+        var savedIcons = e.target.result;
+        var iconMap = {};
+        savedIcons.forEach(function(item) { iconMap[item.name] = item.data; });
+
+        var apps = document.querySelectorAll('.app-cell, .dock-app');
+        apps.forEach(function(app) {
+            var appNameEl = app.querySelector('.app-name');
+            var matchName = appNameEl ? appNameEl.textContent.trim() : "";
+            
+            if (!matchName) {
+                var action = app.getAttribute('onclick') || "";
+                if (action.includes('charApp')) matchName = "RoleBook";
+                if (action.includes('worldApp')) matchName = "WorldBook";
+                if (action.includes('beautifyApp')) matchName = "Beautify";
+                if (action.includes('iconApp')) matchName = "Icons";
+            }
+
+            if (iconMap[matchName]) {
+                var container = app.querySelector('.icon-shape') || app;
+                container.innerHTML = '<img src="' + iconMap[matchName] + '" style="width:100%; height:100%; object-fit:cover; border-radius:inherit;">';
+                container.style.boxShadow = "none";
+            }
+        });
+    };
+}
+
+// 5. 启动时自动初始化
+initIconDB(function() {
+    setTimeout(applyAllCustomIcons, 1000);
+});
 </script>
 </body>
 </html>
