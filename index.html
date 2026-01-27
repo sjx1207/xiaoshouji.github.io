@@ -11573,6 +11573,7 @@ input:checked + .slider:before {
     animation: pulse 1s infinite alternate;
 }
 @keyframes pulse { from { opacity: 0.3; transform: scale(0.8); } to { opacity: 1; transform: scale(1.1); } }
+.chat-inline-img { max-width: 70%; height: auto; border-radius: 12px; cursor: pointer; }
 </style>
 </head>
 <body>
@@ -20331,37 +20332,68 @@ function handleContactClick(item) {
 // ==========================================
 // 🌌 终极渲染引擎：全功能兼容、时空对齐版
 // ==========================================
-// 🔄 统一渲染引擎：历史与即时完全同步
+/**
+ * 🎨 渲染引擎：全量消息对齐版
+ * 修复：1. 转发图片无法显示的问题；2. 语音消息展示逻辑；3. 物理层级同步。
+ */
 function renderMessages() {
     const container = document.getElementById('chat-messages');
-    const messages = getCurrentMessages(); // 假设这是获取当前聊天记录的函数
+    if (!container) return;
+    
+    const char = window.currentChattingWith;
+    if (!char) return;
+
+    // 1. 物理抓取当前角色的所有历史记录
+    const messages = getChatMessages(char.id); 
     container.innerHTML = "";
 
-    messages.forEach(msg => {
-        const div = document.createElement('div');
-        div.className = `message-row ${msg.role}-row`;
+    messages.forEach((msg) => {
+        const isUser = msg.role === 'user';
+        const row = document.createElement('div');
+        row.className = `message-row ${isUser ? 'user-row' : 'char-row'}`;
 
-        // 🚨 核心修复：增加图片渲染分支
+        // 头像逻辑
+        const avatarSrc = isUser ? (localStorage.getItem('user_avatar') || 'assets/default-user.png') : char.avatar;
+        const avatarHtml = `<img class="chat-avatar" src="${avatarSrc}">`;
+
+        let bubbleContent = "";
+
+        // 🚨 核心修复：根据消息类型进行物理分流渲染
         if (msg.type === 'image') {
-            // 如果是转发的图片，渲染 img 标签
-            div.innerHTML = `
-                <div class="message-bubble image-bubble">
-                    <img src="${msg.text}" class="chat-inline-img" onclick="previewImage('${msg.text}')">
-                    ${msg.isForwarded ? '<div class="forward-tag">已转发瞬间</div>' : ''}
+            // 🖼️ 图片/转发照片分支：将 Base64 转化为 img 标签
+            // text 字段在转发时被存入了图片数据流
+            bubbleContent = `
+                <div class="message-bubble image-bubble" style="padding:4px; background:rgba(255,255,255,0.1); border-radius:12px;">
+                    <img src="${msg.text}" class="chat-inline-img" 
+                         style="max-width:200px; border-radius:8px; display:block;" 
+                         onclick="window.previewImage('${msg.text}')">
+                    ${msg.isForwarded ? '<div class="forward-tag" style="font-size:10px; color:#999; margin-top:4px; padding-left:4px;">来自相册转发</div>' : ''}
+                </div>
+            `;
+        } else if (msg.type === 'voice') {
+            // 🎙️ 语音分支
+            const displayStr = msg.text ? msg.text.split('[TRANS]')[0] : "语音消息";
+            bubbleContent = `
+                <div class="message-bubble voice-bubble">
+                    <div class="voice-wave-icon"></div>
+                    <div class="message-text">[语音 ${msg.duration || '2"'}] ${displayStr}</div>
                 </div>
             `;
         } else {
-            // 原有的文字/语音渲染逻辑
-            div.innerHTML = `
+            // 💬 纯文字分支
+            bubbleContent = `
                 <div class="message-bubble">
                     <div class="message-text">${msg.text}</div>
                 </div>
             `;
         }
-        container.appendChild(div);
+
+        // 组装 HTML
+        row.innerHTML = isUser ? `${bubbleContent}${avatarHtml}` : `${avatarHtml}${bubbleContent}`;
+        container.appendChild(row);
     });
-    
-    // 滚动置底
+
+    // 2. 物理置底：确保看到最新消息
     container.scrollTop = container.scrollHeight;
 }
 
