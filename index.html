@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Zhi+Mang+Xing&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         /* 导入顶级艺术字体：Cormorant Garamond（极致优雅）和 Dancing Script（灵动意向） */
         @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;1,300&family=Dancing+Script:wght@500&display=swap');
@@ -41,7 +42,7 @@
             height: 48px; padding: 0 24px; flex-shrink: 0;
             display: flex; justify-content: space-between; align-items: center; 
             color: var(--text-main); font-weight: 600; font-size: 15px; 
-            z-index: 9999; /* ❗核心修改：层级最高 */
+            z-index: 5000000; /* ❗核心修改：层级最高 */
             position: relative; /* 确保 z-index 生效 */
         }
         .status-right { display: flex; align-items: center; gap: 6px; }
@@ -2148,7 +2149,7 @@
     justify-content: center; /* 水平居中 */
     background: rgba(0, 0, 0, 0.4); /* 加深遮罩，突出重点 */
     backdrop-filter: blur(10px); /* 磨砂感 */
-    z-index: 9000;
+    z-index: 6000000;
 }
 
 /* 2. 移除冗余边距，解决空白过多的视觉感 */
@@ -11573,6 +11574,1766 @@ input:checked + .slider:before {
     animation: pulse 1s infinite alternate;
 }
 @keyframes pulse { from { opacity: 0.3; transform: scale(0.8); } to { opacity: 1; transform: scale(1.1); } }
+/* 专门给截图容器用的补丁 */
+#screenshot-temp-container .message-content {
+    /* 确保双语文本都能强制换行，不会撑破图片宽度 */
+    word-break: break-word;
+    white-space: pre-wrap;
+}
+
+/* 如果你的双语是 flex 布局，确保截图时依然保持 */
+#screenshot-temp-container .bilingual-row {
+    display: block !important; /* 或者 keep flex */
+}
+
+/* 🚨 缩略图：长截图专属样式 */
+.photo-item.is-snapshot-item {
+    background: #1c1c1e !important; /* 深色背景，像电影胶片 */
+    border: 1px solid rgba(255,255,255,0.1);
+}
+
+.photo-item.is-snapshot-item img {
+    object-fit: contain !important; /* 核心：不剪裁，完整显示长图 */
+    padding: 2px;
+}
+
+/* 蓝色中文标签 */
+.snap-badge {
+    position: absolute;
+    bottom: 4px;
+    right: 4px;
+    background: #007AFF;
+    color: white;
+    font-size: 8px;
+    padding: 2px 5px;
+    border-radius: 3px;
+    font-weight: bold;
+    z-index: 10;
+}
+/* 图片网格容器 */
+.photo-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr); /* 一行两个，高级感 */
+    gap: 15px;
+    padding: 15px;
+}
+
+/* 每一个图片卡片 */
+.photo-card {
+    position: relative;
+    border-radius: 16px;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.photo-card:active {
+    transform: scale(0.95); /* 点击时的缩放效果 */
+}
+
+/* 图片本身 */
+.photo-card img {
+    width: 100%;
+    height: 200px; /* 固定高度，统一整齐 */
+    object-fit: cover; /* 自动裁剪填充 */
+    display: block;
+}
+
+/* 删除按钮 - 悬浮在右上角 */
+.photo-delete-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 28px;
+    height: 28px;
+    background: rgba(255, 59, 48, 0.9); /* iOS 警示红 */
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 14px;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    z-index: 10;
+    border: none;
+}
+
+/* 时间标签 */
+.photo-time-tag {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(transparent, rgba(0,0,0,0.6));
+    color: white;
+    font-size: 10px;
+    padding: 10px 8px 5px;
+    text-align: left;
+}
+/* 全屏遮罩 */
+#snapshot-fullscreen-overlay {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    z-index: 10000;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #000; /* 纯黑底色 */
+}
+
+#snapshot-fullscreen-overlay.active {
+    opacity: 1;
+}
+
+/* 毛玻璃背景层 */
+.ins-glass-blur {
+    position: absolute;
+    width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+}
+
+/* 预览容器 */
+.snap-preview-container {
+    position: relative;
+    width: 90%;
+    max-width: 400px;
+    height: 80vh;
+    display: flex;
+    flex-direction: column;
+    animation: snapSlideUp 0.4s cubic-bezier(0.2, 1, 0.3, 1);
+}
+
+@keyframes snapSlideUp {
+    from { transform: translateY(50px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+/* 顶部操作栏 */
+.snap-top-bar {
+    display: flex;
+    justify-content: space-between;
+    padding: 15px 5px;
+    color: #fff;
+}
+
+.snap-action-btn {
+    background: none; border: none;
+    color: #fff; display: flex; align-items: center; gap: 6px;
+    font-size: 14px; font-family: 'Montserrat', sans-serif;
+    letter-spacing: 1px; opacity: 0.8;
+}
+
+.snap-action-btn.delete-btn { color: #ff3b30; } /* 唯一的一抹红，警示感 */
+
+/* 图片包装器 - 关键在于这里的黑白艺术感 */
+.snap-content-wrapper {
+    flex: 1;
+    overflow-y: auto;
+    border: 1px solid rgba(255,255,255,0.1);
+    background: #111;
+    border-radius: 4px;
+    padding: 10px;
+}
+
+.snap-main-img {
+    width: 100%;
+    height: auto;
+    display: block;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+}
+
+/* 底部文案 */
+.snap-bottom-info {
+    padding: 20px 0;
+    text-align: center;
+    color: #fff;
+    border-top: 1px solid rgba(255,255,255,0.05);
+}
+
+.snap-label { font-size: 10px; letter-spacing: 4px; opacity: 0.4; margin-bottom: 5px; }
+.snap-date { font-family: 'Cinzel', serif; font-size: 16px; font-weight: 700; }
+/* Action Sheet 容器 */
+#custom-action-sheet {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    z-index: 11000; /* 必须高于预览层的 10000 */
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    visibility: hidden;
+}
+
+#custom-action-sheet.active {
+    visibility: visible;
+}
+
+/* 半透明遮罩 - 调浅了颜色 */
+.sheet-overlay {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.2); 
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+#custom-action-sheet.active .sheet-overlay {
+    opacity: 1;
+}
+
+/* 内容面板 - 改为纯白色 */
+.sheet-content {
+    position: relative;
+    background: #ffffff; 
+    border-radius: 20px 20px 0 0;
+    padding: 20px 16px calc(20px + env(safe-area-inset-bottom));
+    transform: translateY(100%);
+    transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+    border-top: 1px solid rgba(0,0,0,0.05);
+}
+
+#custom-action-sheet.active .sheet-content {
+    transform: translateY(0);
+}
+
+/* 头部文案 - 改为深灰色 */
+.sheet-header {
+    text-align: center;
+    color: rgba(0, 0, 0, 0.4); 
+    font-size: 13px;
+    margin-bottom: 20px;
+    letter-spacing: 1px;
+    font-family: 'Montserrat', sans-serif;
+}
+
+/* 按钮通用样式 */
+.sheet-btn {
+    width: 100%;
+    height: 56px;
+    border-radius: 14px;
+    border: none;
+    font-size: 17px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+}
+
+/* 丢弃按钮 - 改为纯黑背景/白色文字 */
+.sheet-btn.destructive {
+    background: #000000; 
+    color: #fff;
+    margin-bottom: 8px;
+}
+
+.sheet-btn.destructive:active {
+    background: #333333;
+}
+
+/* 取消按钮 - 改为浅灰背景/黑色文字 */
+.sheet-btn.cancel {
+    background: #f2f2f7; 
+    color: #000;
+}
+
+.sheet-btn.cancel:active {
+    background: #e5e5ea;
+}
+
+.sheet-gap {
+    height: 8px;
+}
+/* 每日状态流容器 */
+.daily-status-container { padding: 0 20px; margin-top: 15px; }
+.status-flow-list { display: flex; flex-direction: column; gap: 25px; padding-bottom: 50px; }
+
+/* 极简白金卡片 */
+.status-day-card {
+    display: flex; gap: 12px;
+    animation: slideInRight 0.5s cubic-bezier(0.1, 0.9, 0.2, 1);
+}
+
+.card-date-side { display: flex; flex-direction: column; align-items: center; min-width: 40px; }
+.card-date-side .day { font-family: 'Cinzel', serif; font-size: 26px; font-weight: 700; color: #1a1a1a; }
+.card-date-side .month { font-size: 9px; letter-spacing: 2px; color: #999; transform: rotate(-90deg) translateX(-10px); margin-top: 10px; }
+
+.card-main-content {
+    flex: 1; background: #ffffff; border-radius: 20px; overflow: hidden;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.03); /* 极轻的投影，偏白风格 */
+    border: 1px solid rgba(0, 0, 0, 0.04);
+}
+
+.status-img-wrapper { position: relative; width: 100%; aspect-ratio: 16 / 9; background: #fdfdfd; }
+.status-img-wrapper img { width: 100%; height: 100%; object-fit: cover; filter: saturate(0.8) contrast(1.05); }
+.img-overlay-soft { position: absolute; inset: 0; background: linear-gradient(to top, rgba(255,255,255,0.4), transparent); }
+
+.snap-type-tag {
+    position: absolute; top: 15px; right: 15px;
+    background: #000; color: #fff; padding: 3px 8px;
+    font-size: 8px; font-weight: 800; letter-spacing: 1px; border-radius: 2px;
+}
+
+.status-text-area { padding: 15px 20px; }
+.status-mood { font-size: 10px; color: #aaa; letter-spacing: 1px; margin-bottom: 6px; font-family: 'Montserrat', sans-serif; font-weight: 600; }
+.status-brief { font-size: 14px; color: #222; line-height: 1.6; font-weight: 400; margin: 0; }
+
+@keyframes slideInRight { from { opacity: 0; transform: translateX(10px); } to { opacity: 1; transform: translateX(0); } }
+/* 强制封面图的比例，保持整齐 */
+.status-reflect-img {
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+    filter: grayscale(1) contrast(1.1); /* 封面图保持高级黑白 */
+}
+
+.status-day-card:hover .status-reflect-img {
+    filter: grayscale(0) contrast(1); /* 鼠标悬浮恢复彩色，增加交互感 */
+}
+
+/* 详情页入口提示感 */
+.tap-hint {
+    margin-top: 12px;
+    font-size: 9px;
+    letter-spacing: 1px;
+    color: #000;
+    font-weight: 800;
+    text-align: right;
+    text-decoration: underline;
+    text-underline-offset: 4px;
+    opacity: 0.3;
+}
+
+/* 卡片点击态 */
+.status-day-card:active {
+    transform: translateY(2px) scale(0.98);
+}
+/* 全屏遮罩 */
+.reflection-overlay {
+    position: fixed;
+    inset: 0; z-index: 12000;
+    visibility: hidden; opacity: 0;
+    transition: all 0.4s cubic-bezier(0.2, 1, 0.3, 1);
+}
+.reflection-overlay.active { visibility: visible; opacity: 1; }
+
+.reflection-glass-bg {
+    position: absolute; inset: 0;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px);
+}
+
+.reflection-wrapper {
+    position: relative; width: 100%; height: 100%;
+    display: flex; flex-direction: column;
+}
+
+/* 全屏容器：解决高度不对的问题 */
+.daily-collection-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 15000;
+    background: #fff;
+    visibility: hidden;
+    opacity: 0;
+    transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    display: flex;
+    flex-direction: column; /* 垂直排布 */
+}
+
+.daily-collection-overlay.active {
+    visibility: visible;
+    opacity: 1;
+}
+
+/* 顶部导航：精致留白 */
+.collection-nav {
+    height: 100px;
+    padding: 40px 25px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(10px);
+    z-index: 10;
+}
+
+.nav-main-title { font-family: 'Cinzel', serif; font-size: 14px; font-weight: 900; letter-spacing: 4px; color: #000; }
+.nav-sub-date { font-size: 10px; color: #bbb; letter-spacing: 2px; margin-top: 4px; text-align: center; }
+
+/* 滚动区域：自动填满剩余高度 */
+.collection-scroll-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px 25px 100px;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* 增加卡片下方的留白，防止长图堆叠太紧 */
+.text-vibe-card {
+    min-height: 200px; /* 设置最小高度 */
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+/* 每一张的序号水印 */
+.vibe-card-no {
+    position: absolute;
+    top: 20px;
+    right: 25px;
+    font-family: 'Cinzel', serif;
+    font-size: 40px;
+    font-weight: 900;
+    color: rgba(0,0,0,0.03);
+    line-height: 1;
+}
+
+/* 文字图内的排版 */
+.vibe-card-header {
+    margin-bottom: 30px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.char-badge {
+    background: #000;
+    color: #fff;
+    font-size: 9px;
+    padding: 2px 8px;
+    font-weight: 700;
+    letter-spacing: 1px;
+}
+
+.vibe-time { font-size: 10px; color: #ccc; letter-spacing: 1px; }
+
+/* 修改卡片内的文案排版 */
+.vibe-content-prose {
+    font-size: 16px; /* 字数多时，稍微调小字号，更有呼吸感 */
+    line-height: 2;   /* 增加行高，让长文案不拥挤 */
+    color: #333;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 400;
+    font-style: italic;
+    margin: 0;
+    text-align: justify; /* 两端对齐，像书页一样整齐 */
+    letter-spacing: 0.5px;
+}
+
+.vibe-content-prose::first-letter {
+    font-size: 24px;
+    font-family: 'Cinzel', serif;
+    margin-right: 5px;
+}
+
+/* 底部情绪参数线 */
+.vibe-card-footer {
+    margin-top: 35px;
+    padding-top: 20px;
+    border-top: 0.5px solid #f5f5f5;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.vibe-mood-tag { font-size: 10px; font-weight: 700; color: #000; letter-spacing: 1px; }
+
+/* 进场动画 */
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.collection-footer-tag {
+    padding-bottom: 30px;
+    text-align: center;
+    font-size: 8px;
+    color: #ddd;
+    letter-spacing: 3px;
+}
+/* 音乐 App 总容器 */
+.music-app-container {
+    background: #ffffff !important;
+    display: flex;
+    flex-direction: column;
+    z-index: 9999;
+}
+
+/* 🛠️ 头部瘦身：压缩状态栏下方的距离 */
+.music-app-header {
+    padding: 30px 20px 15px; /* 顶部从 60px 缩减到 30px */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #fff;
+    position: sticky; /* 保持吸顶，增加高级感 */
+    top: 0;
+    z-index: 1000;
+}
+
+.header-main-title {
+    font-family: 'Cinzel', serif;
+    font-weight: 900;
+    font-size: 13px;
+    letter-spacing: 4px;
+    color: #000;
+}
+
+/* 统一图标按钮的大小和居中 */
+.header-side-btn {
+    width: 32px; /* 稍微缩小一点，更显精致 */
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+/* 视图区域 */
+.music-view-viewport {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+}
+
+.music-view-page {
+    position: absolute;
+    inset: 0;
+    padding: 0 20px;
+    overflow-y: auto;
+    opacity: 0;
+    visibility: hidden;
+    transform: scale(0.98);
+    transition: all 0.5s cubic-bezier(0.2, 1, 0.3, 1);
+}
+
+.music-view-page.active {
+    opacity: 1;
+    visibility: visible;
+    transform: scale(1);
+}
+
+/* 💊 悬浮胶囊导航栏 */
+.music-navigation-bar {
+    position: absolute;
+    bottom: 40px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 320px;
+    height: 60px;
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(25px);
+    -webkit-backdrop-filter: blur(25px);
+    border-radius: 30px; /* 超大圆角 */
+    display: flex;
+    align-items: center;
+    padding: 6px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.05);
+    border: 1px solid rgba(0, 0, 0, 0.03);
+    z-index: 100;
+}
+
+.nav-capsule-item {
+    flex: 1;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 25px;
+    transition: all 0.4s ease;
+    cursor: pointer;
+}
+
+.nav-capsule-item span {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 1px;
+    color: #bbb;
+}
+
+/* 激活状态：黑白反转 */
+.nav-capsule-item.active {
+    background: #000;
+}
+
+.nav-capsule-item.active span {
+    color: #fff;
+}
+/* 1. 策展头设计 */
+.archive-curated-header { padding: 40px 0 30px; border-bottom: 0.5px solid #f0f0f0; margin-bottom: 30px; }
+.header-main-info h1 { font-family: 'Cinzel', serif; font-size: 32px; letter-spacing: 8px; margin: 0; }
+.vault-stats { font-size: 9px; color: #bbb; letter-spacing: 2px; margin-top: 10px; font-weight: 700; }
+.archive-search-bar { margin-top: 25px; }
+.archive-search-bar input {
+    width: 100%; background: #f9f9f9; border: none; padding: 12px 20px;
+    border-radius: 12px; font-size: 11px; letter-spacing: 1px; outline: none;
+}
+
+/* 2. 错落网格核心 - 告别单调 */
+.music-vault-staggered-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 25px;
+    padding-bottom: 150px;
+}
+
+/* 让第 1, 4, 7... 个卡片占据整行 (横向大图) */
+.music-gallery-card:nth-child(3n+1) { grid-column: span 2; }
+
+.music-gallery-card {
+    position: relative;
+    animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* 4. 修正图片区：确保图片是纯净的 */
+.card-visual-box {
+    border-radius: 4px; /* 稍微给封面一点圆角，更柔和 */
+    overflow: hidden;
+    border: 0.5px solid #f0f0f0;
+}
+
+/* 默认比例 */
+.card-visual-box { aspect-ratio: 1; }
+.music-gallery-card:nth-child(3n+1) .card-visual-box { aspect-ratio: 16/9; }
+
+.card-visual-box img { 
+    width: 100%; 
+    height: 100%; 
+    object-fit: cover; 
+    /* filter: grayscale(1);  <-- 已删除或注释掉 */
+    transition: 0.8s; 
+}
+.music-gallery-card:hover img { filter: grayscale(0); transform: scale(1.05); }
+
+/* 2. 按钮位置：移出图片，精准对齐到文字右侧 */
+.card-actions {
+    position: absolute;
+    right: 0;
+    bottom: 2px; /* 完美对齐歌手名的基准线 */
+    top: auto;   /* 覆盖之前的 top: 12px */
+    display: flex;
+    gap: 8px;    /* 两个按钮紧凑排列 */
+    opacity: 1;  /* 永远可见，不用找 */
+}
+
+/* 3. 按钮瘦身：从“大圆盘”变成“精致小件” */
+.action-dot {
+    width: 26px;  /* 缩小尺寸，不再抢戏 */
+    height: 26px;
+    background: #f7f7f7; /* 改用极浅灰色，融入背景 */
+    border-radius: 6px;  /* 改为小圆角方块，更有设计感 */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;     /* 图标缩小 */
+    color: #333;
+    box-shadow: none;    /* 去掉厚重的阴影 */
+    border: 0.5px solid #eee; /* 用极细边框代替阴影 */
+    transition: all 0.2s;
+}
+
+/* 点击时的小反馈 */
+.action-dot:active {
+    background: #000;
+    color: #fff;
+    transform: scale(0.9);
+}
+/* 序列号与标签 */
+.card-serial { font-family: 'Cinzel'; font-size: 30px; position: absolute; bottom: 10px; right: 10px; color: rgba(0,0,0,0.03); font-weight: 900; }
+/* 1. 核心修改：让文字区具备承载按钮的能力 */
+.card-info {
+    position: relative; /* 作为定位基准 */
+    margin-top: 15px;
+    padding-right: 70px; /* 为右侧按钮留出专属空间 */
+}
+.card-title { font-size: 13px; font-weight: 800; color: #000; letter-spacing: 0.5px; display: block; }
+.card-artist { font-size: 10px; color: #bbb; text-transform: uppercase; margin-top: 2px; }
+
+/* 3. 悬浮快门按钮 */
+.shutter-upload-btn {
+    position: fixed; bottom: 120px; right: 25px;
+    width: 64px; height: 64px; background: #000; border-radius: 50%;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2); z-index: 1000; transition: 0.3s;
+}
+.shutter-inner { width: 20px; height: 20px; border: 2px solid #fff; border-radius: 50%; }
+.shutter-label { font-size: 7px; color: #fff; font-weight: 900; margin-top: 4px; letter-spacing: 1px; }
+
+/* 1. 模态框背景层 - 沉浸式毛玻璃 */
+.music-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(255, 255, 255, 0.4); /* 浅色半透明背景 */
+    backdrop-filter: blur(25px) saturate(180%); /* 核心：超强模糊与色彩饱和 */
+    -webkit-backdrop-filter: blur(25px) saturate(180%);
+    z-index: 20000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    visibility: hidden;
+    opacity: 0;
+    transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.music-modal-overlay.active {
+    visibility: visible;
+    opacity: 1;
+}
+
+/* 2. 模态框主体卡片 - 艺术展位感 */
+.modal-glass-card {
+    width: 90%;
+    max-width: 400px;
+    max-height: 85vh;
+    background: rgba(255, 255, 255, 0.85); /* 模拟白瓷玻璃 */
+    border-radius: 40px; /* 超大圆角 */
+    border: 1px solid rgba(255, 255, 255, 0.6); /* 亮边线增加质感 */
+    box-shadow: 0 40px 100px rgba(0, 0, 0, 0.1); /* 深度柔和阴影 */
+    padding: 30px;
+    display: flex;
+    flex-direction: column;
+    transform: scale(0.9) translateY(40px); /* 初始进场位移 */
+    transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.music-modal-overlay.active .modal-glass-card {
+    transform: scale(1) translateY(0);
+}
+
+/* 3. 头部排版 */
+.modal-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+.modal-top span {
+    font-family: 'Cinzel', serif;
+    font-size: 11px;
+    font-weight: 900;
+    letter-spacing: 3px;
+    color: #000;
+}
+
+.modal-close-btn {
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 1px;
+    padding: 8px 15px;
+    border-radius: 20px;
+    background: #f0f0f0;
+    cursor: pointer;
+}
+
+/* 4. 滚动区域与表单 */
+.upload-scroll-area {
+    flex: 1;
+    overflow-y: auto;
+    padding-right: 5px;
+}
+
+/* 5. 封面上传区：像一张立起来的黑胶 */
+.cover-upload-zone {
+    width: 100%;
+    aspect-ratio: 1;
+    background: #f7f7f7;
+    border-radius: 25px;
+    margin-bottom: 30px;
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px dashed #ddd;
+}
+
+.cover-upload-zone img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: none; /* 初始隐藏 */
+}
+
+#cover-tips {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+}
+
+#cover-tips span {
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 2px;
+    color: #bbb;
+}
+
+/* 6. 输入框设计：极致极简 */
+.input-group-vault {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.input-item label {
+    display: block;
+    font-size: 9px;
+    font-weight: 900;
+    letter-spacing: 2px;
+    color: #ddd;
+    margin-bottom: 8px;
+}
+
+.input-item input {
+    width: 100%;
+    border: none;
+    border-bottom: 1px solid #f0f0f0;
+    background: transparent;
+    padding: 10px 0;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    outline: none;
+    transition: 0.3s;
+}
+
+.input-item input:focus {
+    border-bottom-color: #000;
+}
+
+/* 7. 音频选择按钮 */
+.custom-file-btn {
+    width: 100%;
+    padding: 15px;
+    background: #000;
+    color: #fff;
+    border-radius: 12px;
+    text-align: center;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 1px;
+    margin-top: 5px;
+}
+
+/* 8. 提交按钮：绝对统治力 */
+.commit-btn {
+    width: 100%;
+    background: #000;
+    color: #fff;
+    border: none;
+    padding: 20px;
+    border-radius: 40px;
+    margin-top: 40px;
+    font-family: 'Cinzel', serif;
+    font-weight: 900;
+    font-size: 12px;
+    letter-spacing: 4px;
+    box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.commit-btn:active {
+    transform: scale(0.96);
+}
+/* 💿 CORE 彻底沉浸化 */
+#music-tab-core {
+    position: fixed; /* 锁定位置 */
+    inset: 0;
+    height: 100vh;
+    width: 100vw;
+    padding: 0;
+    overflow: hidden; /* 核心：禁止页面滑动 */
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between; /* 内容两端对齐 */
+    background: #000; /* 背景黑底，配合封面模糊 */
+}
+
+/* 背景虚化层：覆盖全屏 */
+.player-ambient-bg {
+    position: absolute;
+    inset: 0;
+    background-size: cover;
+    background-position: center;
+    filter: blur(100px) brightness(0.7); /* 增强虚化和暗度 */
+    transform: scale(1.3);
+    z-index: 0;
+    opacity: 0.8;
+}
+
+/* 2. 封面呼吸动画 */
+.breathing-cover-wrapper {
+    width: 280px;
+    height: 280px;
+    margin: 40px auto;
+    position: relative;
+    box-shadow: 0 30px 60px rgba(0,0,0,0.2);
+    animation: coverBreath 8s infinite ease-in-out;
+}
+
+@keyframes coverBreath {
+    0%, 100% { transform: scale(1); box-shadow: 0 30px 60px rgba(0,0,0,0.2); }
+    50% { transform: scale(1.03); box-shadow: 0 45px 90px rgba(0,0,0,0.15); }
+}
+
+.breathing-cover-wrapper img { width: 100%; height: 100%; object-fit: cover; border-radius: 4px; }
+
+/* 3. 歌词流 */
+.core-lyrics-section {
+    height: 120px;
+    margin: 20px 0;
+    overflow: hidden;
+    text-align: center;
+}
+
+.lyrics-scroller { transition: transform 0.4s cubic-bezier(0.23, 1, 0.32, 1); }
+
+.lyric-line {
+    font-size: 15px;
+    font-weight: 500;
+    color: rgba(0,0,0,0.2);
+    margin: 15px 0;
+    transition: all 0.4s;
+    letter-spacing: 1px;
+}
+
+.lyric-line.active {
+    color: #000;
+    font-weight: 800;
+    transform: scale(1.1);
+}
+
+/* 4. 进度条与按钮 */
+.progress-bar-wrap {
+    flex: 1; height: 2px; background: rgba(0,0,0,0.05);
+    margin: 0 15px; position: relative; cursor: pointer;
+}
+.progress-fill { position: absolute; left: 0; top: 0; height: 100%; background: #000; width: 0%; }
+
+.main-buttons { display: flex; align-items: center; justify-content: center; gap: 40px; margin-top: 30px; }
+.ctrl-btn { font-family: 'Cinzel'; font-weight: 900; font-size: 12px; letter-spacing: 2px; cursor: pointer; }
+.ctrl-btn-play {
+    width: 70px; height: 70px; border: 1px solid #000; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Cinzel'; font-weight: 900; cursor: pointer;
+}
+
+/* 歌词输入框特化 */
+#lyric-text-input {
+    width: 100%; background: #f9f9f9; border: 1px solid #eee; border-radius: 15px;
+    padding: 15px; font-family: 'Montserrat'; font-size: 12px; resize: none; outline: none;
+}
+.or-divider { text-align: center; margin: 15px 0; position: relative; }
+.or-divider::before { content: ""; position: absolute; left: 0; top: 50%; width: 45%; height: 1px; background: #eee; }
+.or-divider::after { content: ""; position: absolute; right: 0; top: 50%; width: 45%; height: 1px; background: #eee; }
+.or-divider span { font-size: 9px; color: #ccc; font-weight: 900; }
+/* 💿 CORE 彻底沉浸化 */
+#music-tab-core {
+    position: fixed; /* 锁定位置 */
+    inset: 0;
+    height: 100vh;
+    width: 100vw;
+    padding: 0;
+    overflow: hidden; /* 核心：禁止页面滑动 */
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between; /* 内容两端对齐 */
+    background: #000; /* 背景黑底，配合封面模糊 */
+}
+
+/* 背景虚化层：覆盖全屏 */
+.player-ambient-bg {
+    position: absolute;
+    inset: 0;
+    background-size: cover;
+    background-position: center;
+    filter: blur(100px) brightness(0.7); /* 增强虚化和暗度 */
+    transform: scale(1.3);
+    z-index: 0;
+    opacity: 0.8;
+}
+
+/* 主容器：居中且撑开 */
+.core-main-container {
+    position: relative;
+    z-index: 10;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    padding: 60px 30px 40px; /* 预留顶部和底部的呼吸感 */
+}
+
+/* 封面：在大屏中心更显眼 */
+.core-visual-section {
+    flex: 2; /* 占据更多空间 */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.breathing-cover-wrapper {
+    width: 80vw; /* 宽度随屏幕自适应 */
+    max-width: 320px;
+    aspect-ratio: 1;
+    border-radius: 12px;
+    box-shadow: 0 50px 100px rgba(0,0,0,0.5);
+}
+
+/* 歌词区：居中，只留三行，极致焦点 */
+.core-lyrics-section {
+    flex: 1;
+    height: 100px;
+    mask-image: linear-gradient(to bottom, transparent, #000 20%, #000 80%, transparent);
+    -webkit-mask-image: linear-gradient(to bottom, transparent, #000 20%, #000 80%, transparent);
+}
+
+/* 控制台：移到最底部，悬浮感 */
+.core-controls-section {
+    padding-bottom: 20px;
+}
+
+/* 🔙 增加一个退出 CORE 的按钮（因为隐藏了导航栏） */
+.core-exit-btn {
+    position: absolute;
+    top: 50px;
+    left: 25px;
+    color: rgba(255,255,255,0.6);
+    z-index: 100;
+    font-size: 24px;
+}
+/* 🖼️ CORE 专用背景层：彻底去模糊，还原高清质感 */
+.core-persistent-bg {
+    position: absolute;
+    inset: 0;
+    z-index: 0; /* 依然在内容层下方，但因为去掉了遮罩，它会非常清晰 */
+    background-size: cover;
+    background-position: center;
+    
+    /* 核心修改：删除原本的 filter: blur(40px) brightness(0.6) */
+    filter: none !important; 
+    
+    /* 删除原本的 scale(1.1)，还原原始比例 */
+    transform: none !important; 
+    
+    opacity: 0;
+    transition: opacity 0.8s ease;
+    pointer-events: none;
+}
+
+/* 激活状态 */
+.core-persistent-bg.has-bg {
+    opacity: 1 !important;
+}
+
+/* 🛡️ 确保上层容器透明，不遮挡高清背景 */
+.core-main-container {
+    position: relative;
+    z-index: 5;
+    background: transparent !important; /* 彻底透明 */
+}
+/* 1. 扩充控制条空间 */
+.main-buttons-console {
+    display: flex;
+    align-items: center;
+    justify-content: space-around; /* 均匀分布，不再拥挤 */
+    padding: 0 5px;
+    margin-top: 50px;
+}
+
+/* 2. 图标按钮：从“细小”变为“清晰” */
+.ctrl-icon-btn {
+    width: 52px;  /* 增大点击热区 */
+    height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #FFFFFF; /* 强制纯白，高清不透 */
+    cursor: pointer;
+    transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* 3. 中间主按钮：维持绝对统领地位 */
+.ctrl-play-shutter {
+    width: 82px; /* 进一步加大 */
+    height: 82px;
+    background: #FFFFFF;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #000000;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4); /* 增强阴影，更有实体感 */
+    transition: all 0.2s ease;
+}
+
+/* 4. 点击反馈：更有力的物理感 */
+.ctrl-icon-btn:active {
+    transform: scale(0.8); /* 点击反馈更明显 */
+}
+.ctrl-play-shutter:active {
+    transform: scale(0.9);
+}
+
+/* 5. 两侧按钮稍微减弱一点透明度，形成视觉重心层级 */
+.mode-btn, .list-btn {
+    opacity: 0.7;
+}
+/* 1. 容器：强制横向排列并垂直居中 */
+.progress-container {
+    display: flex;
+    align-items: center; /* 垂直对齐 */
+    justify-content: space-between;
+    width: 100%;
+    margin: 30px 0; /* 留出上下呼吸空间 */
+}
+
+/* 2. 时间戳：微型大写，增加高级感 */
+.time-stamp {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 10px; /* 极小字体是商用级的精髓 */
+    letter-spacing: 1px;
+    color: rgba(255, 255, 255, 0.6); /* 半透明白色，不抢戏 */
+    min-width: 40px; /* 锁定宽度，防止数字跳动时条长缩放 */
+}
+
+#curr-time { text-align: left; }
+#total-time { text-align: right; }
+
+/* 3. 进度条轨道：极细线条 */
+.progress-bar-wrap {
+    flex: 1; /* 自动占据中间所有剩余空间 */
+    height: 2px; /* 极细线才显得“贵” */
+    background: rgba(255, 255, 255, 0.15); /* 轨道颜色 */
+    margin: 0 15px; /* 左右间距 */
+    position: relative;
+    cursor: pointer;
+    border-radius: 4px;
+}
+
+/* 4. 进度填充：纯白质感 */
+.progress-fill {
+    height: 100%;
+    background: #FFFFFF; /* 纯白填充 */
+    width: 0%;
+    border-radius: 4px;
+    position: relative;
+    transition: width 0.1s linear; /* 平滑过渡，不卡顿 */
+}
+
+/* 5. 进阶：加一个微小的进度球（可选，建议加上增加点击欲望） */
+.progress-fill::after {
+    content: "";
+    position: absolute;
+    right: -4px;
+    top: -3px;
+    width: 8px;
+    height: 8px;
+    background: #fff;
+    border-radius: 50%;
+    box-shadow: 0 0 10px rgba(0,0,0,0.3);
+}
+/* 💿 圆形封面容器 */
+.ripple-wrapper {
+    position: relative;
+    width: 260px;
+    height: 260px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 20px 0 40px;
+}
+
+/* 核心圆形：强制 1:1 并裁切 */
+.circular-cover-box {
+    width: 240px;
+    height: 240px;
+    border-radius: 50%;
+    overflow: hidden;
+    z-index: 10;
+    box-shadow: 0 25px 60px rgba(0,0,0,0.4);
+    border: 1px solid rgba(255,255,255,0.1);
+}
+
+.circular-cover-box img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* 🌊 呼吸圈特效 */
+.ripple-ring {
+    position: absolute;
+    border-radius: 50%;
+    border: 1.5px solid rgba(255,255,255,0.25);
+    z-index: 1;
+    animation: ripplePulse 4s infinite cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.r1 { width: 240px; height: 240px; animation-delay: 0s; }
+.r2 { width: 240px; height: 240px; animation-delay: 2s; }
+
+@keyframes ripplePulse {
+    0% { transform: scale(1); opacity: 0.8; }
+    100% { transform: scale(1.6); opacity: 0; }
+}
+
+/* 🖋️ 歌词画布：极致焦距 */
+.core-lyrics-canvas {
+    flex: 1;
+    width: 100%;
+    overflow: hidden;
+    cursor: pointer;
+    /* 上下羽化渐变：让歌词看起来是在无限空间里漂浮 */
+    mask-image: linear-gradient(to bottom, transparent, #000 30%, #000 70%, transparent);
+    -webkit-mask-image: linear-gradient(to bottom, transparent, #000 30%, #000 70%, transparent);
+}
+
+.lyric-placeholder {
+    font-family: 'Cinzel', serif;
+    font-size: 10px;
+    letter-spacing: 5px;
+    color: rgba(255,255,255,0.4);
+    margin-top: 50px;
+    text-align: center;
+    text-transform: uppercase;
+}
+
+/* 歌曲名加粗对齐 */
+.meta-text h2 {
+    font-size: 20px;
+    font-weight: 800;
+    letter-spacing: 1px;
+    margin: 0;
+}
+
+.meta-text p {
+    font-size: 11px;
+    color: rgba(255,255,255,0.5);
+    margin-top: 5px;
+    letter-spacing: 2px;
+}
+.lyric-line.active {
+    /* 原有的样式保留 (颜色、字重、缩放等) */
+    color: #FFFFFF;
+    font-weight: 800;
+    transform: scale(1.15);
+    
+    /* ✨ 核心发光代码：多层柔光叠加，营造空气感光晕 */
+    text-shadow: 
+        0 0 15px rgba(255, 255, 255, 0.8), /* 内层高光：亮且实 */
+        0 0 30px rgba(255, 255, 255, 0.4), /* 中层柔光：扩散 */
+        0 0 50px rgba(255, 255, 255, 0.2); /* 外层氛围：极淡的晕染 */
+}
+/* 1. 确保滚动容器开启 Flex 并横向居中 */
+.lyrics-scroller {
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* 👈 核心：让所有子元素在交叉轴（横向）居中 */
+    width: 100%;
+}
+
+/* 2. 确保每一行文字本身也是居中的 */
+.lyric-line {
+    width: 100%;
+    text-align: center; /* 👈 核心：文字内容水平居中 */
+    /* 其他样式保留... */
+}
+/* 1. 抽屉遮罩层 */
+.playlist-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.2);
+    backdrop-filter: blur(5px);
+    z-index: 30000;
+    visibility: hidden;
+    opacity: 0;
+    transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.playlist-overlay.active {
+    visibility: visible;
+    opacity: 1;
+}
+
+/* 2. 抽屉内容容器：从右侧划入 */
+.playlist-content {
+    position: absolute;
+    top: 0;
+    right: -100%; /* 初始在屏幕外 */
+    width: 85%;
+    max-width: 360px;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.85); /* 磨砂玻璃底色 */
+    backdrop-filter: blur(25px) saturate(180%);
+    -webkit-backdrop-filter: blur(25px) saturate(180%);
+    box-shadow: -20px 0 60px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    transition: right 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.playlist-overlay.active .playlist-content {
+    right: 0;
+}
+
+/* 3. 列表头部 */
+.playlist-header { padding: 40px 30px 20px; }
+.header-line { width: 40px; height: 3px; background: #000; margin-bottom: 15px; }
+.header-text-row { display: flex; justify-content: space-between; align-items: baseline; }
+.header-text-row span:first-child { font-family: 'Cinzel', serif; font-size: 16px; font-weight: 900; letter-spacing: 2px; }
+.header-text-row span:last-child { font-size: 9px; color: #888; font-weight: 700; }
+
+/* 4. 列表滚动区 */
+.playlist-items-scroll {
+    flex: 1;
+    overflow-y: auto;
+    padding: 10px 20px;
+}
+
+/* 5. 单个列表项：黑白极简 */
+.playlist-item {
+    display: flex;
+    align-items: center;
+    padding: 15px 10px;
+    margin-bottom: 5px;
+    border-radius: 12px;
+    transition: all 0.3s;
+    cursor: pointer;
+}
+
+.playlist-item.playing {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+.item-num {
+    font-family: 'Cinzel';
+    font-size: 11px;
+    color: #bbb;
+    width: 30px;
+}
+
+.item-info-row { flex: 1; }
+.item-name {
+    display: block;
+    font-size: 13px;
+    font-weight: 700;
+    color: #444;
+    letter-spacing: 0.5px;
+}
+.item-artist-sub {
+    font-size: 9px;
+    color: #bbb;
+    text-transform: uppercase;
+}
+
+/* 正在播放的特殊状态 */
+.playlist-item.playing .item-name { color: #000; font-weight: 900; }
+.playlist-item.playing .item-num { color: #000; }
+
+/* 6. 底部关闭 */
+.playlist-footer { padding: 30px; }
+.close-drawer-btn {
+    width: 100%;
+    padding: 18px;
+    background: transparent;
+    border: 1px solid #000;
+    font-family: 'Cinzel';
+    font-size: 10px;
+    font-weight: 900;
+    letter-spacing: 3px;
+    cursor: pointer;
+}
+/* --- 🚑 强制消除 App 内部溢出 --- */
+.music-app-container, 
+.music-view-viewport, 
+.music-view-page {
+    width: 100% !important;
+    max-width: 100vw !important;
+    overflow-x: hidden !important; /* 🚨 物理切除横向溢出 */
+    box-sizing: border-box !important;
+}
+/* --- SYNERGY FIELD 专属样式 --- */
+
+.synergy-field-page {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+    background-color: #000; /* 背景为纯黑，突出内容 */
+    color: #FFF;
+    font-family: 'Inter', sans-serif; /* 假设你引入了Inter字体 */
+    position: relative;
+    overflow: hidden; /* 防止内部元素溢出导致页面滑动 */
+}
+
+/* 顶部状态栏占位，确保内容不被状态栏遮挡 */
+.synergy-status-bar-placeholder {
+    height: 44px; /* 根据 iOS 状态栏高度调整 */
+    width: 100%;
+    flex-shrink: 0;
+}
+
+.synergy-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px 0 15px 0;
+    position: relative;
+    z-index: 10;
+}
+
+.character-avatar-wrapper {
+    position: relative;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden; /* 防止光环溢出 */
+}
+
+.character-avatar {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+    filter: grayscale(100%) brightness(80%) contrast(120%); /* Lo-fi 黑白滤镜 */
+    opacity: 0.8;
+}
+
+/* 呼吸光环动画 */
+.avatar-breathing-glow {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 80px; /* 比头像大一点 */
+    height: 80px;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%);
+    animation: breathingGlow 3s ease-in-out infinite alternate;
+    z-index: -1;
+}
+
+@keyframes breathingGlow {
+    0% { transform: translate(-50%, -50%) scale(0.8); opacity: 0.2; }
+    100% { transform: translate(-50%, -50%) scale(1.1); opacity: 0.4; }
+}
+
+/* --- 🏛️ Synergy 2.0 工业美学补丁 --- */
+.synergy-fixed-layout {
+    background: #FFF !important; /* 偏白底色 */
+    color: #1d1d1f;
+    overflow: hidden;
+}
+
+/* 1. 覆盖层面板 */
+.synergy-overlay-panel {
+    position: absolute; inset: 0; padding: 60px 25px;
+    display: flex; flex-direction: column; align-items: center;
+    background: #FFF; z-index: 100;
+}
+
+.synergy-hero-text { text-align: center; margin-bottom: 50px; }
+.synergy-hero-text .label { font-size: 10px; font-weight: 900; letter-spacing: 4px; color: #CCC; }
+.synergy-hero-text h1 { font-family: 'Cinzel', serif; font-size: 32px; margin: 10px 0; }
+.synergy-hero-text p { font-size: 12px; color: #8E8E93; letter-spacing: 1px; }
+
+/* 2. 好友环 (横向物理感) */
+.synergy-friend-dial {
+    width: 100%; display: flex; gap: 30px; overflow-x: auto;
+    padding: 20px 0; scrollbar-width: none;
+    mask-image: linear-gradient(to right, transparent, black 20%, black 80%, transparent);
+}
+.synergy-friend-dial::-webkit-scrollbar { display: none; }
+
+.dial-item {
+    flex-shrink: 0; width: 100px; text-align: center;
+    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.dial-item:active { transform: scale(0.9); }
+.dial-avatar-box {
+    width: 80px; height: 80px; border-radius: 50%; padding: 4px;
+    border: 1px solid #EEE; margin: 0 auto 12px;
+}
+.dial-avatar-box img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; filter: grayscale(100%); }
+.dial-item span { font-size: 12px; font-weight: 700; color: #1d1d1f; }
+
+/* 3. 聊天主场 */
+.synergy-chat-active {
+    position: absolute; inset: 0; display: none; /* 初始隐藏 */
+    flex-direction: column; background: #FFF; z-index: 200;
+}
+
+.synergy-chat-header {
+    padding: 50px 25px 15px; display: flex; justify-content: space-between;
+    border-bottom: 0.5px solid #F2F2F7;
+}
+.header-user { display: flex; align-items: center; gap: 12px; }
+.header-user img { width: 40px; height: 40px; border-radius: 50%; border: 1px solid #1d1d1f; }
+.header-info h2 { font-size: 17px; font-weight: 800; }
+.status-dot { font-size: 10px; color: #34C759; font-weight: 700; letter-spacing: 1px; }
+
+/* 4. 气泡重塑：黑白高级感 */
+.synergy-flow-container { flex: 1; overflow-y: auto; padding: 25px; display: flex; flex-direction: column; gap: 15px; }
+
+.syn-bubble { 
+    max-width: 85%; padding: 12px 18px; font-size: 15px; line-height: 1.6;
+    border-radius: 20px; position: relative;
+}
+.syn-bubble.ai { 
+    background: #F2F2F7; color: #1d1d1f; align-self: flex-start; 
+    border-bottom-left-radius: 4px; font-family: 'Montserrat', serif; font-style: italic;
+}
+.syn-bubble.user { 
+    background: #1d1d1f; color: #FFF; align-self: flex-end; 
+    border-bottom-right-radius: 4px; font-weight: 500;
+}
+
+/* 5. 输入框 */
+.synergy-footer { padding: 15px 20px 40px; }
+#syn-memory-micro-tag { font-size: 9px; color: #BBB; letter-spacing: 1px; margin-bottom: 10px; text-align: center; }
+.input-row { display: flex; gap: 10px; }
+.input-row input { 
+    flex: 1; height: 48px; border-radius: 24px; border: 1.5px solid #1d1d1f;
+    padding: 0 20px; font-size: 15px; outline: none;
+}
+.input-row button { 
+    width: 48px; height: 48px; background: #000; border-radius: 50%; border: none;
+}
+/* --- 🏛️ 邀约 & 成功弹窗高定样式 --- */
+
+/* 确认卡片 */
+.resonance-invite-card {
+    width: 300px !important;
+    background: #FFF !important;
+    border-radius: 28px !important;
+    padding: 30px 20px !important;
+    border: 1px solid #F2F2F7 !important;
+}
+.invite-card-header { text-align: center; margin-bottom: 20px; }
+.invite-card-header .brand-line { width: 30px; height: 3px; background: #000; margin: 0 auto 10px; }
+.invite-card-header span { font-size: 9px; font-weight: 900; letter-spacing: 3px; color: #CCC; }
+
+.invite-card-body { text-align: center; margin-bottom: 30px; }
+.invite-card-body img { width: 80px; height: 80px; border-radius: 50%; border: 1.5px solid #1d1d1f; margin-bottom: 15px; padding: 3px; }
+.invite-card-body h2 { font-family: 'Cinzel', serif; font-size: 22px; color: #000; margin-bottom: 10px; }
+.invite-card-body p { font-size: 11px; color: #8E8E93; line-height: 1.6; padding: 0 10px; }
+
+.invite-card-footer { display: flex; gap: 10px; }
+.invite-btn { flex: 1; height: 48px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; cursor: pointer; transition: 0.2s; }
+.invite-btn.cancel { background: #F2F2F7; color: #1d1d1f; }
+.invite-btn.confirm { background: #1d1d1f; color: #FFF; }
+
+/* 成功全屏提醒 */
+.synergy-success-content { text-align: center; animation: successPop 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
+@keyframes successPop { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+
+.success-glow { width: 120px; height: 120px; background: radial-gradient(circle, rgba(52, 199, 89, 0.2) 0%, transparent 70%); margin: 0 auto; position: relative; }
+.success-glow::after { content: "✓"; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 40px; color: #34C759; }
+
+.success-info { margin: 30px 0 50px; }
+.success-info .label { font-size: 10px; font-weight: 900; letter-spacing: 4px; color: #CCC; }
+.success-info h1 { font-family: 'Cinzel', serif; font-size: 38px; margin: 10px 0; color: #000; }
+.success-info p { font-style: italic; font-family: 'Montserrat', serif; font-size: 15px; color: #555; padding: 0 40px; }
+
+.enter-synergy-btn { 
+    background: #000; color: #FFF; border: none; padding: 18px 45px; 
+    border-radius: 35px; font-size: 13px; font-weight: 900; letter-spacing: 3px; 
+    text-transform: uppercase; cursor: pointer; box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+}
+/* =========================================================
+   📻 SYNERGY RADIO OS 3.0 - 终极工业美学协议
+   ========================================================= */
+
+/* 1. 基础物理容器：强制全屏压制 */
+.synergy-master-fixed {
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    z-index: 3000000 !important; /* 🚨 绝对顶级层级 */
+    background: #FFFFFF !important; /* 极简白基调 */
+    display: flex;
+    flex-direction: column;
+    font-family: 'Montserrat', 'Roboto Mono', monospace;
+    overflow: hidden;
+    color: #1d1d1f;
+}
+
+/* 2. 信号扫描加载层 */
+.synergy-loading-overlay {
+    position: absolute; inset: 0;
+    background: #FFFFFF;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    z-index: 6000000;
+}
+.radar-scanner {
+    width: 160px; height: 160px;
+    border: 1px solid #F0F0F0;
+    border-radius: 50%;
+    position: relative;
+    background: radial-gradient(circle, #FAFAFA 0%, #FFFFFF 70%);
+}
+.radar-beam {
+    position: absolute; inset: 0;
+    background: conic-gradient(from 0deg, transparent 0%, rgba(0, 122, 255, 0.1) 50%, transparent 100%);
+    animation: qRotate 2s infinite linear;
+}
+.radar-grid {
+    position: absolute; inset: 0;
+    background-image: radial-gradient(rgba(0,0,0,0.05) 1px, transparent 1px);
+    background-size: 20px 20px;
+}
+.loading-metadata { margin-top: 40px; text-align: center; }
+.code-line { font-family: monospace; font-size: 10px; font-weight: 900; letter-spacing: 3px; color: #000; margin-bottom: 10px; }
+.percent-num { font-family: 'Cinzel', serif; font-size: 24px; font-weight: 900; color: #007AFF; }
+
+/* 3. 电台主架构 - 解决留白的核心 */
+.radio-main-scaffold {
+    flex: 1; 
+    display: flex; 
+    flex-direction: column;
+    background: #FDFDFD;
+    height: 100%;
+}
+
+/* 顶部调频台 */
+.radio-header-tuner {
+    padding: 65px 25px 20px; /* 避开系统刘海 */
+    background: #FFF;
+    border-bottom: 1.5px solid #000;
+    display: flex; justify-content: space-between; align-items: center;
+}
+.tuner-action { display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: pointer; }
+.tuner-action label { font-size: 8px; font-weight: 900; color: #BBB; letter-spacing: 2px; }
+.btn-min-icon { width: 22px; height: 2px; background: #000; margin: 10px 0; }
+.btn-close-icon { width: 20px; height: 20px; position: relative; }
+.btn-close-icon::before, .btn-close-icon::after { content:""; position: absolute; top:50%; left:0; width:100%; height:2px; background:#000; }
+.btn-close-icon::before { transform: rotate(45deg); }
+.btn-close-icon::after { transform: rotate(-45deg); }
+
+.freq-readout { font-family: 'Cinzel', serif; font-size: 34px; font-weight: 900; letter-spacing: -1px; color: #000; }
+.freq-readout small { font-size: 12px; color: #BBB; margin-left: 5px; }
+
+/* 4. 视觉共鸣区：示波器美学 */
+.radio-body-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 0 25px;
+    overflow: hidden;
+}
+.oscilloscope-module { padding: 40px 0; text-align: center; }
+.avatar-scope-wrap {
+    position: relative; width: 160px; height: 160px; margin: 0 auto;
+    display: flex; align-items: center; justify-content: center;
+}
+.avatar-scope-wrap img {
+    width: 110px; height: 110px; border-radius: 50%; z-index: 10;
+    filter: grayscale(100%) contrast(1.1); border: 3px solid #000;
+    background: #FFF;
+}
+.wave-circle {
+    position: absolute; border: 1.5px solid #007AFF; border-radius: 50%; opacity: 0;
+    animation: waveOut 4s infinite cubic-bezier(0.36, 0, 0.64, 1);
+}
+.wave-circle:nth-child(2) { animation-delay: 2s; }
+@keyframes waveOut {
+    0% { width: 110px; height: 110px; opacity: 0.8; }
+    100% { width: 220px; height: 220px; opacity: 0; }
+}
+
+.partner-meta h2 { font-family: 'Cinzel'; font-size: 24px; letter-spacing: 3px; margin-top: 20px; }
+.id-hash { font-family: monospace; font-size: 9px; color: #007AFF; font-weight: 900; margin-top: 5px; opacity: 0.6; }
+
+/* 5. 通讯终端：数据流风格 */
+.terminal-scroller {
+    flex: 1; overflow-y: auto; padding: 20px 0;
+    mask-image: linear-gradient(to bottom, transparent, black 15%, black 85%, transparent);
+}
+.log-entry { margin-bottom: 25px; font-size: 14px; line-height: 1.8; animation: logFade 0.5s ease forwards; }
+.log-entry.ai { border-left: 2px solid #000; padding-left: 20px; font-family: 'Noto Serif SC', serif; font-style: italic; color: #333; }
+.log-entry.user { border-right: 2px solid #007AFF; padding-right: 20px; text-align: right; font-weight: 600; color: #000; }
+.log-meta { font-family: monospace; font-size: 9px; color: #BBB; letter-spacing: 1.5px; margin-bottom: 8px; }
+
+/* 6. 底部工业基座：彻底封死底部 */
+.radio-bottom-dock {
+    padding: 20px 25px 50px; /* 🚨 底部留白用于 iOS Home Bar */
+    background: #FFF;
+    border-top: 2px solid #000;
+}
+.metadata-strip {
+    background: #F9F9F9; padding: 6px 15px; border-radius: 4px;
+    margin-bottom: 20px; overflow: hidden; white-space: nowrap;
+}
+#radio-memory-strip { font-size: 10px; font-weight: 700; color: #BBB; letter-spacing: 1px; }
+
+.console-input-bay {
+    display: flex; align-items: center; 
+    background: #111; /* 黑底输入框极其显高级 */
+    padding: 8px 15px; border-radius: 8px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+}
+.input-prefix { color: #34C759; font-weight: 900; margin-right: 12px; font-family: monospace; }
+#radio-cmd-input {
+    flex: 1; height: 40px; background: transparent; border: none;
+    color: #FFF; font-family: 'Roboto Mono', monospace; font-size: 15px; outline: none;
+}
+.transmit-btn {
+    background: #FFF; color: #000; border: none; padding: 0 15px;
+    height: 36px; border-radius: 4px; font-weight: 900; font-size: 11px;
+    display: flex; align-items: center; gap: 8px; cursor: pointer;
+}
+
+.industrial-footer-labels {
+    display: flex; justify-content: space-between; margin-top: 20px;
+    font-size: 8px; font-weight: 900; color: #DDD; letter-spacing: 3px;
+}
+
+/* 7. 黑胶悬浮球：独立置顶层 */
+.floating-vinyl-ball {
+    position: fixed; bottom: 120px; right: 25px;
+    width: 68px; height: 68px;
+    z-index: 3000001; display: none; cursor: pointer;
+}
+.vinyl-record {
+    width: 100%; height: 100%; border-radius: 50%;
+    background: repeating-radial-gradient(#111, #111 2px, #222 3px, #222 4px);
+    border: 3px solid #000; display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+}
+.vinyl-record img { width: 45%; height: 45%; border-radius: 50%; border: 1px solid #FFF; object-fit: cover; }
+.status-dot-active {
+    position: absolute; top: 0; right: 0; width: 14px; height: 14px;
+    background: #34C759; border: 2px solid #FFF; border-radius: 50%;
+    box-shadow: 0 0 10px #34C759; animation: qPulse 2s infinite;
+}
+
+/* 动画库 */
+@keyframes qRotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+@keyframes qPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+@keyframes logFade { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+/* 适应窄屏 */
+@media screen and (max-height: 700px) {
+    .oscilloscope-module { padding: 20px 0; }
+    .avatar-scope-wrap { width: 120px; height: 120px; }
+    .avatar-scope-wrap img { width: 90px; height: 90px; }
+}
 </style>
 </head>
 <body>
@@ -11677,7 +13438,9 @@ input:checked + .slider:before {
 
                 <div class="app-cell" onclick="openApp('musicApp')">
                     <div class="icon-shape" style="background: linear-gradient(135deg, #fb3a4d 0%, #fb6470 100%); color: white;">
-                        <svg class="svg-icon" viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+                        <svg class="svg-icon" viewBox="0 0 24 24">
+                            <path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>
+                        </svg>
                     </div>
                     <span class="app-name">Music</span>
                 </div>
@@ -15375,6 +17138,12 @@ input:checked + .slider:before {
             </div>
         </div>
 
+        <div class="daily-status-container">
+            <div class="tz-group-title">每日镜像 (DAILY REFLECTIONS)</div>
+            
+            <div id="status-flow-list" class="status-flow-list"></div>
+        </div>
+
         <div class="tz-group-title">历史瞬间 (ARCHIVES)</div>
         <div id="char-gallery-history" class="char-history-grid"></div>
     </div>
@@ -15506,8 +17275,765 @@ input:checked + .slider:before {
         </div>
     </div>
 </div>
+<div id="daily-collection-overlay" class="daily-collection-overlay">
+    <div class="collection-bg"></div>
+    
+    <div class="collection-nav">
+        <div class="nav-back" onclick="closeDailyCollection()">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+        </div>
+        <div class="nav-title-group">
+            <div class="nav-main-title">DIMENSION ARCHIVE</div>
+            <div class="nav-sub-date" id="collection-date-title">JAN 27, 2026</div>
+        </div>
+        <div style="width:24px;"></div>
+    </div>
+
+    <div class="collection-scroll-body" id="daily-fragments-container">
+        </div>
+    
+    <div class="collection-footer-tag">LUNE PHONE / ENCRYPTED LOG / NO.027</div>
+</div>
+<div id="page-musicApp" class="ios-app-window music-app-container" style="display: none;">
+    <div class="music-app-header">
+        <div class="header-side-btn" onclick="closeSubPage('page-musicApp')">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="1.2"><path d="M15 18l-6-6 6-6"/></svg>
+        </div>
+
+        <div class="header-main-title" id="music-nav-title">ARCHIVE</div>
+
+        <div class="header-side-btn" onclick="document.getElementById('core-bg-input').click()">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="1.2">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>
+            </svg>
+        </div>
+        <input type="file" id="core-bg-input" accept="image/*" hidden onchange="changeCoreBackground(this)">
+    </div>
+
+    <div class="music-view-viewport">
+        <div id="music-tab-archive" class="music-view-page active">
+            <div class="archive-curated-header">
+                <div class="header-main-info">
+                    <h1 class="glitch-text" data-text="SONIC VAULT">SONIC VAULT</h1>
+                    <div class="vault-stats">
+                        <span id="stat-count">00 TRACKS</span> • 
+                        <span id="stat-storage">LOCAL ENCRYPTED</span>
+                    </div>
+                </div>
+                <div class="archive-search-bar">
+                    <input type="text" id="music-search" placeholder="SEARCH ARCHIVE..." oninput="filterMusicArchive()">
+                </div>
+            </div>
+
+            <div id="music-vault-list" class="music-vault-staggered-grid">
+                </div>
+
+            <div class="shutter-upload-btn" onclick="openMusicModal()">
+                <div class="shutter-inner"></div>
+                <span class="shutter-label">REGISTER</span>
+            </div>
+        </div>
+
+        <div id="music-upload-modal" class="music-modal-overlay">
+            <div class="modal-glass-card">
+                <div class="modal-top">
+                    <span id="modal-mode-title">DATA REGISTRATION</span>
+                    <div class="modal-close-btn" onclick="closeMusicModal()">CLOSE</div>
+                </div>
+                
+                <div class="upload-scroll-area">
+                    <div class="cover-upload-zone" onclick="document.getElementById('input-music-cover').click()">
+                        <img id="preview-cover" src="">
+                        <div id="cover-tips">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="1.2"><path d="M12 5v14M5 12h14"/></svg>
+                            <span>VISUAL DATA</span>
+                        </div>
+                        <input type="file" id="input-music-cover" accept="image/*" hidden onchange="previewMusicImage(this)">
+                    </div>
+
+                    <div class="input-group-vault">
+                        <div class="input-item">
+                            <label>TITLE</label>
+                            <input type="text" id="music-title" placeholder="ENTER NAME">
+                        </div>
+                        <div class="input-item">
+                            <label>ARTIST</label>
+                            <input type="text" id="music-artist" placeholder="ENTITY NAME">
+                        </div>
+                        <div class="input-item file-item">
+                            <label>SOURCE FILE</label>
+                            <div class="custom-file-btn" onclick="document.getElementById('input-music-file').click()">
+                                <span id="file-name-display">SELECT AUDIO</span>
+                            </div>
+                            <input type="file" id="input-music-file" accept="audio/*" hidden onchange="updateFileName(this)">
+                        </div>
+                    </div>
+                    
+                    <input type="hidden" id="editing-song-id">
+                    
+                    <button class="commit-btn" onclick="handleArchiveCommit()">COMMIT TO ARCHIVE</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="music-tab-core" class="music-view-page">
+            <div class="core-exit-btn" onclick="switchMusicTab('archive', document.querySelector('.nav-capsule-item:nth-child(1)'))">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m6 9 6 6 6-6"/></svg>
+            </div>
+
+            <div id="player-bg-visual" class="player-ambient-bg"></div>
+            <div id="core-custom-bg-layer" class="core-persistent-bg"></div>
+
+            <div class="core-main-container">
+                <div class="core-visual-section">
+                    <div class="ripple-wrapper">
+                        <div class="ripple-ring r1"></div>
+                        <div class="ripple-ring r2"></div>
+                        <div class="circular-cover-box">
+                            <img id="player-cover" src="" alt="Album Cover">
+                        </div>
+                    </div>
+                    <div class="core-status-tag">
+                        <div class="pulse-dot"></div>
+                    </div>
+                </div>
+
+                <div class="core-lyrics-canvas" onclick="openLyricModal()">
+                    <div id="lyrics-scroller" class="lyrics-scroller">
+                        <p class="lyric-placeholder">NO DATA // CLICK TO ALIGN LYRICS</p>
+                    </div>
+                </div>
+
+                <div class="core-meta-section">
+                    <div class="meta-text">
+                        <h2 id="player-title">SILENCE</h2>
+                        <p id="player-artist">UNKNOWN ENTITY</p>
+                    </div>
+                </div>
+
+                <div class="core-controls-section">
+                    <div class="progress-container">
+                        <span id="curr-time" class="time-stamp">00:00</span>
+                        
+                        <div class="progress-bar-wrap" onclick="seekAudio(event)">
+                            <div id="progress-fill" class="progress-fill"></div>
+                        </div>
+                        
+                        <span id="total-time" class="time-stamp">00:00</span>
+                    </div>
+                    
+                    <div class="main-buttons-console">
+                    <div class="ctrl-icon-btn mode-btn" onclick="togglePlaybackMode()" id="play-mode-trigger">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M7 7h10v10H7z"/><path d="M7 12h10M7 15h10M7 18h10"/>
+                        </svg>
+                    </div>
+
+                    <div class="ctrl-icon-btn" onclick="playPrevSong()">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <polygon points="11 19 2 12 11 5 11 19"/><polygon points="22 19 13 12 22 5 22 19"/>
+                        </svg>
+                    </div>
+
+                    <div class="ctrl-play-shutter" onclick="togglePlay()">
+                        <div id="play-state-icon" class="shutter-icon-wrap">
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                        </div>
+                    </div>
+
+                    <div class="ctrl-icon-btn" onclick="playNextSong()">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <polygon points="13 19 22 12 13 5 13 19"/><polygon points="2 19 11 12 2 5 2 19"/>
+                        </svg>
+                    </div>
+
+                    <div class="ctrl-icon-btn list-btn" onclick="togglePlaylistDrawer()">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><path d="M3 6h.01"/><path d="M3 12h.01"/><path d="M3 18h.01"/>
+                        </svg>
+                    </div>
+                </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="lyric-upload-modal" class="music-modal-overlay">
+            <div class="modal-glass-card" style="max-width: 450px;">
+                <div class="modal-top">
+                    <span>LYRIC ARCHIVING</span>
+                    <div class="modal-close-btn" onclick="closeLyricModal()">CLOSE</div>
+                </div>
+
+                <div class="upload-scroll-area">
+                    <div class="input-group-vault">
+                        <div class="input-item">
+                            <label>PASTE LYRICS TEXT</label>
+                            <textarea id="lyric-text-input" rows="8" placeholder="PASTE YOUR LYRICS HERE (SUPPORT [00:00.00] TIMESTAMPS)"></textarea>
+                        </div>
+                        
+                        <div class="or-divider"><span>OR</span></div>
+
+                        <div class="file-item">
+                            <label>UPLOAD .LRC FILE</label>
+                            <div class="custom-file-btn" onclick="document.getElementById('input-lrc-file').click()">
+                                <span id="lrc-file-name">SELECT LRC FILE</span>
+                            </div>
+                            <input type="file" id="input-lrc-file" accept=".lrc,.txt" hidden onchange="handleLrcUpload(this)">
+                        </div>
+                    </div>
+
+                    <button class="commit-btn" onclick="commitLyrics()">LINK TO TRACK</button>
+                </div>
+            </div>
+        </div>
+
+        <audio id="main-audio-engine" ontimeupdate="updateProgress()" onended="playNextSong()"></audio>
+
+        <div id="music-tab-synergy" class="music-view-page synergy-fixed-layout">
+            <div id="synergy-selection-zone" class="synergy-overlay-panel">
+                <div class="synergy-hero-text">
+                    <span class="label">CO-RESONANCE</span>
+                    <h1>邀请同频者</h1>
+                    <p>选择一个灵魂，开启这段音频维度的纠缠</p>
+                </div>
+                
+                <div class="synergy-friend-dial" id="synergy-friend-dial">
+                    </div>
+
+                <div class="dial-instruction">TUNING KNOB // SELECT TARGET</div>
+            </div>
+        </div>
+
+        <div id="modal-synergy-reject" class="vibe-center-mask" style="display:none; z-index:11000; background:rgba(255,255,255,0.9);">
+            <div class="synergy-reject-card">
+                <div class="reject-header">
+                    <span class="error-code">ERROR_CODE: 403</span>
+                    <span class="error-label">SIGNAL_DIVERGED</span>
+                </div>
+                <div class="reject-body">
+                    <h1 class="reject-title">邀约已失效</h1>
+                    <p id="reject-ai-msg" class="reject-text">“我现在只想独自待会儿。”</p>
+                </div>
+                <button class="reject-close-btn" onclick="closeRejectModal()">返回维度列表</button>
+            </div>
+        </div>
+
+        <div id="modal-synergy-success" class="vibe-center-mask" style="display:none; z-index:11000; background:rgba(255,255,255,0.98);">
+            <div class="synergy-success-content">
+                <div class="success-glow"></div>
+                <div class="success-info">
+                    <span class="label">CONNECTION ESTABLISHED</span>
+                    <h1 id="success-target-name">Dunk</h1>
+                    <p id="success-ai-msg">“既然是你邀请，那就一起听听看吧。”</p>
+                </div>
+                <button class="enter-synergy-btn" onclick="enterSynergyChat()">进入共鸣场</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="music-navigation-bar">
+        <div class="nav-capsule-item active" onclick="switchMusicTab('archive', this)">
+            <span>ARCHIVE</span>
+        </div>
+        <div class="nav-capsule-item" onclick="switchMusicTab('core', this)">
+            <span>CORE</span>
+        </div>
+        <div class="nav-capsule-item" onclick="switchMusicTab('synergy', this)">
+            <span>SYNERGY</span>
+        </div>
+    </div>
+
+    <div id="playlist-drawer" class="playlist-overlay" onclick="togglePlaylistDrawer()">
+        <div class="playlist-content" onclick="event.stopPropagation()">
+            <div class="playlist-header">
+                <div class="header-line"></div>
+                <div class="header-text-row">
+                    <span>PLAYBACK QUEUE</span>
+                    <span id="queue-count">00 TRACKS</span>
+                </div>
+            </div>
+
+            <div id="playlist-items" class="playlist-items-scroll">
+                </div>
+
+            <div class="playlist-footer">
+                <button class="close-drawer-btn" onclick="togglePlaylistDrawer()">CLOSE QUEUE</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="delete-confirm-modal" class="music-modal-overlay">
+    <div class="modal-glass-card" style="max-width: 320px; text-align: center;">
+        <div style="margin-bottom: 25px;">
+            <div style="font-family: 'Cinzel', serif; font-size: 14px; font-weight: 900; letter-spacing: 3px; color: #000; margin-bottom: 15px;">
+                PURGE DATA?
+            </div>
+            <div style="font-size: 11px; color: #888; line-height: 1.6; letter-spacing: 1px;">
+                ARE YOU SURE YOU WANT TO ERASE THIS RECORD FROM THE VAULT? THIS ACTION IS IRREVERSIBLE.
+            </div>
+        </div>
+
+        <input type="hidden" id="pending-delete-id">
+
+        <div style="display: flex; gap: 15px;">
+            <button class="commit-btn" style="margin-top: 0; background: #f0f0f0; color: #000; flex: 1; padding: 15px;" onclick="closeDeleteModal()">
+                CANCEL
+            </button>
+            <button class="commit-btn" style="margin-top: 0; background: #000; color: #fff; flex: 1; padding: 15px;" onclick="executeDelete()">
+                PURGE
+            </button>
+        </div>
+    </div>
+</div>
+<div id="synergy-master-portal" class="synergy-master-fixed" style="display:none;">
+    
+    <div id="synergy-loading-screen" class="synergy-loading-overlay">
+        <div class="radar-scanner">
+            <div class="radar-beam"></div>
+            <div class="radar-grid"></div>
+        </div>
+        <div class="loading-metadata">
+            <div class="code-line">SYNCING_CORE_PROTOCOL...</div>
+            <div class="progress-box">
+                <div class="progress-label">DIMENSION_SYNC</div>
+                <div class="percent-num"><span id="sync-percent">0</span>%</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="synergy-radio-interface" class="radio-main-scaffold">
+        
+        <header class="radio-header-tuner">
+            <div class="tuner-action" onclick="window.minimizeToDisc()">
+                <div class="btn-min-icon"></div>
+                <label>MINIMIZE</label>
+            </div>
+
+            <div class="tuner-display-center">
+                <div class="sys-label">MASTER_VOYAGE_RADIO</div>
+                <div class="freq-readout">
+                    <span id="live-freq">108.0</span><small>MHz</small>
+                </div>
+                <div class="signal-visual">
+                    <div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div>
+                </div>
+            </div>
+
+            <div class="tuner-action" onclick="window.terminateSynergy()">
+                <div class="btn-close-icon"></div>
+                <label>ABORT</label>
+            </div>
+        </header>
+
+        <main class="radio-body-panel">
+            <div class="oscilloscope-module">
+                <div class="module-label">OSCILLOSCOPE / VISUALIZER</div>
+                <div class="avatar-scope-wrap">
+                    <img id="radio-avatar" src="" alt="">
+                    <div class="wave-circle"></div>
+                    <div class="wave-circle"></div>
+                </div>
+                <div class="partner-meta">
+                    <h2 id="radio-name">IDENTIFYING...</h2>
+                    <div class="id-hash">HASH_UUID: <span id="partner-uuid">--</span></div>
+                </div>
+            </div>
+
+            <div id="radio-terminal-log" class="terminal-scroller">
+                </div>
+        </main>
+
+        <footer class="radio-bottom-dock">
+            <div class="metadata-strip">
+                <div class="marquee-wrap">
+                    <span id="radio-memory-strip">>>> 正在从量子总结库读取交互历史... 正在同步最近的对话参数...</span>
+                </div>
+            </div>
+            
+            <div class="console-input-bay">
+                <div class="input-prefix">CMD_</div>
+                <input type="text" id="radio-cmd-input" placeholder="键入通讯指令..." onkeypress="if(event.key==='Enter') window.transmitCommand()">
+                <button class="transmit-btn" onclick="window.transmitCommand()">
+                    <span>SEND</span>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="white"><path d="M2.01 21L23 12L2.01 3L2 10L17 12L2 14L2.01 21Z"/></svg>
+                </button>
+            </div>
+
+            <div class="industrial-footer-labels">
+                <span>BITRATE: 1411 KBPS</span>
+                <span>ENC: AES-256</span>
+                <span>STABILITY: 98.4%</span>
+            </div>
+        </footer>
+    </div>
+</div>
+
+<div id="synergy-floating-disc" class="floating-vinyl-ball" onclick="window.restoreFromDisc()">
+    <div class="vinyl-record spinning">
+        <img id="disc-avatar" src="" alt="">
+    </div>
+    <div class="status-dot-active"></div>
+</div>
+
+<div id="modal-resonance-invite" class="vibe-center-mask" style="display:none; z-index:100001;">
+    <div class="ios-alert-box resonance-invite-card">
+        <div class="invite-card-header">
+            <div class="brand-line"></div>
+            <span>SYNERGY REQUEST</span>
+        </div>
+        <div class="invite-card-body">
+            <img id="invite-target-avatar" src="" alt="">
+            <h2 id="invite-target-name">Character</h2>
+            <p>发起联觉邀约后，对方将感知你此刻的旋律并尝试建立维度连接。</p>
+        </div>
+        <div class="invite-card-footer">
+            <div class="invite-btn cancel" onclick="closeResonanceModal()">暂缓</div>
+            <div class="invite-btn confirm" onclick="executeInviteProtocol()">发起邀约</div>
+        </div>
+    </div>
+</div>
 
 <script>
+/**
+ * 3. 执行邀约协议 (AI 决策分支)
+ * 作用：点击“确认邀约”后触发，显示加载动画并判定结果
+ */
+window.executeInviteProtocol = async function() {
+    const contact = window.currentSynergyTarget;
+    if (!contact) return;
+
+    window.closeResonanceModal();
+    
+    // 🚨 启动加载动画
+    const loader = document.getElementById('synergy-invite-loading');
+    if (loader) {
+        loader.style.display = 'flex';
+        loader.style.opacity = '1';
+    }
+    
+    try {
+        const apiKey = localStorage.getItem('gpt_key');
+        const apiUrl = (localStorage.getItem('gpt_url') || "").replace(/\/+$/, "");
+        const song = currentPlaylist[currentPlayIndex] || { title: "未知旋律" };
+        
+        // 抓取记忆
+        const summaries = await loadFromDB('summaries_' + contact.id) || [];
+        const latestMemory = summaries[0] ? summaries[0].text : "记忆尚未苏醒";
+
+        const prompt = `你是 ${contact.name}。背景: ${contact.desc}。
+        用户邀你一起听歌《${song.title}》。
+        近期记忆摘要: ${latestMemory}。
+        【决策规则】:
+        1. 90%概率接受 accept: true，10%概率拒绝 accept: false。
+        2. 给出一句符合当下心情的回应 JSON: {"accept": boolean, "msg": "str"}`;
+
+        const res = await fetch(`${apiUrl}/chat/completions`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+            body: JSON.stringify({
+                model: localStorage.getItem('gpt_model') || "gpt-3.5-turbo",
+                messages: [{ role: "user", content: prompt }],
+                temperature: 0.9
+            })
+        });
+
+        const data = await res.json();
+        const response = JSON.parse(data.choices[0].message.content.match(/\{.*\}/s)[0]);
+
+        // 模拟 1.2s 的量子频率对齐时间
+        setTimeout(() => {
+            if (loader) loader.style.display = 'none';
+
+            if (response.accept) {
+                // ✅ 跳转至成功全屏弹窗
+                showSynergySuccess(contact, response.msg);
+            } else {
+                // ❌ 跳转至拒绝弹窗
+                showSynergyReject(contact, response.msg);
+            }
+        }, 1200);
+
+    } catch (e) {
+        if (loader) loader.style.display = 'none';
+        showToast("量子信号干扰严重");
+    }
+};
+/**
+ * 🛰️ SYNERGY 协议：发起邀约核心函数
+ * 作用：接收拨盘点击，同步目标数据，唤起确认弹窗
+ */
+window.sendResonanceInvite = function(contact) {
+    console.log("%c[Signal] 捕获点击，准备邀约:", "color: #007AFF; font-weight: bold;", contact.name);
+    
+    // 注入全局目标
+    window.currentSynergyTarget = contact; 
+
+    // 获取确认弹窗中的元素
+    const avt = document.getElementById('invite-target-avatar');
+    const name = document.getElementById('invite-target-name');
+    const modal = document.getElementById('modal-resonance-invite');
+
+    if (avt && name && modal) {
+        avt.src = contact.avatar;
+        name.textContent = contact.name.toUpperCase();
+        modal.style.display = 'flex'; // 弹出确认卡片
+    } else {
+        console.error("❌ 找不到邀约弹窗元素，请检查 HTML 是否补全了 invite-target-avatar");
+        showToast("系统环境异常");
+    }
+};
+
+/**
+ * 辅助：关闭邀约弹窗
+ */
+window.closeResonanceModal = function() {
+    const modal = document.getElementById('modal-resonance-invite');
+    if (modal) modal.style.display = 'none';
+};
+// 1. 初始化入口：在 switchMusicTab 中调用
+window.initSynergyDial = async function() {
+    const dial = document.getElementById('synergy-friend-dial');
+    if (!dial) return;
+    const friends = await loadFromDB('chat_friends') || []; //
+    dial.innerHTML = friends.map(f => `
+        <div class="dial-item" onclick="sendResonanceInvite(${JSON.stringify(f).replace(/"/g, '&quot;')})">
+            <div class="dial-avatar-box"><img src="${f.avatar}"></div>
+            <span>${f.name.toUpperCase()}</span>
+        </div>
+    `).join('') || `<div style="color:#CCC; padding:40px;">次元列表为空</div>`;
+};
+// 2. 物理启动：信号扫描仪式
+window.launchRadioPortal = async function(contact) {
+    const layer = document.getElementById('synergy-master-portal');
+    const loader = document.getElementById('synergy-loading-screen');
+    const radioUI = document.getElementById('synergy-radio-interface');
+    
+    window.currentRadioPartner = contact;
+    layer.style.display = 'flex';
+    loader.style.display = 'flex';
+    radioUI.style.display = 'none';
+
+    // 模拟信号对齐动画
+    let percent = 0;
+    const syncInt = setInterval(() => {
+        percent += 5;
+        document.getElementById('sync-percent').textContent = percent;
+        if(percent >= 100) {
+            clearInterval(syncInt);
+            loader.style.display = 'none';
+            radioUI.style.display = 'flex';
+            initRadioInterface(contact);
+        }
+    }, 50);
+};
+// 3. 渲染电台主界面
+async function initRadioInterface(char) {
+    document.getElementById('radio-avatar').src = char.avatar;
+    document.getElementById('disc-avatar').src = char.avatar;
+    document.getElementById('radio-name').textContent = char.name.toUpperCase();
+    
+    // 同步聊天 App 的总结记忆
+    const summaries = await loadFromDB('summaries_' + char.id) || [];
+    const memoryText = summaries[0] ? summaries[0].text : "量子纠缠初始化中...";
+    document.getElementById('radio-memory-strip').textContent = `[HISTORY_DECODED] // ${memoryText}`;
+}
+
+// 4. 核心交互：缩放至黑胶悬浮球
+window.minimizeToDisc = function() {
+    const layer = document.getElementById('synergy-master-portal');
+    const disc = document.getElementById('synergy-mini-disc');
+
+    layer.style.transition = 'all 0.5s cubic-bezier(0.19, 1, 0.22, 1)';
+    layer.style.transform = 'scale(0.5) translateY(100%)';
+    layer.style.opacity = '0';
+    
+    setTimeout(() => {
+        layer.style.display = 'none';
+        disc.style.display = 'flex';
+        disc.style.animation = 'iosPop 0.5s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards';
+        showToast("电台已挂起至高维空间");
+    }, 400);
+};
+
+// 5. 核心交互：从悬浮球恢复
+window.restoreFromDisc = function() {
+    const layer = document.getElementById('synergy-master-portal');
+    const disc = document.getElementById('synergy-mini-disc');
+
+    disc.style.display = 'none';
+    layer.style.display = 'flex';
+    void layer.offsetWidth; // 触发重绘
+    layer.style.transform = 'scale(1) translateY(0)';
+    layer.style.opacity = '1';
+};
+
+window.terminateSynergy = function() {
+    showIOSConfirm("切断频道", "确定要中断与该维度的频率共鸣吗？", "切断", () => {
+        window.isRadioActive = false;
+        const portal = document.getElementById('synergy-master-portal');
+        const disc = document.getElementById('synergy-floating-disc');
+        
+        if (portal) portal.style.display = 'none';
+        if (disc) disc.style.display = 'none';
+        
+        // 清理旧日志
+        const log = document.getElementById('radio-terminal-log');
+        if (log) log.innerHTML = "";
+        
+        showToast("信号已断开");
+    });
+};
+
+// 7. 发送指令 (电台风通讯)
+window.transmitCommand = async function() {
+    const input = document.getElementById('radio-cmd-input');
+    const text = input ? input.value.trim() : "";
+    if (!text) return;
+
+    appendRadioLog('user', text);
+    input.value = "";
+
+    // 联动 AI 逻辑
+    try {
+        const contact = window.currentSynergyTarget;
+        const song = currentPlaylist[currentPlayIndex] || { title: "未知频率" };
+        const memory = document.getElementById('radio-memory-strip').textContent;
+
+        const reply = await callAIForSynergy(contact, text, memory, song);
+        setTimeout(() => appendRadioLog('ai', reply), 800);
+    } catch (e) {
+        appendRadioLog('ai', "SIGNAL_ERROR: 信号传输受阻...");
+    }
+};       
+
+/**
+ * 🛰️ SYNERGY MASTER PORTAL - 终极启动协议
+ * 作用：处理邀约成功后的全屏切换、信号校准动画、数据同步
+ */
+window.enterSynergyChat = async function() {
+    const contact = window.currentSynergyTarget;
+    const portal = document.getElementById('synergy-master-portal'); // 🚨 对齐 ID
+    const loader = document.getElementById('synergy-loading-screen');
+    const radioUI = document.getElementById('synergy-radio-interface');
+    const successModal = document.getElementById('modal-synergy-success');
+
+    if (!portal || !contact) {
+        console.error("❌ [System] 物理链路断裂：找不到电台主容器或目标数据");
+        return;
+    }
+
+    // A. 物理显现容器，隐藏之前的弹窗
+    portal.style.display = 'flex';
+    if (successModal) successModal.style.display = 'none';
+
+    // B. 启动仪式感加载：显示扫描动画，藏起主界面
+    if (loader) loader.style.display = 'flex';
+    if (radioUI) radioUI.style.display = 'none';
+
+    // C. 物理数据预注入 (趁着动画时间完成)
+    const elAvt = document.getElementById('radio-avatar');
+    const elDiscAvt = document.getElementById('disc-avatar');
+    const elName = document.getElementById('radio-name');
+    const elUUID = document.getElementById('partner-uuid');
+
+    if (elAvt) elAvt.src = contact.avatar;
+    if (elDiscAvt) elDiscAvt.src = contact.avatar;
+    if (elName) elName.textContent = contact.name.toUpperCase();
+    if (elUUID) elUUID.textContent = contact.id.slice(-12).toUpperCase();
+
+    // D. 同步跑马灯记忆
+    const summaries = await loadFromDB('summaries_' + contact.id) || [];
+    const memoryText = summaries[0] ? summaries[0].text : "量子纠缠初始化中...";
+    const elStrip = document.getElementById('radio-memory-strip');
+    if (elStrip) elStrip.textContent = `>>> [ARCHIVE_LINKED] // ${memoryText}`;
+
+    // E. ⏳ 执行 1.2s 进度对齐
+    let percent = 0;
+    const syncInt = setInterval(() => {
+        percent += 10;
+        const pEl = document.getElementById('sync-percent');
+        if (pEl) pEl.textContent = percent;
+        
+        if (percent >= 100) {
+            clearInterval(syncInt);
+            // 物理切换至电台界面
+            if (loader) loader.style.display = 'none';
+            if (radioUI) radioUI.style.display = 'flex';
+            
+            // 如果邀约时有开场白，立即打印到终端
+            if (window.pendingSynergyMsg) {
+                appendRadioLog('ai', window.pendingSynergyMsg);
+                window.pendingSynergyMsg = null;
+            }
+            window.isRadioActive = true;
+        }
+    }, 40);
+};
+
+// 2. 【缩放】电台缩回成黑胶球
+window.minimizeToDisc = function() {
+    const portal = document.getElementById('synergy-master-portal');
+    const disc = document.getElementById('synergy-floating-disc');
+
+    if (!portal || !disc) return;
+
+    // iOS 风格缩放动效
+    portal.style.transition = 'all 0.5s cubic-bezier(0.19, 1, 0.22, 1)';
+    portal.style.transform = 'scale(0.5) translateY(100px)';
+    portal.style.opacity = '0';
+    
+    setTimeout(() => {
+        portal.style.display = 'none';
+        portal.style.transform = ''; // 复位
+        portal.style.opacity = '1';
+        
+        disc.style.display = 'flex'; // 唤醒黑胶球
+        disc.style.animation = 'iosPop 0.5s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards';
+        showToast("电台已挂起至高维空间");
+    }, 400);
+};
+
+// 3. 【恢复】黑胶球弹回电台页
+window.restoreFromDisc = function() {
+    const portal = document.getElementById('synergy-master-portal');
+    const disc = document.getElementById('synergy-floating-disc');
+
+    if (!portal || !disc) return;
+
+    disc.style.display = 'none';
+    portal.style.display = 'flex';
+    
+    // 执行反向滑入动画
+    portal.animate([
+        { transform: 'scale(0.8) translateY(50px)', opacity: 0 },
+        { transform: 'scale(1) translateY(0)', opacity: 1 }
+    ], { duration: 500, easing: 'cubic-bezier(0.16, 1, 0.3, 1)' });
+};
+
+// 5. 【通讯】数据流上屏
+function appendRadioLog(role, text) {
+    const log = document.getElementById('radio-terminal-log');
+    const div = document.createElement('div');
+    div.className = `log-entry ${role}`;
+    
+    const time = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+    const sender = role === 'user' ? 'OPERATOR' : window.currentSynergyTarget.name.toUpperCase();
+    
+    div.innerHTML = `
+        <div class="log-meta">[${time}] // SOURCE: ${sender}</div>
+        <div class="log-content">${text}</div>
+    `;
+    log.appendChild(div);
+    log.scrollTo({ top: log.scrollHeight, behavior: 'smooth' });
+}
+
+let currentPlaylist = []; // 歌曲队列
+let currentPlayIndex = -1;
+// 全局变量，记录当前准备删除哪一个
+let pendingDeleteId = null;
+let parsedLyrics = []; // 解析后的歌词数组 [{time, text}]
+let currentPlayMode = 'order'; // order, single, random
+
 /**
  * 🖼️ 终极版：全媒体转发引擎
  * 逻辑：提取 Base64 图片流 -> 注入媒体协议 -> 唤醒转发层
@@ -17800,10 +20326,75 @@ function switchTab(tab) {
     // 初始化时加载历史
     setTimeout(renderHistory, 500);
 
-    function openApp(id) { 
-        document.getElementById(id).classList.add('active'); 
-        renderHistory(); // 每次打开刷新历史
+    /**
+ * 🚀 全局 App 启动器
+ * 整合了：ID 映射、自动容错、动画重绘、以及音乐 App 的持久化初始化
+ */
+function openApp(appId) {
+    console.log("Attempting to open app:", appId);
+    
+    // 1. ID 映射表：解决 HTML 中 ID 命名不统一（驼峰 vs 连字符）的问题
+    const idMap = {
+        'musicApp': 'page-musicApp',
+        'wallApp': 'page-wall-app',      
+        'settingsApp': 'page-settings',   
+        'safariApp': 'page-safari'
+    };
+
+    // 2. 确定目标 ID，优先使用映射表，找不到则按默认 page- 前缀拼接
+    const pageId = idMap[appId] || ('page-' + appId);
+    const appElement = document.getElementById(pageId);
+    
+    if (!appElement) {
+        // 3. 智能容错：如果依然找不到，尝试遍历几种常见的命名组合
+        const fallbackIds = [
+            'page-' + appId.toLowerCase(), 
+            appId, 
+            'page-' + appId.replace('App', '')
+        ];
+        
+        for (let fid of fallbackIds) {
+            let el = document.getElementById(fid);
+            if (el) {
+                console.log("💡 找到备选容器:", fid);
+                executeOpen(el, appId);
+                return;
+            }
+        }
+        
+        console.error("❌ 依然找不到页面容器:", pageId);
+        return; 
     }
+
+    // 4. 找到容器后执行标准打开流程
+    executeOpen(appElement, appId);
+
+    /**
+     * 核心打开执行逻辑
+     */
+    function executeOpen(el, id) {
+        // A. 视觉显示：设置 Flex 并强制浏览器重绘以确保 transition 动画生效
+        el.style.display = 'flex';
+        void el.offsetWidth; 
+        el.classList.add('active');
+        
+        // B. 音乐 App 深度初始化钩子
+        if (id === 'musicApp') {
+            // 渲染 Archive 列表（确保数据最新）
+            if (typeof renderMusicArchive === 'function') {
+                renderMusicArchive();
+            }
+            
+            // ✨ 核心补全：从 IndexedDB 加载你选定的 CORE 页面自定义背景
+            if (typeof loadPersistentCoreBg === 'function') {
+                loadPersistentCoreBg();
+            }
+        }
+        
+        // C. 后续可在此扩展其他 App（如 settingsApp）的特殊初始化逻辑
+        console.log(`✅ App [${id}] launched successfully.`);
+    }
+}
     function closeApp(id) { document.getElementById(id).classList.remove('active'); }
 
     // 1. 切换 Tab (修复预览图乱跑的问题)
@@ -20727,6 +23318,12 @@ async function triggerAiGenerate() {
             if (i < finalSegments.length - 1) await new Promise(res => setTimeout(res, 1000));
         }
 
+        // 🚨 在循环彻底结束后，插入下面这段代码：
+        const lastFullResponse = finalSegments.join(" "); // 合并本轮所有回复
+        console.log("🛠️ [系统监控] 本轮回复结束，启动维度捕获...");
+        // 自动触发一次极简总结并捕获状态
+        captureAndGenerateSummary(lastFullResponse);
+
         if (typeof initChatMsgPanel === 'function') initChatMsgPanel();
 
     } catch (e) {
@@ -21310,38 +23907,6 @@ function copyToClipboard(text) {
     });
 }
 
-// --- 1. 进入多选模式 ---
-function enterMultiSelect() {
-    console.log("System: Entering Multi-select mode...");
-    const rows = document.querySelectorAll('.msg-row');
-    const footer = document.querySelector('.chat-room-footer');
-    const multiBar = document.getElementById('multi-select-bar');
-
-    if (!multiBar) return;
-
-    rows.forEach(row => {
-        row.classList.add('multi-selecting');
-        
-        // 动态插入勾选框
-        if (!row.querySelector('.msg-check-box')) {
-            const check = document.createElement('div');
-            check.className = 'msg-check-box';
-            // 点击圆圈直接选择
-            check.onclick = (e) => {
-                e.stopPropagation();
-                row.classList.toggle('selected');
-            };
-            row.appendChild(check);
-        }
-        
-        // 注意：这里不需要再给 row 绑定 onclick 了
-        // 因为气泡自带的 showBubbleMenu 已经被我们改成了“转发器”
-    });
-
-    if (footer) footer.style.display = 'none'; 
-    multiBar.style.display = 'flex'; 
-}
-
 // 修改你的 doAction 函数
 // 在 doAction 的 switch(type) 里找到 'multi':
 // case 'multi': enterMultiSelect(); break;
@@ -21411,20 +23976,6 @@ async function batchDelete() {
     });
 }
 
-// --- B. 批量截图 (不再使用原生 alert) ---
-function batchScreenshot() {
-    const selectedCount = document.querySelectorAll('.msg-row.selected').length;
-    if (selectedCount === 0) return showToast("请选择需要截图的消息");
-
-    showToast("正在通过联觉协议合成图像...");
-    
-    // 模拟处理时间
-    setTimeout(() => {
-        showIOSAlert("截图成功", `已成功将 ${selectedCount} 条消息合成长图并保存至模拟相册。`);
-        exitMultiSelect();
-    }, 1200);
-}
-
 // --- C. 批量转发 (逻辑优化) ---
 function batchForward() {
     const selectedRows = document.querySelectorAll('.msg-row.selected');
@@ -21450,28 +24001,27 @@ function refreshMultiSelectCount() {
 // 修改进入函数，确保初始状态正确
 function enterMultiSelect() {
     const rows = document.querySelectorAll('.msg-row');
-    const footer = document.querySelector('.chat-room-footer');
     const multiBar = document.getElementById('multi-select-bar');
+    const footer = document.querySelector('.chat-room-footer');
 
     rows.forEach(row => {
         row.classList.add('multi-selecting');
+        
+        // 点击整行切换选中状态
+        row.onclick = function() {
+            this.classList.toggle('selected');
+        };
+
+        // 如果没有圆圈，补一个圆圈
         if (!row.querySelector('.msg-check-box')) {
-            const check = document.createElement('div');
-            check.className = 'msg-check-box';
-            check.onclick = (e) => {
-                e.stopPropagation();
-                row.classList.toggle('selected');
-                refreshMultiSelectCount(); // 👈 每次点击更新计数
-            };
-            row.appendChild(check);
+            const circle = document.createElement('div');
+            circle.className = 'msg-check-box';
+            row.appendChild(circle);
         }
     });
 
+    if (multiBar) multiBar.style.display = 'flex';
     if (footer) footer.style.display = 'none';
-    if (multiBar) {
-        multiBar.style.display = 'flex';
-        refreshMultiSelectCount(); // 👈 初始化计数
-    }
 }
 // ==========================================
 // 📱 iOS 全局页面弹窗调度中心 (核心工具箱)
@@ -26772,6 +29322,7 @@ async function openCharGallery(char) {
     renderCharHistoryGrid(char.id);
     
     openSubPage('page-char-gallery');
+    renderDailyStatusFlow();
 }
 
 // --- [Core] AI Generation Logic ---
@@ -27318,45 +29869,175 @@ async function renderUserPhotos() {
     const grid = document.getElementById('photos-grid-view');
     if (!grid) return;
 
-    // 🚨 物理对齐：改从 IndexedDB 抓取
     const myPhotos = await loadFromDB('user_my_photos') || [];
     grid.innerHTML = "";
     grid.style.display = "block"; 
 
+    const emptyState = document.getElementById('photos-empty-state');
     if (myPhotos.length === 0) {
-        const emptyState = document.getElementById('photos-empty-state');
         if(emptyState) emptyState.style.display = 'flex';
         return;
     }
-    if(document.getElementById('photos-empty-state')) 
-        document.getElementById('photos-empty-state').style.display = 'none';
+    if(emptyState) emptyState.style.display = 'none';
 
-    // 🗓️ 时间轴分组逻辑保持不变
+    // 1. 🗓️ 重新建立分组
     const groups = {};
     myPhotos.forEach(p => {
-        const date = new Date(p.date);
-        const dateKey = `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日`;
+        const d = new Date(p.time || Date.now());
+        const dateKey = `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日`;
         if (!groups[dateKey]) groups[dateKey] = [];
-        groups[dateKey].push(p);
+        groups[dateKey].push(p); // 🚨 这里之前你漏掉了！
     });
 
+    // 2. 渲染分组内容
     Object.keys(groups).forEach(dateKey => {
         const section = document.createElement('div');
         section.className = 'photos-timeline-section';
         section.innerHTML = `
-            <div class="timeline-header">${dateKey} <span>${groups[dateKey].length}</span></div>
-            <div class="photos-grid"></div> 
+            <div class="timeline-header" style="padding:15px 20px; font-weight:700; color:#000;">${dateKey}</div>
+            <div class="photos-grid" style="display:grid; grid-template-columns:repeat(3, 1fr); gap:2px;"></div>
         `;
+        
         const subGrid = section.querySelector('.photos-grid');
         groups[dateKey].forEach(p => {
             const item = document.createElement('div');
-            item.className = 'photo-item';
-            item.innerHTML = `<img src="${p.src}" loading="lazy">`;
-            item.onclick = () => openPhotoDetail(p.id);
+            // 🚨 截图专属缩略图样式名
+            item.className = 'photo-item' + (p.isSnapshot ? ' is-snapshot-item' : '');
+            item.style.position = 'relative';
+            
+            item.innerHTML = `
+                <img src="${p.src}" loading="lazy">
+                ${p.isSnapshot ? '<div class="snap-badge">长截图</div>' : ''}
+            `;
+            
+            // 🚨 交互隔离：如果是截图，弹起纯净展示层，不弹那个带删除按钮的详情页
+            // 找到 renderUserPhotos 里的 item.onclick 这一行
+            item.onclick = () => {
+                if (p.isSnapshot) {
+                    // 🚨 记得把 p.id 传进去，不然删除按钮不知道删哪张！
+                    showPureSnapshotView(p.src, p.id); 
+                } else {
+                    openPhotoDetail(p.id); 
+                }
+            };
+            
             subGrid.appendChild(item);
         });
         grid.appendChild(section);
     });
+}
+
+/**
+ * 🖤 纯净长截图预览：黑白极致简约风 + 物理删除交互
+ */
+function showPureSnapshotView(src, id) {
+    // 1. 创建遮罩容器
+    const overlay = document.createElement('div');
+    overlay.id = 'snapshot-fullscreen-overlay';
+    
+    // 2. 注入 HTML 结构
+    overlay.innerHTML = `
+        <div class="ins-glass-blur"></div>
+        <div class="snap-preview-container">
+            <div class="snap-top-bar">
+                <button class="snap-action-btn close-btn" onclick="closeSnapshotView()">
+                    <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                    <span>返回</span>
+                </button>
+                <button class="snap-action-btn delete-btn" onclick="deleteAndClose('${id}')">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2M10 11v6M14 11v6"/></svg>
+                    <span>丢弃</span>
+                </button>
+            </div>
+
+            <div class="snap-content-wrapper">
+                <img src="${src}" class="snap-main-img">
+            </div>
+
+            <div class="snap-bottom-info">
+                <div class="snap-label">SNAPSHOT / LUNE PHONE</div>
+                <div class="snap-date">${new Date().toLocaleDateString('en-US', {month:'long', day:'numeric'})}</div>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(overlay);
+    // 强制触发重绘激活动画
+    requestAnimationFrame(() => overlay.classList.add('active'));
+}
+
+// 物理移除预览层
+function closeSnapshotView() {
+    const overlay = document.getElementById('snapshot-fullscreen-overlay');
+    if (overlay) {
+        overlay.classList.remove('active');
+        setTimeout(() => overlay.remove(), 300);
+    }
+}
+
+/**
+ * 🗑️ 预览页面的删除触发器：不再用原生弹窗，改用自定义 Action Sheet
+ */
+async function deleteAndClose(id) {
+    // 弹出自定义的操作表，而不是原生 confirm
+    showDiscardActionSheet(() => {
+        // 用户确认删除后的回调
+        executeDeletePhoto(id);
+    });
+}
+
+/**
+ * 🛠️ 执行物理删除逻辑
+ */
+async function executeDeletePhoto(id) {
+    try {
+        let myPhotos = await loadFromDB('user_my_photos') || [];
+        myPhotos = myPhotos.filter(p => p.id !== id);
+        await saveToDB('user_my_photos', myPhotos);
+        
+        showToast("记忆已粉碎");
+        
+        // 关闭预览页并刷新列表
+        closeSnapshotView();
+        if (typeof renderUserPhotos === 'function') renderUserPhotos();
+    } catch(e) {
+        showToast("处理失败");
+    }
+}
+
+/**
+ * 📱 自定义黑白风 Action Sheet
+ */
+function showDiscardActionSheet(onConfirm) {
+    const sheet = document.createElement('div');
+    sheet.id = 'custom-action-sheet';
+    sheet.innerHTML = `
+        <div class="sheet-overlay" onclick="closeActionSheet()"></div>
+        <div class="sheet-content">
+            <div class="sheet-header">这张截图将被永久删除</div>
+            <button class="sheet-btn destructive" id="confirm-delete">彻底丢弃</button>
+            <div class="sheet-gap"></div>
+            <button class="sheet-btn cancel" onclick="closeActionSheet()">取消</button>
+        </div>
+    `;
+    document.body.appendChild(sheet);
+
+    // 绑定确认事件
+    document.getElementById('confirm-delete').onclick = () => {
+        onConfirm();
+        closeActionSheet();
+    };
+
+    // 激活动画
+    requestAnimationFrame(() => sheet.classList.add('active'));
+}
+
+function closeActionSheet() {
+    const sheet = document.getElementById('custom-action-sheet');
+    if (sheet) {
+        sheet.classList.remove('active');
+        setTimeout(() => sheet.remove(), 300);
+    }
 }
 
 /**
@@ -28715,6 +31396,961 @@ function compressImage(base64, maxWidth) {
             resolve(base64); // 失败时退回原图，保证程序不崩
         };
     });
+}
+/**
+ * 📸 最终合体版：支持分联系人背景复刻 + IndexedDB 强制同步
+ */
+async function batchScreenshot() {
+    const selectedRows = document.querySelectorAll('.selected.msg-row');
+    if (selectedRows.length === 0) return showToast("宝贝，先勾选消息呀~");
+
+    showToast("正在复刻长图...");
+
+    // 1. 获取当前聊天窗口和联系人信息
+    const chatArea = document.querySelector('.chat-scroll-area') || document.querySelector('.chat-container');
+    const contact = window.currentChattingWith;
+    const contactId = contact ? contact.id : null;
+
+    // 2. 创建截图临时容器
+    const container = document.createElement('div');
+    Object.assign(container.style, {
+        position: 'fixed',
+        left: '-9999px',
+        width: chatArea.clientWidth + 'px',
+        padding: '35px 15px',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '20px',
+        zIndex: '-1',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+        minHeight: '100px'
+    });
+
+    // 🚨 核心修复：精准对接你的 saveChatBackgroundSettings 存储逻辑
+    try {
+        let chatBgData = null;
+        if (contactId) {
+            console.log(`【渲染检测】正在读取联系人 [${contactId}] 的专属背景...`);
+            // 对接你保存时的键名：chat_bg_data_${contactId}
+            chatBgData = await loadFromDB(`chat_bg_data_${contactId}`);
+        }
+
+        if (chatBgData) {
+            // 如果拿到的是 Base64 数据，强制注入
+            container.style.backgroundImage = `url(${chatBgData})`;
+            console.log("✅ 专属背景同步成功");
+        } else {
+            // 如果没拿到专属背景，尝试读取全局设置背景（可选）
+            const globalBg = await loadFromDB('settings_bg_data');
+            if (globalBg) {
+                container.style.backgroundImage = `url(${globalBg})`;
+                console.log("✅ 全局设置背景同步成功");
+            } else {
+                // 最终兜底：使用默认渐变
+                container.style.background = "linear-gradient(160deg, #a1fdd4 0%, #c2fbe5 100%)";
+                console.warn("ℹ️ 无背景数据，已使用默认渐变兜底");
+            }
+        }
+    } catch (err) {
+        console.error("数据库背景读取异常:", err);
+        container.style.backgroundColor = "#c2fbe5";
+    }
+
+    // 3. 克隆选中的消息并清理 UI
+    selectedRows.forEach(row => {
+        const clone = row.cloneNode(true);
+        // 移除复选框
+        const cb = clone.querySelector('.msg-check-box') || clone.querySelector('[class*="check"]');
+        if (cb) cb.remove();
+        
+        // 样式重置，确保截图内不显示多选态的阴影或边框
+        clone.classList.remove('multi-selecting', 'selected');
+        clone.style.background = 'transparent'; 
+        clone.style.transform = 'none';
+        clone.style.transition = 'none';
+        container.appendChild(clone);
+    });
+
+    document.body.appendChild(container);
+
+    try {
+        // 4. 使用 html2canvas 渲染
+        const canvas = await html2canvas(container, {
+            useCORS: true,
+            allowTaint: true,
+            scale: 2, 
+            backgroundColor: null, // 必须为 null，否则会遮盖 backgroundImage
+            logging: true
+        });
+
+        const base64Data = canvas.toDataURL("image/png");
+
+        // 5. 存入“我的图片”数据库
+        let myPhotos = await loadFromDB('user_my_photos') || [];
+        myPhotos.unshift({
+            id: 'snap_' + Date.now(),
+            src: base64Data,
+            time: Date.now(),
+            isSnapshot: true 
+        });
+        await saveToDB('user_my_photos', myPhotos);
+
+        // 6. 成功反馈
+        exitMultiSelect();
+        showIOSAlert("截图已存入", "长截图已生成，已存入「我的」专属板块。");
+        if (typeof renderUserPhotos === 'function') renderUserPhotos(); 
+
+    } catch (e) {
+        console.error("❌ 渲染流程崩溃:", e);
+        showToast("合成失败，请查看控制台报告");
+    } finally {
+        // 7. 移除临时元素
+        if (document.body.contains(container)) {
+            document.body.removeChild(container);
+        }
+    }
+}
+
+/**
+ * 💾 专用数据库对接：把图塞进 IndexedDB
+ */
+async function saveSnapshotToAlbum(base64) {
+    const key = 'user_my_photos';
+    try {
+        const compressed = await compressImage(base64, 1200);
+        let myPhotos = await loadFromDB(key) || [];
+        
+        const newPhoto = {
+            id: 'snap_' + Date.now(),
+            src: compressed,
+            date: new Date().toISOString(),
+            time: Date.now(),
+            isSnapshot: true // 🚨 赋予“截图”身份证明
+        };
+
+        myPhotos.unshift(newPhoto);
+        await saveToDB(key, myPhotos);
+        
+        // 重新渲染相册视图
+        if (typeof renderUserPhotos === 'function') renderUserPhotos();
+    } catch (err) {
+        console.error("Save Failed:", err);
+    }
+}
+/**
+ * 🕵️ 控制台监测：捕获当前对话轮次的状态
+ * brief: 这一轮对话的总结文案
+ * mood: 这一轮体现出的情感频率 (例如: 暧昧 85%)
+ */
+async function captureRoundReflection(brief, mood) {
+    console.group("🔍 [维度捕获] 对话轮次监测");
+    
+    const contact = window.currentChattingWith;
+    if (!contact) {
+        console.error("❌ 捕获失败：未检测到当前对话角色");
+        console.groupEnd();
+        return;
+    }
+
+    // 1. 准备数据负载
+    const reflectionData = {
+        id: 'ref_' + Date.now(),
+        date: new Date().getTime(),
+        charName: contact.name,
+        charAvatar: contact.avatar,
+        brief: brief || "在刚才的交锋中，空气的湿度似乎上升了...",
+        mood: mood || "波动率 92%",
+        timestamp: new Date().toLocaleTimeString()
+    };
+
+    console.log("📤 捕获数据:", reflectionData);
+
+    // 2. 存入数据库
+    let logs = await loadFromDB('daily_status_logs') || [];
+    logs.unshift(reflectionData); 
+    await saveToDB('daily_status_logs', logs);
+
+    console.log("✅ 数据库写入成功");
+
+    // 🚨 核心：不管相册页开没开，只要数据变了，就执行一次渲染准备
+    // 确保数据写入后，调用你写的渲染函数
+    await renderDailyStatusFlow(); 
+    
+    console.log("🎨 预览卡片已实时刷新渲染队列");
+    console.groupEnd();
+    
+    // 💡 提示：如果渲染正常，你会看到控制台出现上面的日志
+}
+
+/**
+ * 🖼️ 渲染主页列表：每天仅显示最新的一条作为“封面”
+ */
+async function renderDailyStatusFlow() {
+    const listContainer = document.getElementById('status-flow-list');
+    if (!listContainer) return;
+
+    const allLogs = await loadFromDB('daily_status_logs') || [];
+    if (allLogs.length === 0) {
+        listContainer.innerHTML = `<div style="text-align:center; padding:40px; color:#bbb; font-size:12px; letter-spacing:1px;">NO ARCHIVES TODAY.</div>`;
+        return;
+    }
+
+    // 🚨 核心逻辑：按日期去重，每天只留最鲜活的那一张
+    const dailyMap = new Map();
+    allLogs.forEach(log => {
+        const d = new Date(log.date);
+        const dateKey = `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日`;
+        // 因为 logs 是 unshift 进去的，所以第一次遇到的日期就是最新的
+        if (!dailyMap.has(dateKey)) {
+            dailyMap.set(dateKey, log);
+        }
+    });
+
+    // 将去重后的 Map 转回数组渲染
+    const uniqueLogs = Array.from(dailyMap.values());
+
+    listContainer.innerHTML = uniqueLogs.map(log => {
+        const d = new Date(log.date);
+        const dateKey = `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日`;
+        
+        return `
+        <div class="status-day-card" onclick="openDailyCollection('${dateKey}')">
+            <div class="card-date-side">
+                <span class="day">${d.getDate()}</span>
+                <span class="month">${d.toLocaleString('en-US', {month:'short'}).toUpperCase()}</span>
+            </div>
+            <div class="card-main-content">
+                <div class="status-img-wrapper">
+                    <img src="${log.charAvatar}" class="status-reflect-img">
+                    <div class="snap-type-tag">LATEST REFLECTION</div>
+                </div>
+                <div class="status-text-area">
+                    <div class="status-mood">${log.charName} / ${log.mood}</div>
+                    <p class="status-brief">“${log.brief}”</p>
+                    <div class="tap-hint">VIEW ALL ${dailyMap.size > 0 ? 'MOMENTS' : ''} →</div>
+                </div>
+            </div>
+        </div>
+        `;
+    }).join('');
+}
+/**
+ * 🧠 维度总结驱动器：将本轮对话转化为“高质感文字镜像”
+ */
+async function captureAndGenerateSummary(fullText) {
+    const contact = window.currentChattingWith;
+    if (!contact) return;
+
+    try {
+        const apiKey = localStorage.getItem('gpt_key');
+        const apiUrl = (localStorage.getItem('gpt_url') || "").replace(/\/+$/, "");
+
+        // 🚨 重新设计的 Prompt：侧重环境、空间、情绪描写
+        const prompt = `你是一个情感空间采样器。请基于 AI 刚才的回复内容：["${fullText}"]。
+        1. 描写当前时刻的情绪环境氛围，要像电影镜头一样富有画面感（例如：光影的错落、空气的流速、细微的感官变幻）。
+        2. 给出一个【维度心情参数】（例如：共鸣频率 96%）。
+        要求：
+        - 描写文字字数在 50 字左右，风格要高级、清冷、具象。
+        - 严禁使用“这段话传递了...”这类废话，直接开始氛围描写。
+        格式：氛围描述文字|心情参数`;
+
+        const res = await fetch(`${apiUrl}/chat/completions`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+            body: JSON.stringify({
+                model: localStorage.getItem('gpt_model'),
+                messages: [{ role: "user", content: prompt }],
+                temperature: 0.8 // 调高一点随机性，让文案更有灵气
+            })
+        });
+
+        const data = await res.json();
+        const result = data.choices[0].message.content.trim();
+        const [brief, mood] = result.split('|');
+
+        // 调用捕获函数
+        if (typeof captureRoundReflection === 'function') {
+            await captureRoundReflection(brief || "环境陷入了短暂的静默。", mood || "共鸣率 100%");
+        }
+    } catch (e) {
+        console.warn("⚠️ 镜像生成失败:", e);
+    }
+}
+/**
+ * 📅 打开某一天的全量碎片流（瀑布流排版）
+ */
+async function openDailyCollection(dateKey) {
+    const container = document.getElementById('daily-fragments-container');
+    const title = document.getElementById('collection-date-title');
+    if (!container) return;
+
+    const allLogs = await loadFromDB('daily_status_logs') || [];
+    
+    // 🚨 这里不过滤，我们要拿走那天的所有记录
+    const dailyLogs = allLogs.filter(log => {
+        const d = new Date(log.date);
+        const key = `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日`;
+        return key === dateKey;
+    });
+
+    title.innerText = dateKey.toUpperCase();
+    
+    // 渲染每一轮的文字卡片（50字氛围感文案）
+    container.innerHTML = dailyLogs.map((log, index) => `
+        <div class="text-vibe-card">
+            <div class="vibe-card-no">#0${dailyLogs.length - index}</div>
+            <div class="vibe-card-header">
+                <span class="char-badge">${log.charName.toUpperCase()}</span>
+                <span class="vibe-time">${new Date(log.date).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</span>
+            </div>
+            <p class="vibe-content-prose">“${log.brief}”</p>
+            <div class="vibe-card-footer">
+                <span class="vibe-mood-tag">${log.mood}</span>
+            </div>
+        </div>
+    `).join('');
+
+    document.getElementById('daily-collection-overlay').classList.add('active');
+}
+
+function closeDailyCollection() {
+    document.getElementById('daily-collection-overlay').classList.remove('active');
+}
+/**
+ * 🎵 切换音乐 App 内部页面
+ */
+function switchMusicTab(tabName, element) {
+    // 1. 切换页面显隐
+    document.querySelectorAll('.music-view-page').forEach(page => {
+        page.classList.remove('active');
+    });
+    const targetPage = document.getElementById(`music-tab-${tabName}`);
+    if (targetPage) targetPage.classList.add('active');
+
+    // 2. 切换导航高亮
+    document.querySelectorAll('.nav-capsule-item').forEach(item => {
+        item.classList.remove('active');
+    });
+    element.classList.add('active');
+
+    // 🛠️ 核心：处理沉浸式模式（只在 CORE 页隐藏 UI）
+    const globalHeader = document.querySelector('.music-app-header');
+    const globalNav = document.querySelector('.music-navigation-bar');
+    const appWindow = document.getElementById('page-musicApp');
+
+    if (tabName === 'core') {
+        globalHeader.style.display = 'none'; // 隐藏头部
+        globalNav.style.display = 'none';    // 隐藏底部胶囊
+        appWindow.style.overflow = 'hidden'; // 禁止外层滑动
+    } else {
+        globalHeader.style.display = 'flex'; // 恢复头部
+        globalNav.style.display = 'flex';    // 恢复底部胶囊
+        appWindow.style.overflow = 'auto';   // 恢复滑动
+    }
+
+    // 3. 更新顶部英文标题
+    const titles = {
+        'archive': 'ARCHIVE',
+        'core': 'NOW PLAYING',
+        'synergy': 'SYNERGY FIELD'
+    };
+    document.getElementById('music-nav-title').innerText = titles[tabName] || 'MUSIC';
+
+    // 触觉反馈
+    if (window.navigator.vibrate) window.navigator.vibrate(8);
+
+    if (tabName === 'synergy') initSynergyDial();
+}
+
+/**
+ * 🔍 搜索过滤逻辑 - 解决 filterMusicArchive is not defined
+ */
+async function filterMusicArchive() {
+    const searchTerm = document.getElementById('music-search').value.toLowerCase();
+    const vault = await loadFromDB('lune_music_vault') || [];
+    
+    // 过滤标题或艺术家
+    const filtered = vault.filter(song => 
+        song.title.toLowerCase().includes(searchTerm) || 
+        song.artist.toLowerCase().includes(searchTerm)
+    );
+    
+    // 重新渲染局部列表
+    const container = document.getElementById('music-vault-list');
+    if (container) {
+        renderList(filtered, container);
+    }
+}
+
+/**
+ * 📂 弹窗管理逻辑 - 解决 openMusicModal is not defined
+ */
+function openMusicModal() {
+    const modal = document.getElementById('music-upload-modal');
+    if (!modal) return console.error("找不到 music-upload-modal 容器");
+    
+    // 重置状态为“新增”
+    document.getElementById('editing-song-id').value = "";
+    document.getElementById('music-title').value = "";
+    document.getElementById('music-artist').value = "";
+    document.getElementById('preview-cover').style.display = 'none';
+    document.getElementById('cover-tips').style.display = 'flex';
+    document.getElementById('modal-mode-title').innerText = "DATA REGISTRATION";
+    
+    modal.classList.add('active');
+}
+
+function closeMusicModal() {
+    const modal = document.getElementById('music-upload-modal');
+    if (modal) modal.classList.remove('active');
+}
+
+/**
+ * 💾 增删改查逻辑补全
+ */
+
+// 提交档案（新增或编辑）
+async function handleArchiveCommit() {
+    const id = document.getElementById('editing-song-id').value;
+    const title = document.getElementById('music-title').value;
+    const artist = document.getElementById('music-artist').value;
+    const coverInput = document.getElementById('input-music-cover');
+    const audioInput = document.getElementById('input-music-file');
+
+    if (!title || !artist) return showToast("请填写完整信息");
+
+    let vault = await loadFromDB('lune_music_vault') || [];
+    
+    if (id) {
+        // 编辑模式
+        const idx = vault.findIndex(s => s.id === id);
+        if (idx !== -1) {
+            vault[idx].title = title;
+            vault[idx].artist = artist;
+            if (coverInput.files[0]) vault[idx].cover = await fileToBase64(coverInput.files[0]);
+            if (audioInput.files[0]) vault[idx].audio = await fileToBase64(audioInput.files[0]);
+        }
+    } else {
+        // 新增模式
+        if (!coverInput.files[0] || !audioInput.files[0]) return showToast("请选择封面和音频文件");
+        const newSong = {
+            id: 'LN-' + Date.now(),
+            title, artist,
+            cover: await fileToBase64(coverInput.files[0]),
+            audio: await fileToBase64(audioInput.files[0]),
+            date: Date.now()
+        };
+        vault.unshift(newSong);
+    }
+
+    await saveToDB('lune_music_vault', vault);
+    closeMusicModal();
+    renderMusicArchive(); // 重新渲染列表
+    showToast("档案已同步");
+}
+
+/**
+ * ✕ 唤起自定义删除弹窗
+ */
+function deleteFromArchive(id, e) {
+    // 🛡️ 拦截冒泡，防止进入播放页
+    if (e) e.stopPropagation();
+
+    // 1. 记录要删除的 ID
+    pendingDeleteId = id;
+    
+    // 2. 打开自定义弹窗
+    const modal = document.getElementById('delete-confirm-modal');
+    if (modal) modal.classList.add('active');
+}
+
+/**
+ * 🔒 关闭删除弹窗
+ */
+function closeDeleteModal() {
+    const modal = document.getElementById('delete-confirm-modal');
+    if (modal) modal.classList.remove('active');
+    pendingDeleteId = null;
+}
+
+/**
+ * 🔥 真正的物理抹除操作
+ */
+async function executeDelete() {
+    if (!pendingDeleteId) return;
+
+    // 1. 从数据库读取并过滤
+    let vault = await loadFromDB('lune_music_vault') || [];
+    vault = vault.filter(s => s.id !== pendingDeleteId);
+
+    // 2. 保存回数据库
+    await saveToDB('lune_music_vault', vault);
+
+    // 3. UI 交互反馈
+    closeDeleteModal(); // 关闭弹窗
+    if (typeof renderMusicArchive === 'function') {
+        renderMusicArchive(); // 刷新列表
+    }
+    if (typeof showToast === 'function') {
+        showToast("RECORD PURGED FROM VAULT");
+    }
+
+    console.log("Deleted ID:", pendingDeleteId);
+}
+
+/**
+ * ✎ 编辑功能：唤起模态框并回填档案数据
+ * @param {string} id - 歌曲唯一标识
+ * @param {Event} e - 原生点击事件对象
+ */
+async function editMusicEntry(id, e) {
+    // 🛡️ 核心：阻止事件向上传递给父级卡片（防止进入播放页）
+    if (e) e.stopPropagation();
+
+    // 1. 从数据库获取最新档案
+    let vault = await loadFromDB('lune_music_vault') || [];
+    const song = vault.find(s => s.id === id);
+    
+    if (!song) {
+        if (typeof showToast === 'function') showToast("ERROR: DATA NOT FOUND");
+        return;
+    }
+
+    // 2. 将数据精准填入模态框表单
+    document.getElementById('editing-song-id').value = song.id;       // 隐藏 ID 域
+    document.getElementById('music-title').value = song.title;       // 标题
+    document.getElementById('music-artist').value = song.artist;     // 艺术家
+    
+    // 3. 处理封面预览图
+    const previewImg = document.getElementById('preview-cover');
+    const coverTips = document.getElementById('cover-tips');
+    if (previewImg && song.cover) {
+        previewImg.src = song.cover;
+        previewImg.style.display = 'block';
+        if (coverTips) coverTips.style.display = 'none'; // 隐藏“上传提示”文字
+    }
+
+    // 4. 切换模态框标题为“编辑模式”并打开
+    const modeTitle = document.getElementById('modal-mode-title');
+    if (modeTitle) modeTitle.innerText = "EDIT ARCHIVE";
+    
+    const modal = document.getElementById('music-upload-modal');
+    if (modal) modal.classList.add('active');
+    
+    console.log("Archive ready for modification:", id);
+}
+
+/**
+ * 🏛️ 渲染系统
+ */
+async function renderMusicArchive() {
+    const vault = await loadFromDB('lune_music_vault') || [];
+    currentPlaylist = vault;
+    
+    const countEl = document.getElementById('stat-count');
+    if(countEl) countEl.innerText = `${vault.length.toString().padStart(2, '0')} TRACKS`;
+
+    const container = document.getElementById('music-vault-list');
+    if (container) {
+        renderList(vault, container);
+    }
+}
+
+// 提取出的通用渲染逻辑
+function renderList(data, container) {
+    if (data.length === 0) {
+        container.innerHTML = `<div style="grid-column:1/3; padding:100px 0; text-align:center; color:#ddd; font-size:10px; letter-spacing:2px;">NO DATA FOUND</div>`;
+        return;
+    }
+
+    // 在你的 renderList 或渲染循环里，确保按钮是这样写的：
+    container.innerHTML = data.map((song, index) => `
+        <div class="music-gallery-card" onclick="initiatePlayback('${song.id}')">
+            <div class="card-visual-box">
+                <img src="${song.cover}">
+                <div class="card-serial">0${data.length - index}</div>
+            </div>
+            <div class="card-info">
+                <span class="card-title">${song.title.toUpperCase()}</span>
+                <span class="card-artist">${song.artist} / REGISTERED</span>
+                
+                <div class="card-actions">
+                    <div class="action-dot" onclick="editMusicEntry('${song.id}', event)">✎</div>
+                    <div class="action-dot" onclick="deleteFromArchive('${song.id}', event)">✕</div>
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+/**
+ * 辅助工具
+ */
+function fileToBase64(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = error => reject(error);
+    });
+}
+
+function previewMusicImage(input) {
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = e => {
+            const preview = document.getElementById('preview-cover');
+            preview.src = e.target.result;
+            preview.style.display = 'block';
+            document.getElementById('cover-tips').style.display = 'none';
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+function updateFileName(input) {
+    const name = input.files[0] ? input.files[0].name : "SELECT AUDIO";
+    document.getElementById('file-name-display').innerText = name.toUpperCase();
+}
+/**
+ * 💿 修复版：加载并播放
+ */
+// 每次切歌时调用的核心函数
+async function initiatePlayback(id) {
+    currentPlayIndex = currentPlaylist.findIndex(s => s.id === id);
+    const song = currentPlaylist[currentPlayIndex];
+    if (!song) return;
+
+    // 1. UI 基本回填
+    document.getElementById('player-cover').src = song.cover;
+    document.getElementById('player-title').innerText = song.title.toUpperCase();
+    document.getElementById('player-artist').innerText = song.artist.toUpperCase();
+    
+    // 2. 环境背景同步 (如果设置了高清自定义图则应用)
+    if (typeof loadPersistentCoreBg === 'function') loadPersistentCoreBg();
+
+    // 3. 歌词处理逻辑：若有歌词则解析，若无则显示“点击对齐”
+    const scroller = document.getElementById('lyrics-scroller');
+    if (song.lyrics) {
+        loadLyrics(song.lyrics); // 之前写的解析函数
+    } else {
+        scroller.innerHTML = '<p class="lyric-placeholder">NO DATA // CLICK TO REGISTER LYRICS</p>';
+    }
+
+    // 4. 音频启动
+    const audio = document.getElementById('main-audio-engine');
+    audio.src = song.audio;
+    audio.play();
+    updatePlayBtnIcon(true);
+
+    // 5. 沉浸式切换
+    switchMusicTab('core', document.querySelector('.nav-capsule-item:nth-child(2)'));
+}
+
+/**
+ * ⏪ 上一首
+ */
+function playPrevSong() {
+    if (currentPlaylist.length === 0) return;
+    currentPlayIndex = (currentPlayIndex - 1 + currentPlaylist.length) % currentPlaylist.length;
+    initiatePlayback(currentPlaylist[currentPlayIndex].id);
+}
+
+/**
+ * ⏩ 下一首
+ */
+function playNextSong() {
+    if (currentPlaylist.length === 0) return;
+    currentPlayIndex = (currentPlayIndex + 1) % currentPlaylist.length;
+    initiatePlayback(currentPlaylist[currentPlayIndex].id);
+}
+
+/**
+ * 📋 播放列表抽屉 (先占位，防止报错)
+ */
+function togglePlaylistDrawer() {
+    showToast("PLAYLIST COMING SOON");
+    // 这里以后可以写抽屉弹出的逻辑
+}
+
+// 3. 歌词处理系统
+function openLyricModal() { document.getElementById('lyric-upload-modal').classList.add('active'); }
+function closeLyricModal() { document.getElementById('lyric-upload-modal').classList.remove('active'); }
+
+async function handleLrcUpload(input) {
+    if (input.files && input.files[0]) {
+        const text = await input.files[0].text();
+        document.getElementById('lyric-text-input').value = text;
+        document.getElementById('lrc-file-name').innerText = input.files[0].name.toUpperCase();
+    }
+}
+
+// 核心：提交歌词并与歌曲 ID 绑定
+async function commitLyrics() {
+    const lyricText = document.getElementById('lyric-text-input').value;
+    if (!lyricText) return showToast("LYRICS EMPTY");
+
+    const currentSong = currentPlaylist[currentPlayIndex];
+    if (!currentSong) return;
+
+    // 1. 更新数据库中的歌曲对象
+    let vault = await loadFromDB('lune_music_vault') || [];
+    const idx = vault.findIndex(s => s.id === currentSong.id);
+    if (idx !== -1) {
+        vault[idx].lyrics = lyricText;
+        await saveToDB('lune_music_vault', vault);
+        currentPlaylist[idx].lyrics = lyricText; // 同步当前队列
+    }
+
+    // 2. 立即解析并显示
+    loadLyrics(lyricText);
+    closeLyricModal();
+    showToast("LYRICS ALIGNED");
+}
+
+// 解析 LRC 格式
+function loadLyrics(lrcContent) {
+    const scroller = document.getElementById('lyrics-scroller');
+    if (!lrcContent) {
+        parsedLyrics = [];
+        scroller.innerHTML = '<p class="lyric-placeholder">NO LYRICS DATA</p>';
+        return;
+    }
+
+    parsedLyrics = lrcContent.split('\n').map(line => {
+        const match = line.match(/\[(\d+):(\d+\.\d+)\](.*)/);
+        if (match) {
+            const time = parseInt(match[1]) * 60 + parseFloat(match[2]);
+            return { time, text: match[3].trim() };
+        }
+        return { time: -1, text: line.trim() };
+    }).filter(l => l.text !== "");
+
+    scroller.innerHTML = parsedLyrics.map((l, i) => 
+        `<p class="lyric-line" id="lyric-${i}">${l.text}</p>`
+    ).join('');
+}
+
+// 4. 进度同步
+function updateProgress() {
+    const audio = document.getElementById('main-audio-engine');
+    const fill = document.getElementById('progress-fill');
+    const currText = document.getElementById('curr-time');
+    const totalText = document.getElementById('total-time');
+
+    if (!audio.duration) return;
+
+    const percent = (audio.currentTime / audio.duration) * 100;
+    fill.style.width = percent + '%';
+    currText.innerText = formatTime(audio.currentTime);
+    totalText.innerText = formatTime(audio.duration);
+
+    // 同步歌词滚动
+    const currentLineIdx = parsedLyrics.findLastIndex(l => audio.currentTime >= l.time);
+    if (currentLineIdx !== -1) {
+        document.querySelectorAll('.lyric-line').forEach(el => el.classList.remove('active'));
+        const activeLine = document.getElementById(`lyric-${currentLineIdx}`);
+        if (activeLine) {
+            activeLine.classList.add('active');
+            const offset = activeLine.offsetTop - 50;
+            document.getElementById('lyrics-scroller').style.transform = `translateY(-${offset}px)`;
+        }
+    }
+}
+
+function formatTime(secs) {
+    const min = Math.floor(secs / 60);
+    const sec = Math.floor(secs % 60);
+    return `${min.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
+}
+
+function seekAudio(e) {
+    const audio = document.getElementById('main-audio-engine');
+    const rect = e.currentTarget.getBoundingClientRect();
+    const percent = (e.clientX - rect.left) / rect.width;
+    audio.currentTime = percent * audio.duration;
+}
+/**
+ * 🎨 CORE 页面自定义背景系统
+ */
+
+// 1. 处理背景上传并保存
+async function changeCoreBackground(input) {
+    if (input.files && input.files[0]) {
+        showToast("UPDATING CANVAS...");
+        
+        const base64 = await fileToBase64(input.files[0]);
+        
+        // 统一存储 Key
+        await saveToDB('lune_core_settings', { bg: base64 });
+        
+        // 立即渲染
+        applyCoreBg(base64);
+        showToast("CORE THEME UPDATED");
+    }
+}
+
+// 2. 将背景渲染到页面上
+function applyCoreBg(imgData) {
+    const bgLayer = document.getElementById('core-custom-bg-layer');
+    if (bgLayer && imgData) {
+        bgLayer.style.backgroundImage = `url(${imgData})`;
+        // 添加 class 确保 opacity 变为 1
+        bgLayer.classList.add('has-bg');
+        console.log("✅ CORE 背景已渲染");
+    } else {
+        console.error("❌ 找不到背景层容器 core-custom-bg-layer");
+    }
+}
+
+// 3. 【核心】刷新页面后自动加载背景
+// 这个函数需要你在 App 初始化或者 openApp('musicApp') 时调用一次
+async function loadPersistentCoreBg() {
+    // 确保从正确的 Key 读取
+    const savedData = await loadFromDB('lune_core_settings');
+    if (savedData && savedData.bg) {
+        applyCoreBg(savedData.bg);
+    }
+}
+
+// 2. 播放模式逻辑切换
+// 核心：模式图标切换（保持 2.2px 的粗细）
+function togglePlaybackMode() {
+    const modes = ['order', 'single', 'random'];
+    let idx = modes.indexOf(currentPlayMode);
+    currentPlayMode = modes[(idx + 1) % modes.length];
+    
+    const btn = document.getElementById('play-mode-trigger');
+    const boldAttr = 'stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"';
+    
+    if (currentPlayMode === 'order') {
+        btn.innerHTML = `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" ${boldAttr}><path d="M7 7h10v10H7z"/><path d="M7 12h10M7 15h10M7 18h10"/></svg>`;
+        showToast("SEQUENCE");
+    } else if (currentPlayMode === 'single') {
+        btn.innerHTML = `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" ${boldAttr}><path d="M17 2l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 22l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/><path d="M11 10h1v4"/></svg>`;
+        showToast("SINGLE");
+    } else {
+        btn.innerHTML = `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" ${boldAttr}><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/><line x1="4" y1="4" x2="9" y2="9"/></svg>`;
+        showToast("RANDOM");
+    }
+}
+/**
+ * ⏯️ 核心：播放与暂停的无缝切换
+ */
+function togglePlay() {
+    const audio = document.getElementById('main-audio-engine');
+    const shutter = document.getElementById('play-state-icon');
+    
+    if (!audio) return console.error("音频引擎未就绪");
+
+    if (audio.paused) {
+        // 1. 执行播放
+        audio.play().then(() => {
+            updatePlayBtnIcon(true); // 切换为暂停图标
+            if (typeof showToast === 'function') showToast("PLAYING");
+        }).catch(err => {
+            console.error("播放失败:", err);
+            if (typeof showToast === 'function') showToast("STREAMING ERROR");
+        });
+    } else {
+        // 2. 执行暂停
+        audio.pause();
+        updatePlayBtnIcon(false); // 切换为播放图标
+        if (typeof showToast === 'function') showToast("PAUSED");
+    }
+}
+
+/**
+ * 🔄 图标同步：根据播放状态精准切换加粗版 SVG
+ * @param {boolean} isPlaying - 当前是否正在播放
+ */
+function updatePlayBtnIcon(isPlaying) {
+    const container = document.getElementById('play-state-icon');
+    if (!container) return;
+
+    if (isPlaying) {
+        // ⏸️ 切换为：加粗暂停图标 (两条厚重的竖杠)
+        container.innerHTML = `
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
+                <rect x="5" y="4" width="5" height="16" rx="1"/>
+                <rect x="14" y="4" width="5" height="16" rx="1"/>
+            </svg>`;
+    } else {
+        // ▶️ 切换为：加粗播放图标 (饱满的三角形)
+        container.innerHTML = `
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M7 4v16l12-8L7 4z"/>
+            </svg>`;
+    }
+}
+
+// 展示拒绝视觉
+function showSynergyReject(contact, aiMsg) {
+    const modal = document.getElementById('modal-synergy-reject');
+    document.getElementById('reject-ai-msg').textContent = `“${aiMsg}”`;
+    modal.style.display = 'flex';
+}
+
+// 关闭拒绝弹窗
+function closeRejectModal() {
+    document.getElementById('modal-synergy-reject').style.display = 'none';
+    // 物理回到初始选择页，不进入聊天
+}
+
+// 显示成功视觉
+function showSynergySuccess(contact, aiMsg) {
+    const modal = document.getElementById('modal-synergy-success');
+    document.getElementById('success-target-name').textContent = contact.name.toUpperCase();
+    document.getElementById('success-ai-msg').textContent = `“${aiMsg}”`;
+    window.pendingSynergyMsg = aiMsg; 
+    modal.style.display = 'flex';
+}
+
+// 3. 聊天与发送
+async function sendSynMessage() {
+    const input = document.getElementById('syn-input');
+    const text = input.value.trim();
+    if (!text) return;
+
+    appendSynBubble('user', text);
+    input.value = "";
+
+    const contact = window.currentSynergyPartner;
+    const song = currentPlaylist[currentPlayIndex] || { title: "未知" };
+    const memory = document.getElementById('syn-memory-micro-tag').textContent;
+
+    // 调用 AI (逻辑同上，增加当前歌曲上下文)
+    const aiResponse = await callAIAgentForSyn(contact, text, song, memory);
+    setTimeout(() => appendSynBubble('ai', aiResponse), 800);
+}
+
+function appendSynBubble(role, text) {
+    const flow = document.getElementById('synergy-flow');
+    const b = document.createElement('div');
+    b.className = `syn-bubble ${role}`;
+    b.textContent = text;
+    flow.appendChild(b);
+    flow.scrollTop = flow.scrollHeight;
+}
+// 5. 【通讯】数据流上屏引擎
+function appendRadioLog(role, text) {
+    const log = document.getElementById('radio-terminal-log');
+    if (!log) return;
+
+    const div = document.createElement('div');
+    div.className = `log-entry ${role}`;
+    
+    const time = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+    const sender = role === 'user' ? 'OPERATOR' : (window.currentSynergyTarget ? window.currentSynergyTarget.name.toUpperCase() : 'SOURCE');
+
+    div.innerHTML = `
+        <div class="log-meta">[${time}] // ${sender}</div>
+        <div class="log-content">${text}</div>
+    `;
+    log.appendChild(div);
+    log.scrollTo({ top: log.scrollHeight, behavior: 'smooth' });
 }
 </script>
 </body>
