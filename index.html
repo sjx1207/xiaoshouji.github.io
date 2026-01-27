@@ -27125,74 +27125,68 @@ async function openPhotoUploadModal() {
     });
 }
 
-// 2. 提交上传
-// 2. 提交上传 (修复版：上传后自动打开详情页)
+/**
+ * 📤 物理加固版：发布照片到大容量仓库 (IndexedDB)
+ * 逻辑：读取角色设定 -> 获取用户身份 -> 异步存盘 -> 唤起详情
+ */
 async function submitPhotoUpload() {
     const imgPreview = document.getElementById('upload-img-preview');
     const descInput = document.getElementById('upload-desc-input');
     
-    // 🚨 检查图片
+    // 🛡️ 状态自检
     if (!imgPreview || !imgPreview.src || imgPreview.style.display === 'none') {
-        if (typeof showToast === 'function') showToast("📸 请先选择一张照片");
-        else alert("请先选择一张照片");
+        showToast("📸 请先选择一张照片");
         return;
     }
     
-    // 🚨 检查是否选人了
     if (!selectedPhotoCharId) {
-        if (typeof showToast === 'function') showToast("📢 请点击头像邀请一位好友点评");
-        else alert("请点击头像邀请一位好友点评");
+        showToast("📢 请点击头像邀请一位好友点评");
         return;
     }
     
     const imgSrc = imgPreview.src;
     const desc = descInput ? descInput.value : "";
-    
-    // 构造数据
-    const newPhotoId = "p_" + Date.now(); // 记下这个 ID
+    const newPhotoId = "p_" + Date.now();
+
     const newPhoto = {
         id: newPhotoId,
-        src: imgSrc,
+        src: imgSrc, // 二进制大图现在存这里没压力
         desc: desc || "分享了一张照片",
         date: Date.now(),
         charId: selectedPhotoCharId, 
         comments: []
     };
-    
-    // 存入 DB
-    let myPhotos = JSON.parse(localStorage.getItem('user_my_photos')) || [];
-    myPhotos.unshift(newPhoto);
-    localStorage.setItem('user_my_photos', JSON.stringify(myPhotos));
-    
-    // 1. 关闭上传弹窗
-    const uploadModal = document.getElementById('modal-photo-upload');
-    if (uploadModal) uploadModal.style.display = 'none';
-    
-    // 🚨 核心修复：先执行一次重绘，确保 DOM 里已经有了这张照片的 ID
-    renderUserPhotos();
-    
-    // 2. 🚨 强效物理开启详情页：直接把新生成的对象传进去，不从 DOM 捞，防止 ID 还没渲染好
-    setTimeout(() => {
-        // 我们修改一下 openPhotoDetail，让它支持直接传 ID 且能找到刚存入的数据
-        openPhotoDetail(newPhotoId); 
-    }, 100); 
 
-    if (typeof showToast === 'function') showToast("发布成功，正在唤起回忆...");
-    
-    // 3. 触发 AI 评论
-    setTimeout(function() {
-        if(typeof generateAIPhotoComment === 'function') {
-            generateAIPhotoComment(newPhoto);
-        }
-    }, 1500);
-}
+    try {
+        // 🚨 核心改动：从大仓库 IndexedDB 读取并存入
+        let myPhotos = await loadFromDB('user_my_photos') || [];
+        myPhotos.unshift(newPhoto);
+        await saveToDB('user_my_photos', myPhotos);
 
-/**
- * 4. 关闭上传弹窗
- */
-function closePhotoUploadModal() {
-    const modal = document.getElementById('modal-photo-upload');
-    if (modal) modal.style.display = 'none';
+        // 1. 关闭弹窗
+        closePhotoUploadModal();
+        
+        // 2. 🚨 关键：异步等待重绘完成
+        await renderUserPhotos();
+        
+        // 3. 强效物理开启详情页：由于数据已经在 DB，直接传 ID 进去
+        setTimeout(() => {
+            openPhotoDetail(newPhotoId); 
+        }, 150); 
+
+        if (typeof showToast === 'function') showToast("发布成功，正在唤起回忆...");
+        
+        // 4. 触发 AI 异步评论
+        setTimeout(function() {
+            if(typeof generateAIPhotoComment === 'function') {
+                generateAIPhotoComment(newPhoto);
+            }
+        }, 1500);
+
+    } catch (e) {
+        console.error("Storage Critical Error:", e);
+        showToast("❌ 存档失败，图片可能过大或数据库异常");
+    }
 }
 
 /**
@@ -27218,23 +27212,26 @@ function handlePhotoFileSelect(input) {
 }
 
 /**
- * 1. 渲染带时间轴的照片列表
+ * 🖼️ 渲染引擎：从大仓库异步抓取照片流
  */
-function renderUserPhotos() {
+async function renderUserPhotos() {
     const grid = document.getElementById('photos-grid-view');
     if (!grid) return;
 
-    const myPhotos = JSON.parse(localStorage.getItem('user_my_photos')) || [];
+    // 🚨 物理对齐：改从 IndexedDB 抓取
+    const myPhotos = await loadFromDB('user_my_photos') || [];
     grid.innerHTML = "";
-    grid.style.display = "block"; // 🚨 关键：取消 grid 布局，改为块级容器
+    grid.style.display = "block"; 
 
     if (myPhotos.length === 0) {
-        document.getElementById('photos-empty-state').style.display = 'flex';
+        const emptyState = document.getElementById('photos-empty-state');
+        if(emptyState) emptyState.style.display = 'flex';
         return;
     }
-    document.getElementById('photos-empty-state').style.display = 'none';
+    if(document.getElementById('photos-empty-state')) 
+        document.getElementById('photos-empty-state').style.display = 'none';
 
-    // --- 🗓️ 核心逻辑：按日期分组 ---
+    // 🗓️ 时间轴分组逻辑保持不变
     const groups = {};
     myPhotos.forEach(p => {
         const date = new Date(p.date);
@@ -27243,16 +27240,13 @@ function renderUserPhotos() {
         groups[dateKey].push(p);
     });
 
-    // 遍历渲染每个日期组
     Object.keys(groups).forEach(dateKey => {
         const section = document.createElement('div');
         section.className = 'photos-timeline-section';
-        
         section.innerHTML = `
             <div class="timeline-header">${dateKey} <span>${groups[dateKey].length}</span></div>
             <div class="photos-grid"></div> 
         `;
-        
         const subGrid = section.querySelector('.photos-grid');
         groups[dateKey].forEach(p => {
             const item = document.createElement('div');
@@ -27261,28 +27255,20 @@ function renderUserPhotos() {
             item.onclick = () => openPhotoDetail(p.id);
             subGrid.appendChild(item);
         });
-        
         grid.appendChild(section);
     });
 }
 
 /**
- * 8. 打开详情页
+ * 🔍 开启详情页：物理定位 DB 中的存根
  */
-/**
- * 🖼️ 物理级相册详情引擎 (终极完整版)
- * 功能：数据热注入 + 物理隔离锁 + 弹性卡片动画触发
- */
-function openPhotoDetail(pid) {
-    console.log("%c[Photos] 正在调取时空存根: " + pid, "color: #AF52DE; font-weight: bold;");
-
-    // 1. 获取持久化数据
-    const myPhotos = JSON.parse(localStorage.getItem('user_my_photos')) || [];
+async function openPhotoDetail(pid) {
+    // 🚨 物理对齐：异步获取大容量数据
+    const myPhotos = await loadFromDB('user_my_photos') || [];
     const photo = myPhotos.find(p => p.id === pid);
     
-    // 🛡️ 安全隔离：如果找不到照片（可能已被删除），立即拦截
     if (!photo) {
-        console.error("Error: 无法在本地索引中找到该 ID 的图像数据");
+        console.error("无法定位照片 ID:", pid);
         return;
     }
     
@@ -27292,58 +27278,27 @@ function openPhotoDetail(pid) {
     
     if (!mask || !modal) return;
 
-    // 2. 物理数据热注入
-    // 注入主图
-    const mainImg = document.getElementById('detail-main-img');
-    if (mainImg) {
-        mainImg.src = photo.src;
-        // 绑定点击进入全屏模式的逻辑
-        mainImg.onclick = function(e) {
-            e.stopPropagation();
-            if (window.viewFullScreenImg) window.viewFullScreenImg(this.src);
-        };
-    }
+    // 数据填充
+    document.getElementById('detail-main-img').src = photo.src;
+    document.getElementById('detail-desc-text').textContent = photo.desc;
+    
+    const d = new Date(photo.date);
+    document.getElementById('detail-date-title').textContent = `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()}`;
 
-    // 注入描述
-    const descEl = document.getElementById('detail-desc-text');
-    if (descEl) descEl.textContent = photo.desc || "无题";
-
-    // 注入日期
-    const dateEl = document.getElementById('detail-date-title');
-    if (dateEl) {
-        const d = new Date(photo.date);
-        dateEl.textContent = `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()}`;
-    }
-
-    // 注入用户身份
-    const userNameEl = document.getElementById('detail-user-name');
-    if (userNameEl) {
-        const userPersona = JSON.parse(localStorage.getItem('user_persona_data_global')) || { name: "我" };
-        userNameEl.textContent = userPersona.name;
-    }
-
-    // 锁定当前操作 ID
+    // 记录当前 ID 供后续删除/评论使用
     modal.dataset.pid = pid;
     
-    // 3. 驱动评论引擎
-    if (typeof renderPhotoComments === 'function') {
-        renderPhotoComments(photo);
-    }
+    // 驱动评论渲染
+    if (typeof renderPhotoComments === 'function') renderPhotoComments(photo);
 
-    // 4. 重置滚动位置 (🚨 重要：确保每次打开卡片都是从顶部看起)
     if (scroller) scroller.scrollTop = 0;
 
-    // 5. 物理唤醒协议
-    mask.style.display = 'flex';   // 容器现身
-    modal.style.display = 'flex';  // 卡片现身
-    
-    // 🚨 黄金延迟 (20ms)：给 DOM 渲染 display 切换的时间，确保 transition 动画生效
+    // 动画启动
+    mask.style.display = 'flex';
+    modal.style.display = 'flex';
     setTimeout(() => {
         mask.classList.add('active');
-        document.body.style.overflow = 'hidden'; // 物理锁定背景，防止 Dock 栏随页面晃动
-        
-        // 增加震动反馈 (iOS 质感)
-        if (navigator.vibrate) navigator.vibrate(10);
+        document.body.style.overflow = 'hidden';
     }, 20);
 }
 
