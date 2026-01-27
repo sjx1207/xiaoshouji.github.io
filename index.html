@@ -27125,54 +27125,86 @@ async function openPhotoUploadModal() {
     });
 }
 
+/**
+ * 📤 2. 终极发布引擎 (全链路异步锁死版)
+ * 逻辑：即时反馈 -> 物理压缩 -> 异步入库 -> 自动重绘 -> 唤起详情
+ */
 async function submitPhotoUpload() {
     const publishBtn = document.querySelector('.highlight-btn');
-    if (publishBtn) publishBtn.style.opacity = '0.5'; // 物理置灰反馈
-    showToast("正在刻录时空片段...");
+    const imgPreview = document.getElementById('upload-img-preview');
+    const descInput = document.getElementById('upload-desc-input');
+    
+    // 🛡️ 物理锁：置灰反馈并禁止二次点击
+    if (publishBtn) {
+        publishBtn.style.opacity = '0.5';
+        publishBtn.style.pointerEvents = 'none';
+    }
+    
+    if (typeof showToast === 'function') showToast("正在刻录时空片段...");
 
     try {
-        const imgPreview = document.getElementById('upload-img-preview');
-        const descInput = document.getElementById('upload-desc-input');
-        
-        if (!imgPreview.src || !selectedPhotoCharId) throw new Error("资料不全");
+        // 1. 物理检查：确保数据源存在
+        if (!imgPreview || !imgPreview.src || imgPreview.style.display === 'none') {
+            throw new Error("请先选取一张照片");
+        }
+        if (!selectedPhotoCharId) {
+            throw new Error("请点击头像邀请一位好友");
+        }
 
-        // 🚨 核心修复：物理压缩减压
-        const compressedImg = await compressImage(imgPreview.src, 1000); 
+        // 2. 🚨 物理压缩：解决手机端“发布无反应”的头号杀手
+        const compressedImg = await compressImage(imgPreview.src, 1080); 
+        console.log("✅ 图像高维压缩协议完成");
 
+        // 3. 构造数据存根
         const newPhotoId = "p_" + Date.now();
         const newPhoto = {
             id: newPhotoId,
-            src: compressedImg,
-            desc: descInput.value || "分享了一张照片",
+            src: compressedImg, // 存入优化后的数据
+            desc: descInput ? descInput.value : "分享了一张照片",
             date: Date.now(),
             charId: selectedPhotoCharId, 
             comments: []
         };
 
-        // 🚨 核心修复：必须 await 存入成功
+        // 4. 🚨 核心入库：必须 await 存入成功，防止逻辑断层
         let myPhotos = await loadFromDB('user_my_photos') || [];
         myPhotos.unshift(newPhoto);
         await saveToDB('user_my_photos', myPhotos); 
 
-        // 只有存完了，才允许执行后续 UI 操作
-        document.getElementById('modal-photo-upload').style.display = 'none';
+        // 5. UI 状态收尾
+        const uploadModal = document.getElementById('modal-photo-upload');
+        if (uploadModal) uploadModal.style.display = 'none';
         
-        // 🚨 物理重绘：必须等待重绘函数执行完
-        await renderUserPhotos(); 
+        // 🚨 强制重绘列表：让新照片出现在背景网格中
+        if (typeof renderUserPhotos === 'function') {
+            await renderUserPhotos();
+        }
 
-        // 延时 200ms 弹出成功提示，避开手机内存峰值
+        // 6. 延时 200ms 唤起详情：避开手机内存处理峰值，确保丝滑
         setTimeout(() => {
             if (window.triggerSuccessHud) triggerSuccessHud("已存入相册");
-            openPhotoDetail(newPhotoId); 
+            if (typeof openPhotoDetail === 'function') openPhotoDetail(newPhotoId); 
+            
+            // 发布成功后重置输入框状态，方便下次使用
+            if(descInput) descInput.value = "";
         }, 200);
 
-        // 异步触发评论，不阻塞主线程
-        setTimeout(() => generateAIPhotoComment(newPhoto), 1500);
+        // 7. 触发 AI 异步评论（基于当前角色人设与用户关系）
+        setTimeout(() => {
+            if (typeof generateAIPhotoComment === 'function') {
+                generateAIPhotoComment(newPhoto);
+            }
+        }, 1500);
 
     } catch (e) {
-        alert("发布失败: " + e.message);
+        // 手机端直接 alert 是最有效的拦截提示
+        alert("⚠️ 协议异常: " + e.message);
     } finally {
-        if (publishBtn) publishBtn.style.opacity = '1';
+        // 恢复按钮点击权限
+        if (publishBtn) {
+            publishBtn.style.opacity = '1';
+            publishBtn.style.pointerEvents = 'auto';
+        }
     }
 }
 
@@ -28544,6 +28576,44 @@ async function generateCharBioIntro(char) {
         console.error("Bio Intro Failed:", e);
         bioUi.textContent = "档案联结信号微弱。"; // 优雅的失败提示
     }
+}
+/**
+ * 🎨 图像物理压缩引擎 (Canvas 核心版)
+ * 作用：将手机拍摄的大图物理缩小，防止撑爆浏览器内存，解决“发布无反应”
+ * @param {string} base64 - 原始大图数据
+ * @param {number} maxWidth - 锁定最大宽度 (建议 1000)
+ */
+function compressImage(base64, maxWidth) {
+    return new Promise((resolve) => {
+        const img = new Image();
+        img.src = base64;
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            let width = img.width;
+            let height = img.height;
+
+            // 比例锁定算法：如果宽度超过限制，等比例缩小高度
+            if (width > maxWidth) {
+                height = (maxWidth / width) * height;
+                width = maxWidth;
+            }
+
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            
+            // 物理绘制：将图像画入画布
+            ctx.drawImage(img, 0, 0, width, height);
+            
+            // 🚨 核心：导出 0.7 质量的 JPG，体积通常能从 5MB 缩减到 200KB
+            // 这样 IndexedDB 存入时会非常快，不会导致手机卡死
+            resolve(canvas.toDataURL('image/jpeg', 0.7));
+        };
+        img.onerror = (err) => {
+            console.error("图片压缩引擎异常:", err);
+            resolve(base64); // 失败时退回原图，保证程序不崩
+        };
+    });
 }
 </script>
 </body>
