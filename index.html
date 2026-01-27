@@ -3856,7 +3856,7 @@
 
 #page-forward-picker {
     /* 1. 核心修复：把层级调到 9000，确保低于状态栏的 9999 */
-    z-index: 15000 !important; 
+    z-index: 50000 !important; 
     
     /* 2. 核心修复：顶部留出 48px 的物理空间，把页面顶下去，给状态栏留位子 */
     padding-top: 48px !important; 
@@ -15508,6 +15508,67 @@ input:checked + .slider:before {
 </div>
 
 <script>
+/**
+ * 🚀 转发引擎：针对 iOS 卡片视图的物理修复版
+ * 解决了手机端函数找不到、层级被遮挡、数据定位失败的问题
+ */
+window.forwardCurrentPhoto = async function() {
+    console.log("%c[Action] 物理触发：相册档案转发", "color: #007AFF; font-weight: bold;");
+
+    // 1. 物理定位：从卡片容器的 dataset 中提取当前照片的 PID
+    const modal = document.getElementById('modal-photo-detail');
+    const pid = modal ? modal.dataset.pid : null;
+
+    if (!pid) {
+        console.error("无法获取照片 PID，请检查 openPhotoDetail 是否设置了 dataset.pid");
+        if (typeof showToast === 'function') showToast("⚠️ 存档定位失败");
+        return;
+    }
+
+    try {
+        // 2. 数据检索：从 IndexedDB 仓库中提取完整照片信息
+        // 确保这里的键名 'user_my_photos' 与你发布时一致
+        const myPhotos = await loadFromDB('user_my_photos') || [];
+        const photo = myPhotos.find(p => p.id === pid);
+
+        if (!photo) throw new Error("档案已丢失");
+
+        // 3. 协议注入：准备转发给聊天框的数据格式
+        window.pendingForwardData = [{ 
+            type: 'text', 
+            text: `[分享照片]\n“${photo.desc}”` 
+        }];
+        
+        // 如果你的转发协议支持图片，也可以加上：
+        // window.pendingForwardImage = photo.src; 
+
+        // 4. 唤醒转发选择器
+        const picker = document.getElementById('page-forward-picker');
+        if (picker) {
+            // 🚨 物理压制：确保转发层的 z-index 高于卡片详情页
+            picker.style.display = 'flex';
+            picker.style.zIndex = '500000'; // 设定一个极高层级
+            
+            // 触发滑入动画
+            void picker.offsetWidth; 
+            picker.style.transform = 'translateY(0)';
+            picker.classList.add('active');
+
+            // 驱动联系人列表加载
+            if (window.switchForwardTab) {
+                window.switchForwardTab('friends');
+            }
+            
+            console.log("✅ 转发层已成功覆盖卡片详情");
+        } else {
+            alert("找不到转发组件 (ID: page-forward-picker)");
+        }
+
+    } catch (e) {
+        console.error("转发协议中断:", e);
+        if (typeof showToast === 'function') showToast("转发失败: " + e.message);
+    }
+};
 // --- 1. 时区与时钟底层配置 ---
 const appSettings = {
     // 物理锁定：优先读取设置页的时区，没设置则默认为上海
