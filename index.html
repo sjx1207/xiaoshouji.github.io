@@ -27394,26 +27394,6 @@ function closePhotoDetailModal() {
     }, 450); // 等待弹性动画完成
 }
 
-// 3. 转发功能接入
-function forwardCurrentPhoto() {
-    const pid = document.getElementById('modal-photo-detail').dataset.pid;
-    const photo = (JSON.parse(localStorage.getItem('user_my_photos')) || []).find(p => p.id === pid);
-    
-    if (photo) {
-        // 🚨 关键：显式指定 type 为 image
-        window.pendingForwardData = [{ type: 'image', text: photo.src }];
-        
-        const fwdPage = document.getElementById('page-forward-picker');
-        if (fwdPage) {
-            fwdPage.style.display = 'flex';
-            fwdPage.style.zIndex = '15000';
-            setTimeout(() => {
-                fwdPage.style.transform = 'translateY(0)';
-            }, 10);
-            if (typeof switchForwardTab === 'function') switchForwardTab('friends');
-        }
-    }
-}
 /**
  * 🎨 评论区渲染引擎
  * 逻辑：清空旧碎片 -> 物理排序 -> 注入新回响
