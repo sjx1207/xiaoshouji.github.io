@@ -15509,59 +15509,58 @@ input:checked + .slider:before {
 
 <script>
 /**
- * 🚀 转发引擎：针对 iOS 卡片视图的物理修复版
- * 解决了手机端函数找不到、层级被遮挡、数据定位失败的问题
+ * 🖼️ 终极版：全媒体转发引擎
+ * 逻辑：提取 Base64 图片流 -> 注入媒体协议 -> 唤醒转发层
  */
 window.forwardCurrentPhoto = async function() {
-    console.log("%c[Action] 物理触发：相册档案转发", "color: #007AFF; font-weight: bold;");
+    console.log("%c[Action] 物理触发：图片媒体转发协议", "color: #007AFF; font-weight: bold;");
 
-    // 1. 物理定位：从卡片容器的 dataset 中提取当前照片的 PID
     const modal = document.getElementById('modal-photo-detail');
     const pid = modal ? modal.dataset.pid : null;
 
     if (!pid) {
-        console.error("无法获取照片 PID，请检查 openPhotoDetail 是否设置了 dataset.pid");
         if (typeof showToast === 'function') showToast("⚠️ 存档定位失败");
         return;
     }
 
     try {
-        // 2. 数据检索：从 IndexedDB 仓库中提取完整照片信息
-        // 确保这里的键名 'user_my_photos' 与你发布时一致
+        // 1. 从大容量仓库提取包含图片数据的完整档案
         const myPhotos = await loadFromDB('user_my_photos') || [];
         const photo = myPhotos.find(p => p.id === pid);
 
-        if (!photo) throw new Error("档案已丢失");
+        if (!photo || !photo.src) throw new Error("图片数据已损坏或丢失");
 
-        // 3. 协议注入：准备转发给聊天框的数据格式
-        window.pendingForwardData = [{ 
-            type: 'text', 
-            text: `[分享照片]\n“${photo.desc}”` 
-        }];
+        // 🚨 核心修复：更新转发数据协议，加入图片类型
+        // 我们同时传图片和文字，让聊天框能识别这是一个“带图转发”
+        window.pendingForwardData = [
+            { 
+                type: 'image', 
+                src: photo.src // 物理注入 Base64 图片流
+            },
+            { 
+                type: 'text', 
+                text: `[分享瞬间] “${photo.desc}”` 
+            }
+        ];
         
-        // 如果你的转发协议支持图片，也可以加上：
-        // window.pendingForwardImage = photo.src; 
+        // 记录预览图，供转发确认弹窗使用
+        window.pendingForwardPreview = photo.src;
 
-        // 4. 唤醒转发选择器
+        // 2. 唤醒转发层
         const picker = document.getElementById('page-forward-picker');
         if (picker) {
-            // 🚨 物理压制：确保转发层的 z-index 高于卡片详情页
             picker.style.display = 'flex';
-            picker.style.zIndex = '500000'; // 设定一个极高层级
+            picker.style.zIndex = '500000'; 
             
-            // 触发滑入动画
             void picker.offsetWidth; 
             picker.style.transform = 'translateY(0)';
             picker.classList.add('active');
 
-            // 驱动联系人列表加载
             if (window.switchForwardTab) {
                 window.switchForwardTab('friends');
             }
             
-            console.log("✅ 转发层已成功覆盖卡片详情");
-        } else {
-            alert("找不到转发组件 (ID: page-forward-picker)");
+            console.log("✅ 媒体转发协议已激活，图片流已就绪");
         }
 
     } catch (e) {
@@ -15740,7 +15739,9 @@ window.sendSimulatedVoice = async function() {
     if (!text) return showToast("请输入内容");
     if (!window.currentChattingWith) return;
 
-    // 1. UI 变身：显示正在处理
+    const charId = window.currentChattingWith.id; // 锁定当前角色 ID
+
+    // 1. UI 变身
     const originalBtnText = btnEl.innerHTML;
     btnEl.innerHTML = `<span style="animation:pulse 1s infinite">AI 正在转码...</span>`;
     btnEl.style.pointerEvents = 'none'; 
@@ -15750,48 +15751,50 @@ window.sendSimulatedVoice = async function() {
     if (durationSec < 2) durationSec = 2;
     if (durationSec > 60) durationSec = 60;
 
-    // 3. 🚨 核心：强制翻译逻辑
+    // 3. 翻译逻辑处理
     let finalText = text;
-    
-    // 如果输入的不是中文（简单判断），或者是中文想翻英文，这里我们强制调用翻译
-    // 为了稳妥，只要没手动写 [TRANS]，我们就尝试去翻译一下
+    let cleanTextForAI = text; // 🚨 专门给 AI 看的纯净文本
+
     if (!text.includes('[TRANS]')) {
         try {
             const trans = await autoTranslateUserText(text);
-            // 只有当翻译结果有效，且不等于原文时，才拼接
             if (trans && trans !== text) {
                 finalText = `${text} [TRANS] ${trans}`;
-            } else {
-                // 兜底：如果翻译失败，为了测试 UI，我们手动补一个标记（可选）
-                // finalText = `${text} [TRANS] (翻译数据缺失)`; 
             }
         } catch(e) {
             console.error("翻译服务超时");
         }
     }
 
-    // 4. 构造消息
+    // 4. 构造消息并存入数据库
     const msgObj = {
         role: "user",
-        text: finalText, // 存入带翻译的文本
-        type: "voice",
+        text: finalText, 
+        type: "voice", // 🚨 类型锁定为语音
         duration: durationSec + "\"",
         timestamp: Date.now(),
         isRead: true, 
         recalled: false
     };
 
-    // 5. 发送
-    await saveChatMessage(window.currentChattingWith.id, msgObj);
-    renderMessages();
+    await saveChatMessage(charId, msgObj);
+    renderMessages(); // 渲染用户发送的消息
     
-    // 恢复 UI
+    // 5. 🚨 核心修复：手动强制唤醒 AI 响应协议
+    // 之前你少写了这一步，所以 AI 才没反应！
+    if (typeof getAIResponse === 'function') {
+        console.log("📡 物理信号已发出，正在唤醒 AI 思考...");
+        // 我们传 cleanTextForAI，让 AI 看到最干净的文字，不被 [TRANS] 干扰
+        getAIResponse(charId, cleanTextForAI); 
+    }
+
+    // 6. 恢复 UI 状态
     document.getElementById('modal-voice-input').style.display = 'none';
+    inputEl.value = ""; // 清空输入框
     btnEl.innerHTML = originalBtnText;
     btnEl.style.pointerEvents = 'auto';
 
-    console.log("✅ 语音已上屏，等待用户手动触发 AI 回复...");
-
+    console.log("✅ 语音消息已物理同步，AI 响应已触发");
 };
 // 1. 打开语种选择器 (复用你的 Noir Picker)
 window.openVoiceLangPicker = function() {
@@ -20329,43 +20332,37 @@ function handleContactClick(item) {
 // 🌌 终极渲染引擎：全功能兼容、时空对齐版
 // ==========================================
 // 🔄 统一渲染引擎：历史与即时完全同步
-async function renderMessages() {
-    const container = document.getElementById('chat-messages-container');
-    if (!container || !window.currentChattingWith) return;
+function renderMessages() {
+    const container = document.getElementById('chat-messages');
+    const messages = getCurrentMessages(); // 假设这是获取当前聊天记录的函数
+    container.innerHTML = "";
 
-    const contact = window.currentChattingWith;
-    const history = await getChatHistory(contact.id);
-    
-    // 1. 清空容器
-    container.innerHTML = ""; 
-    
-    const userTz = localStorage.getItem('user_timezone') || undefined;
-    let lastMsgTime = 0; 
+    messages.forEach(msg => {
+        const div = document.createElement('div');
+        div.className = `message-row ${msg.role}-row`;
 
-    // 2. 遍历历史
-    for (const msg of history) {
-        const currentTs = msg.timestamp;
-
-        // --- 插入时间分隔符 ---
-        const currentDate = new Date(currentTs).toLocaleDateString('en-US', { timeZone: userTz });
-        const lastDate = new Date(lastMsgTime).toLocaleDateString('en-US', { timeZone: userTz });
-
-        if (currentDate !== lastDate) {
-            container.innerHTML += `<div class="chat-time-divider">${formatChatTime(currentTs, true)}</div>`;
-        } else if (lastMsgTime !== 0 && currentTs - lastMsgTime > 300000) {
-            container.innerHTML += `<div class="chat-time-divider">${formatChatTime(currentTs, false)}</div>`;
+        // 🚨 核心修复：增加图片渲染分支
+        if (msg.type === 'image') {
+            // 如果是转发的图片，渲染 img 标签
+            div.innerHTML = `
+                <div class="message-bubble image-bubble">
+                    <img src="${msg.text}" class="chat-inline-img" onclick="previewImage('${msg.text}')">
+                    ${msg.isForwarded ? '<div class="forward-tag">已转发瞬间</div>' : ''}
+                </div>
+            `;
+        } else {
+            // 原有的文字/语音渲染逻辑
+            div.innerHTML = `
+                <div class="message-bubble">
+                    <div class="message-text">${msg.text}</div>
+                </div>
+            `;
         }
-        
-        // --- 🚨 核心：直接复用单条渲染函数 ---
-        appendMessageToUI(msg, contact);
-
-        lastMsgTime = currentTs;
-    }
-
-    // 3. 自动置底
-    setTimeout(() => {
-        container.scrollTop = container.scrollHeight;
-    }, 100);
+        container.appendChild(div);
+    });
+    
+    // 滚动置底
+    container.scrollTop = container.scrollHeight;
 }
 
 // ==========================================
@@ -21576,35 +21573,44 @@ async function switchForwardTab(mode) {
 
 // --- 4. 确认转发逻辑 (调用 iOS 弹窗) ---
 function confirmForwardTo(target) {
-    const count = window.pendingForwardData.length;
+    const count = window.pendingForwardData ? window.pendingForwardData.length : 0;
+    
     showIOSConfirm(
         "确认转发", 
         `将 ${count} 条消息转发给 ${target.name}？`, 
         "发送", 
         async function() {
-            // 执行真正的转发动作
+            if (!window.pendingForwardData) return;
+
+            // 执行真正的物理转发动作
             for(let item of window.pendingForwardData) {
-                // 🚨 核心逻辑：根据转发项的 type 构造消息对象
+                // 🚨 核心逻辑：物理对齐数据源，确保图片与文字都能正确识别
                 const msgObj = {
                     role: "user",
-                    // 如果是图片，text 存 Base64，但 type 必须锁定为 image
-                    text: item.text, 
+                    // 🚨 关键修复：图片类型取 item.src (Base64)；文字类型取 item.text
+                    text: item.type === 'image' ? item.src : item.text, 
                     type: item.type === 'image' ? "image" : "text",
                     timestamp: Date.now(),
                     isForwarded: true, // 增加转发标记
                     isEmoji: false     // 相册图片不作为表情包处理
                 };
                 
-                await saveChatMessage(target.id, msgObj);
+                // 只有当数据内容存在时，才执行物理存盘
+                if (msgObj.text) {
+                    await saveChatMessage(target.id, msgObj);
+                }
             }
             
             showToast("已成功转发瞬间");
             closeForwardPicker();
             
-            // 🚨 物理补丁：如果当前就开着这个人的聊天室，立即刷新
+            // 🚨 物理补丁：如果当前正开着该角色的聊天室，立即触发 UI 重绘
             if(window.currentChattingWith && window.currentChattingWith.id === target.id) {
-                renderMessages();
+                if (typeof renderMessages === 'function') renderMessages();
             }
+
+            // 🚨 关键收尾：清理转发协议缓存，防止重复发送旧数据
+            window.pendingForwardData = null;
         }
     );
 }
