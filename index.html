@@ -27125,67 +27125,54 @@ async function openPhotoUploadModal() {
     });
 }
 
-/**
- * 📤 物理加固版：发布照片到大容量仓库 (IndexedDB)
- * 逻辑：读取角色设定 -> 获取用户身份 -> 异步存盘 -> 唤起详情
- */
 async function submitPhotoUpload() {
-    const imgPreview = document.getElementById('upload-img-preview');
-    const descInput = document.getElementById('upload-desc-input');
-    
-    // 🛡️ 状态自检
-    if (!imgPreview || !imgPreview.src || imgPreview.style.display === 'none') {
-        showToast("📸 请先选择一张照片");
-        return;
-    }
-    
-    if (!selectedPhotoCharId) {
-        showToast("📢 请点击头像邀请一位好友点评");
-        return;
-    }
-    
-    const imgSrc = imgPreview.src;
-    const desc = descInput ? descInput.value : "";
-    const newPhotoId = "p_" + Date.now();
-
-    const newPhoto = {
-        id: newPhotoId,
-        src: imgSrc, // 二进制大图现在存这里没压力
-        desc: desc || "分享了一张照片",
-        date: Date.now(),
-        charId: selectedPhotoCharId, 
-        comments: []
-    };
+    const publishBtn = document.querySelector('.highlight-btn');
+    if (publishBtn) publishBtn.style.opacity = '0.5'; // 物理置灰反馈
+    showToast("正在刻录时空片段...");
 
     try {
-        // 🚨 核心改动：从大仓库 IndexedDB 读取并存入
+        const imgPreview = document.getElementById('upload-img-preview');
+        const descInput = document.getElementById('upload-desc-input');
+        
+        if (!imgPreview.src || !selectedPhotoCharId) throw new Error("资料不全");
+
+        // 🚨 核心修复：物理压缩减压
+        const compressedImg = await compressImage(imgPreview.src, 1000); 
+
+        const newPhotoId = "p_" + Date.now();
+        const newPhoto = {
+            id: newPhotoId,
+            src: compressedImg,
+            desc: descInput.value || "分享了一张照片",
+            date: Date.now(),
+            charId: selectedPhotoCharId, 
+            comments: []
+        };
+
+        // 🚨 核心修复：必须 await 存入成功
         let myPhotos = await loadFromDB('user_my_photos') || [];
         myPhotos.unshift(newPhoto);
-        await saveToDB('user_my_photos', myPhotos);
+        await saveToDB('user_my_photos', myPhotos); 
 
-        // 1. 关闭弹窗
-        closePhotoUploadModal();
+        // 只有存完了，才允许执行后续 UI 操作
+        document.getElementById('modal-photo-upload').style.display = 'none';
         
-        // 2. 🚨 关键：异步等待重绘完成
-        await renderUserPhotos();
-        
-        // 3. 强效物理开启详情页：由于数据已经在 DB，直接传 ID 进去
+        // 🚨 物理重绘：必须等待重绘函数执行完
+        await renderUserPhotos(); 
+
+        // 延时 200ms 弹出成功提示，避开手机内存峰值
         setTimeout(() => {
+            if (window.triggerSuccessHud) triggerSuccessHud("已存入相册");
             openPhotoDetail(newPhotoId); 
-        }, 150); 
+        }, 200);
 
-        if (typeof showToast === 'function') showToast("发布成功，正在唤起回忆...");
-        
-        // 4. 触发 AI 异步评论
-        setTimeout(function() {
-            if(typeof generateAIPhotoComment === 'function') {
-                generateAIPhotoComment(newPhoto);
-            }
-        }, 1500);
+        // 异步触发评论，不阻塞主线程
+        setTimeout(() => generateAIPhotoComment(newPhoto), 1500);
 
     } catch (e) {
-        console.error("Storage Critical Error:", e);
-        showToast("❌ 存档失败，图片可能过大或数据库异常");
+        alert("发布失败: " + e.message);
+    } finally {
+        if (publishBtn) publishBtn.style.opacity = '1';
     }
 }
 
@@ -27337,57 +27324,32 @@ function forwardCurrentPhoto() {
 /**
  * 9. 渲染评论列表 (Helper)
  */
-function renderPhotoComments(photo) {
+async function renderPhotoComments(photo) {
     const list = document.getElementById('detail-comments-list');
-    const likeCount = document.getElementById('like-count');
-    
     if (!list) return;
     list.innerHTML = "";
-    
-    // 简单模拟点赞数 = 评论数 + 随机基数
-    if (likeCount) likeCount.textContent = (photo.comments ? photo.comments.length : 0) + 5;
-    
-    if (!photo.comments || photo.comments.length === 0) {
-        list.innerHTML = `<div style="padding:20px; text-align:center; color:#999; font-size:12px;">等待好友评论中...</div>`;
+
+    // 🚨 核心修复：由于 AI 评论是异步写入的，渲染时要确保拿到的是最新对象
+    // 如果传入的 photo 没有评论，尝试从总库里现抓一次
+    let latestPhoto = photo;
+    const allPhotos = await loadFromDB('user_my_photos') || [];
+    const found = allPhotos.find(p => p.id === photo.id);
+    if (found) latestPhoto = found;
+
+    if (!latestPhoto.comments || latestPhoto.comments.length === 0) {
+        list.innerHTML = `<div style="padding:20px;text-align:center;color:#999;font-size:12px;">等待回响中...</div>`;
         return;
     }
-    
-    photo.comments.forEach(c => {
-        const div = document.createElement('div');
-        div.className = 'comment-row';
-        
-        // 点击评论，自动填充输入框进行回复 (艾特功能)
-        div.onclick = () => {
-             const input = document.getElementById('detail-reply-input');
-             if (input) {
-                 input.value = `@${c.name} `;
-                 input.focus();
-             }
-        };
-        
-        // 格式化时间
-        let timeStr = "刚刚";
-        if (typeof formatChatTime === 'function') {
-            timeStr = formatChatTime(c.time);
-        } else {
-            timeStr = new Date(c.time).toLocaleTimeString();
-        }
 
-        div.innerHTML = `
-            <img class="comment-avatar" src="${c.avatar}" onerror="this.src='https://api.dicebear.com/7.x/initials/svg?seed=${c.name}'">
+    list.innerHTML = latestPhoto.comments.map(c => `
+        <div class="comment-row">
+            <img class="comment-avatar" src="${c.avatar}">
             <div class="comment-bubble">
-                <div class="comment-name">${c.name} <span class="comment-time">${timeStr}</span></div>
-                <div style="word-break: break-all;">${c.text}</div>
+                <div class="comment-name">${c.name}</div>
+                <div>${c.text}</div>
             </div>
-        `;
-        list.appendChild(div);
-    });
-    
-    // 自动滚动到底部查看最新评论
-    setTimeout(() => {
-        const scrollContent = document.querySelector('.detail-scroll-content');
-        if (scrollContent) scrollContent.scrollTop = scrollContent.scrollHeight;
-    }, 100);
+        </div>
+    `).join('');
 }
 
 /**
@@ -27441,6 +27403,19 @@ async function generateAIPhotoComment(photo, replyContext = null) {
         });
         const data = await res.json();
         const commentText = data.choices[0].message.content.trim();
+
+        // 🚨 核心修复：写入 IndexedDB 
+        const idx = myPhotos.findIndex(p => p.id === photo.id);
+        if (idx !== -1) {
+            myPhotos[idx].comments.push(newComment);
+            await saveToDB('user_my_photos', myPhotos);
+            
+            // 🚨 如果详情页正好开着，立即物理注入
+            const detailModal = document.getElementById('modal-photo-detail');
+            if (detailModal.style.display === 'flex' && detailModal.dataset.pid === photo.id) {
+                renderPhotoComments(myPhotos[idx]);
+            }
+        }
 
         // 构造评论对象并存档
         const newComment = {
@@ -27508,32 +27483,30 @@ ${isMentioned ? "🚨 重点：对方特别艾特了你，你的回应要更有�
 /**
  * 11. 删除照片功能
  */
-function showPhotoActions() {
+async function showPhotoActions() {
     const modal = document.getElementById('modal-photo-detail');
-    if (!modal) return;
-    
     const pid = modal.dataset.pid;
-    
-    // 🚨 物理替换：不再使用 confirm()，改用你自定义的 showIOSConfirm
-    if (typeof showIOSConfirm === 'function') {
-        showIOSConfirm(
-            "抹除这段记忆？", 
-            "这张照片将从你的相册中永久消失，相关的互动痕迹也将一并封存。", 
-            "抹除", 
-            async function() {
-                let myPhotos = JSON.parse(localStorage.getItem('user_my_photos')) || [];
-                myPhotos = myPhotos.filter(p => p.id !== pid);
-                localStorage.setItem('user_my_photos', JSON.stringify(myPhotos));
-                
-                closePhotoDetailModal(); // 关闭详情卡片
-                renderUserPhotos();      // 刷新相册网格
-                
-                if (typeof triggerSuccessHud === 'function') {
-                    triggerSuccessHud("记忆已销毁");
-                }
-            }
-        );
-    }
+
+    showIOSConfirm("抹除记忆", "确定要永久物理抹除这段瞬间吗？", "抹除", async function() {
+        try {
+            // 🚨 核心修复：必须从 IndexedDB 中删除，而不是 localStorage
+            let myPhotos = await loadFromDB('user_my_photos') || [];
+            myPhotos = myPhotos.filter(p => p.id !== pid);
+            
+            // 覆盖保存
+            await saveToDB('user_my_photos', myPhotos); 
+            
+            // 🚨 立即执行物理重绘
+            await renderUserPhotos();
+            
+            // 关闭详情层
+            closePhotoDetailModal();
+            
+            if (window.triggerSuccessHud) triggerSuccessHud("记忆已归于虚无");
+        } catch (e) {
+            showToast("删除异常");
+        }
+    });
 }
 
 /**
