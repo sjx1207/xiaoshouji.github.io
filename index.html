@@ -27354,47 +27354,55 @@ function forwardCurrentPhoto() {
     }
 }
 /**
- * 9. 渲染评论列表 (Helper)
+ * 🎨 评论区渲染引擎
+ * 逻辑：清空旧碎片 -> 物理排序 -> 注入新回响
  */
-async function renderPhotoComments(photo) {
+function renderPhotoComments(photoData) {
     const list = document.getElementById('detail-comments-list');
     if (!list) return;
-    list.innerHTML = "";
 
-    // 🚨 核心修复：由于 AI 评论是异步写入的，渲染时要确保拿到的是最新对象
-    // 如果传入的 photo 没有评论，尝试从总库里现抓一次
-    let latestPhoto = photo;
-    const allPhotos = await loadFromDB('user_my_photos') || [];
-    const found = allPhotos.find(p => p.id === photo.id);
-    if (found) latestPhoto = found;
+    list.innerHTML = ""; // 彻底清空
 
-    if (!latestPhoto.comments || latestPhoto.comments.length === 0) {
-        list.innerHTML = `<div style="padding:20px;text-align:center;color:#999;font-size:12px;">等待回响中...</div>`;
+    if (!photoData.comments || photoData.comments.length === 0) {
+        list.innerHTML = `<div style="padding:40px 20px; text-align:center; color:#ccc; font-size:12px; font-style:italic;">“静默中，等待着命运的回响...”</div>`;
         return;
     }
 
-    list.innerHTML = latestPhoto.comments.map(c => `
-        <div class="comment-row">
-            <img class="comment-avatar" src="${c.avatar}">
-            <div class="comment-bubble">
-                <div class="comment-name">${c.name}</div>
-                <div>${c.text}</div>
+    // 渲染每一条评论
+    const html = photoData.comments.map(c => `
+        <div class="comment-row" style="animation: msgFadeUp 0.4s ease-out forwards;">
+            <img class="comment-avatar" src="${c.avatar}" style="width:32px; height:32px; border-radius:50%; object-fit:cover;">
+            <div class="comment-bubble" style="background:rgba(0,0,0,0.03); padding:10px 14px; border-radius:14px; border-top-left-radius:2px; flex:1;">
+                <div class="comment-name" style="font-weight:800; font-size:12px; margin-bottom:4px; color:#1d1d1f;">${c.name}</div>
+                <div style="font-size:14px; color:#3a3a3c; line-height:1.5;">${c.text}</div>
             </div>
         </div>
     `).join('');
+
+    list.innerHTML = html;
+
+    // 物理平滑置底
+    setTimeout(() => {
+        const scroller = document.querySelector('.theirs-interaction-pod');
+        if(scroller) scroller.scrollTo({ top: scroller.scrollHeight, behavior: 'smooth' });
+    }, 100);
 }
 
 /**
- * 🚀 联觉版：AI 自动评论引擎
- * 逻辑：提取角色人设 + 提取用户身份 + 物理锁定关系线
+ * 🚀 联觉版：AI 自动评论引擎 (终极物理加固版)
+ * 逻辑：提取角色人设 + 提取用户身份 + 物理锁定关系线 + IndexedDB 实时同步
  */
 async function generateAIPhotoComment(photo, replyContext = null) {
+    // 1. 物理提取角色数据
     const charList = await loadFromDB('char_list') || [];
     const char = charList.find(c => c.id === photo.charId);
     
-    if (!char) return;
+    if (!char) {
+        console.warn("System: 未找到关联角色，评论协议挂起");
+        return;
+    }
 
-    // 🚨 核心修复：精准提取该角色眼中的“我”
+    // 🚨 核心修复：精准提取该角色眼中的“我” (优先角色专属身份，次选全局身份)
     const userKey = 'user_persona_for_' + char.id;
     const userPersona = JSON.parse(localStorage.getItem(userKey)) || 
                         JSON.parse(localStorage.getItem('user_persona_data_global')) || 
@@ -27403,7 +27411,9 @@ async function generateAIPhotoComment(photo, replyContext = null) {
     const apiKey = localStorage.getItem('gpt_key');
     const apiUrl = (localStorage.getItem('gpt_url') || "").replace(/\/+$/, "");
 
-    // 🧠 深度宿命感 Prompt 注入
+    if (!apiKey) return;
+
+    // 🧠 深度宿命感 Prompt 注入 (保持原有逻辑)
     const systemPrompt = `
 # Role: 你是 [${char.name}]
 # Character Background: ${char.desc}
@@ -27424,32 +27434,23 @@ async function generateAIPhotoComment(photo, replyContext = null) {
     `;
 
     try {
+        // 2. 调用 AI 接口
         const res = await fetch(`${apiUrl}/chat/completions`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
             body: JSON.stringify({
-                model: localStorage.getItem('gpt_model'),
+                model: localStorage.getItem('gpt_model') || "gpt-3.5-turbo",
                 messages: [{ role: "system", content: systemPrompt }, { role: "user", content: "发表你的见解。" }],
                 temperature: 0.85
             })
         });
+
         const data = await res.json();
+        if (data.error) throw new Error(data.error.message);
+        
         const commentText = data.choices[0].message.content.trim();
 
-        // 🚨 核心修复：写入 IndexedDB 
-        const idx = myPhotos.findIndex(p => p.id === photo.id);
-        if (idx !== -1) {
-            myPhotos[idx].comments.push(newComment);
-            await saveToDB('user_my_photos', myPhotos);
-            
-            // 🚨 如果详情页正好开着，立即物理注入
-            const detailModal = document.getElementById('modal-photo-detail');
-            if (detailModal.style.display === 'flex' && detailModal.dataset.pid === photo.id) {
-                renderPhotoComments(myPhotos[idx]);
-            }
-        }
-
-        // 构造评论对象并存档
+        // 3. 构造标准的评论数据对象
         const newComment = {
             id: Date.now(),
             userId: char.id,
@@ -27459,16 +27460,34 @@ async function generateAIPhotoComment(photo, replyContext = null) {
             time: Date.now()
         };
 
-        let myPhotos = JSON.parse(localStorage.getItem('user_my_photos')) || [];
-        const targetP = myPhotos.find(p => p.id === photo.id);
-        if (targetP) {
-            targetP.comments.push(newComment);
-            localStorage.setItem('user_my_photos', JSON.stringify(myPhotos));
-            if (document.getElementById('modal-photo-detail')?.style.display === 'flex') {
-                renderPhotoComments(targetP);
+        // 🚨 核心修复：全链路物理入库 (IndexedDB 模式)
+        // 必须从大容量仓库 load，push 后再 save，彻底解决 5MB 限制导致的发布失败
+        let myPhotos = await loadFromDB('user_my_photos') || [];
+        const idx = myPhotos.findIndex(p => p.id === photo.id);
+
+        if (idx !== -1) {
+            myPhotos[idx].comments.push(newComment);
+            await saveToDB('user_my_photos', myPhotos); 
+            
+            console.log(`%c[AI Trace] ${char.name} 的回响已录入数据库`, "color: #34C759;");
+
+            // 🚨 实时渲染补丁：如果详情页当前正开启并展示该照片，立即执行热注入
+            const detailModal = document.getElementById('modal-photo-detail');
+            if (detailModal && detailModal.style.display === 'flex' && detailModal.dataset.pid === photo.id) {
+                if (typeof renderPhotoComments === 'function') {
+                    renderPhotoComments(myPhotos[idx]);
+                }
+            }
+            
+            // 发送系统通知 (可选)
+            if (window.showPushNotification) {
+                window.showPushNotification(char.name, "在你的照片下留下了新的回响。");
             }
         }
-    } catch (e) { console.error("AI Comment Failed:", e); }
+
+    } catch (e) { 
+        console.error("AI Comment Logic Collapsed:", e); 
+    }
 }
 
 /**
@@ -28444,30 +28463,51 @@ function closeArchiveReader() {
 }
 
 /**
- * 🚀 功能：转发 Ta 的瞬间到聊天室
+ * 🚀 终极版：Ta的相册转发引擎 (物理置顶版)
+ * 逻辑：锁定档案 -> 格式化文本协议 -> 强力推入转发层 -> 唤醒联系人列表
  */
 function forwardTheirsSnap() {
+    console.log("%c[Signal] 启动档案转发协议...", "color: #007AFF; font-weight: bold;");
+
+    // 1. 获取当前正在查看的瞬间 ID 和数据
     const snapId = window.currentViewingSnapId;
     const galleryDB = JSON.parse(localStorage.getItem('user_char_galleries')) || [];
     const snap = galleryDB.find(p => p.id === snapId);
 
-    if (snap) {
-        // 🚨 核心逻辑：将文字叙事包装成“转发消息”
-        // 我们把 AI 生成的描述作为文本，由于它没有实体图，我们用头像或特定标记代替
-        window.pendingForwardData = [{ 
-            type: 'text', 
-            text: `[转发档案]\n“${snap.description}”` 
-        }];
+    if (!snap) {
+        showToast("⚠️ 无法定位时空存根");
+        return;
+    }
+
+    // 2. 🚨 数据格式化：将 AI 描述转换为标准的转发文本协议
+    // 我们把这段唯美的文字加上标识，方便在聊天框里显示
+    window.pendingForwardData = [{ 
+        type: 'text', 
+        text: `[来自 ${document.getElementById('theirs-char-name').textContent} 的瞬间]\n“${snap.description}”` 
+    }];
+
+    // 3. 🚨 物理层级爆破：强制调取转发选择页面
+    const fwdPage = document.getElementById('page-forward-picker');
+    if (fwdPage) {
+        // 第一步：先将 display 设为 flex，否则 transform 动画在手机上可能无效
+        fwdPage.style.display = 'flex';
         
-        // 呼唤转发选择页
-        const fwdPage = document.getElementById('page-forward-picker');
-        if (fwdPage) {
-            fwdPage.style.display = 'flex';
-            fwdPage.style.zIndex = '150000'; // 必须高于详情页
-            setTimeout(() => { fwdPage.style.transform = 'translateY(0)'; }, 10);
-            if (typeof switchForwardTab === 'function') switchForwardTab('friends');
+        // 第二步：物理锁定最高层级，必须盖过详情页 (100000)
+        fwdPage.style.zIndex = '200000'; 
+        
+        // 第三步：强制重绘并触发滑入动画
+        void fwdPage.offsetWidth; 
+        fwdPage.style.transform = 'translateY(0)';
+
+        // 4. 驱动联系人列表渲染
+        if (typeof switchForwardTab === 'function') {
+            switchForwardTab('friends'); // 默认展示最近联系人
         }
-        console.log("System: 档案转发协议已激活");
+        
+        console.log("✅ 转发层已强力压制详情页并滑入");
+    } else {
+        console.error("Critical Error: 找不到转发页面 DOM 节点");
+        showToast("系统转发协议异常");
     }
 }
 
