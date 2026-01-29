@@ -18682,6 +18682,52 @@ window.appendRadioLog = function(role, text) {
 /**
  * 🛰️ AI 主动回复逻辑 (由 REPLY 按钮物理触发)
  */
+window.requestAIReply = async function() {
+    console.log("%c[Radio] 物理按钮点火...", "color: #AF52DE; font-weight: bold;");
+
+    // 1. 物理锁防抖
+    if (window.isAiProcessing) return;
+
+    // 2. 锁定电台对象
+    const contact = window.currentSynergyTarget;
+    if (!contact) {
+        alert("⚠️ 无法识别联觉对象");
+        return;
+    }
+
+    // 3. UI 状态反馈
+    const btn = document.querySelector('.reply-btn');
+    if (btn) btn.style.opacity = '0.3';
+    window.isAiProcessing = true;
+
+    try {
+        // 4. 获取当前歌曲环境
+        const songTitle = document.getElementById('player-title')?.innerText || "未知旋律";
+        const artist = document.getElementById('player-artist')?.innerText || "佚名";
+
+        // 5. 抓取加密电台历史 (synergy_ 前缀)
+        const history = await getChatHistory("synergy_" + contact.id) || [];
+        
+        // 提取最后一条用户的话，如果没有就用环境音暗示
+        let lastUserText = "";
+        for (let i = history.length - 1; i >= 0; i--) {
+            if (history[i].role === 'user') {
+                lastUserText = history[i].text;
+                break;
+            }
+        }
+
+        // 6. 调用专用电台 AI 引擎
+        await callAIForSynergy(contact, lastUserText, history, { title: songTitle, artist: artist });
+
+    } catch (e) {
+        console.error("Radio AI Error:", e);
+        appendRadioLog('system', "SIGNAL_ERROR: " + e.message);
+    } finally {
+        window.isAiProcessing = false;
+        if (btn) btn.style.opacity = '1';
+    }
+};
 /**
  * 3. 执行邀约协议 (AI 决策分支)
  * 作用：点击“确认邀约”后触发，显示加载动画并判定结果
@@ -18876,23 +18922,27 @@ window.terminateSynergy = function() {
 window.transmitCommand = async function() {
     const input = document.getElementById('radio-cmd-input');
     const text = input ? input.value.trim() : "";
-    const contact = window.currentSynergyTarget;
+    const contact = window.currentSynergyTarget; // 🚨 电台频道必须用这个变量
 
-    if (!text || !contact) return;
+    if (!text || !contact) {
+        showToast("⚠️ 信号未锁定");
+        return;
+    }
 
-    // 1. 黑色屏幕显示
+    // 1. 物理上屏
     appendRadioLog('user', text);
     input.value = "";
 
-    // 2. 🚨 核心改动：存入专属 key (synergy_ + ID)
-    // 这样主聊天 App 就看不见这段话了
+    // 2. 存入电台专属加密数据库 (synergy_ 前缀)
     await saveChatMessage("synergy_" + contact.id, { 
         role: "user", 
         text: text, 
-        timestamp: Date.now()
+        timestamp: Date.now() 
     });
 
-    console.log(`%c[Secure] 信号已加密封存于电台维度: ${contact.name}`, "color: #AF52DE;");
+    // 3. 发送完自动滚动
+    const log = document.getElementById('radio-terminal-log');
+    if (log) log.scrollTo({ top: log.scrollHeight, behavior: 'smooth' });
 };
 
 /**
@@ -33327,20 +33377,22 @@ function appendSynBubble(role, text) {
  */
 async function callAIForSynergy(contact, userText, historyData, songInfo) {
     const apiKey = localStorage.getItem('gpt_key');
-    // URL 处理：确保去掉末尾斜杠，并补全路径
     let baseUrl = (localStorage.getItem('gpt_url') || "https://api.openai.com/v1").replace(/\/+$/, "");
     if (!baseUrl.endsWith('/chat/completions')) baseUrl += '/chat/completions';
 
     if (!apiKey) {
-        alert("请在设置页填写 API Key");
+        alert("请先在设置页配置 API Key");
         return;
     }
 
-    // 1. 上下文截取 (取最后 6 条，防止 Token 爆炸)
-    // 过滤掉空内容的废数据
+    // 🚨 物理补丁：获取本我档案和环境数据
+    const userData = JSON.parse(localStorage.getItem('user_persona_for_' + contact.id)) || {name: "我"};
+    const sensors = await getAIPerceptionData(); 
+    const worldRules = "遵循世界协议。"; // 这里可以根据你的逻辑继续扩展
+
     const contextMessages = historyData
         .filter(m => m.text && m.text.trim() !== "")
-        .slice(-6)
+        .slice(-8)
         .map(m => ({
             role: m.role === 'user' ? 'user' : 'assistant',
             content: m.text
@@ -33373,73 +33425,39 @@ ${worldRules || "遵循常规现实。"}
 哎呀 |BR| 这个前奏也太好听了吧！ |BR| 你听到了吗？ |BR| 感觉心跳都跟着变快了呢~ 💓
 `;
 
-    // 3. 构造 User 消息 (强制非空)
-    const finalUserMsg = userText || "（看着你）";
-
-    // 4. 构造请求包
-    const payload = {
-        model: localStorage.getItem('gpt_model') || "gpt-3.5-turbo",
-        messages: [
-            { role: "system", content: systemPrompt },
-            ...contextMessages, 
-            { role: "user", content: finalUserMsg }
-        ],
-        temperature: 0.85,
-        presence_penalty: 0.6
-    };
-
     try {
         const res = await fetch(baseUrl, {
             method: 'POST',
-            // 🚨 手机端 Fetch 核心配置：不加 mode: 'cors' 有时反而能通，视代理而定
-            headers: { 
-                'Content-Type': 'application/json', 
-                'Authorization': `Bearer ${apiKey}` 
-            },
-            body: JSON.stringify(payload)
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+            body: JSON.stringify({
+                model: localStorage.getItem('gpt_model') || "gpt-3.5-turbo",
+                messages: [
+                    { role: "system", content: systemPrompt },
+                    ...contextMessages,
+                    { role: "user", content: userText || "(静静地听歌)" }
+                ],
+                temperature: 0.9
+            })
         });
-
-        if (!res.ok) {
-            const errText = await res.text(); // 获取详细错误信息
-            throw new Error(`HTTP ${res.status}: ${errText}`);
-        }
 
         const data = await res.json();
         const rawReply = data.choices[0].message.content.trim();
 
-        // 5. 成功！处理回复
+        // 拆分消息分段发送
         const segments = rawReply.split('|BR|').filter(m => m.trim().length > 0);
-
         segments.forEach((msg, index) => {
             setTimeout(async () => {
-                const cleanMsg = msg.trim().replace(/[()[\]{}*]/g, ""); 
-                
-                // A. 屏幕显示
-                if(typeof appendRadioLog === 'function') {
-                    appendRadioLog('ai', cleanMsg);
-                }
-                
-                // B. 存入数据库
+                appendRadioLog('ai', msg.trim());
                 await saveChatMessage("synergy_" + contact.id, {
                     role: "opponent",
-                    text: cleanMsg,
+                    text: msg.trim(),
                     timestamp: Date.now()
                 });
-
-                // C. 震动反馈
-                if (navigator.vibrate) navigator.vibrate(10);
-
-            }, 600 + (index * 1200));
+            }, index * 1000);
         });
 
     } catch (e) {
-        console.error("Fetch Error:", e);
-        // 关键：把错误打印到屏幕上，方便你在手机上看
-        if(typeof appendRadioLog === 'function') {
-            appendRadioLog('system', "❌ 连接断开: " + e.message.substring(0, 50));
-        } else {
-            alert("回复失败: " + e.message);
-        }
+        appendRadioLog('system', "LINK_ERROR: " + e.message);
     }
 }
 
@@ -34339,169 +34357,48 @@ async function triggerAiSubReply(commentIndex) {
         renderDetailComments(posts[postIndex].replies); // 刷新列表
     }
 }
-// ==========================================
-// 🚨 手机端强制调试模式 (Mobile Debugger)
-// ==========================================
-(function() {
-    // 1. 创建屏幕顶部的调试红框
-    var debugBox = document.createElement('div');
-    debugBox.id = 'mobile-debug-console';
-    debugBox.style.cssText = "position:fixed; top:0; left:0; width:100%; height:150px; background:rgba(0,0,0,0.8); color:#00FF00; font-size:10px; z-index:99999999; overflow-y:scroll; pointer-events:none; padding:5px; font-family:monospace; border-bottom:2px solid red;";
-    document.body.appendChild(debugBox);
-
-    function logToScreen(msg) {
-        var p = document.createElement('div');
-        p.innerText = "> " + msg;
-        debugBox.prepend(p); // 最新消息在最上面
-        console.log(msg);
-    }
-
-    logToScreen("✅ 调试器已启动，等待点击...");
-
-    // 2. 暴力监听全局点击 (Event Delegation)
-    // 不管按钮是怎么生成的，只要点了类名为 reply-btn 的东西，就必须触发
-    document.addEventListener('click', function(e) {
-        // 查找是否点击了 .reply-btn 或其子元素
-        var target = e.target.closest('.reply-btn');
-        
-        if (target) {
+// === 📱 手机端强制事件绑定补丁 ===
+document.addEventListener('DOMContentLoaded', () => {
+    // 强制绑定电台发送按钮
+    const transmitBtn = document.querySelector('.transmit-btn');
+    if (transmitBtn) {
+        transmitBtn.onclick = null;
+        transmitBtn.addEventListener('click', (e) => {
             e.preventDefault();
-            e.stopPropagation();
-            logToScreen("🖱️ 捕获到按钮点击！开始执行...");
-            runReplyLogic(target);
-        }
-    }, true); // useCapture = true，确保最先捕获
-
-    // 3. 独立的执行逻辑 (不依赖原有函数，防止旧代码干扰)
-    async function runReplyLogic(btnElement) {
-        try {
-            // --- A. 检查身份 ---
-            let contact = window.currentSynergyTarget || window.currentChattingWith;
-            // 尝试从 localStorage 兜底
-            if (!contact) {
-                try { contact = JSON.parse(localStorage.getItem('last_synergy_char')); } catch(e){}
-            }
-
-            if (!contact) {
-                logToScreen("❌ 错误：找不到聊天对象 (Contact is null)");
-                alert("未找到聊天对象，请重新进入");
-                return;
-            }
-            logToScreen("👤 对象锁定: " + contact.name + " (ID: " + contact.id + ")");
-
-            // --- B. 检查 API Key ---
-            const apiKey = localStorage.getItem('gpt_key');
-            if (!apiKey) {
-                logToScreen("❌ 错误：API Key 未填写");
-                alert("请去设置页填写 API Key");
-                return;
-            }
-
-            // --- C. 抓取上下文 (针对 Music App 的 DOM 结构) ---
-            // 专门针对 #radio-terminal-log 这个容器
-            const logContainer = document.getElementById('radio-terminal-log');
-            if (!logContainer) {
-                logToScreen("⚠️ 警告：找不到日志容器 #radio-terminal-log，无法读取历史");
-            }
-
-            // 暴力抓取最后一条包含 'user' 类的文本
-            let lastUserText = "（沉默）";
-            if (logContainer) {
-                // 获取所有 .log-entry 元素
-                const entries = logContainer.querySelectorAll('.log-entry');
-                logToScreen("📚 扫描到日志条数: " + entries.length);
-                
-                // 倒序查找
-                for (let i = entries.length - 1; i >= 0; i--) {
-                    if (entries[i].classList.contains('user')) {
-                        // 尝试 innerText, textContent
-                        let txt = entries[i].innerText || entries[i].textContent;
-                        // 清理无关字符
-                        txt = txt.replace(/\[.*?\]/g, "").replace("SOURCE: OPERATOR", "").trim();
-                        if (txt) {
-                            lastUserText = txt;
-                            break;
-                        }
-                    }
-                }
-            }
-            logToScreen("📝 发送内容: " + lastUserText.substring(0, 20) + "...");
-
-            // --- D. 按钮变态 ---
-            const oldHtml = btnElement.innerHTML;
-            btnElement.innerHTML = "⏳";
-            btnElement.style.opacity = "0.5";
-
-            // --- E. 发送请求 (Fetch) ---
-            let apiUrl = (localStorage.getItem('gpt_url') || "https://api.openai.com/v1").replace(/\/+$/, "");
-            if (!apiUrl.endsWith('/chat/completions')) apiUrl += '/chat/completions';
-
-            logToScreen("🚀 正在请求: " + apiUrl);
-
-            const payload = {
-                model: localStorage.getItem('gpt_model') || "gpt-3.5-turbo",
-                messages: [
-                    { role: "system", content: `你扮演${contact.name}。简短回复用户。禁止动作描写。` },
-                    { role: "user", content: lastUserText }
-                ],
-                temperature: 0.9
-            };
-
-            const res = await fetch(apiUrl, {
-                method: 'POST',
-                headers: { 
-                    'Content-Type': 'application/json', 
-                    'Authorization': `Bearer ${apiKey}` 
-                },
-                body: JSON.stringify(payload)
-            });
-
-            if (!res.ok) {
-                const errText = await res.text();
-                logToScreen("❌ HTTP 错误: " + res.status);
-                logToScreen("详情: " + errText.substring(0, 100));
-                throw new Error("HTTP " + res.status);
-            }
-
-            const data = await res.json();
-            const reply = data.choices[0].message.content.trim();
-            logToScreen("✅ AI 回复: " + reply.substring(0, 10) + "...");
-
-            // --- F. 渲染上屏 ---
-            // 直接调用 appendRadioLog 如果它存在
-            if (typeof appendRadioLog === 'function') {
-                appendRadioLog('ai', reply);
-            } else {
-                // 兜底渲染
-                const div = document.createElement('div');
-                div.className = 'log-entry ai';
-                div.innerHTML = `<div class="log-content">${reply}</div>`;
-                if(logContainer) logContainer.appendChild(div);
-            }
-            
-            // 尝试写入数据库 (静默失败也没关系)
-            try {
-                if (typeof saveChatMessage === 'function') {
-                    await saveChatMessage("synergy_" + contact.id, {
-                        role: "opponent", text: reply, timestamp: Date.now()
-                    });
-                    logToScreen("💾 数据库保存成功");
-                }
-            } catch(dbErr) {
-                logToScreen("⚠️ 数据库错误(不影响显示): " + dbErr.message);
-            }
-
-        } catch (e) {
-            logToScreen("💥 崩溃: " + e.message);
-            alert("执行失败: " + e.message);
-        } finally {
-            if (btnElement) {
-                btnElement.innerHTML = oldHtml;
-                btnElement.style.opacity = "1";
-            }
-        }
+            window.transmitCommand();
+        });
     }
-})();
+
+    // 强制绑定电台 AI 按钮
+    const radioAiBtn = document.querySelector('.reply-btn');
+    if (radioAiBtn) {
+        radioAiBtn.onclick = null;
+        radioAiBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            window.requestAIReply();
+        });
+    }
+    
+    replyBtns.forEach(btn => {
+        // 1. 先移除所有旧的 onclick，防止冲突
+        btn.onclick = null; 
+        
+        // 2. 重新绑定触摸事件 (touchend 在手机上反应更快)
+        btn.addEventListener('touchend', function(e) {
+            e.preventDefault(); // 防止触发两次
+            console.log("📱 手机端强制触发 Reply");
+            window.requestAIReply();
+        });
+        
+        // 3. 同时也绑定点击事件 (兼容电脑)
+        btn.addEventListener('click', function(e) {
+            console.log("💻 电脑端触发 Reply");
+            window.requestAIReply();
+        });
+    });
+    
+    console.log("✅ 按钮事件已强制重置");
+});
 </script>
 </body>
 </html>
