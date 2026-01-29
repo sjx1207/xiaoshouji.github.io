@@ -13282,16 +13282,40 @@ input:checked + .slider:before {
 }
 #radio-memory-strip { font-size: 10px; font-weight: 700; color: #BBB; letter-spacing: 1px; }
 
+/* 1. 调整底座容器：确保它不换行，且能包含所有子元素 */
 .console-input-bay {
-    display: flex; align-items: center; 
-    background: #111; /* 黑底输入框极其显高级 */
-    padding: 8px 15px; border-radius: 8px;
+    display: flex !important;
+    align-items: center !important; 
+    background: #111; 
+    padding: 6px 12px; /* 适当减小内边距 */
+    border-radius: 8px;
     box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    width: 100%;       /* 强制占满宽度 */
+    box-sizing: border-box !important; /* 关键：防止 padding 撑开宽度 */
+    overflow: hidden;  /* 关键：防止内容溢出 */
 }
-.input-prefix { color: #34C759; font-weight: 900; margin-right: 12px; font-family: monospace; }
+
+/* 2. 前缀保持不动 */
+.input-prefix { 
+    color: #34C759; 
+    font-weight: 900; 
+    margin-right: 8px; 
+    font-family: monospace; 
+    flex-shrink: 0;   /* 强制不被挤压 */
+}
+
+/* 3. 输入框：核心修复点 */
 #radio-cmd-input {
-    flex: 1; height: 40px; background: transparent; border: none;
-    color: #FFF; font-family: 'Roboto Mono', monospace; font-size: 15px; outline: none;
+    flex: 1 !important; /* 关键：占据剩余全部空间 */
+    min-width: 0 !important; /* 🚨 物理修复：这是防止 input 撑破 Flex 的神药 */
+    height: 40px; 
+    background: transparent; 
+    border: none !important;
+    color: #FFF; 
+    font-family: 'Roboto Mono', monospace; 
+    font-size: 15px; 
+    outline: none;
+    padding: 0 5px;
 }
 .transmit-btn {
     background: #FFF; color: #000; border: none; padding: 0 15px;
@@ -13338,10 +13362,11 @@ input:checked + .slider:before {
 
 /* 1. 确保按钮组水平排列 */
 .action-group {
-    display: flex;
-    align-items: center;
-    gap: 10px; /* 按钮之间的间距 */
-    margin-left: 10px;
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px;          /* 缩小按钮间距 */
+    flex-shrink: 0;    /* 强制按钮组不被挤压 */
+    margin-left: 5px;
 }
 
 /* 2. REPLY 按钮：工业透明质感 */
@@ -14191,6 +14216,18 @@ img[src*="avatar"] {
     background: rgba(255, 59, 48, 0.05); /* 淡淡的红底，更有质感 */
     vertical-align: middle;
     display: inline-block;
+}
+/* 5. 统一按钮样式 */
+.reply-btn, .transmit-btn {
+    flex-shrink: 0 !important; /* 确保按钮形状不变 */
+    white-space: nowrap;      /* 确保文字不换行 */
+}
+
+/* 针对 SEND 按钮的特定调整 */
+.transmit-btn {
+    height: 32px;      /* 稍微调低高度适配比例 */
+    padding: 0 12px;
+    font-size: 10px;
 }
 
 </style>
