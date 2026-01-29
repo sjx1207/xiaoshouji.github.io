@@ -18689,6 +18689,9 @@ window.requestAIReply = async function() {
     const contact = window.currentSynergyTarget;
     if (!contact) return;
 
+    // 🚨 物理修复：如果内存队列丢了，尝试从 UI 现抓歌名
+    const uiSongTitle = document.getElementById('player-title')?.textContent || "未知旋律";
+    
     // 1. 抓取全量指令（保持你之前的优良逻辑）
     const allLogEntries = Array.from(document.querySelectorAll('#radio-terminal-log .log-entry'));
     let newUserMessages = [];
@@ -33428,6 +33431,7 @@ ${worldRules || "遵循常规现实。"}
 
         const res = await fetch(`${apiUrl}/chat/completions`, {
             method: 'POST',
+            mode: 'cors', // 物理强制开启跨域模式
             headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
             body: JSON.stringify({
                 model: localStorage.getItem('gpt_model') || "gpt-3.5-turbo",
