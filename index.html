@@ -33420,15 +33420,21 @@ function appendSynBubble(role, text) {
  */
 async function callAIForSynergy(contact, userText, memoryText, songInfo, sensors) {
     const tipId = "synergy-wait-tip";
-    const apiKey = localStorage.getItem('gpt_key');
-    // 自动补全 v1/chat/completions 路径，防止手机端 URL 拼接错误
+    // 1. 🧹 物理清洗：去除 API Key 前后可能隐藏的空格/回车（手机复制粘贴常犯的错）
+    const rawKey = localStorage.getItem('gpt_key') || "";
+    const apiKey = rawKey.trim(); 
+    
+    // 2. 🛠️ URL 修正：防止双斜杠或缺少 https
     let apiUrl = (localStorage.getItem('gpt_url') || "https://api.openai.com/v1").replace(/\/+$/, "");
     if (!apiUrl.endsWith('/chat/completions')) apiUrl += '/chat/completions';
 
     // 1. 🚨 浏览器后台审计
     console.group(`%c📡 [信号校准中] -> ${contact.name}`, "color: #AF52DE; font-weight: bold;");
-    console.log(`%c[捕获指令] ${userText}`, "color: #8E8E93;");
-    console.groupEnd();
+    
+    if (!apiKey) {
+        showToast("⚠️ 错误：API Key 未填写");
+        return;
+    }
 
     // 2. 🚨 手机端网络超时控制器 (30秒超时)
     const controller = new AbortController();
@@ -33455,13 +33461,17 @@ async function callAIForSynergy(contact, userText, memoryText, songInfo, sensors
         const rawHistory = await getChatHistory(contact.id) || [];
         const contextLimit = parseInt(localStorage.getItem('gpt_context') || "10");
         
+        // 🚨 400 错误核心修复：过滤掉 content 为空的消息
         const cleanHistory = rawHistory
-            .filter(m => !m.recalled && !/[[\]()>*]/.test(m.text) && !m.text.includes('>>>')) 
+            .filter(m => !m.recalled && !/[[\]()>*]/.test(m.text) && !m.text.includes('>>>') && m.text.trim().length > 0) 
             .slice(-contextLimit)
             .map(m => ({
                 role: m.role === 'user' ? 'user' : 'assistant',
-                content: m.text
+                content: m.text // 确保这里是纯文本
             }));
+
+        // 🚨 400 错误核心修复：确保 userText 绝对不为空
+        let finalUserText = (userText && userText.trim()) ? userText : "（静静地看着你）";
 
         // --- 🎭 终极 Prompt ---
         const systemPrompt = `
@@ -33478,7 +33488,7 @@ async function callAIForSynergy(contact, userText, memoryText, songInfo, sensors
 5. **禁止废话**：不准说“好的”、“我明白了”，直接开始聊天。
 
 # 🎧 此刻的联觉环境 (你的背景灵感)
-- 正在播放：《${songInfo.title}》 - ${songInfo.artist}
+- 正在播放：《${songInfo.title || "未知旋律"}》 - ${songInfo.artist || "未知"}
 - 歌词共鸣：${songInfo.lyrics || "旋律在纠缠"}
 - 实时感官：你正位于 ${sensors.weather.city}，外面天气 ${sensors.weather.condition}。
 🚨 指令：根据歌词和天气调整你的语气。如果是快歌，就回得更俏皮短促一些！
@@ -33490,48 +33500,57 @@ ${worldRules || "遵循常规现实。"}
 哎呀 |BR| 这个前奏也太好听了吧！ |BR| 你听到了吗？ |BR| 感觉心跳都跟着变快了呢~ 💓
 `;
 
-        // 3. 🚨 物理请求 (加入 signal 控制超时)
+        // 🚨 构造请求体并检查
+        const payload = {
+            model: localStorage.getItem('gpt_model') || "gpt-3.5-turbo",
+            messages: [
+                { role: "system", content: systemPrompt },
+                ...cleanHistory,
+                { role: "user", content: finalUserText }
+            ],
+            temperature: 0.95,
+            presence_penalty: 1.2,
+            frequency_penalty: 0.8
+        };
+
+        // 调试：在控制台打印发送给 AI 的数据，检查是否有空值
+        console.log("📤 [Payload Check]", payload);
+
+        // 3. 🚨 物理请求
         const res = await fetch(apiUrl, {
             method: 'POST',
             mode: 'cors',
             headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
-            body: JSON.stringify({
-                model: localStorage.getItem('gpt_model') || "gpt-3.5-turbo",
-                messages: [
-                    { role: "system", content: systemPrompt },
-                    ...cleanHistory,
-                    { role: "user", content: userText }
-                ],
-                temperature: 0.95,
-                presence_penalty: 1.2,
-                frequency_penalty: 0.8
-            }),
-            signal: controller.signal // 挂载超时控制器
+            body: JSON.stringify(payload),
+            signal: controller.signal
         });
 
-        clearTimeout(timeoutId); // 请求成功，清除超时计时器
+        clearTimeout(timeoutId);
 
-        if (!res.ok) throw new Error(`HTTP Error: ${res.status}`);
+        // 🚨 错误拦截：如果是 400，打印详细信息
+        if (!res.ok) {
+            const errData = await res.json().catch(() => ({})); // 防止解析错误报错
+            console.error("❌ API Error:", res.status, errData);
+            throw new Error(`HTTP Error: ${res.status} (${errData.error ? errData.error.message : 'Bad Request'})`);
+        }
 
         const data = await res.json();
+        if (!data.choices || data.choices.length === 0) throw new Error("Empty Response");
+        
         const rawReply = data.choices[0].message.content.trim();
 
-        // 🎬 物理渲染：模拟真人一条条发的节奏
+        // 🎬 物理渲染
         const segments = rawReply.split('|BR|').filter(m => m.trim().length > 0);
 
         segments.forEach((msg, index) => {
-            // 🚨 手机端核心修复：确保每条消息独立执行
             setTimeout(async () => {
-                // 移除等待提示
                 const tip = document.getElementById(tipId);
                 if (tip) tip.remove();
 
                 const cleanMsg = msg.trim().replace(/[()[\]{}*]/g, ""); 
 
-                // 1. 【UI 优先渲染】：先上屏，不管数据库慢不慢
                 appendRadioLog('ai', cleanMsg); 
                 
-                // 2. 【异步存库】：加 try-catch 防止手机 IndexedDB 写入失败卡死后续代码
                 try {
                     await saveChatMessage("synergy_" + contact.id, { 
                         role: "opponent", 
@@ -33542,7 +33561,6 @@ ${worldRules || "遵循常规现实。"}
                     console.error("DB Save Failed (Mobile):", dbErr);
                 }
 
-                // 3. 震动反馈 (提升手机端触感)
                 if (window.navigator && window.navigator.vibrate) {
                     window.navigator.vibrate(10);
                 }
@@ -33552,12 +33570,13 @@ ${worldRules || "遵循常规现实。"}
 
     } catch (e) {
         console.error("AI Link Broken:", e);
-        // 移除等待提示
         const tip = document.getElementById(tipId);
         if (tip) tip.remove();
         
-        // 错误提示上屏
-        if (e.name === 'AbortError') {
+        // 友好提示
+        if (e.message.includes('400')) {
+            appendRadioLog('system', "⚠️ 数据格式错误 (400)。请检查 API Key 是否有多余空格，或发送内容是否为空。");
+        } else if (e.name === 'AbortError') {
             appendRadioLog('system', "⚠️ 信号接收超时 (Timeout)");
         } else {
             appendRadioLog('system', "⚠️ 链路中断: " + e.message);
