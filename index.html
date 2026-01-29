@@ -18686,37 +18686,94 @@ window.appendRadioLog = function(role, text) {
  * 🛰️ 联觉回复：物理感知与系统反馈
  */
 window.requestAIReply = async function() {
-    const contact = window.currentSynergyTarget;
-    if (!contact) return;
+    // 1. 🚨 物理锁：防止手机端网络延迟时的重复点击
+    if (window.isAiProcessing) return;
 
-    // 🚨 物理修复：如果内存队列丢了，尝试从 UI 现抓歌名
-    const uiSongTitle = document.getElementById('player-title')?.textContent || "未知旋律";
-    
-    // 1. 抓取全量指令（保持你之前的优良逻辑）
-    const allLogEntries = Array.from(document.querySelectorAll('#radio-terminal-log .log-entry'));
-    let newUserMessages = [];
-    for (let i = allLogEntries.length - 1; i >= 0; i--) {
-        const entry = allLogEntries[i];
-        if (entry.classList.contains('ai')) break;
-        if (entry.classList.contains('user')) {
-            newUserMessages.unshift(entry.querySelector('.log-content').textContent.trim());
+    // 2. 🕵️ 身份获取：多级兜底，确保绝对能找到聊天对象
+    let contact = window.currentSynergyTarget;
+    if (!contact) {
+        // 如果全局变量丢了，尝试从当前聊天室或本地缓存恢复
+        contact = window.currentChattingWith || JSON.parse(localStorage.getItem('last_synergy_char'));
+    }
+
+    if (!contact) {
+        if(typeof showToast === 'function') showToast("⚠️ 信号源丢失，请重新邀约");
+        return;
+    }
+
+    // 3. 🎬 UI 物理反馈：立即让按钮进入“加载态”，让用户知道点到了
+    const btn = document.querySelector('.reply-btn');
+    const originalIcon = btn ? btn.innerHTML : ''; // 备份图标
+    if (btn) {
+        // 变成一个转圈圈，表示正在请求
+        btn.innerHTML = `<svg class="quantum-spinner" style="width:16px; height:16px; border-width:2px; border-top-color:#fff;" viewBox="0 0 50 50"></svg>`;
+        btn.style.opacity = '0.5';
+        btn.style.pointerEvents = 'none'; // 禁止再次点击
+    }
+
+    window.isAiProcessing = true; // 上锁
+
+    try {
+        // 4. 🎵 歌曲数据抓取 (UI 现抓兜底)
+        // 如果内存里的 currentPlaylist 丢了，就直接抓界面上的文字
+        const uiTitle = document.getElementById('player-title')?.innerText || "未知旋律";
+        const uiArtist = document.getElementById('player-artist')?.innerText || "Unknown";
+        
+        // 优先用内存数据，没有就用 UI 数据兜底
+        const song = (currentPlaylist && currentPlaylist[currentPlayIndex]) 
+            ? currentPlaylist[currentPlayIndex] 
+            : { title: uiTitle, artist: uiArtist, lyrics: "" };
+
+        // 5. 🌍 环境感知数据
+        const rawWeather = localStorage.getItem('current_weather');
+        const weatherObj = rawWeather ? JSON.parse(rawWeather) : { city: "未知领域", condition: "信号静默" };
+        const tz = localStorage.getItem('user_timezone') || 'Asia/Shanghai';
+        
+        const sensors = {
+            weather: weatherObj,
+            tz: tz
+        };
+
+        // 6. 📝 上下文抓取 (你的优良逻辑 + 空值兜底)
+        const allLogEntries = Array.from(document.querySelectorAll('#radio-terminal-log .log-entry'));
+        let newUserMessages = [];
+        
+        // 倒序查找，直到遇到上一条 AI 的回复，提取这中间所有的用户发言
+        for (let i = allLogEntries.length - 1; i >= 0; i--) {
+            const entry = allLogEntries[i];
+            if (entry.classList.contains('ai')) break;
+            if (entry.classList.contains('user')) {
+                // 提取纯文本
+                newUserMessages.unshift(entry.querySelector('.log-content').innerText.trim());
+            }
+        }
+        
+        // 如果用户没说话直接点回复，发送一个默认意图（防止发空字符串导致报错）
+        const combinedUserText = newUserMessages.length > 0 
+            ? newUserMessages.join('\n') 
+            : "（静静地看着你，等待回应...）";
+
+        // F12 审计
+        console.log(`%c[Signal] 发送指令: ${combinedUserText.substring(0, 20)}...`, "color: #AF52DE;");
+        console.log(`%c[Signal] 歌词模块状态: ${song.lyrics ? "已装载" : "无数据"}`, "color: #AF52DE;");
+
+        // 7. 🚀 执行物理请求
+        // 注意：这里必须 await，否则 finally 会立刻执行导致锁解开
+        await callAIForSynergy(contact, combinedUserText, combinedUserText, song, sensors);
+
+    } catch (e) {
+        console.error("Reply Error:", e);
+        if(typeof showToast === 'function') showToast("⚠️ 频率干扰，请重试");
+    } finally {
+        // 8. 🔐 物理解锁：无论成功失败，必须恢复按钮状态
+        window.isAiProcessing = false;
+        if (btn) {
+            // 恢复原来的图标（如果备份失败，就用默认图标）
+            btn.innerHTML = originalIcon || `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>`;
+            btn.style.opacity = '1';
+            btn.style.pointerEvents = 'auto'; // 恢复点击
         }
     }
-    const combinedUserText = newUserMessages.join('\n');
-
-    // 2. 🚨 【核心修复】不仅抓歌名，还要抓歌词文本
-    const song = currentPlaylist[currentPlayIndex] || { title: "静默", artist: "无名氏", lyrics: "" };
-
-    // 3. 抓取环境参数
-    const tz = localStorage.getItem('user_timezone') || 'Asia/Shanghai';
-    const rawWeather = localStorage.getItem('current_weather');
-    const weather = rawWeather ? JSON.parse(rawWeather) : { city: "未知坐标", temp: "??", condition: "信号微弱" };
-
-    // F12 审计：确认歌词是否已进入发射序列
-    console.log(`%c[Signal] 歌词模块状态: ${song.lyrics ? "已装载 (" + song.lyrics.length + "字)" : "无数据"}`, "color: #AF52DE;");
-
-    // 4. 执行发送
-    await callAIForSynergy(contact, combinedUserText, combinedUserText, song, {weather, tz});
 };
 /**
  * 3. 执行邀约协议 (AI 决策分支)
@@ -33362,14 +33419,20 @@ function appendSynBubble(role, text) {
  * 作用：跨 App 抓取数据，编织符合人设与世界观的深度回复
  */
 async function callAIForSynergy(contact, userText, memoryText, songInfo, sensors) {
-    const tipId = "synergy-wait-tip"; 
+    const tipId = "synergy-wait-tip";
     const apiKey = localStorage.getItem('gpt_key');
-    const apiUrl = (localStorage.getItem('gpt_url') || "").replace(/\/+$/, "");
+    // 自动补全 v1/chat/completions 路径，防止手机端 URL 拼接错误
+    let apiUrl = (localStorage.getItem('gpt_url') || "https://api.openai.com/v1").replace(/\/+$/, "");
+    if (!apiUrl.endsWith('/chat/completions')) apiUrl += '/chat/completions';
 
-    // 1. 🚨 浏览器后台审计（不进页面）
+    // 1. 🚨 浏览器后台审计
     console.group(`%c📡 [信号校准中] -> ${contact.name}`, "color: #AF52DE; font-weight: bold;");
     console.log(`%c[捕获指令] ${userText}`, "color: #8E8E93;");
     console.groupEnd();
+
+    // 2. 🚨 手机端网络超时控制器 (30秒超时)
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000);
 
     try {
         const userData = JSON.parse(localStorage.getItem('user_persona_for_' + contact.id)) || 
@@ -33388,12 +33451,10 @@ async function callAIForSynergy(contact, userText, memoryText, songInfo, sensors
                 .join("\n");
         }
 
-        // --- 🧹 🧹 逻辑清洗：剔除所有穿帮的系统记录 ---
+        // --- 🧹 逻辑清洗 ---
         const rawHistory = await getChatHistory(contact.id) || [];
         const contextLimit = parseInt(localStorage.getItem('gpt_context') || "10");
         
-        // 核心过滤：绝对不把任何包含 [、]、>>>、( )、* * 的消息喂给 AI
-        // 这样可以物理切断它模仿“系统提示”和“动作描写”的路径
         const cleanHistory = rawHistory
             .filter(m => !m.recalled && !/[[\]()>*]/.test(m.text) && !m.text.includes('>>>')) 
             .slice(-contextLimit)
@@ -33402,7 +33463,7 @@ async function callAIForSynergy(contact, userText, memoryText, songInfo, sensors
                 content: m.text
             }));
 
-        // --- 🎭 终极 Prompt：强制 E 人碎碎念模式 ---
+        // --- 🎭 终极 Prompt ---
         const systemPrompt = `
 # 🌌 核心身份：你就是 [${contact.name}]
 - 你是充满活力的 E 人！现在正通过电台波段和 [${userData.name}] 秘密连线。
@@ -33429,9 +33490,10 @@ ${worldRules || "遵循常规现实。"}
 哎呀 |BR| 这个前奏也太好听了吧！ |BR| 你听到了吗？ |BR| 感觉心跳都跟着变快了呢~ 💓
 `;
 
-        const res = await fetch(`${apiUrl}/chat/completions`, {
+        // 3. 🚨 物理请求 (加入 signal 控制超时)
+        const res = await fetch(apiUrl, {
             method: 'POST',
-            mode: 'cors', // 物理强制开启跨域模式
+            mode: 'cors',
             headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
             body: JSON.stringify({
                 model: localStorage.getItem('gpt_model') || "gpt-3.5-turbo",
@@ -33440,11 +33502,16 @@ ${worldRules || "遵循常规现实。"}
                     ...cleanHistory,
                     { role: "user", content: userText }
                 ],
-                temperature: 0.95, // 保持高灵活性
-                presence_penalty: 1.2,  // 🚨 强力压制：极大幅度防止复读
-                frequency_penalty: 0.8  // 🚨 惩罚重复用词
-            })
+                temperature: 0.95,
+                presence_penalty: 1.2,
+                frequency_penalty: 0.8
+            }),
+            signal: controller.signal // 挂载超时控制器
         });
+
+        clearTimeout(timeoutId); // 请求成功，清除超时计时器
+
+        if (!res.ok) throw new Error(`HTTP Error: ${res.status}`);
 
         const data = await res.json();
         const rawReply = data.choices[0].message.content.trim();
@@ -33452,34 +33519,49 @@ ${worldRules || "遵循常规现实。"}
         // 🎬 物理渲染：模拟真人一条条发的节奏
         const segments = rawReply.split('|BR|').filter(m => m.trim().length > 0);
 
-        // 在 callAIForSynergy 的 segments.forEach 内部
         segments.forEach((msg, index) => {
+            // 🚨 手机端核心修复：确保每条消息独立执行
             setTimeout(async () => {
+                // 移除等待提示
                 const tip = document.getElementById(tipId);
                 if (tip) tip.remove();
 
                 const cleanMsg = msg.trim().replace(/[()[\]{}*]/g, ""); 
 
-                // 1. 黑色屏幕显示
+                // 1. 【UI 优先渲染】：先上屏，不管数据库慢不慢
                 appendRadioLog('ai', cleanMsg); 
                 
-                // 2. 🚨 核心改动：存入私密 key
-                await saveChatMessage("synergy_" + contact.id, { 
-                    role: "opponent", 
-                    text: cleanMsg, 
-                    timestamp: Date.now()
-                });
+                // 2. 【异步存库】：加 try-catch 防止手机 IndexedDB 写入失败卡死后续代码
+                try {
+                    await saveChatMessage("synergy_" + contact.id, { 
+                        role: "opponent", 
+                        text: cleanMsg, 
+                        timestamp: Date.now()
+                    });
+                } catch (dbErr) {
+                    console.error("DB Save Failed (Mobile):", dbErr);
+                }
 
-                // 🚨 物理删掉：if(window.currentChattingWith...) { renderMessages(); }
-                // 这一步删掉了，主聊天页面就绝对不会被同步刷新了！
+                // 3. 震动反馈 (提升手机端触感)
+                if (window.navigator && window.navigator.vibrate) {
+                    window.navigator.vibrate(10);
+                }
                 
             }, 600 + (index * 1300));
         });
 
     } catch (e) {
         console.error("AI Link Broken:", e);
+        // 移除等待提示
         const tip = document.getElementById(tipId);
         if (tip) tip.remove();
+        
+        // 错误提示上屏
+        if (e.name === 'AbortError') {
+            appendRadioLog('system', "⚠️ 信号接收超时 (Timeout)");
+        } else {
+            appendRadioLog('system', "⚠️ 链路中断: " + e.message);
+        }
     }
 }
 
