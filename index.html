@@ -18683,61 +18683,79 @@ window.appendRadioLog = function(role, text) {
  * 🛰️ AI 主动回复逻辑 (由 REPLY 按钮物理触发)
  */
 window.requestAIReply = async function() {
-    // 1. 物理防抖锁
-    if (window.isAiProcessing) return;
+    console.log("🖱️ [Click] 按钮点击事件触发"); // F12 调试用
 
-    // 2. 获取当前电台连接的角色
-    let contact = window.currentSynergyTarget;
-    if (!contact) {
-        contact = window.currentChattingWith || JSON.parse(localStorage.getItem('last_synergy_char'));
+    // 1. 物理防抖
+    if (window.isAiProcessing) {
+        showToast("⏳ 正在思考中...");
+        return;
     }
-    if (!contact) return showToast("⚠️ 信号丢失，请重新选择角色");
 
-    // 3. UI 变身加载态
+    // 2. 🔎 暴力获取联系人（三重兜底）
+    // 手机端页面切换时全局变量容易丢，所以这里要穷尽所有可能
+    let contact = window.currentSynergyTarget || 
+                  window.currentChattingWith || 
+                  JSON.parse(localStorage.getItem('last_synergy_char'));
+
+    if (!contact || !contact.id) {
+        // 如果实在找不到人，就去数据库抓第一个，保证不报错
+        try {
+            const friends = await loadFromDB('chat_friends') || [];
+            if (friends.length > 0) contact = friends[0];
+        } catch(e) {}
+    }
+
+    if (!contact) {
+        alert("⚠️ 无法识别聊天对象，请重新进入"); // 手机端用 alert 最直观
+        return;
+    }
+
+    // 3. 🎬 UI 变身（立即执行，给用户反馈）
     const btn = document.querySelector('.reply-btn');
-    const originalIcon = btn ? btn.innerHTML : '';
+    const oldIcon = btn ? btn.innerHTML : '';
     if (btn) {
-        btn.innerHTML = `<svg class="quantum-spinner" style="width:16px; height:16px; border-width:2px; border-top-color:#fff;" viewBox="0 0 50 50"></svg>`;
+        btn.innerHTML = `<span style="font-size:10px; font-weight:bold;">...</span>`;
         btn.style.opacity = '0.5';
     }
 
     window.isAiProcessing = true;
 
     try {
-        // --- 🎵 获取当前播放歌曲 (环境数据) ---
-        const uiTitle = document.getElementById('player-title')?.textContent || "未知旋律";
-        const uiArtist = document.getElementById('player-artist')?.textContent || "Unknown";
-        const song = (currentPlaylist && currentPlaylist[currentPlayIndex]) 
-            ? currentPlaylist[currentPlayIndex] 
-            : { title: uiTitle, artist: uiArtist, lyrics: "" };
+        // 4. 🎵 获取歌曲信息 (防崩处理)
+        let songTitle = "未知旋律";
+        try {
+            songTitle = document.getElementById('player-title')?.innerText || 
+                        (currentPlaylist[currentPlayIndex] ? currentPlaylist[currentPlayIndex].title : "静默");
+        } catch(e) {}
 
-        // --- 🚨 核心逻辑复刻：从数据库捞历史，而不是从屏幕抓 ---
-        // Chat App 是用 getChatHistory(contact.id)，这里我们用 getChatHistory("synergy_" + contact.id)
-        // 这样手机端绝对不会抓空！
+        // 5. 💾 从数据库读取历史 (复用 Chat App 逻辑)
+        // 注意：这里读取的是 synergy_ 开头的专属记录
         const history = await getChatHistory("synergy_" + contact.id) || [];
         
-        // 找到最后一条用户说的话
+        // 6. 📝 提取上一句话
         let lastUserText = "（静静地听着歌）";
+        // 倒序找用户说的话
         for (let i = history.length - 1; i >= 0; i--) {
             if (history[i].role === 'user') {
                 lastUserText = history[i].text;
                 break;
             }
         }
+        
+        console.log("📤 准备发送:", lastUserText);
 
-        console.log("📤 [从数据库提取] 用户上一句:", lastUserText);
-
-        // 4. 调用 AI (传入歌曲信息作为环境)
-        await callAIForSynergy(contact, lastUserText, history, song);
+        // 7. 🚀 发射！
+        await callAIForSynergy(contact, lastUserText, history, { title: songTitle });
 
     } catch (e) {
-        console.error("Reply Error:", e);
-        showToast("⚠️ 信号干扰");
+        console.error("❌ 运行崩溃:", e);
+        // 手机端调试神器：直接把错误弹出来
+        alert("运行错误: " + e.message);
     } finally {
-        // 5. 解锁
+        // 8. 还原现场
         window.isAiProcessing = false;
         if (btn) {
-            btn.innerHTML = originalIcon || `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>`;
+            btn.innerHTML = oldIcon || `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>`;
             btn.style.opacity = '1';
         }
     }
@@ -33387,19 +33405,24 @@ function appendSynBubble(role, text) {
  */
 async function callAIForSynergy(contact, userText, historyData, songInfo) {
     const apiKey = localStorage.getItem('gpt_key');
-    let apiUrl = (localStorage.getItem('gpt_url') || "https://api.openai.com/v1").replace(/\/+$/, "");
-    if (!apiUrl.endsWith('/chat/completions')) apiUrl += '/chat/completions';
+    // URL 处理：确保去掉末尾斜杠，并补全路径
+    let baseUrl = (localStorage.getItem('gpt_url') || "https://api.openai.com/v1").replace(/\/+$/, "");
+    if (!baseUrl.endsWith('/chat/completions')) baseUrl += '/chat/completions';
 
     if (!apiKey) {
-        showToast("请配置 API Key");
+        alert("请在设置页填写 API Key");
         return;
     }
 
-    // 1. 准备上下文 (取最近 6 条电台记录)
-    const contextMessages = historyData.slice(-6).map(m => ({
-        role: m.role === 'user' ? 'user' : 'assistant',
-        content: m.text
-    }));
+    // 1. 上下文截取 (取最后 6 条，防止 Token 爆炸)
+    // 过滤掉空内容的废数据
+    const contextMessages = historyData
+        .filter(m => m.text && m.text.trim() !== "")
+        .slice(-6)
+        .map(m => ({
+            role: m.role === 'user' ? 'user' : 'assistant',
+            content: m.text
+        }));
 
     // --- 🎭 终极 Prompt ---
         const systemPrompt = `
@@ -33428,46 +33451,51 @@ ${worldRules || "遵循常规现实。"}
 哎呀 |BR| 这个前奏也太好听了吧！ |BR| 你听到了吗？ |BR| 感觉心跳都跟着变快了呢~ 💓
 `;
 
-    // 3. 🚨 构造标准请求体 (完全照搬 Chat App)
+    // 3. 构造 User 消息 (强制非空)
+    const finalUserMsg = userText || "（看着你）";
+
+    // 4. 构造请求包
     const payload = {
         model: localStorage.getItem('gpt_model') || "gpt-3.5-turbo",
         messages: [
             { role: "system", content: systemPrompt },
             ...contextMessages, 
-            { role: "user", content: userText } // 确保这一条绝对不为空
+            { role: "user", content: finalUserMsg }
         ],
-        temperature: 0.9,
-        presence_penalty: 1.0
+        temperature: 0.85,
+        presence_penalty: 0.6
     };
 
     try {
-        const res = await fetch(apiUrl, {
+        const res = await fetch(baseUrl, {
             method: 'POST',
+            // 🚨 手机端 Fetch 核心配置：不加 mode: 'cors' 有时反而能通，视代理而定
             headers: { 
                 'Content-Type': 'application/json', 
-                'Authorization': `Bearer ${apiKey}`
+                'Authorization': `Bearer ${apiKey}` 
             },
             body: JSON.stringify(payload)
         });
 
         if (!res.ok) {
-            const err = await res.json();
-            throw new Error(err.error?.message || "HTTP " + res.status);
+            const errText = await res.text(); // 获取详细错误信息
+            throw new Error(`HTTP ${res.status}: ${errText}`);
         }
 
         const data = await res.json();
         const rawReply = data.choices[0].message.content.trim();
 
-        // 4. 收到回复，上屏 + 入库
+        // 5. 成功！处理回复
         const segments = rawReply.split('|BR|').filter(m => m.trim().length > 0);
 
-        // 这里的逻辑和之前一样，分段显示
         segments.forEach((msg, index) => {
             setTimeout(async () => {
                 const cleanMsg = msg.trim().replace(/[()[\]{}*]/g, ""); 
                 
                 // A. 屏幕显示
-                appendRadioLog('ai', cleanMsg);
+                if(typeof appendRadioLog === 'function') {
+                    appendRadioLog('ai', cleanMsg);
+                }
                 
                 // B. 存入数据库
                 await saveChatMessage("synergy_" + contact.id, {
@@ -33476,15 +33504,20 @@ ${worldRules || "遵循常规现实。"}
                     timestamp: Date.now()
                 });
 
-                // C. 震动
+                // C. 震动反馈
                 if (navigator.vibrate) navigator.vibrate(10);
 
             }, 600 + (index * 1200));
         });
 
     } catch (e) {
-        console.error("AI Error:", e);
-        appendRadioLog('system', "⚠️ 连接中断: " + e.message);
+        console.error("Fetch Error:", e);
+        // 关键：把错误打印到屏幕上，方便你在手机上看
+        if(typeof appendRadioLog === 'function') {
+            appendRadioLog('system', "❌ 连接断开: " + e.message.substring(0, 50));
+        } else {
+            alert("回复失败: " + e.message);
+        }
     }
 }
 
@@ -34384,7 +34417,31 @@ async function triggerAiSubReply(commentIndex) {
         renderDetailComments(posts[postIndex].replies); // 刷新列表
     }
 }
-
+// === 📱 手机端强制事件绑定补丁 ===
+document.addEventListener('DOMContentLoaded', () => {
+    // 找到所有 reply-btn 按钮（为了保险起见，用 querySelectorAll）
+    const replyBtns = document.querySelectorAll('.reply-btn');
+    
+    replyBtns.forEach(btn => {
+        // 1. 先移除所有旧的 onclick，防止冲突
+        btn.onclick = null; 
+        
+        // 2. 重新绑定触摸事件 (touchend 在手机上反应更快)
+        btn.addEventListener('touchend', function(e) {
+            e.preventDefault(); // 防止触发两次
+            console.log("📱 手机端强制触发 Reply");
+            window.requestAIReply();
+        });
+        
+        // 3. 同时也绑定点击事件 (兼容电脑)
+        btn.addEventListener('click', function(e) {
+            console.log("💻 电脑端触发 Reply");
+            window.requestAIReply();
+        });
+    });
+    
+    console.log("✅ 按钮事件已强制重置");
+});
 </script>
 </body>
 </html>
