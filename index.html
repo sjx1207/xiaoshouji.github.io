@@ -10,6 +10,7 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Zhi+Mang+Xing&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdn.bootcdn.net/ajax/libs/tiny-pinyin/1.3.2/tiny-pinyin.js"></script>
     <style>
         /* 导入顶级艺术字体：Cormorant Garamond（极致优雅）和 Dancing Script（灵动意向） */
         @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;1,300&family=Dancing+Script:wght@500&display=swap');
@@ -13546,6 +13547,8 @@ img[src*="avatar"] {
     width: 100%;
     margin-top: 10px;
     padding-bottom: 50px;
+    padding: 10px 15px;
+    background: transparent;
 }
 
 .npc-community-card {
@@ -13583,11 +13586,6 @@ img[src*="avatar"] {
     background: rgba(0, 0, 0, 0.05);
     color: #555;
     border-radius: 4px;
-}
-/* 🛰️ 社区主容器 */
-#npc-community-zone {
-    padding: 10px 15px;
-    background: transparent;
 }
 
 /* 🌀 扫频按钮美化 */
@@ -13816,7 +13814,7 @@ img[src*="avatar"] {
     /* 4. iOS 丝滑滚动补丁 */
     -webkit-overflow-scrolling: touch !important; 
     
-    padding-bottom: 100px !important; /* 给底部留出呼吸空间 */
+    padding-bottom: 300px !important; /* 给底部留出呼吸空间 */
 }
 
 /* 🚨 嵌套容器滚动保护 */
@@ -14229,11 +14227,1094 @@ img[src*="avatar"] {
     padding: 0 12px;
     font-size: 10px;
 }
+/* 专辑封面旋转动画 */
+@keyframes spinCover {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.album-cover.playing {
+    animation: spinCover 12s linear infinite;
+    border: 2px solid #fff;
+    box-shadow: 0 0 15px rgba(0,0,0,0.2);
+}
+/* 🚨 物理强制补丁：底部防遮挡专用 */
+#npc-community-zone,          /* 社区列表页 */
+#npc-post-detail-overlay,     /* 帖子详情页 */
+#npc-feed-container,          /* 帖子容器 */
+.sheet-body                   /* 底部回复抽屉 */ 
+{
+    /* 暴力给 220px，足以避开任何导航栏、输入框和 iPhone 底部横条 */
+    padding-bottom: 85px !important; 
+    
+    /* 确保最后一条内容能完整露出来 */
+    box-sizing: border-box !important;
+}
+
+/* --- 📞 Phone App 专属样式 --- */
+
+/* 1. 电话主容器 */
+.phone-view-container {
+    width: 100%;
+    height: 100%;
+    display: none; /* 默认隐藏，由 JS 控制 */
+    flex-direction: column;
+    animation: fadeIn 0.3s ease;
+}
+.phone-view-container.active {
+    display: flex;
+}
+
+/* 2. 拨号键盘 (Keypad) - 极简圆球 */
+.keypad-display-area {
+    flex: 1;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding-bottom: 20px;
+}
+#keypad-number-display {
+    font-size: 36px;
+    font-weight: 300;
+    color: #000;
+    letter-spacing: 2px;
+    min-height: 50px;
+}
+
+.keypad-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px 25px;
+    padding: 0 40px 120px 40px; /* 底部留白给导航栏 */
+    justify-items: center;
+}
+
+.keypad-btn {
+    width: 72px;
+    height: 72px;
+    background: #E5E5EA; /* iOS 浅灰 */
+    border-radius: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.2s;
+    user-select: none;
+}
+.keypad-btn:active { background: #D1D1D6; }
+
+.key-num { font-size: 28px; font-weight: 500; color: #000; line-height: 1; }
+.key-alpha { font-size: 9px; font-weight: 700; color: #000; letter-spacing: 1px; margin-top: 2px; }
+
+/* 呼叫按钮 */
+.keypad-call-btn {
+    width: 72px; height: 72px;
+    background: #34C759; /* 电话绿 */
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff;
+    box-shadow: 0 4px 15px rgba(52, 199, 89, 0.4);
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+.keypad-call-btn:active { transform: scale(0.95); }
+
+/* 3. 通话记录 (Recents) - 红黑风格 */
+.recents-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 10px 0 100px 0;
+}
+.recent-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 20px;
+    border-bottom: 0.5px solid rgba(0,0,0,0.05);
+    cursor: pointer;
+}
+.recent-item:active { background: #F2F2F7; }
+.call-type-icon { width: 16px; margin-right: 12px; }
+.call-info { flex: 1; }
+.caller-name { font-size: 17px; font-weight: 600; color: #000; }
+.caller-name.missed { color: #FF3B30; } /* 未接来电红色 */
+.call-meta { font-size: 12px; color: #8E8E93; margin-top: 2px; }
+.call-time { font-size: 14px; color: #8E8E93; }
+.info-icon { color: #007AFF; margin-left: 10px; }
+
+/* 4. 液态玻璃导航栏 (Bottom Nav) */
+.phone-glass-nav-wrapper {
+    position: absolute;
+    bottom: 35px;
+    left: 0; 
+    width: 100%;
+    display: flex; 
+    justify-content: center;
+    z-index: 100;
+    pointer-events: none; /* 穿透空白区域 */
+}
+
+.phone-glass-nav {
+    pointer-events: auto;
+    display: flex;
+    gap: 30px;
+    padding: 12px 35px;
+    background: rgba(255, 255, 255, 0.75);
+    backdrop-filter: blur(25px) saturate(180%);
+    -webkit-backdrop-filter: blur(25px) saturate(180%);
+    border-radius: 40px; /* 完美的圆角胶囊 */
+    box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+    border: 0.5px solid rgba(255,255,255,0.4);
+}
+
+.p-nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    color: #C7C7CC; /* 未选中灰色 */
+    transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+    cursor: pointer;
+}
+
+.p-nav-item svg {
+    width: 24px; height: 24px;
+    fill: currentColor;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.05));
+}
+
+.p-nav-item span {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+/* 激活状态：深蓝 + 上浮 */
+.p-nav-item.active {
+    color: #007AFF; 
+    transform: translateY(-2px);
+}
+.p-nav-item.active svg {
+    filter: drop-shadow(0 4px 8px rgba(0, 122, 255, 0.25));
+}
+/* 🚨 强制覆盖：电话 App 的头部样式 */
+#phoneApp .app-header {
+    justify-content: flex-start !important; /* 强制靠左 */
+    padding-left: 25px !important;         /* 左边留出呼吸感 */
+    padding-top: 50px !important;          /* 避开状态栏 */
+    height: auto !important;               /* 高度自适应 */
+    margin-bottom: 10px;
+}
+
+#phoneApp .header-title-big {
+    font-family: -apple-system, sans-serif;
+    font-size: 34px !important;     /* 超大字号 */
+    font-weight: 800 !important;    /* 特粗 */
+    color: #000000 !important;      /* 纯黑 */
+    text-align: left !important;    /* 文字左对齐 */
+    letter-spacing: -1px;           /* iOS 风格紧凑间距 */
+    flex: none !important;          /* 不要自动伸缩 */
+}
+
+/* 隐藏左边的占位块，防止它把标题挤走 */
+#phoneApp .app-header > div:first-child {
+    display: none !important; 
+}
+/* 🚨 紧急修复：将导航栏改为全宽、贴底的原生样式 */
+
+/* 1. 修改外层包装器：让它不再悬浮，而是填满底部 */
+.phone-glass-nav-wrapper {
+    bottom: 0 !important;       /* 强制贴到底部 */
+    left: 0 !important;
+    width: 100% !important;     /* 强制占满全宽 */
+    padding: 0 !important;      /* 去掉左右的留白 */
+    display: block !important;  /* 不需要 flex 居中了 */
+}
+
+/* 2. 修改导航栏本体：去掉圆角和边框，变成通栏 */
+.phone-glass-nav {
+    width: 100% !important;
+    border-radius: 0 !important; /* ❌ 去掉圆角，变直角 */
+    margin: 0 !important;        /* 去掉外边距 */
+    padding: 10px 0 20px 0 !important; /* 调整内边距 (底部留点空间给 iPhone 横条) */
+    
+    box-shadow: none !important; /* ❌ 去掉浮起来的阴影 */
+    border: none !important;     /* ❌ 去掉边框 */
+    border-top: 0.5px solid rgba(0, 0, 0, 0.1) !important; /* ✅ 加一条细的顶部分割线 */
+    
+    justify-content: space-around !important; /* ✅ 让三个图标在横向上均匀分布 */
+    gap: 0 !important; /* 去掉之前的固定间距 */
+    
+    /* 保持毛玻璃背景，看起来更高级 */
+    background: rgba(255, 255, 255, 0.9) !important;
+}
+
+/* 3. 让每个导航项平分宽度 */
+.p-nav-item {
+    flex: 1 !important; /* 每个项占 1/3 宽度 */
+    padding: 0 !important;
+}
+/* 🚨 暴力修正：把电话 App 的标题往上提 */
+#phoneApp .app-header {
+    /* 核心：把之前的 50px 砍掉，改成 15px 就很紧凑了 */
+    padding-top: 15px !important; 
+    
+    /* 确保高度不会被撑得太离谱 */
+    height: auto !important;
+    min-height: 50px !important;
+    
+    /* 强制垂直居中，防止文字偏下 */
+    align-items: center !important;
+    
+    /* 保持左对齐 */
+    justify-content: flex-start !important;
+    padding-left: 25px !important;
+}
+
+/* 顺手把标题文字的上下边距也清零，确保它贴顶 */
+#phoneApp .header-title-big {
+    margin: 0 !important;
+    padding: 0 !important;
+    line-height: 1 !important; /* 紧凑行高 */
+    transform: translateY(0) !important; /* 防止有位移 */
+}
+/* 🚨 电话 App 头部终极修正：左标题，右按钮 */
+#phoneApp .app-header {
+    display: flex !important;
+    justify-content: space-between !important; /* 核心：撑开两头 */
+    align-items: center !important;
+    
+    /* 间距微调 */
+    padding-top: 15px !important;  /* 紧凑高度 */
+    padding-left: 25px !important; /* 标题左边距 */
+    padding-right: 25px !important;/* 按钮右边距 */
+    height: 50px !important;       /* 锁定高度，防止乱跳 */
+}
+
+/* 标题样式：靠左，黑色，巨大 */
+#phoneApp .header-title-big {
+    text-align: left !important;
+    flex: 1 !important;            /* 占据中间所有空白，把按钮挤到最右 */
+    font-size: 34px !important;
+    font-weight: 800 !important;
+    color: #000 !important;
+    margin: 0 !important;
+    line-height: 1 !important;
+}
+
+/* 隐藏左侧那个没用的透明占位块，防止它捣乱 */
+#phoneApp .app-header > div:first-child {
+    display: none !important;
+}
+
+/* 确保关闭按钮可见且位置正确 */
+#phone-close-btn {
+    width: 32px !important;
+    height: 32px !important;
+    background: #e5e5ea !important; /* 给个浅灰背景，更像原生按钮 */
+    border-radius: 50% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+/* 🚨 物理下沉补丁：让键盘贴近底部导航 */
+.keypad-grid {
+    /* 核心：从原来的 120px 减少到 90px */
+    /* 90px 大约是导航栏的高度+一点点空隙，既不会被遮住，又离得很近 */
+    padding-bottom: 30px !important; 
+    
+    /* 增加一点顶部的推力，把整个键盘区往下压 */
+    margin-top: auto !important; 
+}
+
+/* 配合调整：让上面的数字显示区不要占太多空间，允许键盘上来 */
+.keypad-display-area {
+    /* 从 flex:1 改为 flex:0.6，释放空间给下沉 */
+    flex: 0.8 !important; 
+    padding-bottom: 10px !important; /* 减少数字和键盘之间的空隙 */
+}
+/* --- 🚨 拨号页：顶部速拨栏 (Quick Dial) --- */
+.quick-dial-section {
+    padding: 10px 0 0 0;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    height: 110px; /* 固定高度区 */
+    flex-shrink: 0;
+}
+
+.quick-label {
+    padding-left: 25px;
+    font-size: 10px;
+    font-weight: 800;
+    color: #C7C7CC;
+    letter-spacing: 2px;
+    margin-bottom: 12px;
+    text-transform: uppercase;
+}
+
+.quick-scroll-wrapper {
+    display: flex;
+    overflow-x: auto;
+    padding: 0 20px;
+    gap: 20px;
+    scrollbar-width: none; /* Firefox */
+    -webkit-overflow-scrolling: touch;
+}
+.quick-scroll-wrapper::-webkit-scrollbar { display: none; } /* Chrome/Safari */
+
+.quick-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    flex-shrink: 0;
+    width: 60px;
+    transition: transform 0.2s;
+}
+
+.quick-item:active { transform: scale(0.95); opacity: 0.7; }
+
+/* 头像：极简黑白风 */
+.quick-avatar {
+    width: 54px;
+    height: 54px;
+    border-radius: 50%;
+    object-fit: cover;
+    background: #F2F2F7;
+    border: 1.5px solid #fff;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    filter: grayscale(100%); /* 🚨 核心：强制黑白，显得高级 */
+}
+
+.quick-name {
+    font-size: 10px;
+    font-weight: 700;
+    color: #1d1d1f;
+    text-align: center;
+    width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* --- 🔢 数字显示区微调 --- */
+.keypad-display-area {
+    position: relative;
+    padding: 0 40px 20px 40px;
+    align-items: center; /* 垂直居中 */
+    justify-content: center;
+}
+
+#keypad-number-display {
+    font-size: 38px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    color: #000;
+    height: 50px;
+    line-height: 50px;
+}
+
+/* 隐藏的小删除按钮 */
+.mini-del-btn {
+    position: absolute;
+    right: 30px; /* 放在数字右边 */
+    color: #C7C7CC;
+    cursor: pointer;
+    display: none; /* 默认隐藏，有数字才显示 */
+    padding: 10px;
+}
+.mini-del-btn:active { color: #000; }
+/* 🚨 物理下沉补丁：让号码显示区“坠”到底部 */
+.keypad-display-area {
+    /* 1. 改变对齐方式：从居中(center)改为底部对齐(flex-end) */
+    align-items: flex-end !important;
+    
+    /* 2. 微调底部间距：控制数字和键盘第一排的物理距离 */
+    /* 觉得太近就改成 20px，太远就改成 0px */
+    padding-bottom: 10px !important; 
+    
+    /* 3. 确保容器依然占满中间的空隙 */
+    flex: 1 !important; 
+    display: flex !important;
+    justify-content: center !important;
+    position: relative !important; /* 确保删除按钮能定位 */
+}
+
+/* 🚨 同步修正删除按钮的位置 */
+/* 因为数字下沉了，删除按钮也得跟着沉下来，不然会对不齐 */
+.mini-del-btn {
+    top: auto !important;     /* 取消顶部定位 */
+    bottom: 20px !important;  /* 🚨 物理锁定到底部 (根据 padding-bottom 微调) */
+    /* 垂直居中修正（如果数字太高） */
+    transform: translateY(-5px) !important; 
+}
+/* --- 📞 电话添加弹窗：Noir White 风格 (强制拉伸版) --- */
+
+/* 1. 弹窗容器：核心修改！去掉四周内边距，让它物理撑满 */
+.phone-add-sheet {
+    width: 100vw !important;        /* 🚨 强制占满屏幕宽度 */
+    max-width: none !important;     /* 移除最大宽度限制 */
+    background: #ffffff;
+    border-radius: 24px 24px 0 0;
+    
+    /* 🚨 关键：这里改成 0，不要让父容器挤压子元素 */
+    padding: 0 !important;          
+    
+    box-shadow: 0 -10px 40px rgba(0,0,0,0.1);
+    animation: sheetSlideUp 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+    display: flex;
+    flex-direction: column;
+    max-height: 85vh;
+    overflow: hidden; /* 防止圆角被直角子元素遮挡 */
+}
+
+.sheet-handle-bar {
+    width: 36px; height: 4px; background: #E5E5EA; border-radius: 2px;
+    margin: 12px auto; /* 稍微调整一下上下位置 */
+}
+
+/* 2. 头部：因为父容器没了 padding，这里要自己加回来 */
+.phone-add-header {
+    display: flex; justify-content: space-between; align-items: center;
+    /* 🚨 关键：给头部单独加左右边距 (24px) */
+    padding: 0 24px 15px 24px !important; 
+    margin-bottom: 10px;
+    border-bottom: 0.5px solid rgba(0,0,0,0.05); /* 加一条极细的分割线增加精致感 */
+}
+.header-cancel { font-size: 16px; color: #8E8E93; cursor: pointer; }
+.header-title { font-size: 17px; font-weight: 700; color: #000; }
+.header-save { font-size: 16px; font-weight: 700; color: #007AFF; cursor: pointer; }
+
+/* 3. 滚动区域：单独控制，防止撑破布局 */
+/* 这里的 padding-bottom 是为了防止被底部黑条遮挡 */
+#phone-add-scroll-area, .phone-add-panel {
+    width: 100%;
+    padding: 10px 0 100px 0 !important; 
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* 4. 分段控制器 (Create/Import) */
+/* 只要你在 HTML 里给它加上 style="width: auto; margin: 0 20px 25px 20px;" 就能对齐 */
+/* 或者在这里强制写死： */
+.phone-add-sheet .segment-control {
+    margin: 0 20px 25px 20px !important; /* 左右留 20px */
+    width: auto !important;
+}
+
+/* 头像上传器 */
+.phone-avatar-uploader {
+    width: 80px; height: 80px;
+    background: #F2F2F7;
+    border-radius: 50%;
+    margin: 0 auto 25px auto;
+    display: flex; align-items: center; justify-content: center;
+    overflow: hidden;
+    position: relative;
+    cursor: pointer;
+    border: 1px solid rgba(0,0,0,0.05);
+}
+#phone-avatar-pre { width: 100%; height: 100%; object-fit: cover; }
+#phone-avatar-placeholder {
+    display: flex; flex-direction: column; align-items: center;
+    gap: 4px; font-size: 10px; color: #ccc; font-weight: 600;
+}
+
+/* 5. 极简表单组：核心修改！让它撑开 */
+.noir-form-group {
+    background: #F9F9F9;
+    border-radius: 12px;
+    padding-left: 16px;
+    
+    /* 🚨 关键：左右只留 20px 的空隙 */
+    margin-left: 20px !important;
+    margin-right: 20px !important;
+    margin-bottom: 20px !important;
+    width: auto !important; /* 自动填满剩余空间 */
+    box-sizing: border-box; /* 防止边框撑大 */
+}
+
+.noir-input-row {
+    display: flex; align-items: center;
+    padding: 12px 16px 12px 0;
+    border-bottom: 0.5px solid rgba(0,0,0,0.1);
+}
+/* 去掉最后一行的线 */
+.noir-input-row:last-child {
+    border-bottom: none;
+}
+
+.noir-input-row label {
+    width: 70px;
+    font-size: 10px; font-weight: 700; color: #8E8E93; letter-spacing: 1px;
+}
+.noir-input-row input {
+    flex: 1; border: none; background: transparent;
+    font-size: 16px; color: #000; outline: none; font-weight: 500;
+}
+.noir-input-row input::placeholder { color: #D1D1D6; font-weight: 400; }
+
+/* 开关行：对齐文字 */
+.noir-toggle-row {
+    display: flex; justify-content: space-between; align-items: center;
+    /* 🚨 关键：左右留 24px，跟标题对齐 */
+    padding: 0 24px !important; 
+    font-size: 14px; font-weight: 600; color: #333;
+}
+
+/* 导入网格 */
+.import-grid-wrapper {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px;
+    max-height: 300px; overflow-y: auto; 
+    padding: 10px 20px; /* 🚨 给网格加左右内边距，防止贴边 */
+}
+.import-item {
+    display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer;
+}
+.import-avatar {
+    width: 56px; height: 56px; border-radius: 50%; object-fit: cover;
+    border: 2px solid transparent; transition: all 0.2s;
+    background: #eee;
+}
+.import-name { font-size: 11px; color: #333; text-align: center; }
+
+/* 选中态 */
+.import-item.selected .import-avatar {
+    border-color: #007AFF;
+    transform: scale(0.95);
+    opacity: 0.8;
+}
+.import-item.selected .import-name { color: #007AFF; font-weight: 700; }
+/* ==========================================
+   🚨 终极排版修正：拒绝缩水，强制撑满
+   ========================================== */
+
+/* --- 1. 联系人列表 (Contacts) --- */
+
+/* 页面容器：彻底去边距 */
+#phone-view-contacts {
+    padding: 0 !important;
+    width: 100% !important;
+    overflow-x: hidden !important;
+}
+
+/* 顶部搜索栏容器：保持标准边距 */
+#phone-view-contacts > div:first-child {
+    padding: 10px 16px !important; /* 上下10，左右16 */
+    width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+/* 列表容器：填满 */
+#contacts-list-container {
+    width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+/* 列表单项：撑满宽度，内容内缩 */
+.recent-item {
+    width: 100% !important;
+    box-sizing: border-box !important;
+    padding: 14px 20px !important; /* 内容离边框20px，舒服 */
+    border-bottom: 0.5px solid rgba(0,0,0,0.05) !important;
+}
+
+/* =========================================================
+   🚨 终极全宽版：彻底消除左右留白 (Edge-to-Edge)
+   ========================================================= */
+
+/* 1. 弹窗容器：确保没有内边距 */
+#modal-phone-add-contact .phone-add-sheet {
+    width: 100% !important;
+    padding: 0 !important;
+    background: #F2F2F7 !important; /* 保持灰底 */
+}
+
+/* 2. 头部：两边加一点点距离，不然文字贴边太难看 */
+#modal-phone-add-contact .phone-add-header {
+    padding: 15px 16px !important;
+    background: #fff !important;
+}
+
+/* 3. 核心：把输入框组从“卡片”变成“通栏” */
+#modal-phone-add-contact .noir-form-group,
+#modal-phone-add-contact #phone-world-list {
+    /* 🚨 核心改动：边距归零，宽度 100% */
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    width: 100% !important;
+    
+    /* 去掉圆角，变成直角 */
+    border-radius: 0 !important; 
+    
+    /* 加上上下边框，更有层次感 */
+    border-top: 0.5px solid rgba(0,0,0,0.1) !important;
+    border-bottom: 0.5px solid rgba(0,0,0,0.1) !important;
+    
+    background: #FFFFFF !important;
+    box-shadow: none !important;
+}
+
+/* 4. 分段控制器：这个通常要留一点边距才好看，如果你想铺满也可以改成 0 */
+#modal-phone-add-contact .segment-control {
+    margin: 0 16px 20px 16px !important; /* 保持悬浮，比较好看 */
+    width: auto !important;
+}
+
+/* 5. 修复输入行 */
+#modal-phone-add-contact .noir-input-row {
+    padding-right: 16px !important;
+    margin-left: 16px !important; /* 文字左对齐 */
+}
+
+/* 6. 滚动区域 */
+#modal-phone-add-contact .app-body,
+#modal-phone-add-contact .phone-add-panel {
+    padding: 0 !important; /* 去掉多余的上下空隙 */
+    width: 100% !important;
+}
+
+/* 7. 给表单组上面留一点点灰色的空隙 */
+#modal-phone-add-contact .noir-form-group {
+    margin-bottom: 30px !important;
+}
+
+/* 1. 分段控制器 (New Persona / Import Role) */
+/* 强制让它撑满整行，变成直角 */
+#modal-phone-add-contact .segment-control {
+    width: 100% !important;
+    margin: 0 !important;       /* 杀掉所有外边距 */
+    border-radius: 0 !important; /* 杀掉圆角 */
+    padding: 10px 16px !important; /* 内部留点空隙，不然按钮太丑 */
+    background: #F2F2F7 !important; /* 跟背景融为一体 */
+    box-sizing: border-box !important;
+}
+
+/* 2. 角色信息填写区 (Name/Bio/Phone) */
+/* 强制把白色输入块变成“通栏” */
+#modal-phone-add-contact .noir-form-group {
+    width: 100% !important;
+    margin: 0 !important;       /* 杀掉左右边距 */
+    margin-bottom: 30px !important; /* 只保留底部间距 */
+    
+    border-radius: 0 !important; /* 变直角 */
+    border-left: none !important;
+    border-right: none !important;
+    
+    /* 上下加边框，增加层次感 */
+    border-top: 0.5px solid rgba(0,0,0,0.1) !important;
+    border-bottom: 0.5px solid rgba(0,0,0,0.1) !important;
+    
+    background: #FFFFFF !important;
+}
+
+/* 3. 修复输入框内部的文字对齐 */
+/* 让文字不要紧贴着屏幕边缘，留出 16px 的呼吸空间 */
+#modal-phone-add-contact .noir-input-row {
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+}
+
+/* 4. 修复头像区域 */
+/* 头像保持居中，但容器撑满 */
+#modal-phone-add-contact .phone-avatar-uploader {
+    margin-top: 20px !important;
+    margin-bottom: 20px !important;
+    /* 头像本身还是圆的，但位置要摆正 */
+}
+/* ==================================================
+   🚨 通讯录高级功能：字母索引 + 右侧菜单
+   ================================================== */
+
+/* 1. 列表项布局调整：让右边的按钮靠边站 */
+.recent-item {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important; /* 关键：撑开左右 */
+    position: relative !important; /* 为了定位下拉菜单 */
+    padding-right: 10px !important; /* 右边给按钮留点空 */
+}
+
+/* 左侧信息区 (头像+名字) */
+.contact-left-info {
+    display: flex;
+    align-items: center;
+    flex: 1; /* 占满剩下的空间 */
+    overflow: hidden; /* 防止名字太长撑破 */
+}
+
+/* 2. 右侧更多按钮 (三个点) */
+.contact-more-btn {
+    width: 40px; height: 40px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 50%;
+    color: #C7C7CC;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+.contact-more-btn:active { background: #E5E5EA; color: #000; }
+
+/* 3. 下拉菜单 (Popover) - 默认隐藏 */
+.contact-popover-menu {
+    display: none; /* JS 控制显示 */
+    position: absolute;
+    right: 16px; /* 靠右对齐 */
+    top: 50px;   /* 在按钮下方 */
+    width: 160px;
+    background: #FFFFFF; /* 必须纯白 */
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15); /* 高级投影 */
+    z-index: 1000;
+    overflow: hidden;
+    flex-direction: column;
+    animation: popIn 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+@keyframes popIn {
+    from { opacity: 0; transform: scale(0.95) translateY(-10px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* 菜单项 */
+.pop-item {
+    padding: 12px 16px;
+    font-size: 14px;
+    color: #000;
+    border-bottom: 0.5px solid rgba(0,0,0,0.05);
+    display: flex; align-items: center; gap: 10px;
+}
+.pop-item:active { background: #F2F2F7; }
+.pop-item:last-child { border-bottom: none; }
+.pop-item.danger { color: #FF3B30; } /* 删除按钮标红 */
+
+/* 4. A-Z 分组标题 (Section Header) */
+.az-section-header {
+    background: #F2F2F7;
+    padding: 6px 16px;
+    font-size: 12px;
+    font-weight: 700;
+    color: #8E8E93;
+    width: 100%;
+}
+
+/* 🚨 侧边栏强制显示补丁 */
+.az-sidebar {
+    position: fixed !important; /* 强制固定定位 */
+    right: 5px !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    z-index: 10000 !important; /* 层级设为最高，防止被遮挡 */
+    
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    
+    width: 20px !important;
+    padding: 10px 0 !important;
+    
+    background: rgba(255, 255, 255, 0.6) !important; /* 加深一点背景 */
+    backdrop-filter: blur(5px) !important;
+    border-radius: 10px !important;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1) !important;
+}
+
+.az-char {
+    font-size: 10px !important;
+    line-height: 14px !important; /* 强制行高 */
+    color: #007AFF !important;
+    font-weight: 600 !important;
+    width: 100% !important;
+    text-align: center !important;
+    display: block !important; /* 确保是块级元素 */
+    height: auto !important;
+}
+.az-char.active { background: #007AFF; color: #fff; }
+/* =======================================================
+   🚨 列表样式升级：圆角卡片 + 侧边栏避让通道
+   ======================================================= */
+
+/* 1. 列表项大改造：从“长条”变成“圆角卡片” */
+#contacts-list-container .recent-item {
+    /* A. 核心：变圆 */
+    border-radius: 16px !important;
+    
+    /* B. 核心：给右边留出 35px 的“字母专用通道” */
+    margin-right: 35px !important; 
+    
+    /* 左边也留点空，对称好看 */
+    margin-left: 16px !important;
+    
+    /* 上下给点间距，让卡片之间有呼吸感 */
+    margin-bottom: 10px !important;
+    
+    /* C. 背景色：给个极淡的灰色，让卡片显现出来 */
+    background: #F9F9F9 !important; 
+    
+    /* 去掉之前的下划线，因为已经是独立卡片了 */
+    border-bottom: none !important;
+    
+    /* 内部间距调整 */
+    padding: 12px 10px 12px 16px !important;
+    
+    /* 加一点点投影，更有质感（可选） */
+    box-shadow: 0 2px 8px rgba(0,0,0,0.02) !important;
+}
+
+/* 2. 修正三个点按钮的位置 */
+/* 现在的按钮在卡片内部的最右边，非常安全，绝对碰不到字母表 */
+.contact-more-btn {
+    margin-right: 0 !important; 
+    width: 36px !important; 
+    height: 36px !important;
+    background: rgba(0,0,0,0.03) !important; /* 给按钮加个浅底色，更好点 */
+}
+
+/* 3. 分组标题 (A, B, C...) 也得跟着缩进，保持对齐 */
+.az-section-header {
+    margin-left: 16px !important;
+    margin-right: 35px !important; /* 标题右边也缩回来 */
+    background: transparent !important; /* 标题去掉背景灰条，更清爽 */
+    padding-left: 5px !important;
+    margin-bottom: 5px !important;
+}
+
+/* 4. 确保 A-Z 侧边栏安稳地待在最右边的空地里 */
+.az-sidebar {
+    right: 5px !important; /* 紧贴屏幕右边缘 */
+    width: 20px !important;
+    background: transparent !important;
+}
+
+/* =======================================================
+   🚨 列表样式修复：圆角卡片 + 宽度自适应 (解决横向滚动)
+   ======================================================= */
+
+/* 1. 列表容器：强制禁止横向滚动 */
+#contacts-list-container {
+    overflow-x: hidden !important; /* 双重保险 */
+    width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+/* 2. 列表项大改造 */
+#contacts-list-container .recent-item {
+    /* 🚨🚨🚨 核心修复：绝对不能写 100%！一定要写 auto！ 🚨🚨🚨 */
+    /* auto 的意思就是：父容器宽度 - 左右 margin = 我的宽度 */
+    width: auto !important; 
+    
+    /* 左右边距保持不变 */
+    margin-left: 16px !important;
+    margin-right: 35px !important; /* 右边留空给字母表 */
+    margin-bottom: 10px !important;
+    
+    /* 圆角和背景 */
+    border-radius: 12px !important;
+    background: #F9F9F9 !important;
+    border-bottom: none !important;
+    
+    /* 内部间距 */
+    padding: 12px 10px 12px 16px !important;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.03) !important;
+    
+    /* 布局 */
+    display: flex !important;
+    align-items: center !important;
+    box-sizing: border-box !important;
+}
+
+/* 3. 三个点按钮 */
+.contact-more-btn {
+    margin-right: 0 !important;
+    width: 32px !important; /* 稍微调小一点点更精致 */
+    height: 32px !important;
+    background: rgba(0,0,0,0.03) !important;
+    border-radius: 50%;
+}
+
+/* 4. 分组标题也做防溢出处理 */
+.az-section-header {
+    width: auto !important;
+    margin-left: 16px !important;
+    margin-right: 35px !important;
+    background: transparent !important;
+}
+/* 🚨 侧边栏交互增强 */
+.az-char {
+    /* 增加点击热区，防止点不中 */
+    padding: 2px 0 !important; 
+    cursor: pointer !important;
+    
+    /* 即使没有数据，也要显示成蓝色，让人知道可以点 */
+    color: #007AFF !important; 
+    opacity: 0.7 !important; 
+}
+
+/* 有数据的字母稍微深一点，区分一下 */
+.az-char.has-data {
+    font-weight: 700 !important;
+    opacity: 1 !important;
+}
+
+/* 确保侧边栏在最最上层，不被任何东西挡住 */
+.az-sidebar {
+    z-index: 99999 !important;
+    /* 确保鼠标变小手 */
+    cursor: pointer !important;
+    pointer-events: auto !important; 
+}
+
+/* =======================================================
+   🚨 交互动画：屏幕中心的大字母提示 (Toast)
+   ======================================================= */
+#az-toast {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.8); /* 初始稍微缩小 */
+    width: 80px;
+    height: 80px;
+    background: rgba(200, 200, 200, 0.9); /* 浅灰半透明 */
+    backdrop-filter: blur(10px); /* 毛玻璃特效 */
+    border-radius: 20px;
+    
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    
+    font-size: 40px;
+    font-weight: 700;
+    color: #333;
+    
+    opacity: 0; /* 默认隐藏 */
+    pointer-events: none; /* 让它不挡鼠标点击 */
+    z-index: 100000; /* 最高层级 */
+    transition: opacity 0.3s, transform 0.3s;
+}
+
+/* 激活状态：显示并放大 */
+#az-toast.show {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+}
+/* 确保编辑模式下，没有切换条时，头像也不会贴顶 */
+.phone-avatar-uploader {
+    /* 上下保持舒适的间距 */
+    margin-top: 25px !important;
+    margin-bottom: 25px !important;
+    
+    /* 其他保持不变 */
+    width: 80px; height: 80px;
+    background: #F2F2F7;
+    border-radius: 50%;
+    margin-left: auto; margin-right: auto;
+    display: flex; align-items: center; justify-content: center;
+    overflow: hidden;
+    position: relative;
+    cursor: pointer;
+    border: 1px solid rgba(0,0,0,0.05);
+}
+/* =======================================================
+   🚨 删除确认弹窗样式 (iOS Action Sheet Style)
+   ======================================================= */
+
+/* 1. 遮罩层 (暗背景) */
+#modal-delete-confirm {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    z-index: 20000; /* 确保在最最上层 */
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end; /* 内容在底部 */
+}
+
+/* 背景颜色渐变动画 */
+#modal-delete-confirm .modal-backdrop {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.4);
+    animation: fadeIn 0.2s ease-out;
+}
+
+/* 2. 底部面板容器 */
+.delete-action-sheet {
+    position: relative;
+    z-index: 20001;
+    width: 100%;
+    padding: 10px 10px 30px 10px; /* 底部留白给 Home Bar */
+    box-sizing: border-box;
+    animation: slideUp 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* 3. 提示文字区域 */
+.delete-title-box {
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(10px);
+    border-radius: 14px;
+    padding: 15px;
+    text-align: center;
+    margin-bottom: 10px;
+}
+.delete-main-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #8E8E93;
+    margin-bottom: 5px;
+}
+.delete-sub-desc {
+    font-size: 13px;
+    color: #8E8E93;
+}
+
+/* 4. 按钮组 */
+.delete-btn-group {
+    margin-bottom: 10px;
+}
+
+/* 5. 通用按钮样式 */
+.ios-action-btn {
+    width: 100%;
+    height: 56px;
+    border: none;
+    border-radius: 14px;
+    font-size: 20px;
+    font-weight: 500;
+    cursor: pointer;
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(10px);
+    transition: background 0.1s;
+}
+.ios-action-btn:active {
+    background: rgba(255, 255, 255, 0.6);
+}
+
+/* 红色删除文字 */
+.ios-action-btn.danger {
+    color: #FF3B30; 
+    font-weight: 600;
+}
+/* 蓝色/黑色取消文字 */
+.ios-action-btn.cancel {
+    color: #007AFF;
+    font-weight: 600;
+}
+
+/* 动画定义 */
+@keyframes slideUp {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+}
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
 
 </style>
 </head>
 <body>
-
+    <script src="https://cdn.bootcdn.net/ajax/libs/tiny-pinyin/1.3.2/tiny-pinyin.js"></script>
     <div class="status-bar">
         <div id="clock">12:00</div>
         <div class="status-right">
@@ -14275,7 +15356,7 @@ img[src*="avatar"] {
                     </div>
                 </div>
 
-                <div class="widget w-4x1">
+                <div class="widget w-4x1" onclick="openApp('musicApp')" style="cursor: pointer;">
                     <div class="music-row">
                         <div style="display:flex; align-items:center;">
                             <div class="album-cover"></div>
@@ -18672,8 +19753,1007 @@ img[src*="avatar"] {
             </div>
     </div>
 </div>
+<div id="phoneApp" class="ios-app-window" style="background: #ffffff; z-index: 6000;">
+    <div class="app-header" style="background: transparent; z-index: 20;">
+        <div style="width: 40px;"></div> <div class="header-title-big" id="phone-header-title" style="font-size: 17px; text-align: center; flex: 1;">Keypad</div>
+        
+        <div id="phone-close-btn" class="header-close-btn" onclick="closeApp('phoneApp')" 
+             style="opacity: 0; pointer-events: none; transition: opacity 0.3s ease;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#8e8e93" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+        </div>
+    </div>
+
+    <div class="app-body" style="padding: 0;">
+        
+        <div id="phone-view-recents" class="phone-view-container">
+            <div class="segment-control" style="margin: 10px 16px 15px 16px;">
+                <div id="seg-all" class="segment-btn active" onclick="filterRecents('all')">All</div>
+                <div id="seg-missed" class="segment-btn" onclick="filterRecents('missed')">Missed</div>
+            </div>
+
+            <div id="recents-list-container" class="recents-list">
+                </div>
+        </div>
+
+        <div id="phone-view-keypad" class="phone-view-container active">
+    
+            <div class="quick-dial-section">
+                <div class="quick-label">SUGGESTED</div>
+                <div id="quick-dial-list" class="quick-scroll-wrapper">
+                    </div>
+            </div>
+
+            <div class="keypad-display-area">
+                <div id="keypad-number-display"></div>
+                <div id="keypad-del-btn" class="mini-del-btn" onclick="delKey()">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"></path><line x1="18" y1="9" x2="12" y2="15"></line><line x1="12" y1="9" x2="18" y2="15"></line></svg>
+                </div>
+            </div>
+
+            <div class="keypad-grid">
+                <div class="keypad-btn" onclick="tapKey('1')"><div class="key-num">1</div><div class="key-alpha"> </div></div>
+                <div class="keypad-btn" onclick="tapKey('2')"><div class="key-num">2</div><div class="key-alpha">ABC</div></div>
+                <div class="keypad-btn" onclick="tapKey('3')"><div class="key-num">3</div><div class="key-alpha">DEF</div></div>
+                <div class="keypad-btn" onclick="tapKey('4')"><div class="key-num">4</div><div class="key-alpha">GHI</div></div>
+                <div class="keypad-btn" onclick="tapKey('5')"><div class="key-num">5</div><div class="key-alpha">JKL</div></div>
+                <div class="keypad-btn" onclick="tapKey('6')"><div class="key-num">6</div><div class="key-alpha">MNO</div></div>
+                <div class="keypad-btn" onclick="tapKey('7')"><div class="key-num">7</div><div class="key-alpha">PQRS</div></div>
+                <div class="keypad-btn" onclick="tapKey('8')"><div class="key-num">8</div><div class="key-alpha">TUV</div></div>
+                <div class="keypad-btn" onclick="tapKey('9')"><div class="key-num">9</div><div class="key-alpha">WXYZ</div></div>
+                <div class="keypad-btn" onclick="tapKey('*')"><div class="key-num" style="font-size:36px; padding-top:10px;">*</div></div>
+                <div class="keypad-btn" onclick="tapKey('0')"><div class="key-num">0</div><div class="key-alpha">+</div></div>
+                <div class="keypad-btn" onclick="tapKey('#')"><div class="key-num" style="font-size:30px; padding-top:5px;">#</div></div>
+                
+                <div></div>
+                <div class="keypad-call-btn" onclick="makeCall()">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor"><path d="M20.01 15.38c-1.23 0-2.42-.2-3.53-.59a.996.996 0 00-1.01.24l-2.2 2.2a15.05 15.05 0 01-6.59-6.59l2.2-2.21a.96.96 0 00.25-1A11.36 11.36 0 018.5 4c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1 0 9.39 7.61 17 17 17 .55 0 1-.45 1-1v-3.5c0-.55-.45-1-1-1z"/></svg>
+                </div>
+                <div></div>
+            </div>
+        </div>
+
+        <div id="phone-view-contacts" class="phone-view-container">
+    
+            <div style="padding: 15px 16px 10px 16px; display: flex; align-items: center; gap: 10px; background: #fff; z-index: 10;">
+                
+                <div class="ios-search-wrapper" style="margin: 0; flex: 1; background: #E5E5EA;">
+                    <svg class="search-icon" viewBox="0 0 24 24" style="width: 16px; height: 16px; opacity: 0.5;">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                    <input type="text" class="ios-search-input" placeholder="Search" style="font-size: 15px;">
+                </div>
+                
+                <div onclick="addContact()" style="cursor: pointer; color: #007AFF;">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                </div>
+
+            </div> 
+            <div id="contacts-list-container" class="recents-list" style="padding-bottom: 80px;">
+                </div>
+
+        </div>
+    </div>
+
+    <div class="phone-glass-nav" style="gap: 50px; padding: 15px 40px; width: auto;">
+    
+        <div class="p-nav-item" id="p-nav-recents" onclick="switchPhoneTab('recents')">
+            <svg viewBox="0 0 24 24"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>
+            <span>Recents</span>
+        </div>
+
+        <div class="p-nav-item active" id="p-nav-keypad" onclick="switchPhoneTab('keypad')">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+                <circle cx="6" cy="6" r="2.5"/><circle cx="12" cy="6" r="2.5"/><circle cx="18" cy="6" r="2.5"/>
+                <circle cx="6" cy="12" r="2.5"/><circle cx="12" cy="12" r="2.5"/><circle cx="18" cy="12" r="2.5"/>
+                <circle cx="6" cy="18" r="2.5"/><circle cx="12" cy="18" r="2.5"/><circle cx="18" cy="18" r="2.5"/>
+            </svg>
+            <span>Keypad</span>
+        </div>
+
+        <div class="p-nav-item" id="p-nav-contacts" onclick="switchPhoneTab('contacts')">
+            <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+            <span>Contacts</span>
+        </div>
+    </div>
+</div>
+<div id="modal-phone-add-contact" class="ios-alert-mask" style="align-items: flex-end; z-index: 6500; display: none;" onclick="if(event.target==this) closePhoneAddModal()">
+    <div class="phone-add-sheet">
+        
+        <div class="sheet-handle-bar"></div>
+
+        <div class="phone-add-header">
+            <span class="header-cancel" onclick="closePhoneAddModal()">Cancel</span>
+            <span class="header-title">New Contact</span>
+            <span class="header-save" onclick="submitPhoneContact()">Done</span>
+        </div>
+
+        <div class="app-body" style="overflow-y: auto; padding: 0 5px 40px 5px;">
+            
+            <div class="segment-control" style="margin-bottom: 20px;">
+                <div class="segment-btn active" id="p-seg-create" onclick="switchPhoneAddTab('create')">New Persona</div>
+                <div class="segment-btn" id="p-seg-import" onclick="switchPhoneAddTab('import')">Import Role</div>
+            </div>
+
+            <div id="panel-phone-create">
+                <div class="phone-avatar-uploader" onclick="document.getElementById('phone-avatar-in').click()">
+                    <img id="phone-avatar-pre" src="" style="display:none;">
+                    <div id="phone-avatar-placeholder">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+                    </div>
+                </div>
+                <input type="file" id="phone-avatar-in" hidden accept="image/*" onchange="previewPhoneAvatar(this)">
+
+                <div class="noir-form-group">
+                    <div class="noir-input-row">
+                        <label>NAME</label>
+                        <input type="text" id="phone-name-in" placeholder="Enter Name">
+                    </div>
+                    <div class="noir-input-row" style="border:none;">
+                        <label>BIO</label>
+                        <input type="text" id="phone-desc-in" placeholder="Description...">
+                    </div>
+                </div>
+            </div>
+
+            <div id="panel-phone-import" style="display:none;">
+                <div style="font-size:10px; font-weight:700; color:#8E8E93; margin-bottom:10px; letter-spacing:1px;">SELECT FROM ROLEBOOK</div>
+                <div id="phone-import-grid" class="import-grid-wrapper">
+                    </div>
+                <div id="import-selection-hint" style="text-align:center; color:#007AFF; font-size:12px; font-weight:600; margin:10px 0; display:none;">
+                    Selected: <span id="import-selected-name">--</span>
+                </div>
+            </div>
+
+            <div class="tz-group-title" style="margin-top:20px; color:#000;">CONNECTION DETAILS</div>
+            
+            <div class="noir-form-group">
+                <div class="noir-input-row" style="border:none;">
+                    <label>PHONE</label>
+                    <input type="tel" id="common-phone-in" placeholder="138-0000-0000 (Required)">
+                </div>
+            </div>
+
+            <div class="tz-group-title" style="color:#000;">LINK WORLD (OPTIONAL)</div>
+            <div id="phone-world-list" class="ios-list-group" style="background:#F9F9F9; border-radius:12px; overflow:hidden;">
+                </div>
+            <div style="font-size:10px; color:#ccc; padding:10px; line-height:1.4;">
+                勾选后，该角色的记忆将自动关联选中的世界观设定。
+            </div>
+
+        </div>
+    </div>
+</div>
+<div id="modal-delete-confirm" class="ios-modal-overlay" style="display: none;">
+    <div class="modal-backdrop" onclick="closeDeleteModal()"></div>
+    
+    <div class="delete-action-sheet">
+        <div class="delete-title-box">
+            <div class="delete-main-title">Delete Contact?</div>
+            <div class="delete-sub-desc">Are you sure you want to delete this contact? This action cannot be undone.</div>
+        </div>
+
+        <div class="delete-btn-group">
+            <button class="ios-action-btn danger" onclick="confirmRealDelete()">Delete Contact</button>
+        </div>
+
+        <div class="delete-btn-group">
+            <button class="ios-action-btn cancel" onclick="closeDeleteModal()">Cancel</button>
+        </div>
+    </div>
+</div>
 
 <script>
+// ==========================================
+// 📞 电话本核心逻辑：双向同步与号码库
+// ==========================================
+
+var tempPhoneAvatar = null;
+var selectedImportId = null;
+
+// --- 📞 修复：点击加号打开高级弹窗 (变量前置版) ---
+window.addContact = function() {
+    console.log("System: 打开全功能添加页...");
+    setupModalMode('create'); // 切换到新建模式 UI
+    
+    // 清空新建表单
+    document.getElementById('phone-name-in').value = "";
+    document.getElementById('phone-desc-in').value = "";
+    document.getElementById('common-phone-in').value = ""; // 电话清空
+    
+    // 重置头像
+    document.getElementById('phone-avatar-pre').style.display = 'none';
+    document.getElementById('phone-avatar-placeholder').style.display = 'flex';
+    tempPhoneAvatar = null;
+
+    // 重置导入状态
+    selectedImportId = null;
+    document.getElementById('import-selection-hint').style.display = 'none';
+    
+    // 渲染世界书列表 (复选框)
+    renderPhoneWorldList();
+
+    // 默认切到 Create
+    switchPhoneAddTab('create');
+
+    // 打开弹窗
+    const modal = document.getElementById('modal-phone-add-contact');
+    if(modal) modal.style.display = 'flex';
+    
+    document.getElementById('modal-phone-add-contact').style.display = 'flex';
+};
+
+// 2. 切换 Tab
+window.switchPhoneAddTab = function(mode) {
+    document.getElementById('p-seg-create').classList.toggle('active', mode === 'create');
+    document.getElementById('p-seg-import').classList.toggle('active', mode === 'import');
+    
+    document.getElementById('panel-phone-create').style.display = mode === 'create' ? 'block' : 'none';
+    document.getElementById('panel-phone-import').style.display = mode === 'import' ? 'block' : 'none';
+    
+    if (mode === 'import') renderImportGrid();
+};
+
+// 3. 头像预览
+window.previewPhoneAvatar = function(input) {
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = e => {
+            tempPhoneAvatar = e.target.result;
+            document.getElementById('phone-avatar-pre').src = tempPhoneAvatar;
+            document.getElementById('phone-avatar-pre').style.display = 'block';
+            document.getElementById('phone-avatar-placeholder').style.display = 'none';
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+};
+
+// 5. 核心：提交保存
+window.submitPhoneContact = async function() {
+    const isImportMode = document.getElementById('p-seg-import').classList.contains('active');
+    
+    // A. 获取公共信息
+    const phoneNum = document.getElementById('common-phone-in').value.trim();
+    
+    // 获取选中的世界书 IDs
+    const checkedWorlds = Array.from(document.querySelectorAll('.phone-world-check:checked')).map(cb => cb.value);
+
+    if (!phoneNum) { showToast("必须填写电话号码"); return; }
+
+    let finalCharData = null; // 最终要保存的角色数据
+
+    if (isImportMode) {
+        // --- 导入模式 ---
+        if (!selectedImportId) { showToast("请选择一个角色"); return; }
+        
+        let chars = await loadFromDB('char_list') || [];
+        const existChar = chars.find(c => c.id === selectedImportId);
+        
+        if (existChar) {
+            // 更新该角色的绑定关系 (合并旧的 + 新选的)
+            // 这里我们简单处理：直接覆盖绑定，或者你可以做并集
+            existChar.boundWorldIds = checkedWorlds; 
+            finalCharData = existChar;
+            await saveToDB('char_list', chars); // 更新回角色书
+        }
+    } else {
+        // --- 新建模式 ---
+        const name = document.getElementById('phone-name-in').value.trim();
+        const desc = document.getElementById('phone-desc-in').value.trim();
+        
+        if (!name) { showToast("请输入姓名"); return; }
+        
+        const newId = "char_" + Date.now();
+        const avatar = tempPhoneAvatar || "https://api.dicebear.com/7.x/initials/svg?seed=" + name;
+
+        finalCharData = {
+            id: newId,
+            name: name,
+            desc: desc,
+            avatar: avatar,
+            boundWorldIds: checkedWorlds, // 绑定世界书
+            createdAt: Date.now(),
+            relationNetwork: []
+        };
+
+        // 存入角色书 (char_list)
+        let chars = await loadFromDB('char_list') || [];
+        chars.unshift(finalCharData);
+        await saveToDB('char_list', chars);
+    }
+
+    if (!finalCharData) return;
+
+    // --- B. 存入通讯录 (chat_friends) ---
+    let friends = await loadFromDB('chat_friends') || [];
+    // 避免重复添加
+    if (!friends.some(f => f.id === finalCharData.id)) {
+        friends.unshift({
+            id: finalCharData.id,
+            name: finalCharData.name,
+            avatar: finalCharData.avatar
+        });
+        await saveToDB('chat_friends', friends);
+    }
+
+    // --- C. 存入号码库 (phone_directory) ---
+    let phoneDir = await loadFromDB('phone_directory') || {};
+    // 正向：号码 -> 名字 (来电显示用)
+    phoneDir[phoneNum] = finalCharData.name;
+    // 反向：ID -> 号码 (查找用)
+    phoneDir["id_" + finalCharData.id] = phoneNum;
+    
+    await saveToDB('phone_directory', phoneDir);
+
+    // --- D. 收尾 ---
+    closePhoneAddModal();
+    if(typeof renderContactsList === 'function') renderContactsList();
+    
+    showToast(`联系人已保存 (${phoneNum})`);
+    console.log("✅ 完整链路同步完成：角色书 + 通讯录 + 号码库 + 世界观绑定");
+};
+
+// ==========================================
+// 📞 通讯录渲染 (永不崩溃版)
+// ==========================================
+
+window.renderContactsList = async function() {
+    console.log("System: 🚀 开始渲染联系人...");
+    const container = document.getElementById('contacts-list-container');
+    
+    // 1. 防御性检查：如果没有容器，就不跑了
+    if (!container) {
+        console.error("❌ 错误：找不到 id='contacts-list-container' 的容器！");
+        return;
+    }
+    
+    // 2. 获取数据
+    let friends = await loadFromDB('chat_friends') || [];
+    
+    // 3. 预处理分组 (给中文拼音加“防弹衣”)
+    friends.forEach(f => {
+        let firstChar = '#';
+        const nameStr = f.name || "Unknown";
+
+        // 🚨🚨🚨 核心修复：先检查 window.Pinyin 是否存在 🚨🚨🚨
+        // 只有当库存在时，才去调用它。如果不存在，直接跳过，绝对不报错！
+        if (window.Pinyin) {
+            try {
+                firstChar = Pinyin.convertToPinyin(nameStr).charAt(0).toUpperCase();
+            } catch (e) {
+                firstChar = nameStr.charAt(0).toUpperCase();
+            }
+        } else {
+            // 没库？没关系，直接取首字母（中文会变成符号，但不报错）
+            firstChar = nameStr.charAt(0).toUpperCase();
+        }
+
+        // 归类：只有 A-Z 才能做索引，其他都去 #
+        if (/[A-Z]/.test(firstChar)) {
+            f.groupKey = firstChar;
+        } else {
+            f.groupKey = '#';
+        }
+    });
+
+    // 4. 排序 (让中文也能按拼音顺序排，不仅是分组)
+    friends.sort((a, b) => {
+        if (a.groupKey !== b.groupKey) {
+            if (a.groupKey === '#') return 1;
+            if (b.groupKey === '#') return -1;
+            return a.groupKey.localeCompare(b.groupKey);
+        }
+        // 如果有库，用中文排序；没库用默认排序
+        return a.name.localeCompare(b.name, 'zh-CN');
+    });
+
+    container.innerHTML = ""; // 清空旧列表
+    
+    // 如果没有数据，显示提示
+    if (friends.length === 0) {
+        container.innerHTML = `<div style="padding:40px; text-align:center; color:#ccc;">No Contacts</div>`;
+        // 即使没数据，也要把侧边栏画出来
+        if(typeof renderFullAzSidebar === 'function') renderFullAzSidebar(new Set());
+        return;
+    }
+    
+    const existingGroups = new Set();
+    let currentGroup = '';
+
+    // 5. 循环渲染列表
+    friends.forEach(f => {
+        // 渲染分组标题 (A, B, C...)
+        if (f.groupKey !== currentGroup) {
+            currentGroup = f.groupKey;
+            existingGroups.add(currentGroup);
+            
+            const header = document.createElement('div');
+            header.className = 'az-section-header';
+            header.id = 'anchor-' + currentGroup;
+            header.textContent = currentGroup;
+            container.appendChild(header);
+        }
+
+        // 默认头像逻辑 (防白屏)
+        let avatarHtml = '';
+        if (f.avatar && f.avatar.length > 5) {
+            avatarHtml = `<img src="${f.avatar}" style="width:100%; height:100%; object-fit:cover;">`;
+        } else {
+            const letter = (f.name || "?").charAt(0).toUpperCase();
+            avatarHtml = `<div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; background:#ccc; color:#fff; font-weight:bold;">${letter}</div>`;
+        }
+
+        const div = document.createElement('div');
+        div.className = 'recent-item';
+        div.innerHTML = `
+            <div class="contact-left-info" onclick="openChat('${f.id}')">
+                <div style="width:40px; height:40px; background:#F2F2F7; border-radius:50%; margin-right:15px; overflow:hidden; flex-shrink:0;">
+                    ${avatarHtml}
+                </div>
+                <span class="caller-name" style="font-size:16px; font-weight:600; color:#000;">${f.name}</span>
+            </div>
+            
+            <div class="contact-more-btn" onclick="toggleContactMenu(event, '${f.id}')">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/><circle cx="5" cy="12" r="2"/></svg>
+            </div>
+            
+            <div id="menu-${f.id}" class="contact-popover-menu">
+                <div class="pop-item" onclick="editContact('${f.id}')">Edit</div>
+                <div class="pop-item" onclick="settingContact('${f.id}')">Settings</div>
+                <div class="pop-item danger" onclick="deleteContact('${f.id}')">Delete</div>
+            </div>
+        `;
+        container.appendChild(div);
+    });
+
+    // 6. 🚨 强制渲染侧边栏 (即使报错，上面也会被 catch 住，这里一定能执行)
+    console.log("System: 列表渲染完成，正在绘制侧边栏...");
+    if(typeof renderFullAzSidebar === 'function') {
+        renderFullAzSidebar(existingGroups);
+    } else {
+        console.error("❌ 找不到 renderFullAzSidebar 函数，侧边栏无法显示");
+    }
+};
+
+// --- 辅助：渲染 26 字母侧边栏 (智能跟随版) ---
+function renderFullAzSidebar(existingGroups) {
+    // 1. 🧹 全局大扫除：把所有现存的侧边栏（无论在body还是在哪）全部删掉！
+    document.querySelectorAll('.az-sidebar').forEach(el => el.remove());
+
+    // 2. 准备字母表
+    const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ#".split("");
+    const bar = document.createElement('div');
+    bar.className = 'az-sidebar';
+    
+    // 3. 生成 HTML
+    bar.innerHTML = alphabet.map(char => `
+        <div class="az-char ${existingGroups.has(char) ? 'has-data' : ''}" 
+             onclick="scrollToLetter('${char}')" 
+             style="${existingGroups.has(char) ? 'color:#007AFF; font-weight:900;' : 'opacity:0.4;'}">
+             ${char}
+        </div>
+    `).join('');
+    
+    // 4. 🏠 核心修正：找到联系人页面的容器
+    const contactsPage = document.getElementById('phone-view-contacts');
+    
+    if (contactsPage) {
+        // 把它塞进联系人页面里！这样页面隐藏时，它也会隐藏。
+        contactsPage.appendChild(bar);
+        console.log("System: 侧边栏已挂载到联系人页面");
+    } else {
+        console.error("❌ 严重错误：找不到联系人页面容器 (phone-view-contacts)");
+    }
+}
+
+// 确保页面加载时渲染一次
+document.addEventListener('DOMContentLoaded', () => {
+    setTimeout(renderContactsList, 500); // 延迟一点点，确保 DB 加载
+});
+
+// ==========================================
+// ⚡️ 交互逻辑：菜单开关 & 字母定位 & 功能桩
+// ==========================================
+
+// 1. 切换菜单 (排他性：打开这个，关闭其他的)
+window.toggleContactMenu = function(event, id) {
+    event.stopPropagation(); // 防止冒泡触发 openChat
+    
+    // 获取目标菜单
+    const targetMenu = document.getElementById('menu-' + id);
+    if (!targetMenu) return;
+
+    // 如果它是打开的，就关闭它
+    if (targetMenu.style.display === 'flex') {
+        targetMenu.style.display = 'none';
+        return;
+    }
+
+    // 关闭所有其他的菜单
+    document.querySelectorAll('.contact-popover-menu').forEach(el => el.style.display = 'none');
+
+    // 打开这一个
+    targetMenu.style.display = 'flex';
+};
+
+// 2. 点击空白处关闭所有菜单
+document.addEventListener('click', function(e) {
+    // 如果点击的不是菜单按钮也不是菜单本身
+    if (!e.target.closest('.contact-more-btn') && !e.target.closest('.contact-popover-menu')) {
+        document.querySelectorAll('.contact-popover-menu').forEach(el => el.style.display = 'none');
+    }
+});
+
+// ==========================================
+// 🚀 智能跳转 + 动画反馈 (最终增强版)
+// ==========================================
+
+let azToastTimer = null; // 计时器变量
+
+window.scrollToLetter = function(char) {
+    const container = document.getElementById('contacts-list-container');
+    if (!container) return;
+
+    // --- 1. 触发屏幕中间的大字母动画 (Visual Feedback) ---
+    showAzToast(char);
+
+    // --- 2. 寻找锚点逻辑 (不变) ---
+    let anchor = document.getElementById('anchor-' + char);
+
+    // 智能找邻居
+    if (!anchor) {
+        const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ#";
+        const currentIndex = alphabet.indexOf(char);
+        if (currentIndex !== -1) {
+            for (let i = currentIndex + 1; i < alphabet.length; i++) {
+                const nextChar = alphabet[i];
+                const nextAnchor = document.getElementById('anchor-' + nextChar);
+                if (nextAnchor) {
+                    anchor = nextAnchor; 
+                    break; 
+                }
+            }
+        }
+    }
+
+    // --- 3. 执行滚动 (改为平滑滚动) ---
+    if (anchor) {
+        // 🚨 关键：使用 smooth 让它滑过去，而不是闪过去
+        anchor.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else {
+        // 到底部
+        container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
+    }
+
+    // 4. 手机震动
+    if(navigator.vibrate) navigator.vibrate(10); // 稍微加长一点震动
+};
+
+// --- 辅助：显示屏幕中心的大字母 ---
+function showAzToast(text) {
+    // 1. 如果页面上没有那个弹窗元素，就现造一个
+    let toast = document.getElementById('az-toast');
+    if (!toast) {
+        toast = document.createElement('div');
+        toast.id = 'az-toast';
+        document.body.appendChild(toast);
+    }
+
+    // 2. 设置文字
+    toast.innerText = text;
+
+    // 3. 强制重绘 (让动画能重新触发)
+    toast.classList.remove('show');
+    void toast.offsetWidth; // 魔法代码：触发重绘
+    toast.classList.add('show');
+
+    // 4. 定时消失
+    if (azToastTimer) clearTimeout(azToastTimer);
+    azToastTimer = setTimeout(() => {
+        toast.classList.remove('show');
+    }, 600); // 0.6秒后消失
+}
+
+// 2. 打开“编辑”弹窗 (核心需求)
+window.editContact = async function(id) {
+    console.log("System: 打开编辑模式, ID:", id);
+    const modal = document.getElementById('modal-phone-add-contact');
+    if(!modal) return;
+
+    // A. 准备数据
+    const chars = await loadFromDB('char_list') || [];
+    const phoneDir = await loadFromDB('phone_directory') || {};
+    
+    // 找到该角色数据
+    const charData = chars.find(c => c.id === id);
+    if (!charData) { showToast("找不到该角色数据"); return; }
+
+    // B. 切换 UI 到“编辑模式”
+    setupModalMode('edit', id); // 传入 ID 标记当前正在编辑谁
+
+    // C. 回填数据 (Backfill)
+    // 1. 填名字和人设
+    document.getElementById('phone-name-in').value = charData.name || "";
+    document.getElementById('phone-desc-in').value = charData.desc || "";
+    
+    // 2. 填电话 (从号码库反查)
+    const phoneNum = phoneDir["id_" + id] || "";
+    document.getElementById('common-phone-in').value = phoneNum;
+
+    // 3. 填头像
+    const imgPre = document.getElementById('phone-avatar-pre');
+    const imgPlace = document.getElementById('phone-avatar-placeholder');
+    if (charData.avatar) {
+        imgPre.src = charData.avatar;
+        imgPre.style.display = 'block';
+        imgPlace.style.display = 'none';
+        window.tempPhoneAvatar = charData.avatar; // 存入临时变量
+    } else {
+        imgPre.style.display = 'none';
+        imgPlace.style.display = 'flex';
+        window.tempPhoneAvatar = null;
+    }
+
+    // 4. 填世界书勾选状态
+    await renderPhoneWorldList(); // 先渲染出复选框
+    const boundIds = charData.boundWorldIds || [];
+    document.querySelectorAll('.phone-world-check').forEach(cb => {
+        cb.checked = boundIds.includes(cb.value);
+    });
+
+    // D. 显示弹窗
+    modal.style.display = 'flex';
+    
+    // 关闭刚才的小菜单
+    document.querySelectorAll('.contact-popover-menu').forEach(el => el.style.display = 'none');
+};
+
+// --- 辅助：切换弹窗的 UI 状态 (新建 vs 编辑) ---
+function setupModalMode(mode, editId = null) {
+    const modal = document.getElementById('modal-phone-add-contact');
+    const title = modal.querySelector('.header-title');
+    const segment = modal.querySelector('.segment-control');
+    const createPanel = document.getElementById('panel-phone-create');
+    const importPanel = document.getElementById('panel-phone-import');
+
+    // 标记当前模式
+    modal.setAttribute('data-mode', mode);
+    if(editId) modal.setAttribute('data-edit-id', editId);
+
+    if (mode === 'create') {
+        title.textContent = "New Contact";
+        segment.style.display = 'flex'; // 显示切换条
+        createPanel.style.display = 'block';
+        importPanel.style.display = 'none';
+        switchPhoneAddTab('create'); // 重置 Tab
+    } else {
+        title.textContent = "Edit Contact";
+        segment.style.display = 'none'; // 🚨 编辑时隐藏切换条！
+        createPanel.style.display = 'block'; // 强制显示表单页
+        importPanel.style.display = 'none';
+    }
+}
+
+// --- 辅助：清空表单 ---
+function clearPhoneForm() {
+    document.getElementById('phone-name-in').value = "";
+    document.getElementById('phone-desc-in').value = "";
+    document.getElementById('common-phone-in').value = "";
+    document.getElementById('phone-avatar-pre').style.display = 'none';
+    document.getElementById('phone-avatar-placeholder').style.display = 'flex';
+    window.tempPhoneAvatar = null;
+    renderPhoneWorldList(); // 重置世界书勾选
+}
+
+// 3. 提交保存 (智能判断是新建还是更新)
+window.submitPhoneContact = async function() {
+    const modal = document.getElementById('modal-phone-add-contact');
+    const mode = modal.getAttribute('data-mode'); // 'create' or 'edit'
+    
+    // 获取表单通用数据
+    const name = document.getElementById('phone-name-in').value.trim();
+    const desc = document.getElementById('phone-desc-in').value.trim();
+    const phoneNum = document.getElementById('common-phone-in').value.trim();
+    const avatar = window.tempPhoneAvatar || ("https://api.dicebear.com/7.x/initials/svg?seed=" + name);
+    
+    // 获取世界书勾选
+    const checkedWorlds = Array.from(document.querySelectorAll('.phone-world-check:checked')).map(cb => cb.value);
+
+    if (!name) { showToast("请输入姓名"); return; }
+    if (!phoneNum) { showToast("请输入电话号码"); return; }
+
+    // 加载数据库
+    let chars = await loadFromDB('char_list') || [];
+    let friends = await loadFromDB('chat_friends') || [];
+    let phoneDir = await loadFromDB('phone_directory') || {};
+
+    let targetId = null;
+
+    if (mode === 'edit') {
+        // --- 编辑模式：更新旧数据 ---
+        targetId = modal.getAttribute('data-edit-id');
+        const charIndex = chars.findIndex(c => c.id === targetId);
+        
+        if (charIndex !== -1) {
+            // 更新 char_list
+            chars[charIndex].name = name;
+            chars[charIndex].desc = desc;
+            chars[charIndex].avatar = avatar;
+            chars[charIndex].boundWorldIds = checkedWorlds;
+            await saveToDB('char_list', chars);
+            
+            // 更新 chat_friends (同步名字和头像)
+            const friendIndex = friends.findIndex(f => f.id === targetId);
+            if (friendIndex !== -1) {
+                friends[friendIndex].name = name;
+                friends[friendIndex].avatar = avatar;
+                await saveToDB('chat_friends', friends);
+            }
+        }
+    } else {
+        // --- 新建模式：创建新数据 ---
+        // (如果是导入模式，逻辑稍微不同，这里简化处理，假设都在 Create 面板填)
+        if (document.getElementById('p-seg-import').classList.contains('active')) {
+             // ...导入逻辑复用之前的，或者提示用户切回 Create
+             // 这里为了简单，我们假定用户都在 Create 面板操作
+        }
+        
+        targetId = "char_" + Date.now();
+        chars.unshift({
+            id: targetId,
+            name: name,
+            desc: desc,
+            avatar: avatar,
+            boundWorldIds: checkedWorlds,
+            createdAt: Date.now(),
+            relationNetwork: []
+        });
+        await saveToDB('char_list', chars);
+        
+        friends.unshift({ id: targetId, name: name, avatar: avatar });
+        await saveToDB('chat_friends', friends);
+    }
+
+    // --- 处理电话号码 (通用) ---
+    // 1. 先清除该 ID 绑定的旧号码 (防止一个人占两个号)
+    for (let key in phoneDir) {
+        if (phoneDir[key] === targetId) delete phoneDir[key]; // key 是号码
+        if (key === "id_" + targetId) delete phoneDir[key];   // key 是 id_xxx
+    }
+    // 2. 绑定新号码
+    phoneDir[phoneNum] = name; // 号码 -> 名字 (来电显示)
+    phoneDir["id_" + targetId] = phoneNum; // ID -> 号码 (查号)
+    await saveToDB('phone_directory', phoneDir);
+
+    // --- 收尾 ---
+    closePhoneAddModal();
+    renderContactsList(); // 刷新列表
+    showToast(mode === 'edit' ? "修改已保存" : "新建成功");
+};
+
+window.settingContact = function(id) {
+    showToast("打开独立设置: " + id);
+    // 这里可以跳转到一个新的 Settings 页面，专门存该 ID 的偏好
+};
+
+// ==========================================
+// 🗑️ 删除逻辑 (替换浏览器原生弹窗)
+// ==========================================
+
+// 1. 点击删除按钮 -> 打开自定义弹窗
+window.deleteContact = function(id) {
+    // 存下 ID，一会儿确认删除时要用
+    pendingDeleteId = id;
+    
+    // 关闭那个三个点的小菜单
+    document.querySelectorAll('.contact-popover-menu').forEach(el => el.style.display = 'none');
+    
+    // 显示删除确认弹窗
+    const modal = document.getElementById('modal-delete-confirm');
+    if(modal) modal.style.display = 'flex';
+    
+    // 手机震动提醒
+    if(navigator.vibrate) navigator.vibrate(10);
+};
+
+// 2. 点击弹窗里的“Delete Contact” -> 真的删库
+window.confirmRealDelete = async function() {
+    if (!pendingDeleteId) return;
+    
+    // 执行之前的删除逻辑
+    let friends = await loadFromDB('chat_friends') || [];
+    friends = friends.filter(f => f.id !== pendingDeleteId);
+    await saveToDB('chat_friends', friends);
+    
+    // 还需要从 char_list 里删掉 (可选，看你需求，通常通讯录删除也要删角色数据)
+    let chars = await loadFromDB('char_list') || [];
+    chars = chars.filter(c => c.id !== pendingDeleteId);
+    await saveToDB('char_list', chars);
+
+    // 清理电话本绑定
+    let phoneDir = await loadFromDB('phone_directory') || {};
+    // 清理该 ID 的绑定
+    for (let key in phoneDir) {
+        if (phoneDir[key] === pendingDeleteId) delete phoneDir[key]; 
+        if (key === "id_" + pendingDeleteId) delete phoneDir[key];
+    }
+    await saveToDB('phone_directory', phoneDir);
+
+    // 刷新 UI
+    renderContactsList(); 
+    showToast("Contact Deleted");
+    
+    // 关闭弹窗
+    closeDeleteModal();
+};
+
+// 3. 点击取消或背景 -> 关闭弹窗
+window.closeDeleteModal = function() {
+    const modal = document.getElementById('modal-delete-confirm');
+    if(modal) modal.style.display = 'none';
+    pendingDeleteId = null;
+};
+
+// 初始化
+document.addEventListener('DOMContentLoaded', () => {
+    // 页面加载时刷新一下联系人
+    renderContactsList(); 
+});
+
+var currentRecentsFilter = 'all'; // 当前标签
+// --- 📞 电话 App 逻辑 ---
+
+// --- 📞 电话 App 标签切换逻辑 (终极修复版) ---
+window.switchPhoneTab = function(tabName) {
+    // 1. 隐藏所有视图
+    document.querySelectorAll('.phone-view-container').forEach(el => el.classList.remove('active'));
+    // 移除所有导航高亮
+    document.querySelectorAll('.p-nav-item').forEach(el => el.classList.remove('active'));
+
+    // 2. 激活目标视图 & 导航图标
+    const targetView = document.getElementById('phone-view-' + tabName);
+    const targetNav = document.getElementById('p-nav-' + tabName);
+    if (targetView) targetView.classList.add('active');
+    if (targetNav) targetNav.classList.add('active');
+
+    // 3. 🚨 核心修复：先定义变量，再使用！
+    const closeBtn = document.getElementById('phone-close-btn');
+    const titleEl = document.getElementById('phone-header-title'); 
+
+    // 4. 控制标题和关闭按钮
+    if (tabName === 'keypad') {
+        // Keypad 页面：显示关闭按钮，标题设为 "Keypad"
+        if (closeBtn) {
+            closeBtn.style.opacity = '1';
+            closeBtn.style.pointerEvents = 'auto';
+        }
+        if (titleEl) {
+            titleEl.textContent = "Keypad"; 
+        }
+    } else {
+        // 其他页面：隐藏关闭按钮，设置对应标题
+        if (closeBtn) {
+            closeBtn.style.opacity = '0';
+            closeBtn.style.pointerEvents = 'none';
+        }
+        
+        const titles = { 'recents': 'Recents', 'contacts': 'Contacts' };
+        if (titleEl) {
+            titleEl.textContent = titles[tabName] || "Phone";
+        }
+    }
+};
+
+// 覆盖原有的 tapKey，增加删除按钮显隐逻辑
+var originalTapKey = window.tapKey;
+// --- 🔢 拨号键盘核心逻辑 (合并修复版) ---
+
+// 1. 点击数字键
+window.tapKey = function(num) {
+    const display = document.getElementById('keypad-number-display');
+    const delBtn = document.getElementById('keypad-del-btn');
+    
+    // 物理输入逻辑
+    if (display && display.textContent.length < 15) {
+        display.textContent += num;
+        
+        // 震动反馈
+        if(navigator.vibrate) navigator.vibrate(10);
+    }
+
+    // 🚨 显隐逻辑：只要有字，就显示删除键
+    if (delBtn && display) {
+        // 如果数字长度大于0，显示为 flex (保证居中)，否则隐藏
+        delBtn.style.display = (display.textContent.length > 0) ? 'flex' : 'none';
+    }
+};
+
+// 2. 点击删除键
+window.delKey = function() {
+    const display = document.getElementById('keypad-number-display');
+    const delBtn = document.getElementById('keypad-del-btn');
+    
+    if (display) {
+        // 删掉最后一个字
+        display.textContent = display.textContent.slice(0, -1);
+        
+        // 震动
+        if(navigator.vibrate) navigator.vibrate(10);
+
+        // 🚨 显隐逻辑：删完如果没有字了，就隐藏按钮
+        if (delBtn) {
+            delBtn.style.display = (display.textContent.length > 0) ? 'flex' : 'none';
+        }
+    }
+};
+
+// 3. 拨打电话
+window.makeCall = function() {
+    const num = document.getElementById('keypad-number-display').textContent;
+    if (!num) return;
+    
+    // 模拟呼叫效果
+    alert("正在呼叫 " + num + "...");
+    if(navigator.vibrate) navigator.vibrate([100, 50, 100]);
+};
+
+// 初始化：确保打开 App 时状态正确
+// 你需要在 openApp 函数里加一个钩子，或者直接在这里初始化
+document.addEventListener('DOMContentLoaded', () => {
+    // 默认切到 keypad
+    switchPhoneTab('keypad');
+});
+/**
+ * 🎵 全局音乐同步引擎
+ * 作用：将音乐 App 的播放状态实时物理投射到主页小组件
+ */
+window.syncHomeMusicWidget = function() {
+    const audio = document.getElementById('main-audio-engine');
+    const song = currentPlaylist[currentPlayIndex];
+    
+    // 获取主页组件元素
+    const homeTitle = document.querySelector('.track-title');
+    const homeArtist = document.querySelector('.track-artist');
+    const homeCover = document.querySelector('.album-cover');
+    const playIcon = document.querySelector('.ctrl-btns svg:nth-child(2)'); // 播放/暂停图标
+
+    if (!song) return;
+
+    // 1. 同步文字内容
+    if (homeTitle) homeTitle.textContent = song.title.toUpperCase();
+    if (homeArtist) homeArtist.textContent = song.artist.toUpperCase();
+
+    // 2. 同步封面图
+    if (homeCover) {
+        homeCover.style.backgroundImage = `url(${song.cover})`;
+        homeCover.style.backgroundSize = 'cover';
+        homeCover.style.backgroundPosition = 'center';
+        
+        // 3. 根据播放状态添加动画
+        if (!audio.paused) {
+            homeCover.classList.add('playing');
+        } else {
+            homeCover.classList.remove('playing');
+        }
+    }
+
+    // 4. 同步小组件上的播放图标 (可选)
+    if (playIcon) {
+        if (!audio.paused) {
+            // 切换为暂停图标 (两条竖杠)
+            playIcon.innerHTML = `<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>`;
+        } else {
+            // 切换为播放图标 (三角形)
+            playIcon.innerHTML = `<path d="M8 5v14l11-7z"/>`;
+        }
+    }
+};
 // 🚨 物理补丁：页面加载时自动恢复数据
 window.addEventListener('load', () => {
     const savedPosts = localStorage.getItem('lune_community_posts');
@@ -33118,6 +35198,7 @@ async function initiatePlayback(id) {
     audio.src = song.audio;
     audio.play();
     updatePlayBtnIcon(true);
+    window.syncHomeMusicWidget();
 
     // 5. 沉浸式切换
     switchMusicTab('core', document.querySelector('.nav-capsule-item:nth-child(2)'));
@@ -33323,6 +35404,7 @@ function togglePlay() {
         // 1. 执行播放
         audio.play().then(() => {
             updatePlayBtnIcon(true); // 切换为暂停图标
+            window.syncHomeMusicWidget(); // 🚨 同步
             if (typeof showToast === 'function') showToast("PLAYING");
         }).catch(err => {
             console.error("播放失败:", err);
@@ -33332,6 +35414,7 @@ function togglePlay() {
         // 2. 执行暂停
         audio.pause();
         updatePlayBtnIcon(false); // 切换为播放图标
+        window.syncHomeMusicWidget(); // 🚨 同步
         if (typeof showToast === 'function') showToast("PAUSED");
     }
 }
@@ -34417,6 +36500,226 @@ document.addEventListener('DOMContentLoaded', () => {
     
     console.log("✅ 按钮事件已强制重置");
 });
+
+// ==========================================
+// 📞 电话 App：通话记录核心修复
+// ==========================================
+
+// 2. 核心：智能时间格式化 (解决你的时间显示问题)
+function formatSmartTime(ts) {
+    const now = new Date();
+    const date = new Date(ts);
+    
+    // 判断是不是同一天
+    const isToday = now.getDate() === date.getDate() && 
+                    now.getMonth() === date.getMonth() && 
+                    now.getFullYear() === date.getFullYear();
+
+    // 提取时间 HH:mm
+    const timeStr = date.getHours().toString().padStart(2, '0') + ':' + 
+                    date.getMinutes().toString().padStart(2, '0');
+
+    if (isToday) {
+        // 如果是今天，只显示时间
+        return timeStr;
+    } else {
+        // 如果是以前，显示 年/月/日 时间
+        const y = date.getFullYear();
+        const m = (date.getMonth() + 1).toString().padStart(2, '0');
+        const d = date.getDate().toString().padStart(2, '0');
+        return `${y}/${m}/${d} ${timeStr}`;
+    }
+}
+
+// 3. 标签切换逻辑
+function filterRecents(type) {
+    currentRecentsFilter = type;
+    
+    // 切换按钮样式
+    document.getElementById('seg-all').classList.toggle('active', type === 'all');
+    document.getElementById('seg-missed').classList.toggle('active', type === 'missed');
+
+    // 重新渲染列表
+    renderRecentsList();
+}
+
+// 4. 渲染列表函数
+function renderRecentsList() {
+    const container = document.getElementById('recents-list-container');
+    if (!container) return;
+    
+    container.innerHTML = ""; // 清空
+
+    // 过滤数据
+    const filteredData = callHistoryData.filter(item => {
+        if (currentRecentsFilter === 'missed') return item.type === 'missed';
+        return true;
+    });
+
+    if (filteredData.length === 0) {
+        container.innerHTML = `<div style="text-align:center; padding:40px; color:#999; font-size:14px;">No Recents</div>`;
+        return;
+    }
+
+    // 生成 HTML
+    filteredData.forEach(item => {
+        // 红色高亮未接来电
+        const isMissed = item.type === 'missed';
+        const nameColor = isMissed ? '#FF3B30' : '#000';
+        const iconColor = isMissed ? '#FF3B30' : '#8E8E93';
+        
+        // 图标逻辑 (简单的 SVG)
+        let iconSvg = '';
+        if(item.type === 'video') iconSvg = '<path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/>'; // 摄像机
+        else iconSvg = '<path d="M20.01 15.38c-1.23 0-2.42-.2-3.53-.59a.996.996 0 00-1.01.24l-2.2 2.2a15.05 15.05 0 01-6.59-6.59l2.2-2.21a.96.96 0 00.25-1A11.36 11.36 0 018.5 4c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1 0 9.39 7.61 17 17 17 .55 0 1-.45 1-1v-3.5c0-.55-.45-1-1-1z"/>'; // 电话
+
+        const div = document.createElement('div');
+        div.className = 'recent-item';
+        div.innerHTML = `
+            <div class="call-type-icon" style="color:${iconColor};">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">${iconSvg}</svg>
+            </div>
+            <div class="call-info">
+                <div class="caller-name" style="color:${nameColor};">${item.name}</div>
+                <div class="call-meta">${item.label}</div>
+            </div>
+            <div class="call-time">${formatSmartTime(item.time)}</div>
+            <div class="info-icon" style="opacity:0.5;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+            </div>
+        `;
+        container.appendChild(div);
+    });
+}
+
+// 5. 初始化：页面加载时运行一次
+document.addEventListener('DOMContentLoaded', () => {
+    renderRecentsList();
+});
+
+// --- 📞 自动渲染速拨栏 ---
+function renderQuickDial() {
+    const container = document.getElementById('quick-dial-list');
+    if(!container) return;
+
+    // 模拟数据 (真实场景可以从 loadFromDB('chat_friends') 获取)
+    // 这里我们直接用 callHistoryData，取前 5 个不重复的人
+    const uniqueMap = new Map();
+    const list = [];
+    
+    // 假设 callHistoryData 是上一轮我们定义的变量
+    if (typeof callHistoryData !== 'undefined') {
+        callHistoryData.forEach(item => {
+            if(!uniqueMap.has(item.name)) {
+                uniqueMap.set(item.name, true);
+                list.push(item);
+            }
+        });
+    }
+
+    // 如果数据不够，补几个假的
+    if(list.length < 3) {
+        list.push({name: "Dunk", label: "mobile"}, {name: "Joong", label: "home"}, {name: "Gemini", label: "work"});
+    }
+
+    container.innerHTML = list.slice(0, 6).map(item => `
+        <div class="quick-item" onclick="quickFill('${item.name}')">
+            <img class="quick-avatar" src="https://api.dicebear.com/7.x/initials/svg?seed=${item.name}&backgroundColor=f0f0f0">
+            <span class="quick-name">${item.name.toUpperCase()}</span>
+        </div>
+    `).join('');
+}
+
+// 点击头像：自动填入名字或号码
+function quickFill(name) {
+    const display = document.getElementById('keypad-number-display');
+    const delBtn = document.getElementById('keypad-del-btn');
+    
+    // 这里为了演示，把名字转换成假号码，或者直接填名字
+    // 实际商用可以存真实 phone 字段
+    display.textContent = name; 
+    
+    // 显示删除按钮
+    if(delBtn) delBtn.style.display = 'block';
+    
+    // 震动
+    if(navigator.vibrate) navigator.vibrate(10);
+}
+
+// 初始化
+document.addEventListener('DOMContentLoaded', renderQuickDial);
+
+function closePhoneAddModal() {
+    document.getElementById('modal-phone-add-contact').style.display = 'none';
+}
+
+// 4. 渲染导入列表 (从角色书读取)
+async function renderImportGrid() {
+    const list = document.getElementById('phone-import-grid');
+    const chars = await loadFromDB('char_list') || [];
+    
+    // 获取已有的电话库，用于回显
+    const phoneDir = await loadFromDB('phone_directory') || {};
+
+    list.innerHTML = "";
+    if (chars.length === 0) {
+        list.innerHTML = `<div style="grid-column:1/-1; text-align:center; color:#ccc;">空</div>`; return;
+    }
+    
+    chars.forEach(c => {
+        const div = document.createElement('div');
+        div.className = 'import-item';
+        div.innerHTML = `<img class="import-avatar" src="${c.avatar}"><span class="import-name">${c.name}</span>`;
+        div.onclick = () => {
+            // UI 选中态
+            document.querySelectorAll('.import-item').forEach(el => el.classList.remove('selected'));
+            div.classList.add('selected');
+            
+            // 记录 ID
+            selectedImportId = c.id;
+            
+            // 提示文字
+            document.getElementById('import-selected-name').textContent = c.name;
+            document.getElementById('import-selection-hint').style.display = 'block';
+
+            // 尝试回显电话号码 (如果之前存过)
+            // 查找 Key: "id_角色ID"
+            const savedNum = phoneDir["id_" + c.id];
+            if (savedNum) {
+                document.getElementById('common-phone-in').value = savedNum;
+            } else {
+                document.getElementById('common-phone-in').value = ""; // 没存过就清空，让用户填
+            }
+        };
+        list.appendChild(div);
+    });
+}
+
+// 辅助：生成随机号码
+function generateRandomPhone() {
+    return "1" + Math.floor(Math.random() * 9000000000 + 1000000000);
+}
+
+// 3. 渲染世界书勾选列表
+async function renderPhoneWorldList() {
+    const container = document.getElementById('phone-world-list');
+    const worlds = await loadFromDB('world_list') || [];
+    
+    if (worlds.length === 0) {
+        container.innerHTML = `<div style="padding:15px; font-size:12px; color:#ccc; text-align:center;">暂无世界设定</div>`;
+        return;
+    }
+
+    container.innerHTML = worlds.map(w => `
+        <div class="ios-list-item" style="background:transparent; border-bottom:0.5px solid rgba(0,0,0,0.05);">
+            <div class="item-content" style="border:none;">
+                <span class="item-label" style="font-size:14px; font-weight:500;">${w.name}</span>
+                <input type="checkbox" class="world-checkbox phone-world-check" value="${w.id}" style="width:20px; height:20px;">
+            </div>
+        </div>
+    `).join('');
+}
+
 </script>
 </body>
 </html>
