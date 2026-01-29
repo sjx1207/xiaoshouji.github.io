@@ -18682,96 +18682,82 @@ window.appendRadioLog = function(role, text) {
 /**
  * 🛰️ AI 主动回复逻辑 (由 REPLY 按钮物理触发)
  */
-/**
- * 🛰️ 联觉回复：物理感知与系统反馈
- */
 window.requestAIReply = async function() {
-    // 1. 🚨 物理锁：防止手机端网络延迟时的重复点击
+    // 1. 物理锁
     if (window.isAiProcessing) return;
-
-    // 2. 🕵️ 身份获取：多级兜底，确保绝对能找到聊天对象
+    
+    // 2. 身份获取兜底
     let contact = window.currentSynergyTarget;
     if (!contact) {
-        // 如果全局变量丢了，尝试从当前聊天室或本地缓存恢复
         contact = window.currentChattingWith || JSON.parse(localStorage.getItem('last_synergy_char'));
     }
-
     if (!contact) {
-        if(typeof showToast === 'function') showToast("⚠️ 信号源丢失，请重新邀约");
+        if(typeof showToast === 'function') showToast("⚠️ 信号源丢失，请重新选择角色");
         return;
     }
 
-    // 3. 🎬 UI 物理反馈：立即让按钮进入“加载态”，让用户知道点到了
+    // 3. 按钮变身加载态
     const btn = document.querySelector('.reply-btn');
-    const originalIcon = btn ? btn.innerHTML : ''; // 备份图标
+    const originalIcon = btn ? btn.innerHTML : '';
     if (btn) {
-        // 变成一个转圈圈，表示正在请求
         btn.innerHTML = `<svg class="quantum-spinner" style="width:16px; height:16px; border-width:2px; border-top-color:#fff;" viewBox="0 0 50 50"></svg>`;
         btn.style.opacity = '0.5';
-        btn.style.pointerEvents = 'none'; // 禁止再次点击
+        btn.style.pointerEvents = 'none';
     }
 
-    window.isAiProcessing = true; // 上锁
+    window.isAiProcessing = true;
 
     try {
-        // 4. 🎵 歌曲数据抓取 (UI 现抓兜底)
-        // 如果内存里的 currentPlaylist 丢了，就直接抓界面上的文字
+        // --- 🎵 数据抓取 (防空兜底) ---
+        // 如果内存里没有歌，就用“静默”代替，防止 undefined
         const uiTitle = document.getElementById('player-title')?.innerText || "未知旋律";
-        const uiArtist = document.getElementById('player-artist')?.innerText || "Unknown";
-        
-        // 优先用内存数据，没有就用 UI 数据兜底
         const song = (currentPlaylist && currentPlaylist[currentPlayIndex]) 
             ? currentPlaylist[currentPlayIndex] 
-            : { title: uiTitle, artist: uiArtist, lyrics: "" };
+            : { title: uiTitle, artist: "Unknown", lyrics: "" };
 
-        // 5. 🌍 环境感知数据
+        // --- 🌍 环境数据 ---
         const rawWeather = localStorage.getItem('current_weather');
         const weatherObj = rawWeather ? JSON.parse(rawWeather) : { city: "未知领域", condition: "信号静默" };
-        const tz = localStorage.getItem('user_timezone') || 'Asia/Shanghai';
-        
-        const sensors = {
-            weather: weatherObj,
-            tz: tz
-        };
+        const sensors = { weather: weatherObj, tz: "Asia/Shanghai" };
 
-        // 6. 📝 上下文抓取 (你的优良逻辑 + 空值兜底)
+        // --- 🚨 400 错误的核心根源修复 🚨 ---
+        // 手机端抓取 innerText 有时会失效，我们改用 textContent，并增加强力兜底
         const allLogEntries = Array.from(document.querySelectorAll('#radio-terminal-log .log-entry'));
-        let newUserMessages = [];
-        
-        // 倒序查找，直到遇到上一条 AI 的回复，提取这中间所有的用户发言
+        let lastUserText = "";
+
+        // 倒序找用户说的最后一句话
         for (let i = allLogEntries.length - 1; i >= 0; i--) {
             const entry = allLogEntries[i];
-            if (entry.classList.contains('ai')) break;
             if (entry.classList.contains('user')) {
-                // 提取纯文本
-                newUserMessages.unshift(entry.querySelector('.log-content').innerText.trim());
+                // 优先用 textContent (兼容性更好)，并去除换行符
+                lastUserText = (entry.querySelector('.log-content')?.textContent || "").trim();
+                break;
             }
         }
         
-        // 如果用户没说话直接点回复，发送一个默认意图（防止发空字符串导致报错）
-        const combinedUserText = newUserMessages.length > 0 
-            ? newUserMessages.join('\n') 
-            : "（静静地看着你，等待回应...）";
+        // 🚨 绝对防御：如果没抓到字，或者抓到的是空的，强制赋值！
+        // 这样 AI 永远不会收到空 content，就不会报 400 了
+        if (!lastUserText || lastUserText.length === 0) {
+            console.warn("⚠️ 检测到用户输入为空，已启用默认意图");
+            lastUserText = "（静静地听着歌，等待你的回应）";
+        }
 
-        // F12 审计
-        console.log(`%c[Signal] 发送指令: ${combinedUserText.substring(0, 20)}...`, "color: #AF52DE;");
-        console.log(`%c[Signal] 歌词模块状态: ${song.lyrics ? "已装载" : "无数据"}`, "color: #AF52DE;");
+        // F12 调试：看看手机端到底发了什么
+        console.log("📤 [发送给AI的数据] Text:", lastUserText, "Song:", song.title);
 
-        // 7. 🚀 执行物理请求
-        // 注意：这里必须 await，否则 finally 会立刻执行导致锁解开
-        await callAIForSynergy(contact, combinedUserText, combinedUserText, song, sensors);
+        // 4. 执行发送
+        await callAIForSynergy(contact, lastUserText, lastUserText, song, sensors);
 
     } catch (e) {
-        console.error("Reply Error:", e);
-        if(typeof showToast === 'function') showToast("⚠️ 频率干扰，请重试");
+        console.error("Reply Critical Error:", e);
+        if(typeof showToast === 'function') showToast("⚠️ 链路异常: " + e.message);
     } finally {
-        // 8. 🔐 物理解锁：无论成功失败，必须恢复按钮状态
+        // 5. 解锁
         window.isAiProcessing = false;
         if (btn) {
-            // 恢复原来的图标（如果备份失败，就用默认图标）
             btn.innerHTML = originalIcon || `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>`;
             btn.style.opacity = '1';
-            btn.style.pointerEvents = 'auto'; // 恢复点击
+            btn.style.pointerEvents = 'auto';
         }
     }
 };
