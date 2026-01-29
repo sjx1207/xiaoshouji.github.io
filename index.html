@@ -33415,7 +33415,6 @@ async function callAIForSynergy(contact, userText, historyData, songInfo) {
 # 🎧 此刻的联觉环境 (你的背景灵感)
 - 正在播放：《${songInfo.title || "未知旋律"}》 - ${songInfo.artist || "未知"}
 - 歌词共鸣：${songInfo.lyrics || "旋律在纠缠"}
-- 实时感官：你正位于 ${sensors.weather.city}，外面天气 ${sensors.weather.condition}。
 🚨 指令：根据歌词和天气调整你的语气。如果是快歌，就回得更俏皮短促一些！
 
 # 📜 世界书规约：
@@ -34378,7 +34377,7 @@ document.addEventListener('DOMContentLoaded', () => {
             window.requestAIReply();
         });
     }
-    
+
     replyBtns.forEach(btn => {
         // 1. 先移除所有旧的 onclick，防止冲突
         btn.onclick = null; 
