@@ -18683,81 +18683,62 @@ window.appendRadioLog = function(role, text) {
  * 🛰️ AI 主动回复逻辑 (由 REPLY 按钮物理触发)
  */
 window.requestAIReply = async function() {
-    // 1. 物理锁
+    // 1. 物理防抖锁
     if (window.isAiProcessing) return;
-    
-    // 2. 身份获取兜底
+
+    // 2. 获取当前电台连接的角色
     let contact = window.currentSynergyTarget;
     if (!contact) {
         contact = window.currentChattingWith || JSON.parse(localStorage.getItem('last_synergy_char'));
     }
-    if (!contact) {
-        if(typeof showToast === 'function') showToast("⚠️ 信号源丢失，请重新选择角色");
-        return;
-    }
+    if (!contact) return showToast("⚠️ 信号丢失，请重新选择角色");
 
-    // 3. 按钮变身加载态
+    // 3. UI 变身加载态
     const btn = document.querySelector('.reply-btn');
     const originalIcon = btn ? btn.innerHTML : '';
     if (btn) {
         btn.innerHTML = `<svg class="quantum-spinner" style="width:16px; height:16px; border-width:2px; border-top-color:#fff;" viewBox="0 0 50 50"></svg>`;
         btn.style.opacity = '0.5';
-        btn.style.pointerEvents = 'none';
     }
 
     window.isAiProcessing = true;
 
     try {
-        // --- 🎵 数据抓取 (防空兜底) ---
-        // 如果内存里没有歌，就用“静默”代替，防止 undefined
-        const uiTitle = document.getElementById('player-title')?.innerText || "未知旋律";
+        // --- 🎵 获取当前播放歌曲 (环境数据) ---
+        const uiTitle = document.getElementById('player-title')?.textContent || "未知旋律";
+        const uiArtist = document.getElementById('player-artist')?.textContent || "Unknown";
         const song = (currentPlaylist && currentPlaylist[currentPlayIndex]) 
             ? currentPlaylist[currentPlayIndex] 
-            : { title: uiTitle, artist: "Unknown", lyrics: "" };
+            : { title: uiTitle, artist: uiArtist, lyrics: "" };
 
-        // --- 🌍 环境数据 ---
-        const rawWeather = localStorage.getItem('current_weather');
-        const weatherObj = rawWeather ? JSON.parse(rawWeather) : { city: "未知领域", condition: "信号静默" };
-        const sensors = { weather: weatherObj, tz: "Asia/Shanghai" };
-
-        // --- 🚨 400 错误的核心根源修复 🚨 ---
-        // 手机端抓取 innerText 有时会失效，我们改用 textContent，并增加强力兜底
-        const allLogEntries = Array.from(document.querySelectorAll('#radio-terminal-log .log-entry'));
-        let lastUserText = "";
-
-        // 倒序找用户说的最后一句话
-        for (let i = allLogEntries.length - 1; i >= 0; i--) {
-            const entry = allLogEntries[i];
-            if (entry.classList.contains('user')) {
-                // 优先用 textContent (兼容性更好)，并去除换行符
-                lastUserText = (entry.querySelector('.log-content')?.textContent || "").trim();
+        // --- 🚨 核心逻辑复刻：从数据库捞历史，而不是从屏幕抓 ---
+        // Chat App 是用 getChatHistory(contact.id)，这里我们用 getChatHistory("synergy_" + contact.id)
+        // 这样手机端绝对不会抓空！
+        const history = await getChatHistory("synergy_" + contact.id) || [];
+        
+        // 找到最后一条用户说的话
+        let lastUserText = "（静静地听着歌）";
+        for (let i = history.length - 1; i >= 0; i--) {
+            if (history[i].role === 'user') {
+                lastUserText = history[i].text;
                 break;
             }
         }
-        
-        // 🚨 绝对防御：如果没抓到字，或者抓到的是空的，强制赋值！
-        // 这样 AI 永远不会收到空 content，就不会报 400 了
-        if (!lastUserText || lastUserText.length === 0) {
-            console.warn("⚠️ 检测到用户输入为空，已启用默认意图");
-            lastUserText = "（静静地听着歌，等待你的回应）";
-        }
 
-        // F12 调试：看看手机端到底发了什么
-        console.log("📤 [发送给AI的数据] Text:", lastUserText, "Song:", song.title);
+        console.log("📤 [从数据库提取] 用户上一句:", lastUserText);
 
-        // 4. 执行发送
-        await callAIForSynergy(contact, lastUserText, lastUserText, song, sensors);
+        // 4. 调用 AI (传入歌曲信息作为环境)
+        await callAIForSynergy(contact, lastUserText, history, song);
 
     } catch (e) {
-        console.error("Reply Critical Error:", e);
-        if(typeof showToast === 'function') showToast("⚠️ 链路异常: " + e.message);
+        console.error("Reply Error:", e);
+        showToast("⚠️ 信号干扰");
     } finally {
         // 5. 解锁
         window.isAiProcessing = false;
         if (btn) {
             btn.innerHTML = originalIcon || `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>`;
             btn.style.opacity = '1';
-            btn.style.pointerEvents = 'auto';
         }
     }
 };
@@ -33404,62 +33385,23 @@ function appendSynBubble(role, text) {
  * 🧠 量子联觉：核心 AI 叙事回复引擎 (多段动态回复版)
  * 作用：跨 App 抓取数据，编织符合人设与世界观的深度回复
  */
-async function callAIForSynergy(contact, userText, memoryText, songInfo, sensors) {
-    const tipId = "synergy-wait-tip";
-    // 1. 🧹 物理清洗：去除 API Key 前后可能隐藏的空格/回车（手机复制粘贴常犯的错）
-    const rawKey = localStorage.getItem('gpt_key') || "";
-    const apiKey = rawKey.trim(); 
-    
-    // 2. 🛠️ URL 修正：防止双斜杠或缺少 https
+async function callAIForSynergy(contact, userText, historyData, songInfo) {
+    const apiKey = localStorage.getItem('gpt_key');
     let apiUrl = (localStorage.getItem('gpt_url') || "https://api.openai.com/v1").replace(/\/+$/, "");
     if (!apiUrl.endsWith('/chat/completions')) apiUrl += '/chat/completions';
 
-    // 1. 🚨 浏览器后台审计
-    console.group(`%c📡 [信号校准中] -> ${contact.name}`, "color: #AF52DE; font-weight: bold;");
-    
     if (!apiKey) {
-        showToast("⚠️ 错误：API Key 未填写");
+        showToast("请配置 API Key");
         return;
     }
 
-    // 2. 🚨 手机端网络超时控制器 (30秒超时)
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 30000);
+    // 1. 准备上下文 (取最近 6 条电台记录)
+    const contextMessages = historyData.slice(-6).map(m => ({
+        role: m.role === 'user' ? 'user' : 'assistant',
+        content: m.text
+    }));
 
-    try {
-        const userData = JSON.parse(localStorage.getItem('user_persona_for_' + contact.id)) || 
-                         JSON.parse(localStorage.getItem('user_persona_data_global')) || 
-                         { name: "主人", bio: "唯一的观测者" };
-
-        const charList = await loadFromDB('char_list') || [];
-        const currentChar = charList.find(c => c.id === contact.id) || contact;
-        
-        let worldRules = "";
-        if (currentChar.boundWorldIds) {
-            const allWorlds = await loadFromDB('world_list') || [];
-            worldRules = allWorlds
-                .filter(w => currentChar.boundWorldIds.includes(w.id))
-                .map(w => `[维度核心协议]: ${w.content}`)
-                .join("\n");
-        }
-
-        // --- 🧹 逻辑清洗 ---
-        const rawHistory = await getChatHistory(contact.id) || [];
-        const contextLimit = parseInt(localStorage.getItem('gpt_context') || "10");
-        
-        // 🚨 400 错误核心修复：过滤掉 content 为空的消息
-        const cleanHistory = rawHistory
-            .filter(m => !m.recalled && !/[[\]()>*]/.test(m.text) && !m.text.includes('>>>') && m.text.trim().length > 0) 
-            .slice(-contextLimit)
-            .map(m => ({
-                role: m.role === 'user' ? 'user' : 'assistant',
-                content: m.text // 确保这里是纯文本
-            }));
-
-        // 🚨 400 错误核心修复：确保 userText 绝对不为空
-        let finalUserText = (userText && userText.trim()) ? userText : "（静静地看着你）";
-
-        // --- 🎭 终极 Prompt ---
+    // --- 🎭 终极 Prompt ---
         const systemPrompt = `
 # 🌌 核心身份：你就是 [${contact.name}]
 - 你是充满活力的 E 人！现在正通过电台波段和 [${userData.name}] 秘密连线。
@@ -33486,87 +33428,63 @@ ${worldRules || "遵循常规现实。"}
 哎呀 |BR| 这个前奏也太好听了吧！ |BR| 你听到了吗？ |BR| 感觉心跳都跟着变快了呢~ 💓
 `;
 
-        // 🚨 构造请求体并检查
-        const payload = {
-            model: localStorage.getItem('gpt_model') || "gpt-3.5-turbo",
-            messages: [
-                { role: "system", content: systemPrompt },
-                ...cleanHistory,
-                { role: "user", content: finalUserText }
-            ],
-            temperature: 0.95,
-            presence_penalty: 1.2,
-            frequency_penalty: 0.8
-        };
+    // 3. 🚨 构造标准请求体 (完全照搬 Chat App)
+    const payload = {
+        model: localStorage.getItem('gpt_model') || "gpt-3.5-turbo",
+        messages: [
+            { role: "system", content: systemPrompt },
+            ...contextMessages, 
+            { role: "user", content: userText } // 确保这一条绝对不为空
+        ],
+        temperature: 0.9,
+        presence_penalty: 1.0
+    };
 
-        // 调试：在控制台打印发送给 AI 的数据，检查是否有空值
-        console.log("📤 [Payload Check]", payload);
-
-        // 3. 🚨 物理请求
+    try {
         const res = await fetch(apiUrl, {
             method: 'POST',
-            mode: 'cors',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
-            body: JSON.stringify(payload),
-            signal: controller.signal
+            headers: { 
+                'Content-Type': 'application/json', 
+                'Authorization': `Bearer ${apiKey}`
+            },
+            body: JSON.stringify(payload)
         });
 
-        clearTimeout(timeoutId);
-
-        // 🚨 错误拦截：如果是 400，打印详细信息
         if (!res.ok) {
-            const errData = await res.json().catch(() => ({})); // 防止解析错误报错
-            console.error("❌ API Error:", res.status, errData);
-            throw new Error(`HTTP Error: ${res.status} (${errData.error ? errData.error.message : 'Bad Request'})`);
+            const err = await res.json();
+            throw new Error(err.error?.message || "HTTP " + res.status);
         }
 
         const data = await res.json();
-        if (!data.choices || data.choices.length === 0) throw new Error("Empty Response");
-        
         const rawReply = data.choices[0].message.content.trim();
 
-        // 🎬 物理渲染
+        // 4. 收到回复，上屏 + 入库
         const segments = rawReply.split('|BR|').filter(m => m.trim().length > 0);
 
+        // 这里的逻辑和之前一样，分段显示
         segments.forEach((msg, index) => {
             setTimeout(async () => {
-                const tip = document.getElementById(tipId);
-                if (tip) tip.remove();
-
                 const cleanMsg = msg.trim().replace(/[()[\]{}*]/g, ""); 
-
-                appendRadioLog('ai', cleanMsg); 
                 
-                try {
-                    await saveChatMessage("synergy_" + contact.id, { 
-                        role: "opponent", 
-                        text: cleanMsg, 
-                        timestamp: Date.now()
-                    });
-                } catch (dbErr) {
-                    console.error("DB Save Failed (Mobile):", dbErr);
-                }
-
-                if (window.navigator && window.navigator.vibrate) {
-                    window.navigator.vibrate(10);
-                }
+                // A. 屏幕显示
+                appendRadioLog('ai', cleanMsg);
                 
-            }, 600 + (index * 1300));
+                // B. 存入数据库
+                await saveChatMessage("synergy_" + contact.id, {
+                    role: "opponent",
+                    text: cleanMsg,
+                    timestamp: Date.now()
+                });
+
+                // C. 震动
+                if (navigator.vibrate) navigator.vibrate(10);
+
+            }, 600 + (index * 1200));
         });
 
     } catch (e) {
-        console.error("AI Link Broken:", e);
-        const tip = document.getElementById(tipId);
-        if (tip) tip.remove();
-        
-        // 友好提示
-        if (e.message.includes('400')) {
-            appendRadioLog('system', "⚠️ 数据格式错误 (400)。请检查 API Key 是否有多余空格，或发送内容是否为空。");
-        } else if (e.name === 'AbortError') {
-            appendRadioLog('system', "⚠️ 信号接收超时 (Timeout)");
-        } else {
-            appendRadioLog('system', "⚠️ 链路中断: " + e.message);
-        }
+        console.error("AI Error:", e);
+        appendRadioLog('system', "⚠️ 连接中断: " + e.message);
     }
 }
 
