@@ -10810,7 +10810,6 @@ input:checked + .slider:before {
     border: 1px solid rgba(0,122,255,0.4);
     border-radius: 20px;
     cursor: pointer;
-    display: none; /* 默认隐藏，生成后显示 */
     transition: all 0.3s;
 }
 
@@ -20704,6 +20703,442 @@ input[type="range"] { width: 100%; accent-color: #000; cursor: pointer; }
     border-color: #000;
     color: #000;
 }
+/* 列表项美化：银行回执单风格 */
+.report-entry-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 18px 10px;
+    border-bottom: 1px dashed #ccc; /* 虚线更有档案感 */
+    position: relative;
+    transition: background 0.3s;
+}
+.report-entry-row:hover { background: #f9f9f9; }
+.m-title { font-family: 'Cinzel', serif; font-weight: 900; font-size: 15px; color: #000; }
+.m-desc { font-size: 10px; color: #666; font-family: monospace; line-height: 1.4; margin-top: 4px; }
+.m-price { font-family: 'Cinzel'; font-weight: 900; font-size: 18px; color: #000; }
+
+/* 按钮组美化 */
+.report-footer-actions {
+    display: flex; gap: 10px; padding: 20px 0;
+}
+.save-archive-btn {
+    flex: 2; background: #000; color: #fff; border: none;
+    padding: 15px; font-family: 'Cinzel'; font-weight: 900;
+    letter-spacing: 1px; cursor: pointer; transition: 0.3s;
+}
+.re-gen-btn {
+    flex: 1; background: #fff; color: #000; border: 2px solid #000;
+    padding: 15px; font-family: 'Cinzel'; font-weight: 900; font-size: 10px;
+    cursor: pointer;
+}
+.save-archive-btn:active { transform: scale(0.98); opacity: 0.8; }
+
+/* 图表容器增加外发光 */
+.chart-wrapper-bw {
+    background: #fff; border: 3px solid #000;
+    padding: 15px; margin-bottom: 25px;
+    box-shadow: 8px 8px 0px #eee;
+}
+/* 专属生成动画：扫描线效果 */
+.scanning-overlay {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(255, 255, 255, 0.9);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    z-index: 100;
+}
+
+.scan-line {
+    width: 80%; height: 2px; background: #000;
+    position: absolute; top: 0;
+    animation: scanMove 1.5s infinite linear;
+}
+
+@keyframes scanMove {
+    0% { top: 0; opacity: 0; }
+    50% { opacity: 1; }
+    100% { top: 100%; opacity: 0; }
+}
+
+.loading-text {
+    font-family: 'Cinzel', serif; font-weight: 900; font-size: 12px;
+    letter-spacing: 2px; margin-top: 15px; animation: blink 1s infinite;
+}
+
+@keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+/* 详情文字淡入动画 */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* 详情滚动条美化 */
+.scroll-body::-webkit-scrollbar { width: 4px; }
+.scroll-body::-webkit-scrollbar-track { background: #f1f1f1; }
+.scroll-body::-webkit-scrollbar-thumb { background: #000; }
+
+/* 响应式调整 */
+#detail-story-container span {
+    display: inline-block;
+    transition: all 0.3s;
+}
+#detail-story-container span:hover {
+    background: #000; color: #fff;
+}
+
+/* 修复：扫描遮罩层必须撑满 */
+.scanning-overlay {
+    position: absolute; 
+    top: 0; left: 0; 
+    width: 100%; height: 100%;
+    background: rgba(255, 255, 255, 0.95);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    z-index: 100;
+    overflow: hidden; /* 防止线条飞出 */
+}
+
+/* 修复：线条宽度设为 100%，并增加光晕感 */
+.scan-line {
+    width: 100%; /* 线条拉满 */
+    height: 3px; 
+    background: linear-gradient(90deg, transparent, #000, transparent); /* 渐变线，更有质感 */
+    position: absolute; 
+    left: 0; /* 靠左对齐 */
+    animation: scanMove 2s infinite ease-in-out;
+    box-shadow: 0 0 8px rgba(0,0,0,0.3); /* 增加一点阴影，让线条变重 */
+}
+
+@keyframes scanMove {
+    0% { top: 0; }
+    100% { top: 100%; }
+}
+.archive-list-header {
+    margin: 20px 0 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.header-line { flex: 1; height: 1px; background: #eee; }
+.entry-arrow {
+    font-size: 10px;
+    color: #ccc;
+    font-weight: 100;
+}
+.records-box-white {
+    border: 2px solid #000;
+    background: #fff;
+    margin-bottom: 15px;
+}
+/* 生成总表专属：全屏解密遮罩 */
+.vault-decrypting-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: #fff; z-index: 999999;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+}
+
+/* 动态扫描线 */
+.v-scan-line {
+    width: 100%; height: 4px;
+    background: rgba(0,0,0,0.8);
+    position: absolute;
+    box-shadow: 0 0 15px rgba(0,0,0,0.5);
+    animation: vScanMove 2s infinite ease-in-out;
+}
+
+@keyframes vScanMove {
+    0% { top: 0; }
+    100% { top: 100%; }
+}
+
+/* 闪烁的终端文字 */
+.v-loading-text {
+    font-family: 'Cinzel', serif; font-weight: 900; font-size: 16px;
+    color: #000; letter-spacing: 4px;
+    text-shadow: 2px 2px 0px #eee;
+    animation: vBlink 0.8s infinite;
+}
+
+.v-status-sub {
+    font-family: monospace; font-size: 10px; color: #888; margin-top: 15px;
+}
+
+@keyframes vBlink { 0%, 100% { opacity: 1; } 50% { opacity: 0.2; } }
+/* 实时账目流标签：工业铭牌风格 */
+.tiny-label {
+    font-family: 'Courier New', monospace; /* 程序员最爱的等宽字体 */
+    font-size: 9px;
+    font-weight: 900;
+    color: #000;
+    text-transform: uppercase; /* 强制大写，增加仪式感 */
+    letter-spacing: 3px;       /* 核心：极宽字间距，营造高级感 */
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 5px;
+    opacity: 0.8;
+}
+
+/* 给标签前面加一个“闪烁的状态点”，更有动态感 */
+.tiny-label::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    background: #000;
+    display: inline-block;
+    border-radius: 50%; /* 圆形 */
+    animation: statusBlink 1.5s infinite; /* 呼吸灯动画 */
+}
+
+@keyframes statusBlink {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.3; transform: scale(0.8); }
+}
+/* 卡片容器：支持横向滚动 */
+.history-cards-scroll {
+    display: flex;
+    gap: 15px;
+    overflow-x: auto;
+    padding: 10px 0;
+    min-height: 120px;
+}
+.history-cards-scroll::-webkit-scrollbar { display: none; }
+
+/* 单张存档卡片样式 */
+.archive-card-bw {
+    flex: 0 0 140px; /* 固定宽度 */
+    background: #fff;
+    border: 2px solid #000;
+    padding: 12px;
+    position: relative;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+.archive-card-bw:hover {
+    transform: translateY(-5px);
+    box-shadow: 6px 6px 0px rgba(0,0,0,0.1);
+}
+.card-tag { font-family: monospace; font-size: 8px; color: #888; display: block; }
+.card-month { font-family: 'Cinzel'; font-weight: 900; font-size: 14px; margin: 5px 0; }
+.card-val { font-family: 'Cinzel'; font-weight: 900; font-size: 16px; border-top: 1px dashed #eee; padding-top: 5px; }
+
+/* 空状态文字 */
+.empty-placeholder { font-size: 9px; color: #ccc; letter-spacing: 2px; padding: 20px; text-align: center; width: 100%; }
+/* 新建生成按钮：工业协议风格 */
+.mini-add-btn {
+    background: #000;          /* 黑色底 */
+    color: #fff;               /* 白色字 */
+    border: 1.5px solid #000;
+    padding: 4px 12px;
+    font-family: 'Cinzel', serif;
+    font-weight: 900;
+    font-size: 10px;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    text-transform: uppercase;
+}
+
+/* 悬停效果：黑白反转 */
+.mini-add-btn:hover {
+    background: #fff;
+    color: #000;
+    box-shadow: 4px 4px 0px rgba(0,0,0,0.1);
+    transform: translate(-2px, -2px); /* 悬浮感 */
+}
+
+/* 点击反馈：深陷感 */
+.mini-add-btn:active {
+    transform: translate(0, 0);
+    box-shadow: 0px 0px 0px transparent;
+}
+
+/* 按钮前面的 "+" 号稍微加粗 */
+.mini-add-btn::before {
+    margin-right: 4px;
+    font-weight: 100;
+    opacity: 0.7;
+}
+/* 1. 头部容器：强制两端对齐 */
+.dash-section-header {
+    display: flex;
+    justify-content: space-between; /* 这一行让标签往左，按钮往右 */
+    align-items: center;
+    width: 100%;
+    margin-bottom: 15px;
+    border-bottom: 1px solid #eee; /* 加一条细线，增加分区感 */
+    padding-bottom: 8px;
+}
+
+/* 2. 左侧标签美化：工业铭牌风格 */
+.tiny-label {
+    font-family: 'Courier New', monospace;
+    font-size: 9px;
+    font-weight: 900;
+    letter-spacing: 2px;
+    color: #000;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.tiny-label::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    background: #000;
+    border-radius: 50%;
+    animation: blink 1.5s infinite;
+}
+
+/* 3. 右侧按钮：硬核黑色方块 */
+.mini-add-btn {
+    background: #000;
+    color: #fff;
+    border: none;
+    padding: 6px 14px; /* 增加宽度，让它看起来更稳 */
+    font-family: 'Cinzel', serif;
+    font-size: 10px;
+    font-weight: 900;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: 0.2s;
+    white-space: nowrap; /* 保证文字不换行 */
+}
+.mini-add-btn:hover {
+    background: #444; /* 悬停时稍微变灰，增加反馈 */
+    transform: translateY(-1px);
+}
+.mini-add-btn:active {
+    transform: translateY(0);
+}
+
+@keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.2; } }
+.report-footer-actions {
+    display: flex; gap: 10px; margin-top: 25px;
+}
+
+.save-archive-btn {
+    flex: 2; background: #000; color: #fff; border: none;
+    padding: 15px; font-family: 'Cinzel', serif; font-weight: 900;
+    font-size: 12px; cursor: pointer; letter-spacing: 2px;
+    /* 增加一个细微的扫光动画，诱导点击 */
+    background: linear-gradient(135deg, #000 0%, #333 50%, #000 100%);
+    background-size: 200% 100%;
+    animation: buttonGlow 3s infinite;
+}
+
+.re-gen-btn-alt {
+    flex: 1; background: #fff; color: #000; border: 2px solid #000;
+    padding: 15px; font-family: 'Cinzel'; font-weight: 900; font-size: 10px;
+    cursor: pointer;
+}
+
+@keyframes buttonGlow {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+/* 确认存档按钮：纯黑高定感 */
+.save-archive-btn {
+    background: #000 !important;
+    color: #fff !important;
+    border: none;
+    padding: 15px;
+    font-family: 'Cinzel', serif;
+    font-weight: 900;
+    font-size: 12px;
+    letter-spacing: 2px;
+    cursor: pointer;
+    text-transform: uppercase;
+}
+
+/* 重新生成按钮：白底黑框 */
+.re-gen-btn {
+    background: #fff !important;
+    color: #000 !important;
+    border: 2px solid #000 !important;
+    padding: 15px;
+    font-family: 'Cinzel', serif;
+    font-weight: 900;
+    font-size: 10px;
+    cursor: pointer;
+}
+
+/* 悬停反馈 */
+.save-archive-btn:hover { background: #333 !important; }
+.re-gen-btn:hover { background: #eee !important; }
+
+.full-box { 
+    width: 95% !important; 
+    max-width: 450px !important; 
+    height: 85vh; /* 建议给 85%，留一点边距 */
+    display: flex; 
+    flex-direction: column; 
+    overflow: hidden; 
+}
+
+/* 确保中间的内容区可以滚动，不把底部的按钮顶出去 */
+.scroll-body { 
+    flex: 1; 
+    overflow-y: auto; 
+    padding: 20px; 
+}
+
+/* 底部按钮区固定 */
+.report-footer-actions {
+    flex: 0 0 auto; /* 禁止收缩 */
+    background: #fff;
+    border-top: 2px solid #000;
+    padding: 15px;
+    display: flex;
+    gap: 10px;
+}
+/* 竖式账单小票样式 */
+.industrial-receipt {
+    background: #fff;
+    border: 1px solid #000;
+    margin-bottom: 30px;
+    padding: 20px;
+    position: relative;
+    box-shadow: 8px 8px 0px rgba(0,0,0,0.05);
+}
+
+.receipt-header {
+    text-align: center;
+    border-bottom: 2px dashed #000;
+    padding-bottom: 10px;
+    margin-bottom: 15px;
+}
+
+.receipt-row {
+    display: flex;
+    justify-content: space-between;
+    font-family: monospace;
+    font-size: 12px;
+    padding: 5px 0;
+    border-bottom: 1px dotted #eee;
+}
+
+.receipt-total-row {
+    margin-top: 15px;
+    padding-top: 10px;
+    border-top: 2px solid #000;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+}
+
+.receipt-total-label { font-family: 'Cinzel'; font-weight: 900; font-size: 14px; }
+.receipt-total-val { font-family: 'Cinzel'; font-weight: 900; font-size: 20px; }
+
+/* 锯齿边缘感 (伪元素装饰) */
+.industrial-receipt::after {
+    content: "";
+    position: absolute;
+    bottom: -10px; left: 0; width: 100%; height: 10px;
+    background-image: linear-gradient(135deg, #f4f4f4 25%, transparent 25%), linear-gradient(225deg, #f4f4f4 25%, transparent 25%);
+    background-size: 10px 20px;
+}
 
 </style>
 </head>
@@ -26394,27 +26829,33 @@ input[type="range"] { width: 100%; accent-color: #000; cursor: pointer; }
 
                 <div class="consumption-module">
                     <nav class="consumption-switcher-tabs">
-                        <div class="con-tab active" onclick="toggleConsumptionView('monthly', this)">MONTHLY</div>
-                        <div class="con-tab" onclick="toggleConsumptionView('yearly', this)">ANNUAL</div>
+                        <div class="con-tab active" onclick="toggleConsumptionView('monthly', this); window.syncVaultDataToUI();">
+                            MONTHLY (月度)
+                        </div>
+                        <div class="con-tab" onclick="toggleConsumptionView('yearly', this); window.syncVaultDataToUI();">
+                            ANNUAL (年度)
+                        </div>
                     </nav>
 
-                    <div id="view-monthly" class="consumption-sub-panel active">
-                        <div class="stat-grid">
-                            <div class="stat-item-bw">
-                                <span class="tag">OUTFLOW</span>
-                                <div class="val" id="dash-monthly-outflow">-￥0.00</div>
-                            </div>
-                            <button class="module-action-btn" onclick="monthlyDetailAction()">DETAIL_REP</button>
+                    <div id="view-monthly" class="consumption-sub-panel active" style="padding: 10px;">
+                        <div class="dash-section-header">
+                            <span class="tiny-label">ARCHIVED_LOGS / 历史存档</span>
+                            <button class="mini-add-btn" onclick="monthlyDetailAction()">+ NEW_GEN</button>
+                        </div>
+
+                        <div id="dash-monthly-cards-container" class="history-cards-scroll">
+                            <div class="empty-placeholder">NO_DATA_FOUND // 等待指令下发</div>
                         </div>
                     </div>
 
-                    <div id="view-yearly" class="consumption-sub-panel">
-                        <div class="stat-grid">
-                            <div class="stat-item-bw">
-                                <span class="tag">TOTAL_YEAR</span>
-                                <div class="val">-￥5,100</div>
-                            </div>
-                            <button class="module-action-btn" onclick="yearlyArchiveSafe()">ARCHIVE_SAFE</button>
+                    <div id="view-yearly" class="consumption-sub-panel" style="padding: 10px;">
+                        <div class="dash-section-header">
+                            <span class="tiny-label">ANNUAL_ARCHIVES / 年度卷宗</span>
+                            <button class="mini-add-btn" onclick="yearlyDetailAction()">+ NEW_ANNUAL</button>
+                        </div>
+
+                        <div id="dash-yearly-cards-container" class="history-cards-scroll">
+                            <div class="empty-placeholder">NO_ANNUAL_DATA // 等待年度指令</div>
                         </div>
                     </div>
                 </div>
@@ -26588,38 +27029,637 @@ input[type="range"] { width: 100%; accent-color: #000; cursor: pointer; }
     </div>
 </div>
 
-<div id="monthly-report-display" class="industrial-modal-overlay" style="z-index: 400001;">
-    <div class="industrial-modal-box full-box">
-        <header class="modal-header-bw">
+<div id="monthly-report-display" class="industrial-modal-overlay" style="z-index: 400001; display: none;">
+    <div class="industrial-modal-box full-box" style="display: flex; flex-direction: column; height: 85vh; max-height: 700px; background: #fff;">
+        
+        <header class="modal-header-bw" style="flex: 0 0 auto;">
             <span class="cinzel-font">EXPENDITURE_VISUALIZATION</span>
             <div class="close-x" onclick="closeMonthlyReport()">×</div>
         </header>
-        <div class="modal-body scroll-body">
+
+        <div class="modal-body scroll-body" style="flex: 1; overflow-y: auto; padding: 20px;">
             <div class="chart-container-bw">
                 <canvas id="monthly-chart-canvas" width="300" height="150"></canvas>
             </div>
-            <div class="section-title-bw cinzel-font">--- ITEM_LOGS ---</div>
-            <div id="monthly-records-list" class="report-list"></div>
+            <div class="archive-list-header">
+                <span class="tiny-label">DATA_STREAM | 实时账目流</span>
+                <div class="header-line"></div>
+            </div>
+            <div id="monthly-records-list"></div>
         </div>
+
+        <footer class="report-footer-actions" style="flex: 0 0 auto; padding: 15px; background: #fff; border-top: 2px solid #000; display: flex; gap: 10px;">
+            <button class="save-archive-btn" onclick="window.manualSaveArchive()" style="flex: 2; background: #000; color: #fff; padding: 12px; font-family: 'Cinzel'; font-weight: 900; border: none; cursor: pointer; border-radius: 0;">
+                COMMIT_TO_VAULT
+            </button>
+            <button class="re-gen-btn" onclick="window.reTriggerConfig()" style="flex: 1; background: #fff; color: #000; padding: 12px; font-family: 'Cinzel'; font-weight: 900; border: 2px solid #000; cursor: pointer; border-radius: 0;">
+                RE-GEN
+            </button>
+        </footer>
     </div>
 </div>
 
-<div id="month-record-detail" class="industrial-modal-overlay" style="z-index: 400002;">
+<div id="month-record-detail" class="industrial-modal-overlay" style="z-index: 400002; display: none;">
+    <div class="industrial-modal-box full-box">
+        <header class="modal-header-bw" style="background: #000; color: #fff; padding: 15px; display: flex; justify-content: space-between;">
+            <div>
+                <span class="cinzel-font">DEEP_LOG_ANALYSIS</span>
+                <div id="detail-month-label" style="font-size: 9px; opacity: 0.5; font-family: monospace;"></div>
+            </div>
+            <div class="close-x" onclick="window.closeMonthEntryDetail()" style="cursor:pointer;">×</div>
+        </header>
+
+        <div class="modal-body scroll-body" id="detail-story-container" style="padding: 25px; min-height: 300px; position: relative;">
+            </div>
+
+        <footer style="padding: 15px 25px; border-top: 1px solid #eee; display: flex; gap: 10px; align-items: center;">
+            <button class="re-gen-btn" onclick="window.regenerateStory()" style="flex:1;">↻ RE-GEN</button>
+            <button class="save-archive-btn" onclick="window.confirmSaveStory()" style="flex:2;">COMMIT_ARCHIVE</button>
+            <span id="detail-amount-tag" style="font-family: 'Cinzel'; font-weight: 900; margin-left: 10px;"></span>
+        </footer>
+    </div>
+</div>
+<div id="yearly-config-modal" class="industrial-modal-overlay" style="z-index: 500000;">
     <div class="industrial-modal-box">
-        <div class="modal-body" style="text-align:center; padding:40px;">
-            <div class="cinzel-font" style="margin-bottom:20px;">ENTRY_DETAIL</div>
-            <button class="protocol-main-btn" onclick="alert('即将解锁的功能...')">INITIALIZE_LOG_ANALYSIS</button>
+        <header class="modal-header-bw">
+            <span class="cinzel-font">ANNUAL_PROTOCOL_CONFIG</span>
+            <div class="close-x" onclick="closeYearlyConfig()">×</div>
+        </header>
+        <div class="modal-body">
+            <div class="config-item">
+                <span class="tiny-label">START_YEAR (起始年份)</span>
+                <input type="number" id="y-config-year" value="2026" min="1990" max="2099">
+            </div>
+            <div class="config-item">
+                <span class="tiny-label">TIME_SPAN (跨度: 1-10年)</span>
+                <input type="range" id="y-config-range" min="1" max="10" value="1" oninput="updateYearRangeText(this.value)">
+                <div id="y-range-val" style="text-align:right; font-weight:900; font-family:'Cinzel';">1 YEAR(S)</div>
+            </div>
+        </div>
+        <footer class="modal-footer-bw">
+            <button class="modal-btn-cancel" onclick="closeYearlyConfig()">ABORT</button>
+            <button class="modal-btn-confirm" onclick="generateYearlyReport()">DECRYPT_ANNUAL</button>
+        </footer>
+    </div>
+</div>
+
+<div id="yearly-report-display" class="industrial-modal-overlay" style="z-index: 500001; display: none;">
+    <div class="industrial-modal-box full-box" style="height: 90vh; background: #f4f4f4;">
+        <header class="modal-header-bw">
+            <span class="cinzel-font">ANNUAL_RECEIPT_STREAM</span>
+            <div class="close-x" onclick="closeYearlyReport()">×</div>
+        </header>
+
+        <div class="modal-body scroll-body" id="yearly-bill-container" style="padding: 15px;">
+            </div>
+
+        <footer class="report-footer-actions" style="background: #fff; border-top: 2px solid #000; padding: 15px; display: flex !important; gap: 10px;">
+            <button class="save-archive-btn" onclick="window.saveYearlyArchive()" style="flex: 2; background: #000 !important; color:#fff !important; display:block !important;">
+                COMMIT_ANNUAL_VAULT (永久封存年度档案)
+            </button>
+            <button class="re-gen-btn" onclick="closeYearlyReport(); yearlyDetailAction();" style="flex: 1; display:block !important;">RE-CONFIG</button>
+        </footer>
+    </div>
+</div>
+<div id="yearly-success-modal" class="industrial-modal-overlay" style="z-index: 600000; display: none;">
+    <div class="industrial-modal-box" style="max-width: 300px; border: 3px solid #000; box-shadow: 15px 15px 0px #eee;">
+        <div style="background: #000; height: 12px; width: 100%;"></div>
+        
+        <div class="modal-body" style="text-align: center; padding: 40px 20px;">
+            <div style="width: 60px; height: 60px; border: 2px solid #000; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center; transform: rotate(45deg);">
+                <span style="transform: rotate(-45deg); font-size: 30px; font-weight: 100;">✓</span>
+            </div>
+            
+            <div class="cinzel-font" style="font-weight: 900; font-size: 18px; letter-spacing: 3px; color: #000;">
+                PROTOCOL_SEALED
+            </div>
+            
+            <div style="font-family: monospace; font-size: 9px; margin-top: 15px; color: #666; line-height: 1.6; text-transform: uppercase;">
+                年度卷宗已正式切片并归档<br>
+                AUTH_CODE: 0x882_LUNE_VAULT<br>
+                STATUS: ENCRYPTED // 锁定中
+            </div>
+
+            <button onclick="closeYearlySuccess()" style="width: 100%; margin-top: 30px; padding: 15px; background: #000; color: #fff; border: none; font-family: 'Cinzel'; font-weight: 900; cursor: pointer; letter-spacing: 2px;">
+                UNDERSTOOD
+            </button>
+        </div>
+        
+        <div style="display: flex; justify-content: space-between; padding: 5px 10px; font-family: monospace; font-size: 7px; opacity: 0.3;">
+            <span>BLOCK_CHAIN_SECURED</span>
+            <span>v2.0_ARCHIVE</span>
         </div>
     </div>
 </div>
 
 <script>
+/**
+ * 🔕 安全震动协议：消除 Chrome 控制台红字警告
+ * 只有当检测到用户已经发生过交互（点击/触摸）后，才执行震动
+ */
+window.safeVibrate = function(ms) {
+    // 1. 现代浏览器检测：如果用户还没点过屏幕，直接跳过，不给浏览器报错的机会
+    if (navigator.userActivation && !navigator.userActivation.hasBeenActive) {
+        // console.log("静默模式：用户尚未交互，跳过震动");
+        return; 
+    }
+
+    // 2. 执行震动
+    if (window.navigator && window.navigator.vibrate) {
+        window.navigator.vibrate(ms);
+    }
+};
+/**
+ * 🔓 中央金库内部导航切换 (复刻版 switchWTab)
+ */
+window.switchBankTab = function(index, btnElement) {
+    // 1. 页面切换显隐 (和你的 switchWTab 逻辑一样)
+    const panels = document.querySelectorAll('.bank-tab-panel');
+    panels.forEach(p => p.classList.remove('active'));
+    if (panels[index]) panels[index].classList.add('active');
+
+    // 2. 底部按钮高亮 (自动处理传参或手动查找)
+    const navItems = document.querySelectorAll('.bank-bottom-nav .nav-b-item');
+    navItems.forEach(n => n.classList.remove('active'));
+    
+    if (btnElement) {
+        btnElement.classList.add('active');
+    } else if (navItems[index]) {
+        navItems[index].classList.add('active');
+    }
+
+    // --- 🚀 联动逻辑 (抄你的作业) ---
+
+    // 如果是 DASHBOARD (首页 - 索引 0)
+    if (index === 0) {
+        console.log("[Tab切换] 进入金库看板，执行全量同步...");
+        
+        // A. 渲染顶部的银行卡
+        if (typeof renderSavedCards === 'function') renderSavedCards();
+        
+        // B. 🚨 渲染月度/年度账单 (就是缺了这一句！)
+        // 加一点点延迟，等待 CSS 动画让容器完全显示出来
+        setTimeout(() => {
+            if (typeof window.syncVaultDataToUI === 'function') {
+                window.syncVaultDataToUI(); 
+            }
+            
+            // C. 强力补丁：如果月度看不见，自动帮你点一下“Monthly”标签
+            // 防止出现“必须要切一下”的 Bug
+            const monthlyContainer = document.getElementById('dash-monthly-cards-container');
+            if (!monthlyContainer || monthlyContainer.innerHTML.trim() === "") {
+                 const mTab = document.querySelector('.consumption-switcher-tabs .con-tab:first-child');
+                 if(mTab) mTab.click();
+            }
+        }, 50);
+    }
+
+    // 如果是 RECORDS (记录 - 索引 1)
+    if (index === 1) {
+        // 这里以后可以加别的逻辑
+    }
+
+    // 震动反馈
+    window.safeVibrate(10);
+};
+
+/**
+ * 视图切换控制器 (月度/年度)
+ */
+window.toggleConsumptionView = function(viewType, btnEl) {
+    // 1. 视觉切换：处理 Tab 样式
+    document.querySelectorAll('.con-tab').forEach(t => t.classList.remove('active'));
+    if (btnEl) btnEl.classList.add('active');
+
+    // 2. 面板切换：处理内容显示
+    document.querySelectorAll('.consumption-sub-panel').forEach(p => p.classList.remove('active'));
+    
+    const targetPanel = document.getElementById(`view-${viewType}`);
+    if (targetPanel) {
+        targetPanel.classList.add('active');
+        // 🚨 切换面板后，立即强制渲染数据
+        if (typeof window.syncVaultDataToUI === 'function') {
+            window.syncVaultDataToUI();
+        }
+    }
+    
+    // 3. 震动反馈 (仅在手动点击时有效，自动点击也会触发但无所谓)
+    window.safeVibrate(5);
+};
+/**
+ * 🔐 中央金库：终极渲染同步协议 (硬核版)
+ */
+window.syncVaultDataToUI = function() {
+    // 1. 强制确定 ID
+    const charID = window.currentVaultCharID || 'GLOBAL';
+    console.log(`%c[Lune Protocol] 正在硬核同步: NODE_${charID}`, "background: #000; color: #fff; padding: 2px 5px;");
+
+    // --- A. 月度数据同步 (修正版) ---
+    const monthlyList = JSON.parse(localStorage.getItem(`LUNE_VAULT_LIST_${charID}`)) || [];
+    const monthlyContainer = document.getElementById('dash-monthly-cards-container');
+    const monthlyDisplayNum = document.getElementById('dash-monthly-outflow');
+
+    if (monthlyContainer) {
+        // 🚨 修正点 1：不管三七二十一，先强制让容器显示出来！
+        // 放在最外层，防止被里面的 if 条件卡住
+        monthlyContainer.style.display = 'flex'; 
+        monthlyContainer.style.opacity = '1'; //以此确保视觉可见
+
+        if (monthlyList.length > 0) {
+            // 渲染卡片
+            monthlyContainer.innerHTML = monthlyList.map(arc => `
+                <div class="archive-card-bw" onclick="window.loadSpecificArchiveFromList('${arc.id}')">
+                    <span class="card-tag">#LOG_${String(arc.id).slice(-4)}</span>
+                    <div class="card-month">${arc.year} / ${arc.data.length}M</div>
+                    <div class="card-val">￥${parseFloat(arc.total).toLocaleString()}</div>
+                </div>
+            `).join('');
+            
+            // 填数字
+            if (monthlyDisplayNum) {
+                monthlyDisplayNum.innerText = `-￥${parseFloat(monthlyList[0].total).toLocaleString()}`;
+            }
+        } else {
+            // 🚨 修正点 2：即使没数据，也要显示“空状态”占位符，不能隐藏
+            monthlyContainer.innerHTML = `<div class="empty-placeholder">NO_DATA // 档案库月度为空</div>`;
+        }
+    }
+
+    // --- B. 年度数据同步 ---
+    const yearlyList = JSON.parse(localStorage.getItem(`LUNE_VAULT_YEARLY_LIST_${charID}`)) || [];
+    const yearlyContainer = document.getElementById('dash-yearly-cards-container');
+    // 🚨 检查点：确保你的年度面板里总金额的类名确实是 .val
+    const yearlyDisplayNum = document.querySelector('#view-yearly .val');
+
+    if (yearlyContainer) {
+        if (yearlyList.length > 0) {
+            yearlyContainer.innerHTML = yearlyList.map(arc => `
+                <div class="archive-card-bw" style="background:#000; color:#fff;" onclick="window.viewYearlyDetail('${arc.id}')">
+                    <span class="card-tag" style="color:#666;">#ANNUAL</span>
+                    <div class="card-month" style="color:#fff;">${arc.years_covered.join('-')}</div>
+                    <div class="card-val" style="color:#fff;">￥${parseFloat(arc.total_all).toLocaleString()}</div>
+                </div>
+            `).join('');
+
+            if (yearlyDisplayNum) {
+                yearlyDisplayNum.innerText = `-￥${parseFloat(yearlyList[0].total_all).toLocaleString()}`;
+            }
+        } else {
+            yearlyContainer.innerHTML = `<div class="empty-placeholder">NO_ANNUAL // 档案库年度为空</div>`;
+        }
+    }
+};
+
+/**
+ * 🔐 中央金库：全量同步协议 (解决刷新数据消失)
+ */
+window.syncVaultDisplay = function() {
+    const charID = window.currentVaultCharID || 'GLOBAL';
+    
+    // 1. 同步月度支出数字
+    const monthlyList = JSON.parse(localStorage.getItem(`LUNE_VAULT_LIST_${charID}`)) || [];
+    const monthlyDisplayEl = document.getElementById('dash-monthly-outflow'); 
+    if (monthlyDisplayEl && monthlyList.length > 0) {
+        // 取最新的一份存档
+        const latestMonthly = monthlyList[0]; 
+        monthlyDisplayEl.innerText = `-￥${parseFloat(latestMonthly.total).toLocaleString()}`;
+    }
+
+    // 2. 同步年度支出数字
+    const yearlyList = JSON.parse(localStorage.getItem(`LUNE_VAULT_YEARLY_LIST_${charID}`)) || [];
+    const yearlyDisplayEl = document.querySelector('#view-yearly .val'); // 对应你年度面板里的那个 -￥5,100
+    if (yearlyDisplayEl && yearlyList.length > 0) {
+        const latestYearly = yearlyList[0];
+        yearlyDisplayEl.innerText = `-￥${parseFloat(latestYearly.total_all).toLocaleString()}`;
+    }
+
+    // 3. 同时触发列表渲染
+    if (typeof window.refreshDashMonthlyCards === 'function') window.refreshDashMonthlyCards();
+    if (typeof window.refreshDashYearlyCards === 'function') window.refreshDashYearlyCards();
+};
+
+// 辅助：更新滑动条文字
+window.updateYearRangeText = (v) => document.getElementById('y-range-val').innerText = v + " YEAR(S)";
+
+window.yearlyDetailAction = () => document.getElementById('yearly-config-modal').style.display = 'flex';
+window.closeYearlyConfig = () => document.getElementById('yearly-config-modal').style.display = 'none';
+window.closeYearlyReport = () => document.getElementById('yearly-report-display').style.display = 'none';
+
+/**
+ * 核心：生成年度报告
+ */
+window.generateYearlyReport = async function() {
+    const startYear = parseInt(document.getElementById('y-config-year').value);
+    const span = parseInt(document.getElementById('y-config-range').value);
+    const charID = window.currentVaultCharID || 'GLOBAL';
+    
+    // 显示加载动画 (复用你月度的加载动画 ID 或类)
+    window.closeYearlyConfig();
+    const overlay = document.createElement('div');
+    overlay.className = "vault-decrypting-overlay";
+    overlay.innerHTML = `<div class="v-scan-line"></div><div class="v-loading-text">DECRYPTING_ANNUAL_FILES</div>`;
+    document.body.appendChild(overlay);
+
+    const apiKey = localStorage.getItem('gpt_key');
+    const apiUrl = (localStorage.getItem('gpt_url') || "https://api.openai.com/v1").replace(/\/+$/, "");
+    const model = localStorage.getItem('gpt_model') || "gpt-3.5-turbo";
+
+    // 升级版年度 Prompt：强制数据差异化与叙事丰富度
+const systemPrompt = `你是一个冷峻、毒舌且观察入微的财务审计员。
+你必须输出严格的 JSON 数组。
+【规则锁定】：
+1. 每年12个月的金额 (amount) 严禁重复，必须大幅随机波动。
+2. 每个月的摘要 (n) 必须是丰富的短句，描述这一笔钱背后的故事（如：深夜的便利店、意外的医药费、一张去往新疆的单程票、或是某次无声的告别）。
+3. 语气要冷峻且具备工业酸涩感，禁止使用可爱的表情符号。
+格式: [{"year":年份, "total":总额, "months":[{"m":1, "a":1240, "n":"摘要..."}, ... (共12个)]}]`;
+
+    const userPrompt = `主角：${window.currentVaultCharName}。请生成从 ${startYear} 年开始，共 ${span} 年的年度财务流水。每年必须包含12个月。`;
+
+    try {
+        const response = await fetch(`${apiUrl}/chat/completions`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+            body: JSON.stringify({
+                model: model,
+                messages: [{role:"system", content:systemPrompt}, {role:"user", content:userPrompt}],
+                response_format: { type: "json_object" }
+            })
+        });
+
+        const data = await response.json();
+        const raw = data.choices[0].message.content;
+        const jsonMatch = raw.match(/\[[\s\S]*\]/);
+        const yearlyData = JSON.parse(jsonMatch[0]);
+
+        // 挂载到临时变量供保存使用
+        window.currentPendingYearlyData = yearlyData;
+
+        overlay.remove();
+        window.renderYearlyVisuals(yearlyData);
+
+    } catch (e) {
+        overlay.remove();
+        alert("ANNUAL_GEN_FAILED: " + e.message);
+    }
+};
+
+/**
+ * 渲染：竖式账单风格
+ */
+window.renderYearlyVisuals = function(data) {
+    const container = document.getElementById('yearly-bill-container');
+    document.getElementById('yearly-report-display').style.display = 'flex';
+    
+    container.innerHTML = data.map(yearObj => `
+        <div class="industrial-receipt" style="margin-bottom: 40px;">
+            <div class="receipt-header">
+                <div class="cinzel-font" style="font-size:14px; opacity:0.6;">ANNUAL_RECORD_DECRYPTED</div>
+                <div class="cinzel-font" style="font-size:24px; font-weight:900; margin:10px 0;">FY_${yearObj.year}</div>
+            </div>
+            
+            <div class="receipt-body" style="border-top: 1px solid #000; border-bottom: 1px solid #000; padding: 15px 0;">
+                ${yearObj.months.map(m => `
+                    <div class="receipt-row" style="margin-bottom: 8px;">
+                        <div style="display:flex; flex-direction:column;">
+                            <span style="font-weight:900;">${yearObj.year}.${m.m}</span>
+                            <span style="font-size:8px; color:#888;">${m.n}</span>
+                        </div>
+                        <span style="font-family:'Cinzel'; font-weight:900;">￥${parseFloat(m.a).toLocaleString()}</span>
+                    </div>
+                `).join('')}
+            </div>
+
+            <div class="receipt-total-row" style="background:#000; color:#fff; padding: 10px; margin-top:0;">
+                <span class="receipt-total-label" style="color:#fff;">NET_EXPENDITURE</span>
+                <span class="receipt-total-val" style="color:#fff;">-￥${parseFloat(yearObj.total).toLocaleString()}</span>
+            </div>
+        </div>
+    `).join('');
+};
+
+/**
+ * 💾 更新版：年度隔离保存逻辑 (取消浏览器 alert)
+ */
+window.saveYearlyArchive = function() {
+    if (!window.currentPendingYearlyData) {
+        showToast("ERROR: NO_DATA_STREAM");
+        return;
+    }
+    
+    const charID = window.currentVaultCharID || 'GLOBAL';
+    
+    // 1. 读取并更新列表
+    let yearlyList = JSON.parse(localStorage.getItem(`LUNE_VAULT_YEARLY_LIST_${charID}`)) || [];
+    
+    const newEntry = {
+        id: "Y_ARC_" + Date.now(),
+        years_covered: window.currentPendingYearlyData.map(y => y.year),
+        total_all: window.currentPendingYearlyData.reduce((s, y) => s + y.total, 0),
+        fullData: window.currentPendingYearlyData,
+        timestamp: Date.now()
+    };
+
+    yearlyList.unshift(newEntry);
+    localStorage.setItem(`LUNE_VAULT_YEARLY_LIST_${charID}`, JSON.stringify(yearlyList));
+
+    // 2. 交互反馈
+    if (window.navigator.vibrate) window.navigator.vibrate([10, 50, 10]);
+    
+    // 🚨 核心修改：关闭展示窗，打开成功提示窗
+    window.closeYearlyReport();
+    document.getElementById('yearly-success-modal').style.display = 'flex';
+    
+    // 3. 刷新首页卡片流
+    if (typeof window.refreshDashYearlyCards === 'function') {
+        window.refreshDashYearlyCards();
+    }
+};
+
+/**
+ * 关闭成功提示窗
+ */
+window.closeYearlySuccess = function() {
+    const modal = document.getElementById('yearly-success-modal');
+    if (modal) modal.style.display = 'none';
+};
+
+/**
+ * 刷新首页年度卡片流
+ */
+window.refreshDashYearlyCards = function() {
+    const charID = window.currentVaultCharID || 'GLOBAL';
+    const container = document.getElementById('dash-yearly-cards-container');
+    if (!container) return;
+
+    const list = JSON.parse(localStorage.getItem(`LUNE_VAULT_YEARLY_LIST_${charID}`)) || [];
+
+    if (list.length === 0) {
+        container.innerHTML = `<div class="empty-placeholder">NO_ANNUAL_DATA // 等待年度指令</div>`;
+        return;
+    }
+
+    container.innerHTML = list.map(arc => `
+        <div class="archive-card-bw" 
+             style="border: 2px solid #000; background: #000; color: #fff; flex: 0 0 160px; position: relative; overflow: hidden;" 
+             onclick="window.viewYearlyDetail('${arc.id}')">
+            
+            <div style="position: absolute; top: 0; right: 0; background: #fff; color: #000; font-size: 7px; padding: 2px 5px; font-weight: 900;">
+                ANNUAL
+            </div>
+
+            <span class="card-tag" style="color:#666; font-size: 8px;">LOG_SERIAL: ${String(arc.id).slice(-6)}</span>
+            <div class="card-month" style="color:#fff; font-size: 15px; margin: 8px 0;">${arc.years_covered.join(' - ')}</div>
+            
+            <div style="border-top: 1px dashed #444; margin-top: 5px; padding-top: 8px;">
+                <span style="font-size: 8px; opacity: 0.6; display: block; margin-bottom: 2px;">ACCUMULATED_EXPENSE:</span>
+                <div class="card-val" style="color:#fff; font-size: 18px;">￥${parseFloat(arc.total_all).toLocaleString()}</div>
+            </div>
+        </div>
+    `).join('');
+};
+
+// 增加：点击历史年度卡片回看
+window.viewYearlyDetail = function(id) {
+    const charID = window.currentVaultCharID || 'GLOBAL';
+    const list = JSON.parse(localStorage.getItem(`LUNE_VAULT_YEARLY_LIST_${charID}`)) || [];
+    const entry = list.find(e => e.id === id);
+    if (entry) window.renderYearlyVisuals(entry.fullData);
+};
+
+/**
+ * 🚀 核心启动序列：自动唤醒月度面板
+ */
+window.addEventListener('load', async () => {
+    // 1. 恢复角色 ID
+    const lastCharID = localStorage.getItem('LUNE_LAST_ACTIVE_CHAR_ID');
+    if (lastCharID) {
+        window.currentVaultCharID = lastCharID;
+        console.log(`[系统] 记忆回溯：${lastCharID}`);
+    } else {
+        window.currentVaultCharID = 'GLOBAL'; // 兜底
+    }
+
+    // 2. 初始化数据库等服务
+    if (typeof initSystemServices === 'function') await initSystemServices();
+    if (typeof refreshNPCContainer === 'function') await refreshNPCContainer();
+
+    // 3. 🚨 关键动作：模拟点击“月度”按钮
+    // 这会强制触发 toggleConsumptionView 和 syncVaultDataToUI，解决“切一下才有”的问题
+    setTimeout(() => {
+        const monthlyTabBtn = document.querySelector('.consumption-switcher-tabs .con-tab:first-child');
+        if (monthlyTabBtn) {
+            console.log("[系统] 自动校准月度视图...");
+            monthlyTabBtn.click(); // <--- 就是这一脚，踢它一下！
+        } else {
+            // 如果没找到按钮，就手动强制刷一次
+            window.syncVaultDataToUI();
+        }
+    }, 200); // 稍微延迟，等页面喘口气
+});
+
+/**
+ * 1. 首页卡片流渲染：增加强制纠偏逻辑
+ */
+window.refreshDashMonthlyCards = function() {
+    // 强制获取当前角色，确保 ID 即使在加载瞬间也是准确的
+    const charID = window.currentVaultCharID || 'GLOBAL';
+    const container = document.getElementById('dash-monthly-cards-container');
+    if (!container) return;
+
+    console.log(`[档案系统] 正在尝试渲染 ID 为 ${charID} 的卡片流...`);
+
+    const storageKey = `LUNE_VAULT_LIST_${charID}`;
+    const archiveList = JSON.parse(localStorage.getItem(storageKey)) || [];
+
+    if (archiveList.length === 0) {
+        container.innerHTML = `<div class="empty-placeholder">NO_DATA_FOUND // 档案库暂无解密记录</div>`;
+        return;
+    }
+
+    // 渲染卡片：增加反转，确保最新生成的在最前面
+    container.innerHTML = archiveList.map((arc, idx) => `
+        <div class="archive-card-bw" onclick="window.loadSpecificArchiveFromList('${arc.id}')" 
+             style="flex: 0 0 140px; background: #fff; border: 2px solid #000; padding: 12px; box-shadow: 4px 4px 0px #000; cursor: pointer; position: relative;">
+            <span class="card-tag" style="font-family: monospace; font-size: 8px; color: #888; text-transform: uppercase;">#LOG_${String(arc.id).slice(-4)}</span>
+            <div class="card-month" style="font-family: 'Cinzel'; font-weight: 900; font-size: 13px; margin: 5px 0; border-bottom: 1px solid #000; padding-bottom: 3px;">
+                ${arc.year} / ${arc.data ? arc.data.length : 0}M
+            </div>
+            <div class="card-val" style="font-family: 'Cinzel'; font-weight: 900; font-size: 15px; margin-top: 5px;">
+                ￥${parseFloat(arc.total || 0).toLocaleString()}
+            </div>
+            <div style="font-size:7px; margin-top:8px; color:#aaa; font-family: monospace;">
+                STAMP: ${new Date(arc.timestamp).toLocaleDateString()}
+            </div>
+        </div>
+    `).join('');
+};
+
+/**
+ * 2. 终极存档协议：修复了变量丢失和渲染中断问题
+ */
+window.manualSaveArchive = function() {
+    if (!window.currentPendingData || window.currentPendingData.length === 0) {
+        showToast("ERROR: 无有效数据流");
+        return;
+    }
+
+    const charID = window.currentVaultCharID || 'GLOBAL';
+    const totalAmount = window.currentPendingData.reduce((sum, item) => sum + (item.amount || 0), 0);
+
+    const newEntry = {
+        id: "ARC_" + Date.now(),
+        year: document.getElementById('config-year')?.value || "2026",
+        total: totalAmount,
+        data: window.currentPendingData,
+        timestamp: Date.now()
+    };
+
+    // 物理入库
+    let archiveList = JSON.parse(localStorage.getItem(`LUNE_VAULT_LIST_${charID}`)) || [];
+    archiveList.unshift(newEntry);
+    localStorage.setItem(`LUNE_VAULT_LIST_${charID}`, JSON.stringify(archiveList));
+
+    // 同步当前汇总档案
+    localStorage.setItem(`LUNE_VAULT_ARCHIVE_${charID}`, JSON.stringify({
+        total: totalAmount,
+        data: window.currentPendingData,
+        timestamp: Date.now()
+    }));
+
+    // 🚨 震动并强制触发所有 UI 刷新
+    window.safeVibrate([20, 80, 20]);
+    
+    // 执行刷新
+    window.refreshDashMonthlyCards();
+    if (typeof window.refreshDashMonthlySummary === 'function') window.refreshDashMonthlySummary();
+
+    showToast("✓ 档案已正式锁入中央金库");
+    window.closeMonthlyReport();
+};
+
+/**
+ * 3. 增强版：点击历史卡片重新查看
+ */
+window.loadSpecificArchiveFromList = function(arcId) {
+    const charID = window.currentVaultCharID || 'GLOBAL';
+    const archiveList = JSON.parse(localStorage.getItem(`LUNE_VAULT_LIST_${charID}`)) || [];
+    const target = archiveList.find(a => a.id === arcId);
+    
+    if (target) {
+        console.log(`[系统] 正在重新调取档案: ${arcId}`);
+        window.renderMonthlyVisuals(target.data);
+    }
+};
+
 // 手机端加载时立即触发
 window.onload = async () => {
     await initSystemServices(); // 1. 先初始化系统库
     await refreshNPCContainer(); // 2. 再根据初始化后的数据画页面
     console.log("PROTOCOL_SYNC: 系统服务已强制下发至客户端。");
+    // 在切换角色或者系统初始化时调用
+    window.refreshDashMonthlyCards();
 };
+
 
 /**
  * 1. 首页数据同步：从档案库提取最新总额并渲染到 Dashboard
@@ -26670,7 +27710,17 @@ window.generateMonthlyReport = async function() {
 
     if (!apiKey) return alert("PROTOCOL_ERROR: 请先配置 AI 密钥");
 
-    const overlay = document.getElementById('ai-loading-overlay');
+    // 1. 🚨 创建并显示全屏动画遮罩
+    const overlay = document.createElement('div');
+    overlay.id = "global-gen-overlay";
+    overlay.className = "vault-decrypting-overlay";
+    overlay.innerHTML = `
+        <div class="v-scan-line"></div>
+        <div class="v-loading-text">DECRYPTING_VAULT_FILES</div>
+        <div class="v-status-sub">CONNECTING_TO_LUNE_NODE... [0x882_AUTH]</div>
+    `;
+    document.body.appendChild(overlay);
+
     if(overlay) overlay.style.display = 'flex';
     window.closeMonthlyConfig();
 
@@ -26681,6 +27731,22 @@ window.generateMonthlyReport = async function() {
 
     const userPrompt = `主角：${window.currentVaultCharName}。背景：${window.currentVaultCharBio}。
 请为“你”和 ${window.currentVaultCharName} 生成 ${year} 年连续 ${monthsCount} 个月的财务纠葛记录。`;
+
+    // 1. 🚨 在容器内插入局部动画 (只动这几行)
+    const listContainer = document.getElementById('monthly-records-list');
+    if (listContainer) {
+        listContainer.style.position = 'relative'; // 确保定位
+        listContainer.innerHTML = `
+            <div class="scanning-overlay">
+                <div class="scan-line"></div>
+                <div class="loading-text">DECRYPTING_VAULT_DATA...</div>
+                <div style="font-size:8px; font-family:monospace; margin-top:5px;">ANALYZING_ENTITY: ${window.currentVaultCharName}</div>
+            </div>
+        `;
+    }
+    
+    // 关闭配置弹窗 (你原本的逻辑)
+    window.closeMonthlyConfig();
 
     try {
         const response = await fetch(`${apiUrl}/chat/completions`, {
@@ -26708,6 +27774,14 @@ window.generateMonthlyReport = async function() {
         // 角色隔离存储
         localStorage.setItem(`LUNE_VAULT_ARCHIVE_${charID}`, JSON.stringify(archivePayload));
 
+        // 3. 🚨 数据到手，销毁动画遮罩
+        const oldOverlay = document.getElementById('global-gen-overlay');
+        if (oldOverlay) {
+            oldOverlay.style.transition = "opacity 0.5s";
+            oldOverlay.style.opacity = "0";
+            setTimeout(() => oldOverlay.remove(), 500);
+        }
+
         // 同步 UI
         window.refreshDashMonthlySummary();
         window.renderMonthlyVisuals(reportData);
@@ -26720,29 +27794,40 @@ window.generateMonthlyReport = async function() {
 };
 
 /**
- * 4. 渲染可视化界面 (增加重新生成按钮)
+ * 核心修复：增加数据防御，防止 toLocaleString 报错
  */
 window.renderMonthlyVisuals = function(data) {
-    document.getElementById('monthly-report-display').style.display = 'flex';
+    const display = document.getElementById('monthly-report-display');
+    if (display) display.style.display = 'flex';
     
     const list = document.getElementById('monthly-records-list');
+    if (!list) return;
+
+    // 1. 只渲染账目列表项，不加按钮 HTML
     list.innerHTML = `
-        ${data.map((item, idx) => `
-            <div class="report-entry" onclick="window.openMonthEntryDetail(${idx})">
-                <div class="item-main">
-                    <div class="m-name cinzel-font">${item.month}</div>
-                    <div class="m-summary">${item.summary.substring(0, 30)}...</div>
+        <div class="records-box-white">
+            ${data.map((item, idx) => `
+                <div class="report-entry-row" onclick="window.openMonthEntryDetail(${idx})">
+                    <div class="entry-meta">
+                        <span class="m-title cinzel-font">${item.month || '未知'}</span>
+                        <span class="m-desc">${(item.summary || '').substring(0, 45)}...</span>
+                    </div>
+                    <div class="m-price">￥${parseFloat(item.amount || 0).toLocaleString()}</div>
+                    <div class="entry-arrow">〉</div>
                 </div>
-                <div class="m-val">￥${item.amount.toLocaleString()}</div>
-            </div>
-        `).join('')}
-        <div style="padding:20px; text-align:center;">
-            <button class="re-gen-btn" onclick="window.reTriggerConfig()">重新校准财务协议 (RE-GEN)</button>
+            `).join('')}
         </div>
     `;
 
-    window.drawBwChart(data);
+    // 2. 触发绘图
+    if (typeof window.drawBwChart === 'function') {
+        window.drawBwChart(data);
+    }
+
+    // 3. ⚡ 核心逻辑：挂载数据供外部“固定按钮”使用
+    window.currentPendingData = data;
 };
+
 
 // 辅助：在详情页强制重新生成
 window.reTriggerConfig = function() {
@@ -26755,28 +27840,212 @@ window.reTriggerConfig = function() {
  */
 window.drawBwChart = function(data) {
     const canvas = document.getElementById('monthly-chart-canvas');
+    if (!canvas) return;
     const ctx = canvas.getContext('2d');
-    const w = canvas.width, h = canvas.height, padding = 30;
+    const w = canvas.width, h = canvas.height, p = 40;
     
     ctx.clearRect(0, 0, w, h);
-    ctx.strokeStyle = "#000"; ctx.lineWidth = 3;
-    
-    const amounts = data.map(d => d.amount);
-    const maxAmt = Math.max(...amounts) * 1.2;
-    const stepX = (w - padding*2) / (data.length - 1 || 1);
+    if (!data || data.length < 2) return;
 
+    const amounts = data.map(d => d.amount);
+    const max = Math.max(...amounts) * 1.3;
+    const stepX = (w - p * 2) / (data.length - 1);
+
+    // 1. 绘制阴影面积 (Area Fill)
     ctx.beginPath();
-    data.forEach((item, i) => {
-        const x = padding + i * stepX;
-        const y = h - padding - (item.amount / maxAmt) * (h - padding*2);
-        if(i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
-        ctx.fillRect(x-3, y-3, 6, 6); // 绘制硬核方块点
+    ctx.moveTo(p, h - p);
+    data.forEach((d, i) => {
+        const x = p + i * stepX;
+        const y = (h - p) - (d.amount / max) * (h - p * 2);
+        ctx.lineTo(x, y);
+    });
+    ctx.lineTo(p + (data.length - 1) * stepX, h - p);
+    ctx.fillStyle = "rgba(0, 0, 0, 0.05)"; // 极淡的工业灰
+    ctx.fill();
+
+    // 2. 绘制主趋势线
+    ctx.strokeStyle = "#000";
+    ctx.lineWidth = 4;
+    ctx.lineJoin = "round";
+    ctx.beginPath();
+    data.forEach((d, i) => {
+        const x = p + i * stepX;
+        const y = (h - p) - (d.amount / max) * (h - p * 2);
+        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
     });
     ctx.stroke();
+
+    // 3. 绘制月份标签 (X轴)
+    ctx.fillStyle = "#aaa";
+    ctx.font = "8px Monospace";
+    data.forEach((d, i) => {
+        if (i % (Math.ceil(data.length/4)) === 0 || i === data.length-1) { // 抽样显示标签，防止拥挤
+            const x = p + i * stepX;
+            ctx.fillText(d.month, x - 10, h - 15);
+        }
+    });
 };
 
-window.openMonthEntryDetail = function() { document.getElementById('month-record-detail').style.display = 'flex'; };
-window.closeMonthlyReport = function() { document.getElementById('monthly-report-display').style.display = 'none'; };
+/**
+ * 1. 详情页入口：增加“先查档，后调 AI”的逻辑
+ */
+window.openMonthEntryDetail = async function(index) {
+    window.currentDetailIndex = index;
+    const charID = window.currentVaultCharID || 'GLOBAL';
+    const archive = JSON.parse(localStorage.getItem(`LUNE_VAULT_ARCHIVE_${charID}`));
+    
+    if (!archive || !archive.data[index]) return;
+    const item = archive.data[index];
+
+    // 初始化 UI
+    const modal = document.getElementById('month-record-detail');
+    const label = document.getElementById('detail-month-label');
+    const tag = document.getElementById('detail-amount-tag');
+
+    if (modal) modal.style.display = 'flex';
+    if (label) label.innerText = `NODE: ${charID} // PERIOD: ${item.month}`;
+    if (tag) tag.innerText = `￥${parseFloat(item.amount).toLocaleString()}`;
+
+    // --- ⚡ 关键：生成唯一的档案 Key (角色+月份+金额) ---
+    const storyKey = `STORY_CACHE_${charID}_${item.month}_${item.amount}`;
+    const savedStory = localStorage.getItem(storyKey);
+
+    if (savedStory) {
+        // 如果硬盘里有，直接读，不消耗 AI 额度
+        console.log("[系统] 命中本地存档，跳过 AI 请求。");
+        window.renderFinalStory(savedStory);
+        window.tempCurrentStory = savedStory; 
+    } else {
+        // 如果没有，才去请 AI 扩写
+        console.log("[系统] 未发现存档，启动 AI 扩写协议...");
+        window.triggerAIStep(item);
+    }
+};
+
+/**
+ * 1. 核心 AI 解密步骤：负责请求数据并进行文本预处理
+ * @param {object} item - 包含 month, amount, summary 的账单对象
+ */
+window.triggerAIStep = async function(item) {
+    const container = document.getElementById('detail-story-container');
+    
+    // 🚨 修复点 1：在这里定义 charID，否则后面存档会报错
+    const charID = window.currentVaultCharID || 'GLOBAL';
+
+    container.innerHTML = `
+        <div class="scanning-overlay">
+            <div class="scan-line"></div>
+            <div class="loading-text">DECRYPTING_LORE_ARCHIVE...</div>
+            <div style="font-size:9px; font-family:monospace; margin-top:5px; opacity:0.7;">
+                TARGET_ENTITY: ${window.currentVaultCharName} // SEQUENCE: ${item.month}
+            </div>
+        </div>
+    `;
+
+    const apiKey = localStorage.getItem('gpt_key');
+    const apiUrl = (localStorage.getItem('gpt_url') || "https://api.openai.com/v1").replace(/\/+$/, "");
+    const model = localStorage.getItem('gpt_model') || "gpt-3.5-turbo";
+
+    const systemPrompt = `你是一个冷峻的“命运审计员”。扩写一段500字左右的酸涩感氛围感故事，使用第二人称“你”。排版需用双换行\\n\\n。`;
+    const userPrompt = `主角：${window.currentVaultCharName} | 月份：${item.month} | 金额：￥${item.amount} | 摘要：${item.summary}`;
+
+    try {
+        const response = await fetch(`${apiUrl}/chat/completions`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+            body: JSON.stringify({
+                model: model,
+                messages: [{role:"system", content: systemPrompt}, {role:"user", content: userPrompt}],
+                temperature: 0.85
+            })
+        });
+
+        if (!response.ok) throw new Error(`HTTP_${response.status}`);
+        const data = await response.json();
+        const fullStory = data.choices[0].message.content;
+
+        // --- ⚡ 核心修复：自动存入硬盘 ---
+        const storyKey = `STORY_CACHE_${charID}_${item.month}_${item.amount}`;
+        localStorage.setItem(storyKey, fullStory);
+        console.log("[系统] 档案已同步至本地硬盘。");
+
+        window.tempCurrentStory = fullStory;
+        window.renderFinalStory(fullStory);
+
+    } catch (e) {
+        console.error("DECRYPTION_ERROR:", e);
+        container.innerHTML = `<div style="padding:50px; text-align:center; color:#ff3b30;">[!] DECRYPTION_FAILED: ${e.message}</div>`;
+    }
+};
+
+window.renderFinalStory = function(content) {
+    const container = document.getElementById('detail-story-container');
+    if (!container) return;
+
+    // 1. 处理换行符
+    let formatted = content.replace(/\\n/g, '<br>').replace(/\n/g, '<br>');
+    
+    // 2. 优化双换行
+    formatted = formatted.replace(/(<br>\s*){2,}/g, '<br><br>');
+
+    // 3. 关键词处理
+    formatted = formatted.replace(/【(.*?)】/g, '<span style="font-weight:900; border-bottom:2px solid #000; padding:0 2px; margin:0 2px;">$1</span>');
+
+    // 4. 注入 DOM
+    container.innerHTML = `
+        <div style="line-height: 2.2; font-size: 14px; text-align: justify; color: #333; animation: fadeIn 0.8s ease; word-break: break-all;">
+            ${formatted}
+        </div>
+        <div style="margin-top:50px; border-top:1px dashed #ddd; padding-top:15px; font-size:10px; color:#bbb; font-family:monospace; text-align:right;">
+            PROTOCOL_CHECK: DATA_INTEGRITY_VERIFIED // END_LOG
+        </div>
+    `;
+    
+    // 🚨 之前这里误加了“重新触发”逻辑，已删除，防止无限生成！
+};
+
+/**
+ * 4. 确认存档逻辑：真正写入硬盘
+ */
+window.confirmSaveStory = function() {
+    if(!window.tempCurrentStory) return;
+    
+    const charID = window.currentVaultCharID || 'GLOBAL';
+    const archive = JSON.parse(localStorage.getItem(`LUNE_VAULT_ARCHIVE_${charID}`));
+    const item = archive.data[window.currentDetailIndex];
+    const storyKey = `STORY_CACHE_${charID}_${item.month}_${item.amount}`;
+
+    localStorage.setItem(storyKey, window.tempCurrentStory);
+    
+    if (window.navigator.vibrate) window.navigator.vibrate([10, 30, 10]);
+    alert("✓ 档案已永久封存。下次进入将直接读取此版本。");
+};
+
+/**
+ * 5. 渲染最终文字的工具函数 (包含你要求的 \n 修复)
+ */
+window.renderFinalStory = function(content) {
+    const container = document.getElementById('detail-story-container');
+    // 修复 \n\n 渲染问题
+    let formatted = content.replace(/\\n/g, '<br>').replace(/\n/g, '<br>');
+    formatted = formatted.replace(/(<br>\s*){2,}/g, '<br><br>');
+    
+    container.innerHTML = `
+        <div style="line-height: 2; font-size: 14px; text-align: justify; animation: fadeIn 0.8s ease;">
+            ${formatted}
+        </div>
+    `;
+    // 结束后记得把这次的故事存到临时变量，防止用户没刷新就点存档
+    window.tempCurrentStory = content;
+};
+
+window.closeMonthEntryDetail = function() {
+    document.getElementById('month-record-detail').style.display = 'none';
+};
+
+window.closeMonthlyReport = function() { 
+    document.getElementById('monthly-report-display').style.display = 'none';
+};
 
 // 定义全局变量，增加 Bio (人设简介) 存储
 window.currentVaultCharName = ""; 
@@ -26815,6 +28084,8 @@ if (document.readyState === 'loading') {
 // 终极备份：如果上面的失效，window.onload 是最后的防线
 window.onload = function() {
     forceRenderCards();
+    // 在切换角色或者系统初始化时调用
+window.refreshDashMonthlyCards();
 };
 
 // 同时也把原来的 renderSavedCards 指向这个新函数，防止报错
@@ -27404,6 +28675,17 @@ window.profSelectEntity = async function(entity, el) {
             ` : `<div class="prof-no-links">STANDALONE NODE</div>`}
         </div>
     `;
+
+    // 🚨 核心改动：在切换角色时，物理锁定当前金库的角色 ID
+    window.currentVaultCharID = entity.id;
+    window.currentVaultCharName = entity.name;
+    window.currentVaultCharBio = entity.desc || ""; 
+
+    // 🚨 关键：只要选中了角色，立刻强制刷新金库的渲染，保证数据同步
+    if (typeof window.syncVaultDataToUI === 'function') {
+        window.syncVaultDataToUI();
+        console.log(`[同步协议] 已切换至角色 ${entity.name}，金库数据已重载。`);
+    }
     
     if(navigator.vibrate) navigator.vibrate(5);
 };
@@ -48401,125 +49683,6 @@ function getStoredNPCBindings() {
 // 关闭控制
 function closeNPCList() { document.getElementById('npc-binding-list-overlay').style.display = 'none'; }
 function closeStoryModal() { document.getElementById('binding-story-modal').style.display = 'none'; }
-
-/**
- * 1. 响应 Dashboard 上的按钮点击
- */
-function monthlyDetailAction() {
-    document.getElementById('monthly-config-modal').style.display = 'flex';
-}
-
-function closeMonthlyConfig() { document.getElementById('monthly-config-modal').style.display = 'none'; }
-function updateRangeText(val) { document.getElementById('range-val').innerText = val + " MONTHS"; }
-
-/**
- * 2. 核心：生成月度报告 (调用真实 AI)
- */
-async function generateMonthlyReport() {
-    const year = document.getElementById('config-year').value;
-    const months = document.getElementById('config-months-range').value;
-    
-    // 复用之前的 API 配置
-    const apiKey = localStorage.getItem('gpt_key');
-    const apiUrl = (localStorage.getItem('gpt_url') || "https://api.openai.com/v1").replace(/\/+$/, "");
-    const model = localStorage.getItem('gpt_model') || "gpt-3.5-turbo";
-
-    if (!apiKey) return alert("秘钥缺失，请配置 AI Configuration");
-
-    // 开启加载动画 (复用之前的 AI 加载遮罩)
-    const overlay = document.getElementById('ai-loading-overlay');
-    if(overlay) overlay.style.display = 'flex';
-    closeMonthlyConfig();
-
-    const systemPrompt = `你是一个财务数据生成器。根据要求生成JSON格式的月度开销数据。
-输出必须为严格的 JSON 数组，格式为: [{"month":"月份名", "amount":数字, "summary":"一句话总结"}]`;
-
-    const userPrompt = `主角：${window.currentVaultCharName}。年份：${year}。
-要求：生成过去 ${months} 个月的消费数据。数据要符合该角色的背景：${window.currentVaultCharBio}。
-每月金额需在 500 到 10000 之间波动。`;
-
-    try {
-        const response = await fetch(`${apiUrl}/chat/completions`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
-            body: JSON.stringify({
-                model: model,
-                messages: [{role:"system", content:systemPrompt}, {role:"user", content:userPrompt}],
-                response_format: { type: "json_object" }
-            })
-        });
-
-        const data = await response.json();
-        const rawContent = data.choices[0].message.content;
-        const jsonMatch = rawContent.match(/\[[\s\S]*\]/);
-        const reportData = JSON.parse(jsonMatch[0]);
-
-        // 渲染图表与列表
-        renderMonthlyVisuals(reportData);
-
-    } catch (e) {
-        alert("GENERATE_FAILED: " + e.message);
-    } finally {
-        if(overlay) overlay.style.display = 'none';
-    }
-}
-
-/**
- * 3. 渲染可视化界面
- */
-function renderMonthlyVisuals(data) {
-    document.getElementById('monthly-report-display').style.display = 'flex';
-    
-    // 渲染列表
-    const list = document.getElementById('monthly-records-list');
-    list.innerHTML = data.map((item, idx) => `
-        <div class="report-entry" onclick="openMonthEntryDetail(${idx})">
-            <div>
-                <div class="m-name">${item.month}</div>
-                <div style="font-size:9px; opacity:0.5;">${item.summary}</div>
-            </div>
-            <div class="m-val">￥${item.amount.toLocaleString()}</div>
-        </div>
-    `).join('');
-
-    // 绘制简单折线图
-    drawBwChart(data);
-}
-
-/**
- * 4. 工业风 Canvas 绘图逻辑
- */
-function drawBwChart(data) {
-    const canvas = document.getElementById('monthly-chart-canvas');
-    const ctx = canvas.getContext('2d');
-    const w = canvas.width;
-    const h = canvas.height;
-    
-    ctx.clearRect(0,0,w,h);
-    ctx.strokeStyle = "#000";
-    ctx.lineWidth = 2;
-    
-    const padding = 20;
-    const maxAmt = Math.max(...data.map(d => d.amount));
-    const stepX = (w - padding*2) / (data.length - 1);
-
-    ctx.beginPath();
-    data.forEach((item, i) => {
-        const x = padding + i * stepX;
-        const y = h - padding - (item.amount / maxAmt) * (h - padding*2);
-        if(i === 0) ctx.moveTo(x, y);
-        else ctx.lineTo(x, y);
-        
-        // 画点
-        ctx.fillRect(x-2, y-2, 4, 4);
-    });
-    ctx.stroke();
-}
-
-function openMonthEntryDetail() {
-    document.getElementById('month-record-detail').style.display = 'flex';
-}
-function closeMonthlyReport() { document.getElementById('monthly-report-display').style.display = 'none'; }
 
 </script>
 </body>
