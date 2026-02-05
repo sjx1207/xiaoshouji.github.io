@@ -26614,41 +26614,50 @@ input[type="range"] { width: 100%; accent-color: #000; cursor: pointer; }
 </div>
 
 <script>
+// 手机端加载时立即触发
+window.onload = async () => {
+    await initSystemServices(); // 1. 先初始化系统库
+    await refreshNPCContainer(); // 2. 再根据初始化后的数据画页面
+    console.log("PROTOCOL_SYNC: 系统服务已强制下发至客户端。");
+};
+
 /**
- * 1. 首页 Dashboard 数据刷新：从档案库提取最新总和
+ * 1. 首页数据同步：从档案库提取最新总额并渲染到 Dashboard
  */
 window.refreshDashMonthlySummary = function() {
     const charID = window.currentVaultCharID || 'GLOBAL';
-    const archive = JSON.parse(localStorage.getItem(`LUNE_REPORT_ARCHIVE_${charID}`)) || { latest_total: 0 };
+    // 读取该角色专属的档案
+    const archive = JSON.parse(localStorage.getItem(`LUNE_VAULT_ARCHIVE_${charID}`)) || { total: 0 };
     
+    // 更新 Dashboard 上的数值 (请确保 HTML 里的 ID 是 dash-monthly-outflow)
     const displayEl = document.getElementById('dash-monthly-outflow');
     if (displayEl) {
-        displayEl.innerText = `-￥${parseFloat(archive.latest_total).toLocaleString()}`;
+        displayEl.innerText = `-￥${parseFloat(archive.total).toLocaleString()}`;
     }
 };
 
 /**
- * 2. 修改月度按钮点击逻辑：
- * 如果已有记录，直接展示；如果没有，才弹出配置框。
+ * 2. 按钮点击协议：有档案直接读，无档案弹配置
  */
 window.monthlyDetailAction = function() {
     const charID = window.currentVaultCharID || 'GLOBAL';
-    const archive = JSON.parse(localStorage.getItem(`LUNE_REPORT_ARCHIVE_${charID}`));
+    const archive = JSON.parse(localStorage.getItem(`LUNE_VAULT_ARCHIVE_${charID}`));
 
-    if (archive && archive.history && archive.history.length > 0) {
-        // ⚡ 核心关联：直接调取最后一次生成的记录并展示
-        console.log("[档案系统] 调取已有历史记录...");
-        window.renderMonthlyVisuals(archive.history[0].data);
+    if (archive && archive.data && archive.data.length > 0) {
+        console.log("[档案系统] 检测到历史解密数据，直接调取...");
+        window.renderMonthlyVisuals(archive.data);
     } else {
-        // 无记录则弹出配置
         const modal = document.getElementById('monthly-config-modal');
         if (modal) modal.style.display = 'flex';
     }
     if (window.navigator.vibrate) window.navigator.vibrate(10);
 };
 
+window.closeMonthlyConfig = function() { document.getElementById('monthly-config-modal').style.display = 'none'; };
+window.updateRangeText = function(val) { document.getElementById('range-val').innerText = val + " MONTHS"; };
+
 /**
- * 3. 核心：AI 生成并持久化存储整个“记录包”
+ * 3. 核心：AI 生成并持久化存储
  */
 window.generateMonthlyReport = async function() {
     const year = document.getElementById('config-year').value;
@@ -26659,9 +26668,19 @@ window.generateMonthlyReport = async function() {
     const apiUrl = (localStorage.getItem('gpt_url') || "https://api.openai.com/v1").replace(/\/+$/, "");
     const model = localStorage.getItem('gpt_model') || "gpt-3.5-turbo";
 
-    const loader = document.getElementById('ai-loading-overlay');
-    if(loader) loader.style.display = 'flex';
+    if (!apiKey) return alert("PROTOCOL_ERROR: 请先配置 AI 密钥");
+
+    const overlay = document.getElementById('ai-loading-overlay');
+    if(overlay) overlay.style.display = 'flex';
     window.closeMonthlyConfig();
+
+    // 氛围感 Prompt
+    const systemPrompt = `你是一个冷峻的财务观测者。必须输出严格的 JSON 数组。
+文风需具备工业酸涩感，使用第二人称“你”来描述这笔开销与用户之间的秘密联系。
+格式: [{"month":"月份", "amount":数字, "summary":"150字左右的排版优美的故事"}]`;
+
+    const userPrompt = `主角：${window.currentVaultCharName}。背景：${window.currentVaultCharBio}。
+请为“你”和 ${window.currentVaultCharName} 生成 ${year} 年连续 ${monthsCount} 个月的财务纠葛记录。`;
 
     try {
         const response = await fetch(`${apiUrl}/chat/completions`, {
@@ -26669,80 +26688,95 @@ window.generateMonthlyReport = async function() {
             headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
             body: JSON.stringify({
                 model: model,
-                messages: [
-                    { role: "system", content: "你是一个财务分析系统，输出严格 JSON 数组。" },
-                    { role: "user", content: `为角色 ${window.currentVaultCharName} 生成 ${year} 年 ${monthsCount} 个月的开销记录。` }
-                ],
+                messages: [{role:"system", content:systemPrompt}, {role:"user", content:userPrompt}],
                 response_format: { type: "json_object" }
             })
         });
 
         const data = await response.json();
-        const raw = data.choices[0].message.content;
-        const jsonMatch = raw.match(/\[[\s\S]*\]/);
-        const reportData = JSON.parse(jsonMatch[0]); // 这就是那“几个余额记录”
+        const rawContent = data.choices[0].message.content;
+        const jsonMatch = rawContent.match(/\[[\s\S]*\]/);
+        const reportData = JSON.parse(jsonMatch[0]);
 
-        // --- ⚡ 存储与关联逻辑 ---
+        // --- ⚡ 持久化档案存储逻辑 ---
         const totalAmount = reportData.reduce((sum, item) => sum + item.amount, 0);
-        
-        let archive = JSON.parse(localStorage.getItem(`LUNE_REPORT_ARCHIVE_${charID}`)) || { history: [] };
-        
-        // 将新生成的记录包塞进历史最前端
-        archive.latest_total = totalAmount;
-        archive.history.unshift({
-            timestamp: Date.now(),
-            year: year,
-            data: reportData
-        });
+        const archivePayload = {
+            total: totalAmount,
+            data: reportData,
+            timestamp: Date.now()
+        };
+        // 角色隔离存储
+        localStorage.setItem(`LUNE_VAULT_ARCHIVE_${charID}`, JSON.stringify(archivePayload));
 
-        // 隔离存储：每个角色一个 Key
-        localStorage.setItem(`LUNE_REPORT_ARCHIVE_${charID}`, JSON.stringify(archive));
-
-        // 立即同步首页显示
+        // 同步 UI
         window.refreshDashMonthlySummary();
-        // 渲染可视化界面
         window.renderMonthlyVisuals(reportData);
 
     } catch (e) {
-        alert("PROTOCOL_ERROR: 生成失败");
+        alert("GENERATE_FAILED: " + e.message);
     } finally {
-        if(loader) loader.style.display = 'none';
+        if(overlay) overlay.style.display = 'none';
     }
 };
 
 /**
- * 4. 详情展示页添加一个“重新生成”的按钮入口
+ * 4. 渲染可视化界面 (增加重新生成按钮)
  */
 window.renderMonthlyVisuals = function(data) {
-    const display = document.getElementById('monthly-report-display');
-    if (display) display.style.display = 'flex';
+    document.getElementById('monthly-report-display').style.display = 'flex';
     
-    // 绘图
-    window.drawBwChart(data);
-
-    // 列表渲染
     const list = document.getElementById('monthly-records-list');
-    if (list) {
-        list.innerHTML = `
-            ${data.map((item, idx) => `
-                <div class="report-entry-row" onclick="window.openMonthEntryDetail()">
-                    <div class="entry-meta">
-                        <span class="m-title">${item.month}</span>
-                        <span class="m-desc">${item.summary}</span>
-                    </div>
-                    <div class="m-price">￥${item.amount.toLocaleString()}</div>
+    list.innerHTML = `
+        ${data.map((item, idx) => `
+            <div class="report-entry" onclick="window.openMonthEntryDetail(${idx})">
+                <div class="item-main">
+                    <div class="m-name cinzel-font">${item.month}</div>
+                    <div class="m-summary">${item.summary.substring(0, 30)}...</div>
                 </div>
-            `).join('')}
-            <button class="re-generate-trigger" onclick="window.reopenConfig()">重新校准财务协议 (NEW_GEN)</button>
-        `;
-    }
+                <div class="m-val">￥${item.amount.toLocaleString()}</div>
+            </div>
+        `).join('')}
+        <div style="padding:20px; text-align:center;">
+            <button class="re-gen-btn" onclick="window.reTriggerConfig()">重新校准财务协议 (RE-GEN)</button>
+        </div>
+    `;
+
+    window.drawBwChart(data);
 };
 
-// 辅助：在展示页点“重新生成”
-window.reopenConfig = function() {
+// 辅助：在详情页强制重新生成
+window.reTriggerConfig = function() {
     document.getElementById('monthly-report-display').style.display = 'none';
     document.getElementById('monthly-config-modal').style.display = 'flex';
 };
+
+/**
+ * 5. 工业风 Canvas 绘图 (全局挂载)
+ */
+window.drawBwChart = function(data) {
+    const canvas = document.getElementById('monthly-chart-canvas');
+    const ctx = canvas.getContext('2d');
+    const w = canvas.width, h = canvas.height, padding = 30;
+    
+    ctx.clearRect(0, 0, w, h);
+    ctx.strokeStyle = "#000"; ctx.lineWidth = 3;
+    
+    const amounts = data.map(d => d.amount);
+    const maxAmt = Math.max(...amounts) * 1.2;
+    const stepX = (w - padding*2) / (data.length - 1 || 1);
+
+    ctx.beginPath();
+    data.forEach((item, i) => {
+        const x = padding + i * stepX;
+        const y = h - padding - (item.amount / maxAmt) * (h - padding*2);
+        if(i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+        ctx.fillRect(x-3, y-3, 6, 6); // 绘制硬核方块点
+    });
+    ctx.stroke();
+};
+
+window.openMonthEntryDetail = function() { document.getElementById('month-record-detail').style.display = 'flex'; };
+window.closeMonthlyReport = function() { document.getElementById('monthly-report-display').style.display = 'none'; };
 
 // 定义全局变量，增加 Bio (人设简介) 存储
 window.currentVaultCharName = ""; 
