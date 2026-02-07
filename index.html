@@ -21139,6 +21139,940 @@ input[type="range"] { width: 100%; accent-color: #000; cursor: pointer; }
     background-image: linear-gradient(135deg, #f4f4f4 25%, transparent 25%), linear-gradient(225deg, #f4f4f4 25%, transparent 25%);
     background-size: 10px 20px;
 }
+/* 🚨 强制隔离协议：未激活的面板必须物理消失 */
+.consumption-sub-panel {
+    display: none !important; /* 默认全部隐藏 */
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.consumption-sub-panel.active {
+    display: block !important; /* 只有加了 active 才显示 */
+    opacity: 1;
+    animation: fadeInPanel 0.4s ease forwards;
+}
+
+@keyframes fadeInPanel {
+    from { opacity: 0; transform: translateY(5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* 确保年度容器也是横向排列 */
+#dash-yearly-cards-container {
+    display: flex;
+    gap: 15px;
+    overflow-x: auto;
+    padding: 10px 0;
+    min-height: 120px;
+}
+/* --- 📜 年度历史卷宗专用样式 (Yearly History) --- */
+
+/* 1. 全屏遮罩：极高层级，深色背景 */
+#yearly-history-modal.industrial-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.9); /* 90% 黑 */
+    backdrop-filter: blur(5px);      /* 毛玻璃 */
+    z-index: 999999;                 /* 确保盖住一切 */
+    display: none;                   /* 默认隐藏，JS控制 flex */
+    justify-content: center;
+    align-items: center;
+    animation: fadeIn 0.2s ease-out;
+}
+
+/* 2. 弹窗主体：全屏或大卡片风格 */
+.industrial-modal-box.full-box {
+    width: 100%;
+    max-width: 500px; /* 手机端限制最大宽度 */
+    height: 90vh;     /* 占据屏幕高度的 90% */
+    background: #f4f4f4;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 0 50px rgba(0,0,0,0.8);
+    border: 1px solid #333;
+    animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* 3. 黑白表头 */
+.modal-header-bw {
+    background: #000;
+    color: #fff;
+    padding: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-shrink: 0; /* 防止被挤压 */
+    border-bottom: 2px solid #333;
+}
+
+/* 关闭按钮 (X) */
+.close-x {
+    font-size: 28px;
+    font-weight: 100;
+    cursor: pointer;
+    line-height: 1;
+    padding: 0 10px;
+    transition: transform 0.2s;
+}
+.close-x:active {
+    transform: scale(0.8);
+}
+
+/* 4. 滚动内容区 */
+.scroll-body {
+    flex: 1;           /* 占满剩余空间 */
+    overflow-y: auto;  /* 允许滚动 */
+    padding: 20px;
+    background-color: #f4f4f4; /* 底色 */
+    /* 隐藏滚动条但保留功能 */
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE */
+}
+.scroll-body::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+}
+
+/* 5. 长条收据样式 (核心视觉) */
+.industrial-receipt {
+    background: #fff;
+    border: 2px solid #000;
+    padding: 20px;
+    margin-bottom: 30px;
+    box-shadow: 8px 8px 0 rgba(0,0,0,0.15); /* 硬朗的阴影 */
+    position: relative;
+}
+
+/* 收据内的行布局 */
+.receipt-row {
+    display: flex; 
+    justify-content: space-between; 
+    align-items: flex-start; /* 顶部对齐 */
+    margin-bottom: 15px; 
+    padding-bottom: 10px; 
+    border-bottom: 1px solid #eee;
+}
+
+/* 动画定义 */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+@keyframes slideUp {
+    from { transform: translateY(100px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+/* 字体辅助类 (防止你没有定义) */
+.cinzel-font {
+    font-family: 'Cinzel', serif; /* 如果没有引入 Cinzel，会回退到 serif */
+    font-weight: 900;
+}
+/* --- 🖋️ 故事模式专用样式 (Story Mode) --- */
+
+/* 故事文本排版：散文风 */
+.story-prose-text {
+    font-family: "Songti SC", "SimSun", serif; /* 宋体更适合散文 */
+    font-size: 15px;
+    line-height: 2.2; /* 宽行高，呼吸感 */
+    text-align: justify;
+    color: #222;
+    white-space: pre-wrap; /* 保留换行 */
+    letter-spacing: 1px;
+}
+
+/* 弹窗标题修饰 */
+.story-header-title {
+    font-family: 'Cinzel', serif;
+    font-weight: 900;
+    font-size: 24px;
+    border-bottom: 2px solid #000;
+    padding-bottom: 15px;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+/* --- ⏳ AI 生成时的加载动画 --- */
+.ai-generating-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 300px;
+    text-align: center;
+}
+
+.scan-bar-anim {
+    width: 100%;
+    height: 2px;
+    background: #000;
+    animation: scanMove 1.5s infinite ease-in-out;
+    margin-bottom: 20px;
+}
+
+.loading-log {
+    font-family: monospace;
+    font-size: 10px;
+    color: #666;
+    margin-top: 5px;
+}
+
+@keyframes scanMove {
+    0% { transform: scaleX(0); opacity: 0; }
+    50% { transform: scaleX(1); opacity: 1; }
+    100% { transform: scaleX(0); opacity: 0; }
+}
+
+/* 淡入动画 */
+.fade-in-text {
+    animation: fadeIn 1s ease-out;
+}
+
+/* --- 🏴 无框工业风·重制版 (Open Industrial) --- */
+
+/* 1. 开放式板块容器 */
+.open-section {
+    background: #fff;
+    margin-bottom: 0;
+    padding-bottom: 20px;
+}
+
+/* 2. 头部设计：大编号 + 标题 */
+.open-header {
+    display: flex;
+    align-items: baseline;
+    padding: 30px 20px 15px 20px;
+    border-bottom: 4px solid #000; /* 只有一条粗黑线 */
+}
+
+.big-index {
+    font-family: 'Cinzel', serif;
+    font-size: 50px;
+    font-weight: 900;
+    color: #000;
+    margin-right: 15px;
+    line-height: 0.8;
+    opacity: 0.1; /* 让编号淡淡地显示在背景里 */
+}
+
+.header-text {
+    flex: 1;
+}
+
+.ht-main {
+    font-size: 18px;
+    font-weight: 900;
+    color: #000;
+    letter-spacing: 1px;
+}
+
+.ht-sub {
+    font-family: monospace;
+    font-size: 9px;
+    color: #666;
+    margin-top: 2px;
+    text-transform: uppercase;
+}
+
+/* 3. 列表容器 */
+.open-list-container {
+    min-height: 80px;
+    padding: 0; /* 贴边 */
+}
+
+/* 空状态占位字 */
+.empty-text-mark {
+    padding: 40px;
+    text-align: center;
+    font-family: monospace;
+    font-size: 10px;
+    color: #ccc;
+    letter-spacing: 1px;
+}
+
+/* 4. 按钮设计：极简黑色通栏 */
+.minimal-black-btn {
+    display: block;
+    width: calc(100% - 40px); /* 左右留一点边距，或者 width: 100% 全通栏也可以 */
+    margin: 10px auto;
+    background: #000;
+    color: #fff;
+    border: none;
+    padding: 16px;
+    font-family: 'Cinzel', serif;
+    font-weight: 700;
+    font-size: 14px;
+    letter-spacing: 2px;
+    text-align: left; /* 文字靠左更有终端感 */
+    padding-left: 20px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.minimal-black-btn:active {
+    background: #333;
+    transform: scale(0.99);
+}
+
+.blink-symbol {
+    animation: blink 1s infinite;
+    color: #fff;
+    margin-right: 10px;
+}
+
+@keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+}
+
+/* 5. 巨大的分割区块 */
+.giant-divider {
+    height: 10px;
+    background: repeating-linear-gradient(
+        45deg,
+        #f0f0f0,
+        #f0f0f0 10px,
+        #fff 10px,
+        #fff 20px
+    ); /* 工业斜纹分割 */
+    border-top: 1px solid #000;
+    border-bottom: 1px solid #000;
+}
+
+/* --- 列表项的具体样式 (Row Styles) --- */
+
+/* A. 角色行 (Avatar Row) */
+.char-row-open {
+    display: flex;
+    align-items: center;
+    padding: 15px 20px;
+    border-bottom: 1px solid #eee; /* 极细的分割线 */
+}
+
+.char-img-open {
+    width: 40px;
+    height: 40px;
+    background: #000;
+    border-radius: 50%;
+    margin-right: 15px;
+    overflow: hidden;
+}
+.char-img-open img { width: 100%; height: 100%; object-fit: cover; filter: grayscale(100%); }
+
+.char-info-open { flex: 1; }
+.char-name-open { font-weight: bold; font-size: 14px; color: #000; }
+.char-tag-open { font-size: 8px; font-family: monospace; background: #000; color: #fff; padding: 1px 4px; display: inline-block; margin-top: 2px; }
+
+.char-money-open { font-family: 'Cinzel'; font-weight: 900; font-size: 16px; }
+
+/* B. 账单行 (Bill Row) */
+.receipt-mode {
+    background: #fff;
+}
+.bill-row-open {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    border-bottom: 1px dashed #000; /* 虚线分割 */
+    font-family: monospace;
+}
+.bill-date-open { color: #666; font-size: 10px; width: 80px; }
+.bill-desc-open { flex: 1; font-weight: bold; font-size: 12px; }
+.bill-cost-open { font-family: 'Cinzel'; font-weight: 900; font-size: 14px; }
+/* --- ♟ 实体日结单样式 (Entity Daily) --- */
+
+/* 主页列表里的卡片样式 */
+.entity-log-card {
+    border-bottom: 1px solid #eee;
+    padding: 20px;
+    transition: background 0.2s;
+}
+.entity-log-card:last-child {
+    border-bottom: none;
+}
+.entity-log-card:hover {
+    background: #fafafa;
+}
+
+/* 卡片头部：日期与总额 */
+.elc-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+.elc-date {
+    font-family: 'Cinzel', serif;
+    font-weight: 900;
+    font-size: 16px;
+    color: #000;
+}
+.elc-total {
+    font-family: monospace;
+    font-size: 12px;
+    background: #000;
+    color: #fff;
+    padding: 2px 6px;
+}
+
+/* 具体的收支行 */
+.elc-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    font-size: 13px;
+    line-height: 1.6;
+    color: #333;
+}
+.elc-desc {
+    flex: 1;
+    padding-right: 15px;
+    text-align: justify; /* 两端对齐，更有质感 */
+}
+.elc-amount {
+    font-weight: bold;
+    white-space: nowrap;
+    font-family: 'Cinzel';
+}
+.elc-income { color: #000; } /* 收入黑色 */
+.elc-expense { color: #666; } /* 支出灰色 */
+
+/* 弹窗里的转账条目 */
+.transfer-item-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    border-bottom: 1px solid #eee;
+    padding: 5px 0;
+}
+@keyframes popIn {
+    0% { transform: scale(0.8); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+}
+#industrial-alert-modal button:active {
+    background: #000 !important;
+    color: #fff !important;
+}
+/* --- 🏦 金库专用样式 --- */
+
+/* 盖章动画容器 */
+.stamp-box {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(-15deg);
+    pointer-events: none; /* 盖章后不挡字 */
+    z-index: 10;
+}
+
+/* 印章本体 */
+.stamp-circle {
+    width: 120px;
+    height: 120px;
+    border: 5px solid #d00; /* 红色印章 */
+    border-radius: 50%;
+    color: #d00;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: 'Cinzel', serif;
+    font-weight: 900;
+    font-size: 18px;
+    letter-spacing: 2px;
+    opacity: 0; /* 默认隐藏 */
+    transform: scale(2); /* 默认放大 */
+    box-shadow: inset 0 0 0 2px #d00;
+    background: rgba(221, 0, 0, 0.05);
+}
+
+/* 盖下去的动画类 */
+.stamp-active .stamp-circle {
+    animation: stampDown 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+@keyframes stampDown {
+    0% { opacity: 0; transform: scale(3); }
+    100% { opacity: 0.8; transform: scale(1); }
+}
+
+/* 记录列表项 */
+.vault-log-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px dashed #eee;
+}
+.vl-date { font-size: 10px; color: #999; font-family: monospace; }
+.vl-note { font-size: 12px; color: #333; margin-top: 2px; }
+.vl-amount { font-family: 'Cinzel'; font-weight: 900; font-size: 14px; }
+.vl-plus { color: #000; }
+/* --- 🎹 极简白底工业按钮 (Minimal White Btn) --- */
+.minimal-white-btn {
+    /* 📦 盒子模型 */
+    background: #ffffff;       /* 纯白背景 */
+    color: #000000;            /* 纯黑文字 */
+    border: 2px solid #000;    /* 核心：2px 粗黑边框 */
+    padding: 16px 0;           /* 上下留白，高度舒适 */
+    width: 100%;               /* 强制撑满容器 */
+    box-sizing: border-box;    /* 防止 padding 撑大宽度 */
+
+    /* 🔠 字体排版 */
+    font-family: 'Cinzel', serif; /* 你的标志性字体 */
+    font-weight: 900;          /* 最粗字重 */
+    font-size: 13px;
+    letter-spacing: 2px;       /* 宽字间距，更有高级感 */
+    text-transform: uppercase; /* 强制大写 */
+    text-align: center;
+
+    /* 🎨 交互质感 */
+    cursor: pointer;
+    transition: all 0.1s;      /* 极速响应，不拖泥带水 */
+    box-shadow: 4px 4px 0 rgba(0,0,0,0.1); /* 硬朗的投影，增加厚度感 */
+    
+    /* 布局 */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px; /* 如果里面有图标，保持间距 */
+}
+
+/* 🖱️ 悬停状态 (Hover) */
+.minimal-white-btn:hover {
+    background: #fcfcfc;       /* 微微变灰 */
+    box-shadow: 4px 4px 0 #000; /* 投影变全黑，强调“可点击” */
+}
+
+/* 👇 按下状态 (Active - 物理回弹) */
+.minimal-white-btn:active {
+    transform: translate(3px, 3px); /* 向右下位移，模拟按下 */
+    box-shadow: 1px 1px 0 #000;     /* 投影缩短 */
+    background: #f0f0f0;
+    border-color: #000;
+}
+/* --- 🏦 存钱日记卡片 (Vault Diary Card) --- */
+.vault-log-card {
+    background: #fff;
+    border: 2px solid #000;
+    margin-bottom: 20px;
+    padding: 0;
+    box-shadow: 6px 6px 0 rgba(0,0,0,0.1);
+    animation: slideUp 0.3s ease-out;
+    position: relative;
+}
+
+/* 卡片头部：日期与金额 */
+.vlc-header {
+    background: #000;
+    color: #fff;
+    padding: 10px 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: 'Cinzel', serif;
+}
+
+.vlc-date { font-size: 12px; letter-spacing: 1px; }
+.vlc-amount { font-size: 16px; font-weight: 900; color: #4ade80; } /* 绿色强调金额 */
+
+/* 卡片内容：AI 生成的故事 */
+.vlc-body {
+    padding: 20px 15px;
+    font-size: 13px;
+    line-height: 1.8;
+    color: #333;
+    text-align: justify;
+    font-family: sans-serif;
+    border-bottom: 1px dashed #ccc;
+}
+
+/* 卡片底部：装饰性编号 */
+.vlc-footer {
+    padding: 8px 15px;
+    font-size: 9px;
+    color: #999;
+    font-family: monospace;
+    text-transform: uppercase;
+    display: flex;
+    justify-content: space-between;
+}
+
+@keyframes slideUp {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+/* --- 📱 SIM 卡槽样式 --- */
+.sim-scroll-wrapper {
+    display: flex;
+    overflow-x: auto;
+    gap: 15px;
+    padding: 10px 5px 20px 5px; /* 底部留空间给投影 */
+    scroll-snap-type: x mandatory;
+}
+
+/* Lune 专属 SIM 卡设计 */
+.lune-sim-card {
+    flex: 0 0 160px; /* 固定宽度 */
+    height: 240px;
+    background: #000;
+    border: 2px solid #fff;
+    border-radius: 10px; /* 稍微圆角 */
+    position: relative;
+    padding: 15px;
+    color: #fff;
+    cursor: pointer;
+    scroll-snap-align: center;
+    transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: 5px 5px 0 rgba(0,0,0,0.2);
+    overflow: hidden;
+}
+
+/* 选中状态 */
+.lune-sim-card.active {
+    border: 3px solid #000;
+    background: #fff;
+    color: #000;
+    transform: translateY(-5px);
+    box-shadow: 8px 8px 0 rgba(0,0,0,0.8);
+}
+
+/* 芯片样式 */
+.sim-chip {
+    width: 40px;
+    height: 30px;
+    /* 修正点：将 #fwd700 改为 #ffd700 */
+    background: linear-gradient(135deg, #d4af37 0%, #ffd700 100%); 
+    border-radius: 4px;
+    margin-bottom: 20px;
+    position: relative;
+    overflow: hidden;
+}
+
+/* 黑白风格芯片 (选中态) */
+.lune-sim-card.active .sim-chip {
+    background: #000; 
+    border: 1px solid #ccc;
+}
+.sim-chip::after {
+    content: '';
+    position: absolute;
+    left: 0; top: 50%; width: 100%; height: 1px; background: rgba(0,0,0,0.2);
+}
+.sim-chip::before {
+    content: '';
+    position: absolute;
+    left: 30%; top: 0; width: 1px; height: 100%; background: rgba(0,0,0,0.2);
+}
+
+/* 卡面文字 */
+.sim-number {
+    font-family: 'Cinzel', monospace;
+    font-size: 16px;
+    font-weight: 900;
+    letter-spacing: 1px;
+    margin-bottom: 5px;
+    word-break: break-all;
+}
+.sim-label { font-size: 8px; opacity: 0.6; font-family: monospace; }
+.sim-bal {
+    position: absolute;
+    bottom: 15px;
+    right: 15px;
+    font-weight: bold;
+    font-size: 18px;
+}
+
+/* 选号矩阵 */
+.matrix-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+.matrix-num-btn {
+    background: #111;
+    border: 1px solid #333;
+    color: #0f0; /* 黑客绿 */
+    padding: 15px 5px;
+    font-family: monospace;
+    font-size: 14px;
+    cursor: pointer;
+    text-align: center;
+}
+.matrix-num-btn:active {
+    background: #0f0;
+    color: #000;
+}
+
+/* AI 套餐卡片 */
+.ai-plan-card {
+    background: #fff;
+    border: 2px solid #000;
+    padding: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.ai-plan-card:hover {
+    background: #000;
+    color: #fff;
+    transform: scale(1.02);
+}
+.plan-name { font-weight: 900; font-size: 14px; margin-bottom: 4px; }
+.plan-price { float: right; font-family: 'Cinzel'; font-weight: bold; }
+.plan-desc { font-size: 10px; opacity: 0.7; line-height: 1.4; margin-top: 5px; font-style: italic; }
+/* --- ⚠️ 危险/次级操作按钮 (Danger Text Button) --- */
+.danger-text-btn {
+    background: transparent;    /* 透明背景 */
+    border: 1px dashed #333;    /* 虚线边框，像待撕开的封条 */
+    color: #666;                /* 默认深灰，表示非主要操作 */
+    font-family: 'Montserrat', sans-serif; /* 机械感字体 */
+    font-size: 10px;
+    font-weight: 700;           /* 加粗 */
+    letter-spacing: 2px;        /* 字间距拉开 */
+    text-transform: uppercase;  /* 全大写 */
+    padding: 12px 0;            /* 增加点击区域 */
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); /* 顺滑动画 */
+    position: relative;
+    overflow: hidden;
+}
+
+/* 🖱️ 悬停状态：赛博故障红 */
+.danger-text-btn:hover {
+    color: #ff3b30;             /* 经典的系统警告红 */
+    border-color: #ff3b30;      /* 边框也变红 */
+    background: rgba(255, 59, 48, 0.05); /* 微微的红色背景光 */
+    letter-spacing: 4px;        /* 文字向两边展开，非常有科技感 */
+    text-shadow: 0 0 5px rgba(255, 59, 48, 0.5); /* 文字发光 */
+    box-shadow: inset 0 0 10px rgba(255, 59, 48, 0.1); /* 内发光 */
+}
+
+/* 🖱️ 点击状态：更深一点 */
+.danger-text-btn:active {
+    transform: scale(0.98);
+    opacity: 0.8;
+}
+
+/* ✨ 装饰：前面的小方块 */
+.danger-text-btn::before {
+    content: '■';
+    display: inline-block;
+    font-size: 8px;
+    margin-right: 5px;
+    opacity: 0;
+    transform: translateX(-10px);
+    transition: all 0.3s;
+}
+
+.danger-text-btn:hover::before {
+    opacity: 1;
+    transform: translateX(0);
+    color: #ff3b30;
+}
+/* =========================================
+   📱 电话卡终极美化 (Cyberpunk SIM Card)
+   ========================================= */
+
+/* 1. 卡片容器：黑卡质感 */
+.lune-sim-card {
+    /* 尺寸与布局 */
+    flex: 0 0 170px; /* 固定宽度，防止挤压 */
+    height: 260px;
+    background: #111; /* 哑光黑背景 */
+    border: 2px solid #333; /* 暗灰边框 */
+    border-radius: 12px; /* 圆角 */
+    padding: 20px;
+    margin: 10px; /* 间距 */
+    
+    /* 定位与特效 */
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    cursor: pointer;
+    overflow: hidden;
+    
+    /* 阴影：让卡片浮起来 */
+    box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+}
+
+/* 2. 选中状态：高亮白边 + 上浮 */
+.lune-sim-card.active {
+    background: #1a1a1a;
+    border-color: #fff; /* 选中变白边 */
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: 0 15px 30px rgba(0,0,0,0.6), 0 0 0 2px rgba(255,255,255,0.1);
+    z-index: 10;
+}
+
+/* 3. 装饰：右上角的“缺口”折角设计 */
+.lune-sim-card::after {
+    content: '';
+    position: absolute;
+    top: -20px;
+    right: -20px;
+    width: 40px;
+    height: 40px;
+    background: #333;
+    transform: rotate(45deg);
+    opacity: 0.5;
+}
+.lune-sim-card.active::after {
+    background: #fff; /* 选中时折角变白 */
+}
+
+/* 4. 芯片：黑金电路风格 */
+.sim-chip {
+    width: 48px;
+    height: 36px;
+    background: linear-gradient(135deg, #eebb55 0%, #d4af37 50%, #aa7722 100%); /* 金色流光 */
+    border-radius: 6px;
+    position: relative;
+    border: 1px solid #8a6d3b;
+    box-shadow: inset 0 0 5px rgba(0,0,0,0.4);
+    margin-bottom: 15px;
+}
+
+/* 芯片上的电路纹理 (纯CSS画线) */
+.sim-chip::before {
+    content: ''; position: absolute;
+    top: 50%; left: 0; width: 100%; height: 1px;
+    background: rgba(0,0,0,0.25);
+    box-shadow: 0 -9px 0 rgba(0,0,0,0.25), 0 9px 0 rgba(0,0,0,0.25);
+}
+.sim-chip::after {
+    content: ''; position: absolute;
+    left: 40%; top: 0; width: 1px; height: 100%;
+    background: rgba(0,0,0,0.25);
+    box-shadow: 15px 0 0 rgba(0,0,0,0.25);
+}
+
+/* 5. 文字排版美化 */
+.sim-label {
+    font-size: 9px;
+    color: #666;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    font-weight: 700;
+    margin-bottom: 2px;
+}
+
+.sim-number {
+    font-family: 'Cinzel', serif; /* 只有数字用这种衬线体 */
+    font-size: 20px;
+    font-weight: 900;
+    color: #fff;
+    letter-spacing: 1px;
+    margin-bottom: 20px;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+    word-break: break-all;
+}
+
+/* 6. 底部信息栏 */
+.sim-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    border-top: 1px dashed #333; /* 虚线分割 */
+    padding-top: 10px;
+}
+
+.sim-plan-name {
+    font-size: 9px;
+    color: #888;
+    background: #222;
+    padding: 3px 6px;
+    border-radius: 3px;
+    max-width: 80px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.sim-bal {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    color: #4ade80; /* 荧光绿显示余额 */
+}
+/* --- 📠 SIM 卡流水列表样式 --- */
+
+/* 单条记录 */
+.sim-log-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    border-bottom: 1px dashed #333; /* 虚线分割，像打印纸 */
+    font-family: 'Montserrat', sans-serif;
+    transition: background 0.2s;
+}
+
+.sim-log-item:hover {
+    background: #111;
+}
+
+/* 左侧：信息 */
+.sl-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.sl-type {
+    font-size: 9px;
+    font-weight: 700;
+    color: #666;
+    background: #222;
+    padding: 2px 6px;
+    border-radius: 2px;
+    align-self: flex-start;
+    font-family: monospace;
+}
+
+.sl-desc {
+    font-size: 13px;
+    color: #ddd;
+    font-weight: 500;
+}
+
+.sl-date {
+    font-size: 10px;
+    color: #555;
+}
+
+/* 右侧：金额 */
+.sl-amount {
+    font-family: 'Cinzel', serif;
+    font-size: 16px;
+    font-weight: 900;
+    text-align: right;
+}
+
+/* 🟢 充值 (Topup) 绿色 */
+.sl-amount.plus {
+    color: #4ade80;
+    text-shadow: 0 0 5px rgba(74, 222, 128, 0.3);
+}
+
+/* 🔴 消费 (Plan) 红色 */
+.sl-amount.minus {
+    color: #ff3b30;
+}
+
+/* 空状态 */
+.sim-log-empty {
+    padding: 50px;
+    text-align: center;
+    color: #444;
+    font-family: monospace;
+    font-size: 12px;
+}
 
 </style>
 </head>
@@ -26619,13 +27553,48 @@ input[type="range"] { width: 100%; accent-color: #000; cursor: pointer; }
                     </div>
             </section>
 
-            <section id="w-tab-topup" class="wallet-section">
-                <div class="waiting-canvas">
-                    <div class="art-placeholder">
-                        <h3>CAPITAL TOP-UP</h3>
-                        <p>Waiting for secure gateway connection...</p>
-                        <span class="wait-tag">Standard Protocol</span>
+            <section id="w-tab-topup" class="wallet-section" style="display:none;">
+    
+                <div class="sim-deck-container">
+                    <div class="open-header" style="margin-bottom: 15px;">
+                        <span class="big-index">SIM</span>
+                        <div class="header-text">
+                            <div class="ht-main cinzel-font">NETWORK_NODES</div>
+                            <div class="ht-sub">MANAGE COMMUNICATION PROTOCOLS</div>
+                        </div>
+                        <div class="add-sim-btn" onclick="openSimCreateModal()">+</div>
                     </div>
+
+                    <div id="sim-cards-list" class="sim-scroll-wrapper">
+                        </div>
+                </div>
+
+                <div id="sim-control-panel" style="display:none; padding: 20px; animation: slideUp 0.3s ease;">
+                    <div class="action-btn-row">
+                        <button onclick="openDirectTopUp()" class="minimal-white-btn">
+                            <span>↑</span> DIRECT_CHARGE (直充)
+                        </button>
+                        <button onclick="openSimHistory()" class="minimal-white-btn">
+                            <span>≡</span> LOGS (记录)
+                        </button>
+                    </div>
+
+                    <button onclick="triggerAiPlanGen()" class="minimal-black-btn" style="width:100%; margin-top:10px;">
+                        <span class="blink-symbol"></span> GENERATE_LINK_PROTOCOL
+                    </button>
+
+                    <div style="margin-top: 30px; border-top: 1px dashed #ccc; padding-top: 15px;">
+                        <div style="font-size: 10px; color: #999; margin-bottom: 10px;">DANGER ZONE</div>
+                        <div style="display: flex; gap: 10px;">
+                            <button onclick="editSimNumber()" class="danger-text-btn">MODIFY_ID (改号)</button>
+                            <button onclick="deleteSimCard()" class="danger-text-btn" style="color: #ff3b30;">TERMINATE (注销)</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="sim-empty-state" style="text-align:center; padding: 50px; color: #999; display:none;">
+                    <div>NO ACTIVE NODES</div>
+                    <div style="font-size:10px;">请点击右上角 + 号接入网络</div>
                 </div>
             </section>
 
@@ -26863,34 +27832,120 @@ input[type="range"] { width: 100%; accent-color: #000; cursor: pointer; }
             </div>
         </section>
 
-        <section class="bank-tab-panel" id="tab-records">
-            <div class="scroll-box">
-                <div class="list-item-white">
-                    <div class="item-info">
-                        <span class="item-title">角色花销：云起 (Yunqi)</span>
-                        <span class="item-meta">2026-02-05 / DATA_TEAM</span>
+        <section class="bank-tab-panel" id="tab-records" style="display: none;">
+            <div class="scroll-box" style="padding: 0 !important; padding-bottom: 100px;">
+                
+                <div class="open-section">
+                    <div class="open-header">
+                        <span class="big-index">01</span>
+                        <div class="header-text">
+                            <div class="ht-main cinzel-font">ENTITY_MATRIX</div>
+                            <div class="ht-sub">ACTIVE_CHARACTERS_COST // 角色支出流</div>
+                        </div>
                     </div>
-                    <div class="item-price">-500.00</div>
-                </div>
-                <div class="list-item-white">
-                    <div class="item-info">
-                        <span class="item-title">SIM卡月费扣除</span>
-                        <span class="item-meta">2026-02-01 / VIVO S9E</span>
+
+                    <div id="char-expense-list" class="open-list-container">
+                        <div class="empty-text-mark">WAITING_FOR_DATA_STREAM...</div>
                     </div>
-                    <div class="item-price">-30.00</div>
+
+                    <button onclick="manualSyncTransfers()" class="minimal-black-btn" style="width: 100%; margin-bottom: 10px; background: #fff; color: #000; border: 2px solid #000; text-align: center;">
+                        ↻ SYNC_TRANSFERS (刷新用户转账)
+                    </button>
+
+                    <button onclick="window.triggerCharExpenseAI()" class="minimal-black-btn">
+                        <span class="blink-symbol">_</span> ANALYZE_ENTITIES
+                    </button>
                 </div>
+
+                <div class="giant-divider"></div>
+
+                <div class="open-section">
+                    <div class="open-header">
+                        <span class="big-index">02</span>
+                        <div class="header-text">
+                            <div class="ht-main cinzel-font">SIGNAL_LOGS</div>
+                            <div class="ht-sub">DEVICE_SIM_BILLING // 话费账单</div>
+                        </div>
+                    </div>
+
+                    <div id="phone-bill-list" class="open-list-container receipt-mode">
+                        <div class="empty-text-mark">NO_SIGNAL_RECORD...</div>
+                    </div>
+
+                    <button onclick="window.triggerPhoneBillAI()" class="minimal-black-btn">
+                        <span class="blink-symbol">_</span> GENERATE_BILL
+                    </button>
+                </div>
+
+                <div style="margin-top: 50px; text-align: center; opacity: 0.2;">
+                    <div style="font-family: 'Cinzel'; font-weight: 900; font-size: 24px;">LUNE</div>
+                    <div style="font-family: monospace; font-size: 9px; letter-spacing: 5px;">PROTOCOL_V2</div>
+                </div>
+
             </div>
         </section>
 
-        <section class="bank-tab-panel" id="tab-vault">
-            <div class="scroll-box">
-                <div class="plan-card-white">
-                    <div class="plan-header cinzel-font">SAVING PROTOCOL</div>
-                    <div class="progress-bar-industrial">
-                        <div class="progress-inner" style="width: 75%;"></div>
+        <section class="bank-tab-panel" id="tab-vault" style="display: none;">
+            <div class="scroll-box" style="padding: 20px;">
+
+                <div id="vault-state-empty" style="display: none;">
+                    <div class="open-header">
+                        <span class="big-index">00</span>
+                        <div class="header-text">
+                            <div class="ht-main cinzel-font">PROTOCOL_INIT</div>
+                            <div class="ht-sub">ESTABLISH NEW SAVING GOAL // 建立契约</div>
+                        </div>
                     </div>
-                    <div class="plan-data">75% COMPLETE / TARGET: 50,000</div>
+
+                    <div class="record-section-block" style="padding: 30px 20px; text-align: center; margin-top: 20px;">
+                        <div style="font-size: 12px; color: #666; margin-bottom: 20px;">
+                            当前未检测到活跃的储蓄协议。<br>你可以手动设定，或让对方根据当前处境发起提案。
+                        </div>
+
+                        <button onclick="openManualSetModal()" class="minimal-white-btn" style="margin-bottom: 15px; width: 100%;">
+                            [ MANUAL INPUT ] 手动设定
+                        </button>
+                        
+                        <button onclick="triggerAiSavingPlan()" class="minimal-black-btn" style="width: 100%;">
+                            <span class="blink-symbol"> </span> REQUEST_PROPOSAL (AI 提案)
+                        </button>
+                    </div>
                 </div>
+
+                <div id="vault-state-active" style="display: none;">
+                    
+                    <div class="plan-card-white" style="border: 2px solid #000; padding: 20px; margin-top: 20px; position: relative; overflow: hidden;">
+                        <div style="position: absolute; right: -10px; top: -10px; font-size: 80px; opacity: 0.05; font-weight: 900; font-family: 'Cinzel'; pointer-events: none;">$</div>
+
+                        <div class="plan-header cinzel-font" style="font-size: 18px; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 15px;">
+                            ACTIVE PROTOCOL
+                        </div>
+
+                        <div id="active-goal-name" style="font-weight: bold; font-size: 14px; margin-bottom: 5px;">GOAL_NAME</div>
+                        <div id="active-goal-desc" style="font-size: 10px; color: #666; margin-bottom: 20px; line-height: 1.4;">Goal description...</div>
+
+                        <div class="progress-bar-industrial" style="height: 15px; background: #eee; border: 1px solid #000; position: relative;">
+                            <div id="vault-progress-fill" class="progress-inner" style="width: 0%; background: #000; height: 100%; transition: width 0.5s ease;"></div>
+                        </div>
+                        
+                        <div style="display: flex; justify-content: space-between; margin-top: 10px; font-family: 'Cinzel'; font-weight: 900;">
+                            <span id="vault-current-val">￥0</span>
+                            <span id="vault-target-val">/ ￥50,000</span>
+                        </div>
+                    </div>
+
+                    <div class="action-btn-row" style="margin-top: 30px;">
+                        <button onclick="openDepositModal()" class="minimal-black-btn">
+                            INJECT FUNDS (存入)
+                        </button>
+                    </div>
+
+                    <button onclick="openVaultLogs()" class="minimal-white-btn" style="width: 100%; margin-top: 10px;">
+                        VIEW_LOGS (查看记录)
+                    </button>
+
+                </div>
+
             </div>
         </section>
     </div>
@@ -27152,7 +28207,2146 @@ input[type="range"] { width: 100%; accent-color: #000; cursor: pointer; }
     </div>
 </div>
 
+<div id="yearly-overview-modal" class="industrial-modal-overlay" style="z-index: 550000; display: none;">
+    <div class="industrial-modal-box full-box" style="height: 90vh; background: #f4f4f4;">
+        
+        <header class="modal-header-bw">
+            <span class="cinzel-font">YEARLY_OVERVIEW // 年度总览</span>
+            <div class="close-x" onclick="closeYearlyOverview()">×</div>
+        </header>
+
+        <div class="modal-body scroll-body" id="yearly-overview-container" style="padding: 15px; overflow-y: auto;">
+            </div>
+
+        <footer class="report-footer-actions" style="background: #fff; border-top: 2px solid #000; padding: 15px; display: flex !important;">
+            <button onclick="enterYearlySecondLayer()" style="width: 100%; background: #000 !important; color:#fff !important; padding: 18px; font-family: 'Cinzel'; font-weight: 900; border: none; cursor: pointer; letter-spacing: 2px; font-size: 16px;">
+                VIEW MONTHLY BREAKDOWN (查看月度拆解)
+            </button>
+        </footer>
+    </div>
+</div>
+
+<div id="yearly-history-modal" class="industrial-modal-overlay" style="z-index: 550000; display: none;">
+    <div class="industrial-modal-box full-box" style="height: 90vh; background: #f4f4f4;">
+        
+        <header class="modal-header-bw">
+            <span class="cinzel-font">ARCHIVED_YEAR_LOG</span>
+            <div class="close-x" onclick="closeYearlyHistory()">×</div>
+        </header>
+
+        <div class="modal-body scroll-body" id="yearly-history-container" style="padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px;">
+            </div>
+
+        <footer class="report-footer-actions" style="background: #fff; border-top: 2px solid #000; padding: 15px; display: flex !important;">
+            <button onclick="handleAnnualConsumption()" style="width: 100%; background: #000 !important; color:#fff !important; padding: 18px; font-family: 'Cinzel'; font-weight: 900; border: none; cursor: pointer; letter-spacing: 2px; font-size: 16px;">
+                ANNUAL EXPENDITURE (年度消费)
+            </button>
+        </footer>
+    </div>
+</div>
+<div id="annual-story-modal" class="industrial-modal-overlay" style="z-index: 600000; display: none;">
+    <div class="industrial-modal-box full-box" style="height: 85vh; background: #fff; border: 4px solid #000; max-width: 500px;">
+        
+        <div style="background:#000; color:#fff; padding:10px; font-family:monospace; font-size:9px; display:flex; justify-content:space-between;">
+            <span>CLASSIFIED_ARCHIVE</span>
+            <span>LEVEL_5_ACCESS</span>
+        </div>
+
+        <div class="modal-body scroll-body" style="padding: 30px;">
+            <div class="story-header-title">ANNUAL REPORT</div>
+            
+            <div id="annual-story-content">
+                </div>
+        </div>
+
+        <div onclick="closeAnnualStory()" style="padding: 20px; text-align: center; cursor: pointer; border-top: 1px solid #eee; font-family: 'Cinzel'; font-weight: 900; letter-spacing: 2px;">
+            CLOSE_DOSSIER (关闭档案)
+        </div>
+    </div>
+</div>
+
+<div id="monthly-story-modal" class="industrial-modal-overlay" style="z-index: 600000; display: none;">
+    <div class="industrial-modal-box" style="width: 90%; max-width: 400px; background: #f4f4f4; border: 2px solid #000; box-shadow: 15px 15px 0 rgba(0,0,0,0.8);">
+        
+        <div style="position:absolute; left:10px; top:10px; bottom:10px; width:2px; background:#000; opacity:0.1;"></div>
+
+        <div class="modal-body" style="padding: 30px 20px 30px 30px; max-height: 70vh; overflow-y: auto;">
+            
+            <div id="month-story-title" style="font-family:'Cinzel'; font-size:40px; font-weight:900; opacity:0.1; position:absolute; right:20px; top:10px;">01</div>
+            
+            <div style="font-family:monospace; font-size:10px; margin-bottom:15px; color:#666;">MEMORY_FRAGMENT_RECOVERY...</div>
+
+            <div id="month-story-content" class="story-prose-text" style="font-size: 14px;">
+                </div>
+        </div>
+
+        <div onclick="closeMonthlyStory()" style="background:#000; color:#fff; text-align:center; padding:15px; font-weight:bold; cursor:pointer;">
+            RETURN (返回)
+        </div>
+    </div>
+</div>
+
+<div id="entity-daily-modal" class="industrial-modal-overlay" style="z-index: 600000; display: none;">
+    <div class="industrial-modal-box" style="width: 90%; max-width: 450px; background: #fff; border: 4px solid #000; box-shadow: 15px 15px 0 rgba(0,0,0,0.2);">
+        
+        <div style="background: #000; color: #fff; padding: 20px; display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <div class="cinzel-font" style="font-size: 18px; font-weight: 900;">DAILY SETTLEMENT</div>
+                <div id="daily-date-label" style="font-family: monospace; font-size: 10px; opacity: 0.7;">YYYY-MM-DD</div>
+            </div>
+            <div onclick="closeEntityDailyModal()" style="cursor: pointer; font-size: 24px;">×</div>
+        </div>
+
+        <div style="padding: 25px;">
+            
+            <div id="pending-transfer-box" style="margin-bottom: 25px; padding: 15px; border: 1px dashed #000; display: none;">
+                <div style="font-size: 10px; font-weight: bold; margin-bottom: 10px;">⚡ INCOMING TRANSFERS (检测到资金流入)</div>
+                <div id="transfer-list-content">
+                    </div>
+            </div>
+
+            <div id="daily-status-text" style="text-align: center; margin-bottom: 25px; font-family: monospace; font-size: 12px; line-height: 1.6;">
+                READY TO ANALYZE ENTITY ACTIVITY...<br>
+                准备生成今日收支流水
+            </div>
+
+            <button id="btn-gen-daily" onclick="runEntityDailyAI()" class="minimal-black-btn" style="width: 100%;">
+                [ EXECUTE_PROTOCOL ] 生成日记录
+            </button>
+            
+            <div id="daily-done-msg" style="display: none; text-align: center; color: #666; font-size: 12px; padding: 20px;">
+                ✓ 今日记录已归档 (ARCHIVED)
+            </div>
+
+        </div>
+    </div>
+</div>
+<div id="industrial-alert-modal" class="industrial-modal-overlay" style="display: none; z-index: 999999; justify-content: center; align-items: center;">
+    <div class="industrial-modal-box" style="width: 80%; max-width: 320px; background: #fff; border: 3px solid #000; box-shadow: 12px 12px 0 rgba(0,0,0,0.9); padding: 0; animation: popIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);">
+        
+        <div style="background: #000; color: #fff; padding: 12px; font-family: 'Cinzel', serif; font-weight: 900; letter-spacing: 2px; font-size: 12px; display: flex; justify-content: space-between;">
+            <span>SYSTEM_NOTICE</span>
+            <span>///</span>
+        </div>
+
+        <div id="industrial-alert-msg" style="padding: 35px 25px; font-size: 14px; font-weight: bold; line-height: 1.6; color: #000; text-align: center;">
+            </div>
+
+        <button onclick="closeIndustrialAlert()" style="width: 100%; padding: 18px; background: #fff; color: #000; border: none; border-top: 3px solid #000; font-family: 'Cinzel'; font-weight: 900; cursor: pointer; font-size: 14px; transition: background 0.2s;">
+            [ CONFIRM_RECEIPT ]
+        </button>
+    </div>
+</div>
+<div id="modal-ai-proposal" class="industrial-modal-overlay" style="z-index: 700000; display: none;">
+    <div class="industrial-modal-box" style="background: #fdfbf7; border: 2px solid #000; padding: 0; max-width: 350px;">
+        
+        <div style="padding: 20px; border-bottom: 1px dashed #000; text-align: center;">
+            <div class="cinzel-font" style="font-weight: 900; font-size: 18px;">SAVING AGREEMENT</div>
+            <div style="font-family: monospace; font-size: 10px; margin-top: 5px;">DRAFTED BY: <span id="proposal-char-name">UNKOWN</span></div>
+        </div>
+
+        <div style="padding: 25px; position: relative;">
+            <div id="proposal-loader" style="text-align: center; padding: 20px;">
+                <div class="scan-bar-anim" style="background:#000;"></div>
+                <div style="font-size: 10px; margin-top: 10px;">NEGOTIATING...</div>
+            </div>
+
+            <div id="proposal-content" style="display: none;">
+                <div style="font-weight: bold; font-size: 16px; margin-bottom: 10px;" id="prop-title"></div>
+                <div style="font-size: 13px; line-height: 1.8; text-align: justify; margin-bottom: 20px;" id="prop-desc"></div>
+                
+                <div style="background: #eee; padding: 10px; text-align: center; font-family: 'Cinzel'; font-weight: 900;">
+                    TARGET: ￥<span id="prop-amount">0</span>
+                </div>
+            </div>
+
+            <div id="stamp-container" class="stamp-box" style="display: none;">
+                <div class="stamp-circle">APPROVED</div>
+            </div>
+        </div>
+
+        <div id="proposal-actions" style="display: none; border-top: 2px solid #000; display: flex;">
+            <button onclick="rejectProposal()" style="flex: 1; padding: 15px; border: none; background: #fff; color: #000; border-right: 1px solid #000; cursor: pointer; font-weight: bold;">REJECT</button>
+            <button onclick="approveProposal()" style="flex: 1; padding: 15px; border: none; background: #000; color: #fff; cursor: pointer; font-weight: bold;">SIGN (批准)</button>
+        </div>
+    </div>
+</div>
+
+<div id="modal-vault-logs" class="industrial-modal-overlay" style="z-index: 650000; display: none;">
+    <div class="industrial-modal-box full-box" style="height: 85vh; background: #fdfbf9; display: flex; flex-direction: column;">
+        
+        <header class="modal-header-bw" style="flex-shrink: 0;">
+            <span>SAVING_LOGS // 存蓄档案</span>
+            <div class="close-x" onclick="document.getElementById('modal-vault-logs').style.display='none'">×</div>
+        </header>
+
+        <div id="vault-action-area" style="padding: 15px; border-bottom: 2px solid #000; background: #fff; flex-shrink: 0;">
+            <button id="btn-daily-deposit" onclick="triggerDailyDepositAI()" class="minimal-black-btn" style="width: 100%;">
+                <span class="blink-symbol">+</span> EXECUTE_DAILY_DEPOSIT (每日存入)
+            </button>
+            <div id="daily-deposit-hint" style="font-size: 10px; color: #666; text-align: center; margin-top: 8px; font-family: monospace;">
+                STATUS: READY // 今日尚未打卡
+            </div>
+        </div>
+
+        <div class="modal-body scroll-body" id="vault-logs-container" style="padding: 15px; flex: 1; overflow-y: auto; background: #f4f4f4;">
+            </div>
+    </div>
+</div>
+
+<div id="modal-deposit" class="industrial-modal-overlay" style="z-index: 660000; display: none;">
+    <div class="industrial-modal-box" style="width: 80%; max-width: 300px; background: #fff; border: 3px solid #000;">
+        <div style="padding: 20px;">
+            <div style="font-weight: 900; margin-bottom: 15px;">INJECT FUNDS</div>
+            <input type="number" id="deposit-amount" placeholder="Amount (￥)" style="width: 100%; padding: 10px; border: 1px solid #000; font-family: 'Cinzel'; font-weight: bold; font-size: 16px; margin-bottom: 10px;">
+            <input type="text" id="deposit-note" placeholder="Memo (Optional)" style="width: 100%; padding: 10px; border: 1px solid #ccc; font-size: 12px; margin-bottom: 15px;">
+            <button onclick="executeDeposit()" class="minimal-black-btn" style="width: 100%;">CONFIRM</button>
+        </div>
+    </div>
+</div>
+<div id="modal-manual-goal" class="industrial-modal-overlay" style="z-index: 710000; display: none;">
+    <div class="industrial-modal-box" style="width: 85%; max-width: 350px; background: #fff; border: 3px solid #000; padding: 25px;">
+        
+        <div style="font-family: 'Cinzel'; font-weight: 900; font-size: 18px; margin-bottom: 20px; border-bottom: 2px solid #000; padding-bottom: 10px;">
+            DEFINE PROTOCOL
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 15px;">
+            <div>
+                <label style="font-size: 10px; font-weight: bold; display: block; margin-bottom: 5px;">PROTOCOL NAME (计划名称)</label>
+                <input type="text" id="manual-goal-title" placeholder="Ex: 逃离地球基金" style="width: 100%; padding: 12px; border: 1px solid #000; font-size: 14px;">
+            </div>
+
+            <div>
+                <label style="font-size: 10px; font-weight: bold; display: block; margin-bottom: 5px;">TARGET AMOUNT (目标金额)</label>
+                <div style="position: relative;">
+                    <span style="position: absolute; left: 12px; top: 12px; font-weight: bold;">￥</span>
+                    <input type="number" id="manual-goal-target" placeholder="50000" style="width: 100%; padding: 12px 12px 12px 30px; border: 1px solid #000; font-family: 'Cinzel'; font-weight: bold; font-size: 16px;">
+                </div>
+            </div>
+
+            <div>
+                <label style="font-size: 10px; font-weight: bold; display: block; margin-bottom: 5px;">DESCRIPTION (备注)</label>
+                <textarea id="manual-goal-desc" rows="3" placeholder="写给自己的一句话..." style="width: 100%; padding: 10px; border: 1px solid #ccc; font-size: 12px; resize: none;"></textarea>
+            </div>
+        </div>
+
+        <div style="display: flex; gap: 10px; margin-top: 25px;">
+            <button onclick="document.getElementById('modal-manual-goal').style.display='none'" class="minimal-white-btn" style="flex: 1;">CANCEL</button>
+            <button onclick="confirmManualGoal()" class="minimal-black-btn" style="flex: 1;">CONFIRM</button>
+        </div>
+
+    </div>
+</div>
+
+<div id="modal-sim-create" class="industrial-modal-overlay" style="z-index: 800000; display: none;">
+    <div class="industrial-modal-box full-box" style="height: auto; max-height: 80vh; background: #000; color: #fff; border: 2px solid #fff;">
+        <header class="modal-header-bw" style="background:#000; color:#fff; border-bottom: 1px solid #333;">
+            <span>ACCESS_REQUEST</span>
+            <div class="close-x" onclick="closeSimCreateModal()">×</div>
+        </header>
+        
+        <div style="padding: 20px;">
+            <div id="sim-mode-random">
+                <div class="matrix-grid" id="random-number-grid">
+                    </div>
+                <button onclick="generateRandomBatch()" class="minimal-white-btn" style="margin-top:20px;">
+                    ↻ REFRESH_BATCH (换一批)
+                </button>
+                <div style="text-align:center; margin: 15px 0; font-size: 10px; opacity: 0.5;">- OR -</div>
+                <button onclick="switchSimMode('manual')" class="minimal-black-btn" style="border:1px solid #fff;">
+                    MANUAL INPUT (手动输入)
+                </button>
+            </div>
+
+            <div id="sim-mode-manual" style="display:none;">
+                <input type="text" id="manual-sim-input" placeholder="Enter 8-15 digits..." maxlength="15" 
+                       style="width: 100%; background: #222; border: 1px solid #555; color: #fff; padding: 15px; font-family: 'Cinzel'; font-size: 18px; text-align: center;">
+                <button onclick="saveNewSim(document.getElementById('manual-sim-input').value)" class="minimal-white-btn" style="margin-top: 20px;">
+                    CONFIRM ACTIVATION
+                </button>
+                <button onclick="switchSimMode('random')" class="danger-text-btn" style="margin-top: 10px; width:100%; text-align:center;">BACK TO RANDOM</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="modal-ai-plans" class="industrial-modal-overlay" style="z-index: 810000; display: none;">
+    <div class="industrial-modal-box" style="width: 90%; max-width: 400px; background: #f4f4f4; border: 3px solid #000;">
+        <div style="padding: 15px; border-bottom: 2px solid #000; background: #fff;">
+            <div class="cinzel-font" style="font-weight:900;">PROTOCOL_GENERATOR</div>
+            <div style="font-size: 10px; color: #666;">Linking to Entity Persona...</div>
+        </div>
+        
+        <div id="ai-plan-container" style="padding: 15px; display: flex; flex-direction: column; gap: 10px; min-height: 200px;">
+            <div class="scan-bar-anim" style="margin: 50px auto;"></div>
+        </div>
+
+        <div style="padding: 15px; border-top: 2px solid #000; display: flex; gap: 10px;">
+            <button onclick="closeAiPlans()" class="minimal-white-btn" style="flex:1;">CANCEL</button>
+            <button onclick="triggerAiPlanGen()" class="minimal-black-btn" style="flex:1;">↻ REGENERATE</button>
+        </div>
+    </div>
+</div>
+
+<div id="modal-direct-topup" class="industrial-modal-overlay" style="z-index: 820000; display: none;">
+    <div class="industrial-modal-box" style="width: 80%; background: #fff; border: 3px solid #000; padding: 20px;">
+        <div class="cinzel-font" style="font-size:18px; margin-bottom:15px;">DIRECT CHARGE</div>
+        <input type="number" id="topup-amount-inp" placeholder="Amount (￥)" class="npc-edit-input" style="font-size: 20px; font-weight: bold;">
+        <button onclick="executeDirectTopUp()" class="minimal-black-btn" style="margin-top: 15px;">PAY NOW</button>
+        <button onclick="document.getElementById('modal-direct-topup').style.display='none'" class="minimal-white-btn" style="margin-top: 10px; border:none;">CANCEL</button>
+    </div>
+</div>
+
+<div id="modal-sim-history" class="industrial-modal-overlay" style="z-index: 850000; display: none;">
+    <div class="industrial-modal-box full-box" style="height: 70vh; background: #0a0a0a; border: 2px solid #333; color: #ccc;">
+        
+        <header class="modal-header-bw" style="background: #111; border-bottom: 1px solid #333; padding: 15px;">
+            <div style="display:flex; flex-direction:column;">
+                <span style="font-family:'Cinzel'; color:#fff; font-size:16px;">DATA_LOGS</span>
+                <span style="font-size:10px; color:#666; font-family:monospace;" id="sh-sim-number">TARGET: UNKNOWN</span>
+            </div>
+            <div class="close-x" onclick="document.getElementById('modal-sim-history').style.display='none'" style="color:#fff;">×</div>
+        </header>
+
+        <div class="modal-body scroll-body" id="sim-history-list" style="padding: 0; background: #000;">
+            </div>
+
+        <div style="padding: 15px; border-top: 1px solid #333; background: #111; display:flex; justify-content:space-between; font-family:monospace; font-size:10px;">
+            <span>STATUS: CONNECTED</span>
+            <span style="color: #4ade80;">END_OF_STREAM</span>
+        </div>
+    </div>
+</div>
+
 <script>
+/* ============================================================
+   📠 SIM 历史记录逻辑 (History Logs)
+   ============================================================ */
+
+window.openSimHistory = async function() {
+    // 1. 检查是否选中了卡
+    if (window.currentSimIndex === null || window.currentSimIndex === undefined) {
+        return showIndAlert("请先选择一张 SIM 卡"); // 假设你有 showIndAlert，没有的话用 alert
+    }
+
+    // 2. 读取数据
+    const list = await loadFromDB('phone_cards') || [];
+    const card = list[window.currentSimIndex];
+
+    if (!card) return;
+
+    // 3. 打开弹窗
+    const modal = document.getElementById('modal-sim-history');
+    const container = document.getElementById('sim-history-list');
+    const headerNum = document.getElementById('sh-sim-number');
+    
+    modal.style.display = 'flex';
+    if(headerNum) headerNum.innerText = `TARGET_ID: ${card.number}`;
+
+    // 4. 渲染列表
+    // 检查是否有 logs 字段，没有就给个空数组
+    const logs = card.logs || [];
+
+    if (logs.length === 0) {
+        container.innerHTML = `
+            <div class="sim-log-empty">
+                <div>NO_DATA_PACKETS</div>
+                <div style="margin-top:5px;">暂无通讯/交易记录</div>
+            </div>
+        `;
+    } else {
+        // 按时间倒序排列 (最新的在上面)
+        // 假设 logs 里的结构是 { date, type, amount, desc }
+        container.innerHTML = logs.map(log => {
+            const isIncome = log.amount > 0; // 金额大于0是充值
+            const typeClass = isIncome ? 'plus' : 'minus';
+            const sign = isIncome ? '+' : ''; // 正数加个加号
+            
+            return `
+                <div class="sim-log-item">
+                    <div class="sl-info">
+                        <span class="sl-type">${log.type || 'SYSTEM'}</span>
+                        <span class="sl-desc">${log.desc || 'Unknown Operation'}</span>
+                        <span class="sl-date">${log.date}</span>
+                    </div>
+                    <div class="sl-amount ${typeClass}">
+                        ${sign}￥${Math.abs(log.amount).toFixed(2)}
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+    
+    if(navigator.vibrate) navigator.vibrate(10);
+};
+
+/* ============================================================
+   🔄 钱包导航切换 (完美融合版：索引定位 + 全功能初始化)
+   ============================================================ */
+window.switchWTab = function(index, tabName) {
+    console.log("[System] Switching Wallet Tab:", index, tabName);
+
+    // 1. 视觉反馈：底部按钮高亮
+    const btns = document.querySelectorAll('.nav-btn');
+    if (btns) {
+        btns.forEach((b, idx) => {
+            if (idx === index) b.classList.add('active');
+            else b.classList.remove('active');
+        });
+    }
+
+    // 2. 页面显隐逻辑 (🚨 核心修复：使用索引定位，保证页面一定显示)
+    const sections = document.querySelectorAll('.wallet-section');
+    if (sections) {
+        // 先全部隐藏
+        sections.forEach(s => {
+            s.style.display = 'none'; 
+            s.classList.remove('active');
+        });
+
+        // 再根据索引显示当前这一个 (这是旧代码生效的关键)
+        if (sections[index]) {
+            sections[index].style.display = 'block';
+            sections[index].classList.add('active');
+        } else {
+            console.warn(`警告：找不到索引为 ${index} 的 .wallet-section 页面`);
+        }
+    }
+
+    // 3. 数据初始化逻辑 (根据页面类型刷新数据)
+
+    // --- [索引 0] CARD / 资产首页 ---
+    if (index === 0 || tabName === 'CARD') {
+        if (typeof renderSavedCards === 'function') renderSavedCards();
+    }
+    
+    // --- [索引 1] SEND / 转账页面 ---
+    else if (index === 1 || tabName === 'SEND') {
+        if (typeof refreshPickers === 'function') refreshPickers();
+    }
+
+    // --- [索引 2] LOG / 档案记录页面 ---
+    else if (index === 2 || tabName === 'LOG') {
+        // 这里的逻辑融合了你两段代码的需求
+        if (typeof renderCharacterArchives === 'function') renderCharacterArchives(); // 渲染票据
+        if (typeof initVaultTab === 'function') initVaultTab(); // 渲染存钱计划
+        if (typeof renderCharExpenseList === 'function') renderCharExpenseList(); // 渲染支出列表
+    }
+
+    // --- [索引 3] TOPUP / 电话卡页面 ---
+    else if (index === 3 || tabName === 'TOPUP') {
+        // 这里的 ID 检查是为了双重保险，主要显示还是靠上面的 sections[index]
+        const el = document.getElementById('w-tab-topup');
+        if (el) el.style.display = 'block'; // 强制确保显示
+
+        // 初始化 SIM 卡数据
+        if (typeof initSimTab === 'function') {
+            initSimTab();
+        }
+    }
+
+    // --- [索引 4] TRADE / 交易页面 ---
+    else if (index === 4 || tabName === 'TRADE') {
+        const el = document.getElementById('w-tab-trade');
+        if (el) el.style.display = 'block';
+        
+        // 可以在这里加交易页面的初始化函数
+        // if (typeof initTradeTab === 'function') initTradeTab();
+    }
+
+    // 4. 震动反馈
+    try {
+        if (navigator.vibrate) navigator.vibrate(10);
+    } catch (e) {}
+};
+/* ============================================================
+   📱 LUNE SIM CORE (通讯核心)
+   ============================================================ */
+
+window.currentSimIndex = null; // 当前选中的卡片索引
+
+/* ============================================================
+   📱 修复版 SIM 卡逻辑 (记忆选中状态 + 自动兜底)
+   ============================================================ */
+
+/**
+ * 1. 初始化 SIM 页面 (增强版)
+ */
+window.initSimTab = async function() {
+    // A. 读取数据
+    const list = await loadFromDB('phone_cards') || [];
+    const container = document.getElementById('sim-cards-list');
+    const emptyState = document.getElementById('sim-empty-state');
+    const controlPanel = document.getElementById('sim-control-panel');
+
+    // 清空容器，防止重复渲染
+    container.innerHTML = "";
+    
+    // B. 空状态处理
+    if (list.length === 0) {
+        emptyState.style.display = 'block';
+        controlPanel.style.display = 'none';
+        return; // 没卡直接结束
+    } 
+
+    // C. 有卡状态：渲染列表
+    emptyState.style.display = 'none';
+    
+    // 🛠️ 关键修复 1：尝试恢复“上次选中的卡”
+    // 如果 currentSimIndex 是 null (刚刷新)，就去硬盘里找上次选了谁
+    if (window.currentSimIndex === null || window.currentSimIndex === undefined) {
+        const lastIdx = localStorage.getItem('LUNE_SIM_LAST_INDEX');
+        if (lastIdx !== null) {
+            window.currentSimIndex = parseInt(lastIdx);
+        } else {
+            // 如果连硬盘里都没记录，默认选中第一张 (兜底)
+            window.currentSimIndex = 0;
+        }
+    }
+
+    // 🛠️ 关键修复 2：防止索引越界 (比如你删了卡，索引还在)
+    if (window.currentSimIndex >= list.length) {
+        window.currentSimIndex = 0;
+    }
+
+    // D. 渲染卡片 DOM
+    container.innerHTML = list.map((card, idx) => `
+        <div class="lune-sim-card ${window.currentSimIndex === idx ? 'active' : ''}" 
+             onclick="selectSimCard(${idx})">
+            
+            <div>
+                <div class="sim-chip"></div>
+                <div class="sim-label">LUNE_ID</div>
+                <div class="sim-number">${card.number}</div>
+            </div>
+
+            <div class="sim-footer">
+                <div class="sim-info-group">
+                    <div class="sim-label">PLAN</div>
+                    <div class="sim-plan-name">${card.planName || 'NO_PROTOCOL'}</div>
+                </div>
+                <div class="sim-info-group" style="text-align:right;">
+                    <div class="sim-label">CREDITS</div>
+                    <div class="sim-bal">￥${parseFloat(card.balance).toFixed(0)}</div>
+                </div>
+            </div>
+            
+        </div>
+    `).join('');
+    
+    // E. 立即触发选中逻辑 (刷新下方的操作面板)
+    // 这样刷新页面后，不仅列表出来了，下面的操作按钮也会直接弹出来
+    if (list[window.currentSimIndex]) {
+        selectSimCard(window.currentSimIndex, false); 
+    }
+};
+
+/**
+ * 2. 选中卡片 (增加记忆功能)
+ */
+window.selectSimCard = async function(idx, redraw = true) {
+    const list = await loadFromDB('phone_cards') || [];
+    const card = list[idx];
+
+    if (!card) return;
+
+    // 🛠️ 关键修复 3：选中时，把索引存入硬盘
+    window.currentSimIndex = idx;
+    localStorage.setItem('LUNE_SIM_LAST_INDEX', idx);
+
+    // UI 更新：显示下方控制台
+    const panel = document.getElementById('sim-control-panel');
+    if(panel) {
+        panel.style.display = 'block';
+        // 重新触发上滑动画
+        panel.style.animation = 'none';
+        panel.offsetHeight; /* 触发重绘 */
+        panel.style.animation = 'slideUp 0.3s ease';
+    }
+
+    // 填充数据
+    const numEl = document.getElementById('ssi-number');
+    const balEl = document.getElementById('ssi-balance');
+    if(numEl) numEl.innerText = card.number;
+    if(balEl) balEl.innerText = `￥${parseFloat(card.balance).toFixed(2)}`;
+    
+    // 如果需要重绘列表高亮 (点击时需要，初始化时不需要)
+    if (redraw) {
+        initSimTab(); 
+        if(navigator.vibrate) navigator.vibrate(10);
+    }
+};
+
+/**
+ * 3. 打开/关闭创建弹窗
+ */
+window.openSimCreateModal = function() {
+    document.getElementById('modal-sim-create').style.display = 'flex';
+    generateRandomBatch(); // 默认生成一批
+};
+window.closeSimCreateModal = () => document.getElementById('modal-sim-create').style.display = 'none';
+
+/**
+ * 4. 随机选号逻辑 (一次生成6个)
+ */
+window.generateRandomBatch = function() {
+    const grid = document.getElementById('random-number-grid');
+    grid.innerHTML = "";
+    
+    // 生成6个随机号
+    for (let i=0; i<6; i++) {
+        // 生成 3位前缀 + 8位随机
+        const prefix = ["138", "139", "186", "199", "166"][Math.floor(Math.random()*5)];
+        const suffix = Math.floor(Math.random() * 100000000).toString().padStart(8, '0');
+        const num = prefix + suffix;
+        
+        const btn = document.createElement('div');
+        btn.className = 'matrix-num-btn';
+        btn.innerText = num;
+        btn.onclick = () => saveNewSim(num);
+        grid.appendChild(btn);
+    }
+    
+    if(navigator.vibrate) navigator.vibrate(10);
+};
+
+window.switchSimMode = function(mode) {
+    document.getElementById('sim-mode-random').style.display = mode === 'random' ? 'block' : 'none';
+    document.getElementById('sim-mode-manual').style.display = mode === 'manual' ? 'block' : 'none';
+};
+
+/**
+ * 5. 保存新卡 (存库)
+ */
+window.saveNewSim = async function(number) {
+    if (!number || number.length > 15 || !/^\d+$/.test(number)) {
+        return showIndAlert("INVALID_ID<br>号码必须为15位以内的数字");
+    }
+
+    let list = await loadFromDB('phone_cards') || [];
+    
+    // 查重
+    if (list.some(c => c.number === number)) {
+        return showIndAlert("ID_CONFLICT<br>该号码已被注册");
+    }
+
+    const newCard = {
+        id: "SIM_" + Date.now(),
+        number: number,
+        balance: 0, // 初始余额为0
+        planName: null,
+        logs: [],
+        createDate: new Date().toLocaleDateString()
+    };
+
+    list.push(newCard);
+    await saveToDB('phone_cards', list);
+
+    closeSimCreateModal();
+    window.currentSimIndex = list.length - 1; // 选中新卡
+    initSimTab();
+    
+    showIndAlert(`NODE_ACTIVATED<br>接入号码: ${number}`);
+};
+
+/**
+ * ⚡ 6. AI 套餐生成逻辑 (关联角色)
+ */
+window.triggerAiPlanGen = async function() {
+    if (window.currentSimIndex === null) return showIndAlert("请先选择一张 SIM 卡");
+
+    const modal = document.getElementById('modal-ai-plans');
+    const container = document.getElementById('ai-plan-container');
+    modal.style.display = 'flex';
+    container.innerHTML = `<div class="scan-bar-anim" style="margin:50px auto;"></div><div style="text-align:center;font-size:10px;">ANALYZING ENTITY RESONANCE...</div>`;
+
+    // 1. 获取角色人设
+    const charName = window.currentVaultCharName || "Lune System";
+    const charBio = window.currentVaultCharBio || "Standard Protocol";
+
+    // 2. Prompt
+    const systemPrompt = `你是一个赛博朋克风格的移动网络运营商。
+    请根据角色“${charName}”的人设(${charBio})，设计 3 个手机流量/通话套餐。
+    
+    【要求】：
+    1. 返回纯 JSON 数组，不含 Markdown。
+    2. 套餐名(name)要抽象、文艺或符合人设 (如: "沉默的守护", "无限熵增", "深夜热线")。
+    3. 价格(price)在 20-200 之间。
+    4. 描述(desc)要用角色的口吻推荐这个套餐，50字以内。
+    
+    格式: [{"name":"套餐名", "price":99, "desc":"推荐语"}]`;
+
+    try {
+        const apiKey = localStorage.getItem('gpt_key');
+        const apiUrl = (localStorage.getItem('gpt_url') || "https://api.openai.com/v1").replace(/\/+$/, "");
+        const model = apiUrl.includes("deepseek") ? "deepseek-chat" : (localStorage.getItem('gpt_model') || "gpt-3.5-turbo");
+
+        const response = await fetch(`${apiUrl}/chat/completions`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+            body: JSON.stringify({
+                model: model,
+                messages: [{role: "system", content: systemPrompt}, {role: "user", content: "生成3个套餐"}],
+                temperature: 0.9
+            })
+        });
+
+        const data = await response.json();
+        const jsonMatch = data.choices[0].message.content.match(/\[[\s\S]*\]/);
+        const plans = JSON.parse(jsonMatch[0]);
+
+        // 3. 渲染套餐卡片
+        container.innerHTML = plans.map((plan, idx) => `
+            <div class="ai-plan-card" onclick="purchasePlan('${plan.name}', ${plan.price})">
+                <div style="overflow:hidden;">
+                    <span class="plan-name">${plan.name}</span>
+                    <span class="plan-price">￥${plan.price}</span>
+                </div>
+                <div class="plan-desc">"${plan.desc}"</div>
+            </div>
+        `).join('');
+
+    } catch (e) {
+        console.error(e);
+        container.innerHTML = `<div style="color:red;text-align:center;">SIGNAL LOST: ${e.message}</div>`;
+    }
+};
+
+window.closeAiPlans = () => document.getElementById('modal-ai-plans').style.display = 'none';
+
+/**
+ * 7. 购买套餐逻辑
+ */
+window.purchasePlan = async function(name, price) {
+    let list = await loadFromDB('phone_cards') || [];
+    let card = list[window.currentSimIndex];
+
+    if (card.balance < price) {
+        return showIndAlert(`INSUFFICIENT_FUNDS<br>余额不足，需充值 ￥${(price - card.balance).toFixed(2)}`);
+    }
+
+    // 扣费
+    card.balance -= price;
+    card.planName = name;
+    card.logs.unshift({
+        date: new Date().toLocaleDateString(),
+        type: 'PLAN',
+        amount: -price,
+        desc: `Protocol: ${name}`
+    });
+
+    await saveToDB('phone_cards', list);
+    
+    closeAiPlans();
+    initSimTab(); // 刷新 UI
+    showIndAlert(`PROTOCOL_ESTABLISHED<br>已开通: ${name}`);
+};
+
+/**
+ * 8. 直充逻辑
+ */
+window.openDirectTopUp = () => document.getElementById('modal-direct-topup').style.display = 'flex';
+
+window.executeDirectTopUp = async function() {
+    const amount = parseFloat(document.getElementById('topup-amount-inp').value);
+    if (!amount || amount <= 0) return showIndAlert("无效金额");
+
+    // 这里应该扣主钱包的钱，简单起见我们直接假设扣款成功
+    // TODO: 对接 lune_wallets 扣款
+
+    let list = await loadFromDB('phone_cards') || [];
+    let card = list[window.currentSimIndex];
+
+    card.balance += amount;
+    card.logs.unshift({
+        date: new Date().toLocaleDateString(),
+        type: 'TOPUP',
+        amount: amount,
+        desc: 'Direct Charge'
+    });
+
+    await saveToDB('phone_cards', list);
+    
+    document.getElementById('modal-direct-topup').style.display = 'none';
+    document.getElementById('topup-amount-inp').value = "";
+    initSimTab();
+    
+    showIndAlert(`FUNDS INJECTED<br>充值成功: +￥${amount}`);
+};
+
+/**
+ * 9. 注销/删除卡片
+ */
+window.deleteSimCard = async function() {
+    if (!confirm("确认注销此号码？此操作不可逆。")) return;
+    
+    let list = await loadFromDB('phone_cards') || [];
+    list.splice(window.currentSimIndex, 1);
+    await saveToDB('phone_cards', list);
+    
+    window.currentSimIndex = null;
+    initSimTab();
+};
+
+/**
+ * 10. 修改号码 (改号)
+ */
+window.editSimNumber = async function() {
+    let newNum = prompst("请输入新号码 (8-15位):");
+    if(!newNum) return;
+    
+    if (newNum.length > 15 || !/^\d+$/.test(newNum)) {
+        return showIndAlert("格式错误");
+    }
+    
+    let list = await loadFromDB('phone_cards') || [];
+    list[window.currentSimIndex].number = newNum;
+    await saveToDB('phone_cards', list);
+    
+    initSimTab();
+};
+
+/* ============================================================
+   🏦 每日存钱打卡系统 (Daily Deposit AI)
+   ============================================================ */
+
+/**
+ * 🚀 1. 入口：点击“每日存入”按钮
+ */
+window.triggerDailyDepositAI = async function() {
+    const charID = window.currentVaultCharID;
+    if (!charID) return;
+
+    // --- A. 检查是否已打卡 ---
+    const goalKey = `LUNE_SAVING_GOAL_${charID}`;
+    let goal = JSON.parse(localStorage.getItem(goalKey));
+    if (!goal) return alert("请先建立存钱计划！");
+
+    const todayStr = new Date().toLocaleDateString();
+    
+    // 检查最新的一条记录
+    if (goal.logs && goal.logs.length > 0) {
+        const lastLog = goal.logs[0];
+        if (lastLog.fullDate === todayStr && lastLog.isDailyCheckIn) {
+            showIndAlert("DAILY_LIMIT_REACHED<br>今日已完成存蓄打卡。");
+            return;
+        }
+    }
+
+    // --- B. 准备生成 ---
+    const btn = document.getElementById('btn-daily-deposit');
+    const hint = document.getElementById('daily-deposit-hint');
+    
+    // 随机金额算法 (例如 50 ~ 300 之间随机)
+    const randomAmount = Math.floor(Math.random() * (300 - 50 + 1)) + 50;
+    
+    btn.disabled = true;
+    btn.innerText = `SAVING ￥${randomAmount}... (WRITING)`;
+    hint.innerText = "NEURAL LINK: GENERATING MEMORY...";
+
+    // --- C. AI 配置 ---
+    const apiKey = localStorage.getItem('gpt_key');
+    let apiUrl = (localStorage.getItem('gpt_url') || "https://api.openai.com/v1").replace(/\/+$/, "");
+    let model = localStorage.getItem('gpt_model') || "gpt-3.5-turbo";
+
+    if (apiUrl.includes("deepseek")) model = "deepseek-chat";
+
+    // 强制查库获取人设
+    let charName = window.currentVaultCharName || "Ta";
+    let charBio = "未知";
+    try {
+        if (typeof loadFromDB === 'function') {
+            const charList = await loadFromDB('char_list') || [];
+            const tChar = charList.find(c => c.id === charID);
+            if (tChar) {
+                charName = tChar.name;
+                charBio = tChar.desc || tChar.bio || charBio;
+            }
+        }
+    } catch(e) {}
+
+    // --- D. Prompt 设计 ---
+    const systemPrompt = `你现在是角色“${charName}”。
+    核心人设：${charBio}。
+    正在进行的存钱目标：${goal.title}。
+    
+    你刚刚省下了一笔钱（￥${randomAmount}）。
+    请写一篇【200字左右】的存钱日记。
+    
+    【要求】：
+    1. **必须包含心理活动**：为什么省下这笔钱？是忍住了没买什么？还是为了目标做出的牺牲？
+    2. **文风**：必须完全贴合人设，可以是碎碎念、冷峻的记录、或者是充满希望的独白。
+    3. **输出格式**：只返回日记内容本身（纯文本），不要标题，不要JSON，不要Markdown。`;
+
+    try {
+        const response = await fetch(`${apiUrl}/chat/completions`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+            body: JSON.stringify({
+                model: model,
+                messages: [{role:"system", content:systemPrompt}, {role:"user", content: "生成日记"}],
+                temperature: 0.85
+            })
+        });
+
+        const data = await response.json();
+        if (data.error) throw new Error(data.error.message);
+        
+        const story = data.choices[0].message.content.trim();
+
+        // --- E. 保存逻辑 (持久化) ---
+        saveDailyDeposit(charID, randomAmount, story, todayStr);
+
+    } catch (e) {
+        console.error(e);
+        showIndAlert("CONNECTION_LOST: " + e.message);
+        btn.disabled = false;
+        btn.innerText = "+ EXECUTE_DAILY_DEPOSIT";
+    }
+};
+
+/**
+ * 💾 2. 保存并更新进度
+ */
+window.saveDailyDeposit = function(charID, amount, story, dateStr) {
+    const goalKey = `LUNE_SAVING_GOAL_${charID}`;
+    let goal = JSON.parse(localStorage.getItem(goalKey));
+
+    // 更新金额
+    goal.current += amount;
+    
+    // 构造新记录
+    const newLog = {
+        id: Date.now(),
+        fullDate: dateStr, // 用于判断今天是否已存
+        displayDate: new Date().toLocaleDateString('en-US', {month:'short', day:'numeric'}).toUpperCase(),
+        amount: amount,
+        note: story, // AI 写的 200字小作文
+        isDailyCheckIn: true // 标记这是每日打卡
+    };
+
+    // 插入到最前面
+    goal.logs.unshift(newLog);
+
+    // 存入硬盘
+    localStorage.setItem(goalKey, JSON.stringify(goal));
+
+    // --- F. UI 刷新 ---
+    
+    // 1. 刷新弹窗内的列表
+    window.renderVaultLogsInner(goal.logs);
+    
+    // 2. 刷新外部进度条 (如果 initVaultTab 存在)
+    if (typeof initVaultTab === 'function') initVaultTab();
+
+    // 3. 恢复按钮状态
+    const btn = document.getElementById('btn-daily-deposit');
+    const hint = document.getElementById('daily-deposit-hint');
+    if (btn) {
+        btn.innerText = "✓ COMPLETED (今日已完成)";
+        btn.disabled = true;
+        btn.style.background = "#eee";
+        btn.style.color = "#aaa";
+        btn.style.border = "2px solid #eee";
+    }
+    if (hint) hint.innerText = "NEXT CHECK-IN: TOMORROW";
+
+    // 4. 震动反馈
+    if(navigator.vibrate) navigator.vibrate([50, 50, 50]);
+};
+// 内部渲染函数 (抽离出来方便复用)
+window.renderVaultLogsInner = function(logs) {
+    const container = document.getElementById('vault-logs-container');
+    
+    if (!logs || logs.length === 0) {
+        container.innerHTML = `<div style="padding:40px; text-align:center; color:#999;">NO RECORDS FOUND</div>`;
+        return;
+    }
+
+    container.innerHTML = logs.map(log => `
+        <div class="vault-log-card">
+            <div class="vlc-header">
+                <span class="vlc-date">${log.displayDate || log.date}</span>
+                <span class="vlc-amount">+￥${log.amount.toLocaleString()}</span>
+            </div>
+            <div class="vlc-body">
+                ${(log.note || '').replace(/\n/g, '<br>')}
+            </div>
+            <div class="vlc-footer">
+                <span>REF: ${String(log.id).slice(-8)}</span>
+                <span>${log.isDailyCheckIn ? 'DAILY_AI_LOG' : 'MANUAL_DEPOSIT'}</span>
+            </div>
+        </div>
+    `).join('');
+};
+
+/**
+ * 🛠️ 打开手动设定弹窗
+ */
+window.openManualSetModal = function() {
+    const modal = document.getElementById('modal-manual-goal');
+    if (modal) modal.style.display = 'flex';
+};
+
+/**
+ * 💾 确认手动设定
+ */
+window.confirmManualGoal = function() {
+    const title = document.getElementById('manual-goal-title').value;
+    const target = parseFloat(document.getElementById('manual-goal-target').value);
+    const desc = document.getElementById('manual-goal-desc').value || "Self-imposed protocol.";
+    
+    if (!title || !target || target <= 0) {
+        alert("请输入有效的标题和目标金额");
+        return;
+    }
+
+    const charID = window.currentVaultCharID;
+    if (!charID) return alert("未选中角色");
+
+    const newGoal = {
+        title: title,
+        desc: desc,
+        target: target,
+        current: 0,
+        isCompleted: false,
+        logs: [],
+        startDate: new Date().toISOString().split('T')[0]
+    };
+
+    // 存入硬盘
+    localStorage.setItem(`LUNE_SAVING_GOAL_${charID}`, JSON.stringify(newGoal));
+
+    // 关闭弹窗并刷新
+    document.getElementById('modal-manual-goal').style.display = 'none';
+    
+    // 刷新主界面 (显示进度条)
+    if (typeof initVaultTab === 'function') initVaultTab();
+    
+    if (navigator.vibrate) navigator.vibrate(20);
+};
+
+/* ============================================================
+   🏦 金库协议模块 (Vault Protocol)
+   ============================================================ */
+
+// 临时存储 AI 生成的提案
+window.tempAiProposal = null;
+
+/**
+ * 1. 初始化金库页面 (每次切到 tab-vault 时调用)
+ */
+window.initVaultTab = function() {
+    const charID = window.currentVaultCharID;
+    if (!charID) return;
+
+    // 读取该角色的存钱目标
+    // 格式: { title, desc, target: 50000, current: 1200, logs: [...] }
+    const goalKey = `LUNE_SAVING_GOAL_${charID}`;
+    const goal = JSON.parse(localStorage.getItem(goalKey));
+
+    const stateEmpty = document.getElementById('vault-state-empty');
+    const stateActive = document.getElementById('vault-state-active');
+
+    if (goal && !goal.isCompleted) { // 如果有未完成的目标
+        stateEmpty.style.display = 'none';
+        stateActive.style.display = 'block';
+        renderActiveGoal(goal);
+    } else {
+        stateEmpty.style.display = 'block';
+        stateActive.style.display = 'none';
+    }
+};
+
+/**
+ * 2. 渲染进行中的目标
+ */
+window.renderActiveGoal = function(goal) {
+    document.getElementById('active-goal-name').innerText = goal.title;
+    document.getElementById('active-goal-desc').innerText = goal.desc;
+    
+    // 计算百分比
+    const percent = Math.min(100, (goal.current / goal.target) * 100);
+    document.getElementById('vault-progress-fill').style.width = percent + "%";
+    
+    document.getElementById('vault-current-val').innerText = `￥${goal.current.toLocaleString()}`;
+    document.getElementById('vault-target-val').innerText = `/ ￥${goal.target.toLocaleString()}`;
+};
+
+/**
+ * ⚡ 3. 触发 AI 提案 (终极修正版：强制读取数据库 + 随机性注入)
+ */
+window.triggerAiSavingPlan = async function() {
+    const charID = window.currentVaultCharID;
+    
+    // 1. 安全检查
+    if (!charID) {
+        alert("PROTOCOL_ERROR: 未选中有效角色 (No Entity Selected)");
+        return;
+    }
+
+    // 2. 🛠️ 核心修复 A：直接去数据库查人设，不依赖可能为空的全局变量
+    let charName = window.currentVaultCharName || "UNKNOWN";
+    let charBio = "普通人"; // 默认兜底
+
+    try {
+        // 假设您的数据库读取函数是 loadFromDB (根据您提供的文件 wenjian copy 2.html)
+        const charList = await loadFromDB('char_list') || [];
+        const targetChar = charList.find(c => c.id === charID);
+        
+        if (targetChar) {
+            charName = targetChar.name;
+            // 兼容 desc 或 bio 字段，确保一定能取到字
+            charBio = targetChar.desc || targetChar.bio || "无详细人设"; 
+            console.log(`[AI] 已锁定精准人设: ${charName} / ${charBio.substring(0, 10)}...`);
+        } else {
+            console.warn("[AI] 数据库未找到该ID，使用缓存人设");
+            charBio = window.currentVaultCharBio || charBio;
+        }
+    } catch (e) {
+        console.error("数据库读取失败:", e);
+    }
+
+    // 3. UI 初始化
+    const modal = document.getElementById('modal-ai-proposal');
+    if(modal) modal.style.display = 'flex';
+    
+    document.getElementById('proposal-char-name').innerText = charName.toUpperCase();
+    document.getElementById('proposal-loader').style.display = 'block';
+    document.getElementById('proposal-content').style.display = 'none';
+    document.getElementById('proposal-actions').style.display = 'none';
+    document.getElementById('stamp-container').classList.remove('stamp-active');
+
+    // 4. 准备 API
+    const apiKey = localStorage.getItem('gpt_key');
+    let apiUrl = (localStorage.getItem('gpt_url') || "https://api.openai.com/v1").replace(/\/+$/, "");
+    let model = localStorage.getItem('gpt_model') || "gpt-3.5-turbo";
+
+    if (apiUrl.includes("deepseek")) {
+        console.log("检测到 DeepSeek 环境，自动修正模型名称...");
+        model = "deepseek-chat"; 
+    }
+
+    // 5. 🛠️ 核心修复 B：注入随机因子，强迫 AI 每次写不一样的
+    const styles = ["激进强硬", "温柔诱惑", "冷酷理性", "绝望末世", "幽默调侃", "极简主义", "哲学深沉"];
+    const randomStyle = styles[Math.floor(Math.random() * styles.length)];
+    const timestamp = Date.now(); // 物理随机数
+
+    const systemPrompt = `你现在是角色“${charName}”。
+    核心人设：${charBio}。
+    
+    用户想和你一起存钱。你需要以"${randomStyle}"的风格，用你的口吻起草一份【存钱协议书】。
+    
+    【绝对指令】：
+    1. 必须只返回纯 JSON 格式，严禁包含 Markdown (不要写 \`\`\`json)。
+    2. "description" 必须极具角色个人特色，不要写成通用的银行文案。
+    3. 每次生成的理由必须截然不同。
+    
+    JSON格式参考：
+    {
+        "title": "协议标题 (简短有力)",
+        "target": 5000 (建议金额),
+        "description": "用角色口吻写一段话(50字内)，说明为什么要存这笔钱。"
+    }`;
+
+    const userPrompt = `现在时间是 ${timestamp}，请立刻起草一份新的计划。`;
+
+    try {
+        const response = await fetch(`${apiUrl}/chat/completions`, {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json', 
+                'Authorization': `Bearer ${apiKey}` 
+            },
+            body: JSON.stringify({
+                model: model, 
+                messages: [
+                    {role: "system", content: systemPrompt}, 
+                    {role: "user", content: userPrompt}
+                ],
+                temperature: 0.85 // 调高温度，增加随机性
+            })
+        });
+
+        const data = await response.json();
+        
+        if (data.error) throw new Error(data.error.message);
+        if (!data.choices || data.choices.length === 0) throw new Error("API 返回内容为空");
+
+        let rawText = data.choices[0].message.content;
+
+        // 正则提取 JSON，防止废话干扰
+        const jsonMatch = rawText.match(/\{[\s\S]*\}/);
+        if (!jsonMatch) throw new Error("AI 未返回有效的 JSON 格式");
+        
+        const content = JSON.parse(jsonMatch[0]);
+        
+        // 6. 渲染结果
+        window.tempAiProposal = content;
+        
+        document.getElementById('prop-title').innerText = content.title;
+        document.getElementById('prop-desc').innerText = content.description;
+        document.getElementById('prop-amount').innerText = (content.target || 0).toLocaleString();
+
+        document.getElementById('proposal-loader').style.display = 'none';
+        document.getElementById('proposal-content').style.display = 'block';
+        document.getElementById('proposal-actions').style.display = 'flex';
+
+    } catch (e) {
+        console.error(e);
+        alert("生成失败: " + e.message);
+        if(modal) modal.style.display = 'none';
+    }
+};
+
+/**
+ * 💮 4. 批准提案 (盖章动画 + 存库)
+ */
+window.approveProposal = function() {
+    if (!window.tempAiProposal) return;
+
+    // 1. 播放盖章动画
+    const stamp = document.getElementById('stamp-container');
+    stamp.style.display = 'flex';
+    void stamp.offsetWidth; // 触发重绘
+    stamp.classList.add('stamp-active');
+
+    if (navigator.vibrate) navigator.vibrate([50, 100]); // 震动更有感觉
+
+    // 2. 延时后保存并跳转
+    setTimeout(() => {
+        const charID = window.currentVaultCharID;
+        const newGoal = {
+            title: window.tempAiProposal.title,
+            desc: window.tempAiProposal.description,
+            target: window.tempAiProposal.target,
+            current: 0,
+            isCompleted: false,
+            logs: [],
+            startDate: new Date().toISOString().split('T')[0]
+        };
+
+        // 存入硬盘
+        localStorage.setItem(`LUNE_SAVING_GOAL_${charID}`, JSON.stringify(newGoal));
+
+        // 关闭弹窗并刷新
+        document.getElementById('modal-ai-proposal').style.display = 'none';
+        initVaultTab(); // 刷新主界面
+        
+    }, 1500); // 等动画播完
+};
+
+window.rejectProposal = function() {
+    // 重新触发生成
+    triggerAiSavingPlan();
+};
+
+/**
+ * 💰 5. 存入资金 (Deposit)
+ */
+window.openDepositModal = () => document.getElementById('modal-deposit').style.display = 'flex';
+
+window.executeDeposit = function() {
+    const amount = parseFloat(document.getElementById('deposit-amount').value);
+    const note = document.getElementById('deposit-note').value || "Regular Saving";
+    
+    if (!amount || amount <= 0) return alert("无效金额");
+
+    const charID = window.currentVaultCharID;
+    const goalKey = `LUNE_SAVING_GOAL_${charID}`;
+    let goal = JSON.parse(localStorage.getItem(goalKey));
+
+    if (!goal) return;
+
+    // 更新数据
+    goal.current += amount;
+    goal.logs.unshift({
+        date: new Date().toLocaleDateString(),
+        amount: amount,
+        note: note
+    });
+
+    localStorage.setItem(goalKey, JSON.stringify(goal));
+
+    // UI 反馈
+    document.getElementById('modal-deposit').style.display = 'none';
+    document.getElementById('deposit-amount').value = "";
+    initVaultTab(); // 刷新进度条
+    
+    if (navigator.vibrate) navigator.vibrate(20);
+    showIndAlert(`FUNDS INJECTED: +￥${amount}`);
+};
+
+/**
+ * 📜 6. 查看存钱记录
+ */
+window.openVaultLogs = function() {
+    const charID = window.currentVaultCharID;
+    const goal = JSON.parse(localStorage.getItem(`LUNE_SAVING_GOAL_${charID}`));
+    const modal = document.getElementById('modal-vault-logs');
+    
+    // 打开弹窗
+    modal.style.display = 'flex';
+
+    // 检查今日是否已存，更新按钮状态
+    checkDailyButtonState(goal);
+
+    // 渲染列表
+    if (goal && goal.logs) {
+        renderVaultLogsInner(goal.logs);
+    } else {
+        document.getElementById('vault-logs-container').innerHTML = `<div style="padding:40px; text-align:center; color:#999;">NO RECORDS FOUND</div>`;
+    }
+};
+
+/**
+ * 🔔 显示工业风弹窗
+ */
+window.showIndAlert = function(msg) {
+    const modal = document.getElementById('industrial-alert-modal');
+    const msgBox = document.getElementById('industrial-alert-msg');
+    
+    if (modal && msgBox) {
+        msgBox.innerHTML = msg; // 支持 HTML 换行
+        modal.style.display = 'flex';
+        
+        // 震动反馈
+        if (navigator.vibrate) navigator.vibrate([10, 50]);
+    } else {
+        // 兜底：万一 HTML 没加对，还是弹原生，防止没反应
+        alert(msg);
+    }
+};
+
+/**
+ * 🔕 关闭弹窗
+ */
+window.closeIndustrialAlert = function() {
+    const modal = document.getElementById('industrial-alert-modal');
+    if (modal) modal.style.display = 'none';
+};
+
+/**
+ * 🔄 全局初始化：页面刷新后自动恢复状态
+ */
+window.addEventListener('DOMContentLoaded', () => {
+    console.log("正在恢复系统状态...");
+
+    // 1. 尝试从缓存恢复上次选中的角色 ID
+    const lastCharID = localStorage.getItem('LUNE_LAST_SELECTED_CHAR_ID');
+    const lastCharName = localStorage.getItem('LUNE_LAST_SELECTED_CHAR_NAME');
+    const lastCharBio = localStorage.getItem('LUNE_LAST_SELECTED_CHAR_BIO');
+
+    if (lastCharID) {
+        // 恢复全局变量
+        window.currentVaultCharID = lastCharID;
+        window.currentVaultCharName = lastCharName || "未知角色";
+        window.currentVaultCharBio = lastCharBio || "无详细信息";
+        
+        console.log(`状态已恢复: ${lastCharName} (${lastCharID})`);
+
+        // 2. 🚨 关键：立即渲染角色支出列表
+        // 只要页面里有这个容器，就马上画出来
+        if (document.getElementById('char-expense-list')) {
+            renderCharExpenseList(); 
+        }
+    } else {
+        console.log("无历史选中角色");
+    }
+
+    // 3. 恢复底部导航栏的选中状态 (可选)
+    // 如果你希望刷新后停留在“记录页”，可以在这里写逻辑，否则默认回首页
+});
+
+/**
+ * ↻ 手动刷新转账 (在日记录弹窗里点击)
+ */
+window.manualSyncTransfers = function() {
+    const charID = window.currentVaultCharID;
+    if (!charID) return;
+
+    // 1. 重新读取日志 (因为转账逻辑已经把数据写进去了)
+    // 这一步其实主要是为了让用户感觉“刷新”了，实际上数据已经是新的了
+    
+    // 2. 刷新主页列表
+    renderCharExpenseList();
+    
+    // 3. 提示用户
+    const btn = event.target; // 获取点击的按钮
+    const originalText = btn.innerText;
+    
+    btn.innerText = "✓ SYNCED";
+    btn.style.background = "#000";
+    btn.style.color = "#fff";
+    
+    if(navigator.vibrate) navigator.vibrate(20);
+
+    setTimeout(() => {
+        btn.innerText = originalText;
+        btn.style.background = "#fff";
+        btn.style.color = "#000";
+        
+        // 3. 🚨 核心修改：使用新的工业风弹窗
+        showIndAlert(`
+            SYNC_COMPLETE <br>
+            <span style="font-size:12px; color:#666; font-weight:normal;">
+                用户转账资金已注入今日流水。<br>
+                FUNDS INJECTED SUCCESSFULLY.
+            </span>
+        `);
+        
+    }, 800);
+};
+
+// 全局配置
+const DAILY_STORAGE_PREFIX = "LUNE_ENTITY_DAILY_";
+
+/**
+ * 🚀 1. 入口：点击 "ANALYZE_ENTITIES" 按钮
+ */
+window.triggerCharExpenseAI = function() {
+    const charID = window.currentVaultCharID;
+    if (!charID) return showToast("PROTOCOL_ERROR: NO_ENTITY_SELECTED");
+
+    // 1. 初始化弹窗 UI
+    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+    document.getElementById('daily-date-label').innerText = today;
+    
+    // 2. 检查转账同步 (模拟读取钱包记录)
+    const transfers = syncUserTransfers(charID, today);
+    renderTransfersInModal(transfers);
+
+    // 3. 检查今日是否已生成
+    const recordKey = `${DAILY_STORAGE_PREFIX}${charID}_${today}`;
+    const hasRecord = localStorage.getItem(recordKey);
+
+    const btn = document.getElementById('btn-gen-daily');
+    const status = document.getElementById('daily-status-text');
+    const doneMsg = document.getElementById('daily-done-msg');
+
+    if (hasRecord) {
+        // 如果今天生成过了
+        btn.style.display = 'none';
+        status.style.display = 'none';
+        doneMsg.style.display = 'block';
+    } else {
+        // 如果今天还没生成
+        btn.style.display = 'block';
+        status.style.display = 'block';
+        doneMsg.style.display = 'none';
+        
+        // 挂载临时数据供 AI 使用
+        window.tempPendingTransfers = transfers; 
+    }
+
+    document.getElementById('entity-daily-modal').style.display = 'flex';
+};
+
+/* ============================================================
+   🔄 转账同步辅助函数 (修复 ReferenceError)
+   ============================================================ */
+
+/**
+ * 🔍 读取今日已收到的转账
+ * (从角色日志里反查，看看今天是不是已经收到了钱)
+ */
+window.syncUserTransfers = function(charID, dateStr) {
+    if (!charID) return [];
+
+    // 读取该角色的所有日志
+    const listKey = `LUNE_ENTITY_LOGS_${charID}`;
+    const logs = JSON.parse(localStorage.getItem(listKey)) || [];
+    
+    // 找到“今天”的那条记录
+    const todayLog = logs.find(l => l.date === dateStr);
+
+    if (todayLog && todayLog.items) {
+        // 筛选出所有“收入”项 (type: 'income')
+        return todayLog.items.filter(item => item.type === 'income');
+    }
+    
+    return [];
+};
+
+/**
+ * 🎨 在弹窗里渲染转账列表
+ * (让用户知道 AI 会把这些钱考虑进去)
+ */
+window.renderTransfersInModal = function(transfers) {
+    const box = document.getElementById('pending-transfer-box');
+    const list = document.getElementById('transfer-list-content');
+    
+    if (!box || !list) return; // 防御性编程
+
+    if (transfers && transfers.length > 0) {
+        box.style.display = 'block';
+        list.innerHTML = transfers.map(t => `
+            <div class="transfer-item-row" style="display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px dashed #eee;">
+                <span style="font-size: 11px; color: #333;">
+                    ${t.desc || 'USER_TRANSFER'}
+                </span>
+                <span style="font-weight: bold; font-family: 'Cinzel'; font-size: 13px;">
+                    +￥${parseFloat(t.amount).toLocaleString()}
+                </span>
+            </div>
+        `).join('');
+    } else {
+        box.style.display = 'none';
+        list.innerHTML = "";
+    }
+};
+
+/**
+ * ⚡ 3. AI 执行：生成日记录 (人设同步修正版)
+ */
+window.runEntityDailyAI = async function() {
+    const btn = document.getElementById('btn-gen-daily');
+    const originalText = btn.innerText;
+
+    // 1. 基础检查
+    const apiKey = localStorage.getItem('gpt_key');
+    let apiUrl = (localStorage.getItem('gpt_url') || "https://api.openai.com/v1").replace(/\/+$/, "");
+    let model = localStorage.getItem('gpt_model') || "gpt-3.5-turbo"; 
+
+    if (!apiKey) {
+        alert("未配置 API KEY");
+        return;
+    }
+
+    // 🚨 自动修正：如果是 DeepSeek，必须用 deepseek-chat
+    if (apiUrl.includes("deepseek")) {
+        console.log("检测到 DeepSeek 环境，自动修正模型名称...");
+        model = "deepseek-chat"; 
+    }
+
+    btn.innerText = "CALCULATING VARIANCE... (计算中)";
+    btn.disabled = true;
+
+    // 2. 🛠️ 核心修复：强制从数据库读取精准人设
+    const charID = window.currentVaultCharID;
+    let charName = window.currentVaultCharName || "未知角色";
+    let charBio = window.currentVaultCharBio || "无详细人设";
+
+    try {
+        // 尝试读取数据库
+        // 注意：这里假设您的 loadFromDB 函数可用，如果不可用请确保 helper.js 已加载
+        if (typeof loadFromDB === 'function') {
+            const charList = await loadFromDB('char_list') || [];
+            const targetChar = charList.find(c => c.id === charID);
+            
+            if (targetChar) {
+                charName = targetChar.name;
+                // 优先取 desc，没有再取 bio
+                charBio = targetChar.desc || targetChar.bio || charBio;
+                console.log(`[AI] 日记录生成 - 已锁定人设: ${charName}`);
+            }
+        }
+    } catch (e) {
+        console.warn("读取人设失败，将使用缓存值", e);
+    }
+
+    // 3. 构建转账上下文
+    const transfers = window.tempPendingTransfers || [];
+    let transferContext = "";
+    if (transfers.length > 0) {
+        transferContext = `【强制包含收入】：用户今天给角色转账了以下金额，必须作为“收入”写入记录，并描写角色收到钱后的反应：
+        ${transfers.map(t => `- 金额：${t.amount}，备注：${t.note}`).join('\n')}`;
+    }
+
+    // 4. Prompt 设计
+    const systemPrompt = `你是一个严谨的财务记录官。请为角色生成【今日收支明细】。
+    
+    【生成规则】：
+    1. **金额波动**：支出金额必须有明显的随机性（不要总是整数，例如 32.50, 128.00），不要每次都一样。
+    2. **项目数量**：生成 7-10 笔支出（必须写满），如果有转账则额外加上收入。
+    3. **描述要求**：每一笔记录必须有 30-40 字的细腻描述（描写购买动机、心情或具体场景）。
+    4. **严禁截断**：必须输出完整的 JSON 数组，不要写到一半停下。
+    5. **格式**：纯 JSON 数组，不要包含 Markdown 标记。格式示例：[{"type":"expense/income", "amount":数字, "desc":"描述"}]`;
+
+    const userPrompt = `角色：${charName}
+    人设：${charBio}
+    日期：${new Date().toLocaleDateString()}
+    
+    ${transferContext}
+    
+    请生成今日的消费/收入流水。`;
+
+    try {
+        const response = await fetch(`${apiUrl}/chat/completions`, {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json', 
+                'Authorization': `Bearer ${apiKey}` 
+            },
+            body: JSON.stringify({
+                model: model,
+                messages: [{role:"system", content:systemPrompt}, {role:"user", content:userPrompt}],
+                // 🚨 您要求的参数配置
+                max_tokens: 5000, 
+                temperature: 0.95 
+            })
+        });
+
+        const data = await response.json();
+
+        // 🚨 错误捕捉
+        if (data.error) {
+            console.error("API 报错详情:", data.error);
+            throw new Error(`API Error: ${data.error.message}`);
+        }
+
+        if (!data.choices || data.choices.length === 0) {
+            throw new Error("API 返回了空数据");
+        }
+
+        const raw = data.choices[0].message.content;
+        console.log("AI 原始内容:", raw); 
+
+        // 🚨 正则提取 JSON (增强容错)
+        let jsonStr = raw;
+        const jsonMatch = raw.match(/\[[\s\S]*\]/); // 寻找最外层的 []
+        if (jsonMatch) {
+            jsonStr = jsonMatch[0];
+        } else {
+            throw new Error("AI 未返回有效的 JSON 数组格式");
+        }
+
+        try {
+            const dailyData = JSON.parse(jsonStr);
+            saveAndRenderEntityDaily(dailyData);
+        } catch (jsonErr) {
+            console.error("JSON 解析失败，原始内容:", raw);
+            throw new Error("AI 生成的内容格式错误，请重试");
+        }
+
+    } catch (e) {
+        console.error(e);
+        alert("生成失败: " + e.message);
+        btn.innerText = "[ RETRY ] 重试";
+        btn.disabled = false;
+    }
+};
+
+/**
+ * 🎨 5. 渲染主页列表 (展示每一天的记录)
+ */
+window.renderCharExpenseList = function() {
+    const charID = window.currentVaultCharID;
+    if (!charID) return;
+
+    const listContainer = document.getElementById('char-expense-list');
+    const listKey = `LUNE_ENTITY_LOGS_${charID}`;
+    
+    // 读取所有历史记录
+    const logs = JSON.parse(localStorage.getItem(listKey)) || [];
+
+    if (logs.length === 0) {
+        listContainer.innerHTML = `<div class="empty-text-mark">WAITING_FOR_DATA_STREAM...</div>`;
+        return;
+    }
+
+    // map 会遍历数组里的每一天，把它们都画出来
+    listContainer.innerHTML = logs.map(log => `
+        <div class="entity-log-card" style="animation: fadeIn 0.5s ease;">
+            <div class="elc-header">
+                <div class="elc-date">${log.date}</div> <div class="elc-total" style="${log.total > 0 ? 'background:#000' : 'background:#666'}">
+                    NET: ${log.total > 0 ? '+' : ''}￥${log.total.toFixed(2)}
+                </div>
+            </div>
+            
+            <div style="border-left: 2px solid #eee; padding-left: 10px;">
+                ${log.items.map(item => `
+                    <div class="elc-row">
+                        <div class="elc-desc">${item.desc}</div>
+                        <div class="elc-amount ${item.type === 'income' ? 'elc-income' : 'elc-expense'}">
+                            ${item.type === 'income' ? '+' : '-'}￥${item.amount.toLocaleString()}
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+    `).join('');
+};
+
+// 辅助：关闭弹窗
+window.closeEntityDailyModal = function() {
+    document.getElementById('entity-daily-modal').style.display = 'none';
+    // 重置按钮状态
+    const btn = document.getElementById('btn-gen-daily');
+    btn.innerText = "[ EXECUTE_PROTOCOL ] 生成日记录";
+    btn.disabled = false;
+};
+
+
+/**
+ * 🌟 1. 响应“年度消费”按钮 (500字长文 + 强力省钱缓存版 + 精准人设修正)
+ */
+window.handleAnnualConsumption = async function() {
+    if(window.navigator.vibrate) window.navigator.vibrate(20);
+
+    // 获取数据 (如果全局变量丢了，尝试从 ID 恢复)
+    let archive = window.currentViewingYearlyData;
+    
+    // 🚨 防御性代码：尝试重连数据流
+    if (!archive) {
+        console.warn("数据流重连中...");
+        const charID = window.currentVaultCharID || 'GLOBAL';
+        const list = JSON.parse(localStorage.getItem(`LUNE_VAULT_YEARLY_LIST_${charID}`)) || [];
+        if (window.currentViewingArchiveId) {
+            archive = list.find(a => a.id === window.currentViewingArchiveId);
+        }
+    }
+
+    if (!archive) {
+        alert("数据流丢失，请关闭弹窗重新点击卡片进入。");
+        return;
+    }
+
+    // 准备打开弹窗
+    const modal = document.getElementById('annual-story-modal');
+    const container = document.getElementById('annual-story-content');
+    
+    if(!modal) return console.error("缺少 HTML: annual-story-modal");
+
+    modal.style.display = 'flex';
+
+    // --- 💰 省钱核心逻辑：检查本地缓存 ---
+    const charID = window.currentVaultCharID || 'GLOBAL';
+    // 升级 Key 为 V2，确保缓存唯一且持久
+    const cacheKey = `LUNE_STORY_ANNUAL_V2_${charID}_${archive.id}`;
+    const cachedStory = localStorage.getItem(cacheKey);
+
+    if (cachedStory) {
+        console.log("💰 [省钱模式] 年度故事命中本地缓存，不消耗 API。");
+        // 直接渲染，不请求 AI
+        container.innerHTML = `<div class="story-prose-text fade-in-text">${cachedStory}</div>`;
+        return; 
+    }
+
+    // --- 下面是第一次生成才跑的代码 ---
+
+    // 2. 加载动画
+    container.innerHTML = `
+        <div class="ai-generating-box">
+            <div class="scan-bar-anim"></div>
+            <div class="cinzel-font" style="font-size:18px;">ANALYZING YEARLY DATA</div>
+            <div class="loading-log">Total Spent: ￥${parseFloat(archive.total_all).toLocaleString()}</div>
+            <div class="loading-log" style="color:red;">WRITING 500 WORDS REPORT...</div>
+        </div>
+    `;
+
+    // 3. 🛠️ 核心修复：强制从数据库读取精准人设
+    let charName = window.currentVaultCharName || "Ta";
+    let charBio = window.currentVaultCharBio || "未知"; // 默认兜底
+
+    try {
+        // 尝试从数据库加载最新人设
+        if (typeof loadFromDB === 'function') {
+            const charList = await loadFromDB('char_list') || [];
+            const targetChar = charList.find(c => c.id === charID);
+            
+            if (targetChar) {
+                charName = targetChar.name;
+                // 优先取 desc，没有再取 bio，确保人设最丰富
+                charBio = targetChar.desc || targetChar.bio || charBio;
+                console.log(`[AI] 年度故事生成 - 已锁定人设: ${charName}`);
+            }
+        }
+    } catch (e) {
+        console.warn("读取人设失败，将使用缓存值", e);
+    }
+
+    // 4. AI 调用 (Prompt 升级)
+    const systemPrompt = `你是一位擅长写“致郁系”或“细腻散文风”的小说家。
+    请根据用户的年度账单总额，结合角色身份，写一篇【500字左右】的年度总结故事。
+    
+    【强制要求】：
+    1. **字数达标**：必须写满 500 字，内容要厚重，涵盖春夏秋冬的流转。
+    2. **核心情感**：探讨金钱背后隐藏的情感、遗憾、陪伴或牺牲。以“你”和“我”的羁绊为主线。
+    3. **排版**：必须使用【双换行】分段，让文字像诗一样排列。`;
+
+    const userPrompt = `主角：${charName}
+    人设：${charBio}
+    这一年总共花费：￥${archive.total_all}
+    请为这段关系写下年度注脚，回顾这一年的点点滴滴。`;
+
+    try {
+        const story = await callAIForStory(systemPrompt, userPrompt);
+        const formatted = formatStoryText(story); // 格式化换行
+        
+        // 💰 存入缓存：下次直接读
+        localStorage.setItem(cacheKey, formatted);
+        
+        container.innerHTML = `<div class="story-prose-text fade-in-text">${formatted}</div>`;
+    } catch (e) {
+        container.innerHTML = `<div style="color:red; text-align:center;">[CONNECTION ERROR]<br>${e.message}</div>`;
+    }
+};
+
+/**
+ * 🌟 2. 响应“月度条目”点击 (300字扩写 + 严格省钱缓存版 + 精准人设修正)
+ */
+window.openYearlyMonthDetail = async function(yearIdx, monthIdx) {
+    if(window.navigator.vibrate) window.navigator.vibrate(10);
+
+    const archive = window.currentViewingYearlyData;
+    if (!archive) return console.error("No archive data locked.");
+
+    // 兼容处理：确保数据结构正确
+    const dataArray = (archive.fullData && Array.isArray(archive.fullData)) ? archive.fullData : [archive.fullData];
+    const targetYear = dataArray[yearIdx];
+    const targetMonth = targetYear.months[monthIdx];
+
+    // 打开弹窗
+    const modal = document.getElementById('monthly-story-modal');
+    const container = document.getElementById('month-story-content');
+    const titleBg = document.getElementById('month-story-title');
+    
+    if(!modal) return console.error("缺少 HTML: monthly-story-modal");
+
+    modal.style.display = 'flex';
+    titleBg.innerText = String(targetMonth.m).padStart(2, '0');
+
+    // --- 💰 省钱核心逻辑：检查本地缓存 ---
+    const charID = window.currentVaultCharID || 'GLOBAL';
+    // 缓存 Key 保持不变
+    const cacheKey = `LUNE_STORY_V2_${charID}_${targetYear.year}_${targetMonth.m}_${targetMonth.a}`;
+    const cachedStory = localStorage.getItem(cacheKey);
+
+    if (cachedStory) {
+        console.log("💰 [省钱模式] 命中本地缓存，不消耗 API 额度。");
+        container.innerHTML = cachedStory; // 直接显示存好的
+        return; // 🚨 直接结束函数，绝不请求 AI
+    }
+
+    // --- 如果没存过，才往下走 ---
+
+    // 显示加载动画
+    container.innerHTML = `
+        <div class="ai-generating-box" style="height:200px;">
+            <div class="scan-bar-anim" style="width:50px;"></div>
+            <div style="font-size:12px; font-weight:bold;">WRITING MEMORY (${targetMonth.m})...</div>
+            <div class="loading-log" style="color:red;">READING NEURAL CLOUD...</div>
+        </div>
+    `;
+
+    // 1. 🛠️ 核心修复：强制从数据库读取精准人设
+    let charName = window.currentVaultCharName || "Ta";
+    let charBio = "未知"; // 默认兜底
+
+    try {
+        // 尝试从数据库加载最新人设
+        if (typeof loadFromDB === 'function') {
+            const charList = await loadFromDB('char_list') || [];
+            const targetChar = charList.find(c => c.id === charID);
+            
+            if (targetChar) {
+                charName = targetChar.name;
+                // 优先取 desc (详细人设)，没有再取 bio
+                charBio = targetChar.desc || targetChar.bio || charBio;
+                console.log(`[AI] 月度故事生成 - 已锁定人设: ${charName}`);
+            }
+        }
+    } catch (e) {
+        console.warn("读取人设失败，将使用缓存值", e);
+    }
+
+    // 2. 🚀 升级版 Prompt：注入了 charBio
+    const systemPrompt = `你是一名擅长“王家卫风格”或“伤痛文学”的小说家。
+    你现在的代入角色是：${charName}。
+    角色的核心人设背景是：${charBio}。
+    
+    请根据用户的单月账单，结合上述人设，扩写一个**具体的、画面感极强**的生活片段。
+    
+    【强制要求】：
+    1. **字数必须充实**：严格控制在 300 字左右，禁止少于 200 字。
+    2. **人设一致性**：必须体现出人设中的性格（如：${charBio.substring(0, 10)}...）和语气。
+    3. **拒绝流水账**：不要只罗列买了什么，而是写“为什么买”以及“买的时候在想什么”，挖掘金钱背后的情感。
+    4. **排版**：必须使用【双换行】分段，营造呼吸感。`;
+
+    const userPrompt = `时间：${targetYear.year}年 ${targetMonth.m}月
+    金额：￥${targetMonth.a}
+    备注线索：${targetMonth.n || '（无备注，请根据金额和人设自行想象是孤独的夜宵、昂贵的礼物、还是医院的账单）'}
+    
+    请以“我”的第一人称，把这笔开销还原成一个这就发生在昨天的故事。`;
+
+    try {
+        // 调用 AI (使用您现有的 callAIForStory 封装函数)
+        const story = await callAIForStory(systemPrompt, userPrompt);
+        
+        // 格式化换行
+        const formatted = formatStoryText(story);
+        
+        // 💰 存入缓存：下次点这个月，绝对不会再花钱
+        localStorage.setItem(cacheKey, formatted);
+        
+        container.innerHTML = `<div class="story-prose-text fade-in-text">${formatted}</div>`;
+        
+    } catch (e) {
+        container.innerHTML = `<div style="padding:20px; text-align:center; opacity:0.6;">信号中断...<br>${e.message}</div>`;
+    }
+};
+
+// 关闭函数
+window.closeAnnualStory = () => document.getElementById('annual-story-modal').style.display = 'none';
+window.closeMonthlyStory = () => document.getElementById('monthly-story-modal').style.display = 'none';
+
+// 全局暂存变量：确保层级之间 ID 不丢失
+window.currentViewingArchiveId = null;
+
+/**
+ * 🚀 第一层入口：点击首页黑色卡片 -> 显示【年度总览 (长收据)】
+ * 对应 HTML ID: yearly-overview-modal
+ */
+window.viewYearlyDetail = function(archiveId) {
+    console.log("进入第一层: 年度总览 (收据样式)", archiveId);
+    
+    // 1. 锁定存档 ID
+    window.currentViewingArchiveId = archiveId;
+
+    const charID = window.currentVaultCharID || 'GLOBAL';
+    const list = JSON.parse(localStorage.getItem(`LUNE_VAULT_YEARLY_LIST_${charID}`)) || [];
+    const archive = list.find(a => a.id === archiveId);
+    
+    if (!archive) return console.warn("未找到存档");
+
+    // 2. 🚨 锁定【第一层】的容器 (注意 ID 是 overview)
+    const container = document.getElementById('yearly-overview-container');
+    const modal = document.getElementById('yearly-overview-modal');
+
+    if (!container || !modal) return console.error("缺少 HTML: yearly-overview-modal");
+
+    // 3. 渲染长收据样式 (Receipt Style)
+    let htmlContent = "";
+    const dataArray = (archive.fullData && Array.isArray(archive.fullData)) ? archive.fullData : [];
+
+    htmlContent = dataArray.map(yearObj => `
+        <div class="industrial-receipt" style="margin-bottom: 20px; background: #fff; border: 2px solid #000; padding: 15px; box-shadow: 5px 5px 0 rgba(0,0,0,0.1);">
+            <div class="receipt-header" style="text-align: center; border-bottom: 2px dashed #000; padding-bottom: 15px; margin-bottom: 15px;">
+                <div class="cinzel-font" style="font-size:12px; opacity:0.6; letter-spacing: 2px;">ARCHIVED_RECEIPT</div>
+                <div class="cinzel-font" style="font-size:32px; font-weight:900; margin:5px 0;">FY_${yearObj.year}</div>
+                <div style="font-family: monospace; font-size: 9px;">REF: ${archiveId.slice(-6).toUpperCase()}</div>
+            </div>
+            
+            <div class="receipt-body">
+                ${yearObj.months.map(m => `
+                    <div class="receipt-row" style="display: flex; justify-content: space-between; margin-bottom: 8px; border-bottom: 1px solid #eee; padding-bottom: 5px;">
+                        <span style="font-weight:900; font-family:'Cinzel';">M . ${String(m.m).padStart(2,'0')}</span>
+                        <span style="font-family:'Cinzel';">￥${parseFloat(m.a).toLocaleString()}</span>
+                    </div>
+                `).join('')}
+            </div>
+
+            <div class="receipt-total-row" style="background:#000; color:#fff; padding: 10px; margin-top: 15px; display: flex; justify-content: space-between;">
+                <span style="letter-spacing:1px; font-size:10px;">YEAR_TOTAL</span>
+                <span class="cinzel-font" style="font-weight:900;">-￥${parseFloat(yearObj.total).toLocaleString()}</span>
+            </div>
+        </div>
+    `).join('');
+
+    // 4. 显示第一层
+    container.innerHTML = htmlContent;
+    modal.style.display = 'flex'; 
+    
+    if(window.navigator.vibrate) window.navigator.vibrate(10);
+};
+
+/**
+ * 🚀 第二层跳转：点击“查看拆解”按钮 -> 显示【12个月度条目 (交互版)】
+ * 对应 HTML ID: yearly-history-modal
+ */
+window.enterYearlySecondLayer = function() {
+    // 1. 关闭第一层
+    document.getElementById('yearly-overview-modal').style.display = 'none';
+
+    // 2. 获取数据
+    const archiveId = window.currentViewingArchiveId;
+    if (!archiveId) return;
+
+    const charID = window.currentVaultCharID || 'GLOBAL';
+    const list = JSON.parse(localStorage.getItem(`LUNE_VAULT_YEARLY_LIST_${charID}`)) || [];
+    const archive = list.find(a => a.id === archiveId);
+
+    // 🚨 关键：锁定数据给第三层(AI故事)使用
+    window.currentViewingYearlyData = archive;
+
+    // 3. 🚨 锁定【第二层】的容器 (注意 ID 是 history)
+    const container = document.getElementById('yearly-history-container');
+    const modal = document.getElementById('yearly-history-modal');
+
+    if (!container || !modal) return console.error("缺少 HTML: yearly-history-modal");
+
+    // 4. 渲染 12 个独立交互条 (Strips Style)
+    let htmlContent = "";
+    const dataArray = (archive.fullData && Array.isArray(archive.fullData)) ? archive.fullData : [];
+
+    dataArray.forEach((yearObj, yearIdx) => {
+        // 年份大标题
+        htmlContent += `
+            <div style="text-align:center; margin: 10px 0 5px 0; font-family:'Cinzel'; font-weight:900; font-size:20px; opacity:0.4;">FY_${yearObj.year}</div>
+        `;
+        // 12个条
+        yearObj.months.forEach((m, monthIdx) => {
+            htmlContent += `
+                <div class="month-strip-item" 
+                     onclick="window.openYearlyMonthDetail(${yearIdx}, ${monthIdx})"
+                     style="display: flex; align-items: stretch; background: #fff; border: 2px solid #000; min-height: 60px; margin-bottom: 0; box-shadow: 4px 4px 0 rgba(0,0,0,0.1); cursor: pointer;">
+                    
+                    <div class="strip-left" style="background: #000; color: #fff; width: 50px; display: flex; flex-direction: column; justify-content: center; align-items: center; flex-shrink: 0;">
+                        <span style="font-size: 8px; font-family: monospace; opacity: 0.7;">M</span>
+                        <span style="font-family: 'Cinzel'; font-weight: 900; font-size: 20px;">${String(m.m).padStart(2, '0')}</span>
+                    </div>
+
+                    <div class="strip-center" style="flex: 1; padding: 0 15px; display: flex; align-items: center; overflow: hidden;">
+                        <div style="font-size: 12px; color: #444; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 500;">
+                            ${m.n || 'No Details'}
+                        </div>
+                    </div>
+
+                    <div class="strip-right" style="padding-right: 15px; display: flex; align-items: center;">
+                        <div style="font-family: 'Cinzel'; font-weight: 900; font-size: 14px; color: #000;">
+                            ￥${parseFloat(m.a).toLocaleString()}
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+    });
+
+    // 5. 显示第二层
+    container.innerHTML = htmlContent;
+    modal.style.display = 'flex';
+    
+    if(window.navigator.vibrate) window.navigator.vibrate(10);
+};
+
+// 简单的关闭函数
+window.closeYearlyOverview = () => document.getElementById('yearly-overview-modal').style.display = 'none';
+
+/**
+ * 🔙 关闭第二层 (12条目页) -> 返回第一层 (总览页)
+ */
+window.closeYearlyHistory = function() {
+    // 1. 关闭当前的第二层
+    document.getElementById('yearly-history-modal').style.display = 'none';
+    
+    // 2. 重新打开第一层 (实现“返回”效果)
+    const layer1 = document.getElementById('yearly-overview-modal');
+    if (layer1) {
+        layer1.style.display = 'flex';
+        
+        // 可选：加个震动反馈，更有质感
+        if(window.navigator.vibrate) window.navigator.vibrate(10);
+    }
+};
+
+// ⚡️ 最终保险丝：页面加载完毕后，自动点火
+document.addEventListener('DOMContentLoaded', () => {
+    // 1. 初始化系统服务 (IndexedDB 等)
+    if (typeof initSystemServices === 'function') initSystemServices();
+    
+    // 2. 延迟 200ms 确保数据读取完毕，然后强制渲染首页
+    setTimeout(() => {
+        const dashPanel = document.getElementById('tab-dashboard');
+        // 如果当前确实停留在 Dashboard 页，就触发渲染
+        if (dashPanel && (dashPanel.classList.contains('active') || getComputedStyle(dashPanel).display !== 'none')) {
+            if (typeof window.triggerDashboardInit === 'function') {
+                window.triggerDashboardInit();
+            }
+        }
+    }, 200);
+});
+/**
+ * 🚀 核心修复：Dashboard 初始化扳机
+ * 专门解决“必须切一下才显示”的 Bug
+ */
+window.triggerDashboardInit = function() {
+    console.log("[系统] 正在强制初始化月度看板...");
+
+    // 1. 强制选中“月度”Tab UI
+    const monthlyTab = document.querySelector('.consumption-switcher-tabs .con-tab:first-child');
+    const yearlyTab = document.querySelector('.consumption-switcher-tabs .con-tab:last-child');
+    
+    if (monthlyTab) monthlyTab.classList.add('active');
+    if (yearlyTab) yearlyTab.classList.remove('active');
+
+    // 2. 强制显示“月度”面板 DOM (物理显示)
+    const mPanel = document.getElementById('view-monthly');
+    const yPanel = document.getElementById('view-yearly');
+
+    if (mPanel) {
+        mPanel.classList.add('active');
+        mPanel.style.cssText = "display: block !important; opacity: 1 !important;";
+    }
+    if (yPanel) {
+        yPanel.classList.remove('active');
+        yPanel.style.display = 'none';
+    }
+
+    // 3. ⚡️ 核心：主动触发数据同步 (就是这一步之前没跑！)
+    // 稍微延迟 10ms 确保 DOM 已经出来了
+    setTimeout(() => {
+        if (typeof window.forceRenderMonthly === 'function') {
+            window.forceRenderMonthly(); // 如果你用了之前的核弹补丁
+        } else if (typeof window.syncVaultDataToUI === 'function') {
+            window.syncVaultDataToUI();  // 如果你用的是标准同步
+        }
+    }, 10);
+};
+
+/**
+ * 💥 核弹级修复：强制渲染月度数据 (含清场逻辑)
+ */
+window.forceRenderMonthly = function() {
+    console.log("🔥 [核弹修复] 执行月度强制渲染...");
+
+    const charID = window.currentVaultCharID || localStorage.getItem('LUNE_LAST_ACTIVE_CHAR_ID') || 'GLOBAL';
+    const monthlyList = JSON.parse(localStorage.getItem(`LUNE_VAULT_LIST_${charID}`)) || [];
+    
+    const container = document.getElementById('dash-monthly-cards-container');
+    const mPanel = document.getElementById('view-monthly');
+    const yPanel = document.getElementById('view-yearly'); // 获取年度面板
+    const displayNum = document.getElementById('dash-monthly-outflow');
+
+    if (!container || !mPanel) return;
+
+    // 1. 🧹 这里的清场也很关键：一定要再次确保年度面板是关掉的！
+    if (yPanel) {
+        yPanel.classList.remove('active');
+        yPanel.style.cssText = "display: none !important;";
+    }
+
+    // 2. 强开月度
+    mPanel.classList.add('active');
+    mPanel.style.cssText = "display: block !important; opacity: 1 !important; visibility: visible !important;";
+
+    // 3. 注入数据
+    if (monthlyList.length > 0) {
+        container.innerHTML = monthlyList.map(arc => `
+            <div class="archive-card-bw" onclick="window.loadSpecificArchiveFromList('${arc.id}')" 
+                 style="flex: 0 0 140px; background: #fff; border: 2px solid #000; padding: 12px; margin-right: 15px; cursor: pointer; box-shadow: 4px 4px 0 rgba(0,0,0,0.1);">
+                <span class="card-tag" style="font-size:8px; color:#888; display:block;">#LOG_${String(arc.id).slice(-4)}</span>
+                <div class="card-month" style="font-family:'Cinzel'; font-weight:900; font-size:14px; margin:5px 0; border-bottom:1px solid #eee; padding-bottom:5px;">
+                    ${arc.year} / ${arc.data ? arc.data.length : 0}M
+                </div>
+                <div class="card-val" style="font-family:'Cinzel'; font-weight:900; font-size:16px; margin-top:5px;">
+                    ￥${parseFloat(arc.total || 0).toLocaleString()}
+                </div>
+            </div>
+        `).join('');
+        
+        if (displayNum) displayNum.innerText = `-￥${parseFloat(monthlyList[0].total).toLocaleString()}`;
+    } else {
+        container.innerHTML = `<div style="padding:20px; text-align:center; font-size:10px; color:#999; width:100%;">NO DATA // 暂无数据</div>`;
+    }
+    
+    // 4. 纠正 Tab 状态
+    document.querySelectorAll('.con-tab').forEach(t => t.classList.remove('active'));
+    const mTab = document.querySelector('.consumption-switcher-tabs .con-tab:first-child');
+    if (mTab) mTab.classList.add('active');
+};
+
 /**
  * 🔕 安全震动协议：消除 Chrome 控制台红字警告
  * 只有当检测到用户已经发生过交互（点击/触摸）后，才执行震动
@@ -27170,16 +30364,33 @@ window.safeVibrate = function(ms) {
     }
 };
 /**
- * 🔓 中央金库内部导航切换 (复刻版 switchWTab)
+ * 🔄 底部导航切换函数 (暴力强制版)
+ * 直接修改 style.display，确保页面一定能显示
  */
 window.switchBankTab = function(index, btnElement) {
-    // 1. 页面切换显隐 (和你的 switchWTab 逻辑一样)
+    // 1. 找到所有面板
     const panels = document.querySelectorAll('.bank-tab-panel');
-    panels.forEach(p => p.classList.remove('active'));
-    if (panels[index]) panels[index].classList.add('active');
+    
+    // 2. 先把所有面板“物理隐藏”
+    panels.forEach(p => {
+        p.classList.remove('active');
+        p.style.display = 'none'; // 🚨 强制隐藏，覆盖 HTML 里的 style
+    });
+    
+    // 3. 只显示选中的那个
+    if (panels[index]) {
+        panels[index].classList.add('active');
+        panels[index].style.display = 'block'; // 🚨 强制显示
+        
+        // 如果有滚动条，重置到顶部
+        const scrollBox = panels[index].querySelector('.scroll-box');
+        if (scrollBox) scrollBox.scrollTop = 0;
+    } else {
+        console.error("找不到第 " + index + " 个页面 (index out of bounds)");
+    }
 
-    // 2. 底部按钮高亮 (自动处理传参或手动查找)
-    const navItems = document.querySelectorAll('.bank-bottom-nav .nav-b-item');
+    // 4. 底部按钮高亮切换
+    const navItems = document.querySelectorAll('.nav-b-item');
     navItems.forEach(n => n.classList.remove('active'));
     
     if (btnElement) {
@@ -27188,124 +30399,133 @@ window.switchBankTab = function(index, btnElement) {
         navItems[index].classList.add('active');
     }
 
-    // --- 🚀 联动逻辑 (抄你的作业) ---
-
-    // 如果是 DASHBOARD (首页 - 索引 0)
-    if (index === 0) {
-        console.log("[Tab切换] 进入金库看板，执行全量同步...");
-        
-        // A. 渲染顶部的银行卡
-        if (typeof renderSavedCards === 'function') renderSavedCards();
-        
-        // B. 🚨 渲染月度/年度账单 (就是缺了这一句！)
-        // 加一点点延迟，等待 CSS 动画让容器完全显示出来
-        setTimeout(() => {
-            if (typeof window.syncVaultDataToUI === 'function') {
-                window.syncVaultDataToUI(); 
-            }
-            
-            // C. 强力补丁：如果月度看不见，自动帮你点一下“Monthly”标签
-            // 防止出现“必须要切一下”的 Bug
-            const monthlyContainer = document.getElementById('dash-monthly-cards-container');
-            if (!monthlyContainer || monthlyContainer.innerHTML.trim() === "") {
-                 const mTab = document.querySelector('.consumption-switcher-tabs .con-tab:first-child');
-                 if(mTab) mTab.click();
-            }
-        }, 50);
-    }
-
-    // 如果是 RECORDS (记录 - 索引 1)
+    // 🚨 关键新增：如果是切到“记录页” (index 1)，强制刷新列表
     if (index === 1) {
-        // 这里以后可以加别的逻辑
+        console.log("进入记录页，正在刷新数据...");
+        if (typeof renderCharExpenseList === 'function') {
+            renderCharExpenseList();
+        }
+        // 如果以后有电话账单的渲染函数，也在这里调用
+        // renderPhoneBillList(); 
     }
 
-    // 震动反馈
-    window.safeVibrate(10);
+    // 在 switchBankTab 里加一句
+    if (index === 2) { // 假设 Vault 是第3个 tab
+        initVaultTab();
+    }
+    
+    if(window.navigator.vibrate) window.navigator.vibrate(10);
 };
 
 /**
- * 视图切换控制器 (月度/年度)
+ * 🔄 视图切换控制器 (清场修复版)
+ * 核心逻辑：先杀光，再复活。确保同一时间只有一个面板存活。
  */
 window.toggleConsumptionView = function(viewType, btnEl) {
-    // 1. 视觉切换：处理 Tab 样式
+    // 1. 按钮高亮处理
     document.querySelectorAll('.con-tab').forEach(t => t.classList.remove('active'));
     if (btnEl) btnEl.classList.add('active');
 
-    // 2. 面板切换：处理内容显示
-    document.querySelectorAll('.consumption-sub-panel').forEach(p => p.classList.remove('active'));
-    
-    const targetPanel = document.getElementById(`view-${viewType}`);
-    if (targetPanel) {
-        targetPanel.classList.add('active');
-        // 🚨 切换面板后，立即强制渲染数据
-        if (typeof window.syncVaultDataToUI === 'function') {
+    const mPanel = document.getElementById('view-monthly');
+    const yPanel = document.getElementById('view-yearly');
+
+    // 2. 🧹 暴力清场：不管三七二十一，先把两个都按死 (display: none)
+    // 这一步是解决“重叠/幽灵显示”的关键
+    if (mPanel) {
+        mPanel.classList.remove('active');
+        mPanel.style.cssText = "display: none !important;";
+    }
+    if (yPanel) {
+        yPanel.classList.remove('active');
+        yPanel.style.cssText = "display: none !important;";
+    }
+
+    // 3. 🎯 定点复活：只打开选中的那个
+    if (viewType === 'monthly') {
+        if (mPanel) {
+            mPanel.classList.add('active');
+            mPanel.style.cssText = "display: block !important; opacity: 1 !important;";
+        }
+        
+        // 触发月度渲染
+        if (typeof window.forceRenderMonthly === 'function') {
+            window.forceRenderMonthly();
+        } else if (typeof window.syncVaultDataToUI === 'function') {
             window.syncVaultDataToUI();
         }
+
+    } else { // viewType === 'yearly'
+        if (yPanel) {
+            yPanel.classList.add('active');
+            yPanel.style.cssText = "display: block !important; opacity: 1 !important;";
+        }
+        
+        // 触发年度渲染 (这里确保只渲染年度数据)
+        if (typeof window.syncVaultDataToUI === 'function') {
+            // 这里我们手动为了年度再做一次指向性渲染，防止 syncVaultDataToUI 内部判断失误
+            // 强制读取年度列表
+            const charID = window.currentVaultCharID || 'GLOBAL';
+            const yearlyList = JSON.parse(localStorage.getItem(`LUNE_VAULT_YEARLY_LIST_${charID}`)) || [];
+            const yContainer = document.getElementById('dash-yearly-cards-container');
+            
+            if (yContainer && yearlyList.length > 0) {
+                 yContainer.innerHTML = yearlyList.map(arc => `
+                    <div class="archive-card-bw" style="background:#000; color:#fff; min-width:160px; margin-right:10px;" onclick="window.viewYearlyDetail('${arc.id}')">
+                        <span class="card-tag" style="color:#666;">#ANNUAL</span>
+                        <div class="card-month" style="color:#fff;">${arc.years_covered.join('-')}</div>
+                        <div class="card-val" style="color:#fff;">￥${parseFloat(arc.total_all).toLocaleString()}</div>
+                    </div>`).join('');
+            } else if (yContainer) {
+                yContainer.innerHTML = `<div class="empty-placeholder">NO ANNUAL DATA</div>`;
+            }
+        }
     }
     
-    // 3. 震动反馈 (仅在手动点击时有效，自动点击也会触发但无所谓)
-    window.safeVibrate(5);
+    if(window.safeVibrate) window.safeVibrate(5);
 };
+
 /**
- * 🔐 中央金库：终极渲染同步协议 (硬核版)
+ * 🔐 中央金库：终极渲染同步协议 (修复版)
  */
 window.syncVaultDataToUI = function() {
-    // 1. 强制确定 ID
-    const charID = window.currentVaultCharID || 'GLOBAL';
-    console.log(`%c[Lune Protocol] 正在硬核同步: NODE_${charID}`, "background: #000; color: #fff; padding: 2px 5px;");
-
-    // --- A. 月度数据同步 (修正版) ---
-    const monthlyList = JSON.parse(localStorage.getItem(`LUNE_VAULT_LIST_${charID}`)) || [];
-    const monthlyContainer = document.getElementById('dash-monthly-cards-container');
-    const monthlyDisplayNum = document.getElementById('dash-monthly-outflow');
-
-    if (monthlyContainer) {
-        // 🚨 修正点 1：不管三七二十一，先强制让容器显示出来！
-        // 放在最外层，防止被里面的 if 条件卡住
-        monthlyContainer.style.display = 'flex'; 
-        monthlyContainer.style.opacity = '1'; //以此确保视觉可见
-
-        if (monthlyList.length > 0) {
-            // 渲染卡片
-            monthlyContainer.innerHTML = monthlyList.map(arc => `
-                <div class="archive-card-bw" onclick="window.loadSpecificArchiveFromList('${arc.id}')">
-                    <span class="card-tag">#LOG_${String(arc.id).slice(-4)}</span>
-                    <div class="card-month">${arc.year} / ${arc.data.length}M</div>
-                    <div class="card-val">￥${parseFloat(arc.total).toLocaleString()}</div>
-                </div>
-            `).join('');
-            
-            // 填数字
-            if (monthlyDisplayNum) {
-                monthlyDisplayNum.innerText = `-￥${parseFloat(monthlyList[0].total).toLocaleString()}`;
-            }
-        } else {
-            // 🚨 修正点 2：即使没数据，也要显示“空状态”占位符，不能隐藏
-            monthlyContainer.innerHTML = `<div class="empty-placeholder">NO_DATA // 档案库月度为空</div>`;
+    const charID = window.currentVaultCharID || localStorage.getItem('LUNE_LAST_ACTIVE_CHAR_ID') || 'GLOBAL';
+    
+    // --- A. 渲染月度 (Monthly) ---
+    // 只有当月度面板是显示状态，或者处于初始化阶段时，才去动它
+    const monthlyPanel = document.getElementById('view-monthly');
+    if (monthlyPanel && (monthlyPanel.style.display !== 'none' || monthlyPanel.classList.contains('active'))) {
+        const monthlyList = JSON.parse(localStorage.getItem(`LUNE_VAULT_LIST_${charID}`)) || [];
+        const monthlyContainer = document.getElementById('dash-monthly-cards-container');
+        
+        if (monthlyContainer) {
+            monthlyContainer.innerHTML = monthlyList.length > 0 
+                ? monthlyList.map(arc => `
+                    <div class="archive-card-bw" onclick="window.loadSpecificArchiveFromList('${arc.id}')" style="min-width:140px; margin-right:10px;">
+                        <span class="card-tag">#LOG_${String(arc.id).slice(-4)}</span>
+                        <div class="card-month">${arc.year} / ${arc.data ? arc.data.length : 0}M</div>
+                        <div class="card-val">￥${parseFloat(arc.total || 0).toLocaleString()}</div>
+                    </div>`).join('')
+                : `<div class="empty-placeholder">NO ARCHIVES // 暂无月度记录</div>`;
         }
     }
 
-    // --- B. 年度数据同步 ---
-    const yearlyList = JSON.parse(localStorage.getItem(`LUNE_VAULT_YEARLY_LIST_${charID}`)) || [];
-    const yearlyContainer = document.getElementById('dash-yearly-cards-container');
-    // 🚨 检查点：确保你的年度面板里总金额的类名确实是 .val
-    const yearlyDisplayNum = document.querySelector('#view-yearly .val');
+    // --- B. 渲染年度 (Yearly) ---
+    // 🚨 关键：这里必须全是 yearly 相关的变量，严禁出现 monthly
+    const yearlyPanel = document.getElementById('view-yearly');
+    // 只有年度面板显示时才渲染，节省资源
+    if (yearlyPanel && (yearlyPanel.style.display !== 'none' || yearlyPanel.classList.contains('active'))) {
+        const yearlyList = JSON.parse(localStorage.getItem(`LUNE_VAULT_YEARLY_LIST_${charID}`)) || [];
+        const yearlyContainer = document.getElementById('dash-yearly-cards-container');
 
-    if (yearlyContainer) {
-        if (yearlyList.length > 0) {
-            yearlyContainer.innerHTML = yearlyList.map(arc => `
-                <div class="archive-card-bw" style="background:#000; color:#fff;" onclick="window.viewYearlyDetail('${arc.id}')">
-                    <span class="card-tag" style="color:#666;">#ANNUAL</span>
-                    <div class="card-month" style="color:#fff;">${arc.years_covered.join('-')}</div>
-                    <div class="card-val" style="color:#fff;">￥${parseFloat(arc.total_all).toLocaleString()}</div>
-                </div>
-            `).join('');
-
-            if (yearlyDisplayNum) {
-                yearlyDisplayNum.innerText = `-￥${parseFloat(yearlyList[0].total_all).toLocaleString()}`;
-            }
-        } else {
-            yearlyContainer.innerHTML = `<div class="empty-placeholder">NO_ANNUAL // 档案库年度为空</div>`;
+        if (yearlyContainer) {
+            yearlyContainer.innerHTML = yearlyList.length > 0 
+                ? yearlyList.map(arc => `
+                    <div class="archive-card-bw" style="background:#000; color:#fff; min-width:160px; margin-right:10px;" onclick="window.viewYearlyDetail('${arc.id}')">
+                        <span class="card-tag" style="color:#666;">#ANNUAL</span>
+                        <div class="card-month" style="color:#fff;">${arc.years_covered.join('-')}</div>
+                        <div class="card-val" style="color:#fff;">￥${parseFloat(arc.total_all).toLocaleString()}</div>
+                    </div>`).join('')
+                : `<div class="empty-placeholder">NO ANNUAL DATA // 暂无年度记录</div>`;
         }
     }
 };
@@ -27346,34 +30566,67 @@ window.closeYearlyConfig = () => document.getElementById('yearly-config-modal').
 window.closeYearlyReport = () => document.getElementById('yearly-report-display').style.display = 'none';
 
 /**
- * 核心：生成年度报告
+ * 核心：生成年度报告 (人设同步 + 兼容性修复版)
  */
 window.generateYearlyReport = async function() {
     const startYear = parseInt(document.getElementById('y-config-year').value);
     const span = parseInt(document.getElementById('y-config-range').value);
     const charID = window.currentVaultCharID || 'GLOBAL';
     
-    // 显示加载动画 (复用你月度的加载动画 ID 或类)
+    // 显示加载动画
     window.closeYearlyConfig();
     const overlay = document.createElement('div');
     overlay.className = "vault-decrypting-overlay";
     overlay.innerHTML = `<div class="v-scan-line"></div><div class="v-loading-text">DECRYPTING_ANNUAL_FILES</div>`;
     document.body.appendChild(overlay);
 
+    // 1. 🛠️ 核心修复：强制从数据库读取精准人设
+    let charName = window.currentVaultCharName || "Ta";
+    let charBio = "未知身世"; // 默认兜底
+
+    try {
+        if (typeof loadFromDB === 'function') {
+            const charList = await loadFromDB('char_list') || [];
+            const targetChar = charList.find(c => c.id === charID);
+            
+            if (targetChar) {
+                charName = targetChar.name;
+                // 优先取 desc，没有再取 bio
+                charBio = targetChar.desc || targetChar.bio || charBio;
+                console.log(`[AI] 年度报告生成 - 已锁定人设: ${charName}`);
+            }
+        }
+    } catch (e) {
+        console.warn("读取人设失败，将使用缓存值", e);
+    }
+
+    // 2. 准备 API
     const apiKey = localStorage.getItem('gpt_key');
-    const apiUrl = (localStorage.getItem('gpt_url') || "https://api.openai.com/v1").replace(/\/+$/, "");
-    const model = localStorage.getItem('gpt_model') || "gpt-3.5-turbo";
+    let apiUrl = (localStorage.getItem('gpt_url') || "https://api.openai.com/v1").replace(/\/+$/, "");
+    let model = localStorage.getItem('gpt_model') || "gpt-3.5-turbo";
 
-    // 升级版年度 Prompt：强制数据差异化与叙事丰富度
-const systemPrompt = `你是一个冷峻、毒舌且观察入微的财务审计员。
-你必须输出严格的 JSON 数组。
-【规则锁定】：
-1. 每年12个月的金额 (amount) 严禁重复，必须大幅随机波动。
-2. 每个月的摘要 (n) 必须是丰富的短句，描述这一笔钱背后的故事（如：深夜的便利店、意外的医药费、一张去往新疆的单程票、或是某次无声的告别）。
-3. 语气要冷峻且具备工业酸涩感，禁止使用可爱的表情符号。
-格式: [{"year":年份, "total":总额, "months":[{"m":1, "a":1240, "n":"摘要..."}, ... (共12个)]}]`;
+    // 🚨 自动修正：如果是 DeepSeek，强制切换模型名
+    if (apiUrl.includes("deepseek")) {
+        console.log("检测到 DeepSeek 环境，自动修正模型名称...");
+        model = "deepseek-chat"; 
+    }
 
-    const userPrompt = `主角：${window.currentVaultCharName}。请生成从 ${startYear} 年开始，共 ${span} 年的年度财务流水。每年必须包含12个月。`;
+    // 3. Prompt 设计：注入人设
+    const systemPrompt = `你是一个冷峻、毒舌且观察入微的财务审计员。
+    你必须输出严格的 JSON 数组。
+    
+    【规则锁定】：
+    1. 每年12个月的金额 (amount) 严禁重复，必须大幅随机波动。
+    2. 每个月的摘要 (n) 必须是丰富的短句，**必须紧扣主角的人设背景**，描述这笔钱背后的故事（如：深夜的便利店、意外的医药费、一张去往远方的单程票、或是某次无声的告别）。
+    3. 语气要冷峻且具备工业酸涩感，禁止使用可爱的表情符号。
+    4. 严禁包含 Markdown 标记 (不要写 \`\`\`json)。
+    
+    格式: [{"year":年份, "total":总额, "months":[{"m":1, "a":1240, "n":"摘要..."}, ... (共12个)]}]`;
+
+    const userPrompt = `主角：${charName}
+    人设背景：${charBio}
+    
+    请生成从 ${startYear} 年开始，共 ${span} 年的年度财务流水。每年必须包含12个月。`;
 
     try {
         const response = await fetch(`${apiUrl}/chat/completions`, {
@@ -27382,13 +30635,31 @@ const systemPrompt = `你是一个冷峻、毒舌且观察入微的财务审计�
             body: JSON.stringify({
                 model: model,
                 messages: [{role:"system", content:systemPrompt}, {role:"user", content:userPrompt}],
-                response_format: { type: "json_object" }
+                temperature: 0.85 // 提高一点随机性
+                // 🚨 移除了 response_format 以防止 400 报错
             })
         });
 
         const data = await response.json();
-        const raw = data.choices[0].message.content;
-        const jsonMatch = raw.match(/\[[\s\S]*\]/);
+        
+        // 🚨 错误捕捉
+        if (data.error) {
+            throw new Error(`API Error: ${data.error.message}`);
+        }
+        if (!data.choices || data.choices.length === 0) {
+            throw new Error("API 返回了空数据");
+        }
+
+        let rawText = data.choices[0].message.content;
+        
+        // 🚨 正则提取 JSON
+        const jsonMatch = rawText.match(/\[[\s\S]*\]/);
+        
+        if (!jsonMatch) {
+            console.error("AI 返回原始内容:", rawText);
+            throw new Error("AI 未返回有效的 JSON 数组格式");
+        }
+        
         const yearlyData = JSON.parse(jsonMatch[0]);
 
         // 挂载到临时变量供保存使用
@@ -27404,39 +30675,71 @@ const systemPrompt = `你是一个冷峻、毒舌且观察入微的财务审计�
 };
 
 /**
- * 渲染：竖式账单风格
+ * ⚡️ 渲染 AI 生成的年度账单 (对应 ID: yearly-report-display)
+ * 这个函数专门用于显示带有 "COMMIT (保存)" 按钮的那个弹窗
  */
 window.renderYearlyVisuals = function(data) {
+    console.log("正在渲染 AI 生成结果...");
+
+    // 1. 锁定你提供的 HTML ID
     const container = document.getElementById('yearly-bill-container');
-    document.getElementById('yearly-report-display').style.display = 'flex';
+    const modal = document.getElementById('yearly-report-display');
+    const reportSection = document.getElementById('yearly-report-display'); // 确保显示的是报告层
+
+    if (!container || !modal) {
+        console.error("找不到生成页容器: yearly-bill-container 或 yearly-report-display");
+        return;
+    }
+
+    // 2. 生成账单 HTML (复用长条收据样式)
+    // 注意：这里的 data 直接就是 AI 返回的 JSON 数组 (包含多个年份)
+    let htmlContent = "";
     
-    container.innerHTML = data.map(yearObj => `
-        <div class="industrial-receipt" style="margin-bottom: 40px;">
-            <div class="receipt-header">
-                <div class="cinzel-font" style="font-size:14px; opacity:0.6;">ANNUAL_RECORD_DECRYPTED</div>
-                <div class="cinzel-font" style="font-size:24px; font-weight:900; margin:10px 0;">FY_${yearObj.year}</div>
+    // 兼容性处理：无论 data 是数组还是单对象，都转为数组处理
+    const dataArray = Array.isArray(data) ? data : [data];
+
+    htmlContent = dataArray.map(yearObj => `
+        <div class="industrial-receipt" style="margin-bottom: 40px; background: #fff; border: 2px solid #000; padding: 15px; box-shadow: 5px 5px 0 rgba(0,0,0,0.1);">
+            <div class="receipt-header" style="text-align: center; border-bottom: 2px dashed #000; padding-bottom: 15px; margin-bottom: 15px;">
+                <div class="cinzel-font" style="font-size:12px; opacity:0.6; letter-spacing: 2px;">LUNE_GEN_RESULT</div>
+                <div class="cinzel-font" style="font-size:32px; font-weight:900; margin:5px 0;">FY_${yearObj.year}</div>
+                <div style="font-family: monospace; font-size: 9px; color:#ff3b30;">STATUS: PENDING_COMMIT (待归档)</div>
             </div>
             
-            <div class="receipt-body" style="border-top: 1px solid #000; border-bottom: 1px solid #000; padding: 15px 0;">
+            <div class="receipt-body">
                 ${yearObj.months.map(m => `
-                    <div class="receipt-row" style="margin-bottom: 8px;">
-                        <div style="display:flex; flex-direction:column;">
-                            <span style="font-weight:900;">${yearObj.year}.${m.m}</span>
-                            <span style="font-size:8px; color:#888;">${m.n}</span>
+                    <div class="receipt-row" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #eee;">
+                        <div style="display:flex; flex-direction:column; width: 70%;">
+                            <div style="font-weight:900; font-family: 'Cinzel'; font-size: 14px;">MONTH . ${String(m.m).padStart(2, '0')}</div>
+                            <div style="font-size:10px; color:#666; margin-top: 2px; line-height: 1.3;">${m.n || 'No Details'}</div>
                         </div>
-                        <span style="font-family:'Cinzel'; font-weight:900;">￥${parseFloat(m.a).toLocaleString()}</span>
+                        <div style="font-family:'Cinzel'; font-weight:900; font-size: 16px;">
+                            ￥${parseFloat(m.a).toLocaleString()}
+                        </div>
                     </div>
                 `).join('')}
             </div>
 
-            <div class="receipt-total-row" style="background:#000; color:#fff; padding: 10px; margin-top:0;">
-                <span class="receipt-total-label" style="color:#fff;">NET_EXPENDITURE</span>
-                <span class="receipt-total-val" style="color:#fff;">-￥${parseFloat(yearObj.total).toLocaleString()}</span>
+            <div class="receipt-total-row" style="background:#000; color:#fff; padding: 15px; margin-top: 10px; display: flex; justify-content: space-between; align-items: center;">
+                <span class="receipt-total-label" style="font-size: 10px; letter-spacing: 1px;">NET_EXPENDITURE</span>
+                <span class="receipt-total-val" style="font-size: 18px; font-weight: 900; font-family: 'Cinzel';">-￥${parseFloat(yearObj.total).toLocaleString()}</span>
             </div>
         </div>
     `).join('');
-};
 
+    // 3. 填入数据
+    container.innerHTML = htmlContent;
+
+    // 4. 强制显示弹窗 (关键步骤)
+    modal.style.display = 'flex'; // 或者是 block，看你的 CSS 怎么写的
+    
+    // 隐藏之前的加载动画（如果有的话）
+    const overlay = document.querySelector('.vault-decrypting-overlay');
+    if (overlay) overlay.remove();
+
+    // 强制滚动到顶部
+    container.scrollTop = 0;
+};
 /**
  * 💾 更新版：年度隔离保存逻辑 (取消浏览器 alert)
  */
@@ -27484,7 +30787,7 @@ window.closeYearlySuccess = function() {
 };
 
 /**
- * 刷新首页年度卡片流
+ * 🔄 渲染首页的年度历史卡片 (让它们可以点击！)
  */
 window.refreshDashYearlyCards = function() {
     const charID = window.currentVaultCharID || 'GLOBAL';
@@ -27494,13 +30797,15 @@ window.refreshDashYearlyCards = function() {
     const list = JSON.parse(localStorage.getItem(`LUNE_VAULT_YEARLY_LIST_${charID}`)) || [];
 
     if (list.length === 0) {
-        container.innerHTML = `<div class="empty-placeholder">NO_ANNUAL_DATA // 等待年度指令</div>`;
+        container.innerHTML = `<div class="empty-placeholder">NO_ANNUAL_DATA // 暂无年度记录</div>`;
         return;
     }
 
+    // 🚨 关键修改：onclick="window.viewYearlyDetail('${arc.id}')"
+    // 这样点击任何一张历史卡片，都会触发详情页
     container.innerHTML = list.map(arc => `
         <div class="archive-card-bw" 
-             style="border: 2px solid #000; background: #000; color: #fff; flex: 0 0 160px; position: relative; overflow: hidden;" 
+             style="border: 2px solid #000; background: #000; color: #fff; flex: 0 0 160px; position: relative; overflow: hidden; margin-right: 10px; cursor: pointer;" 
              onclick="window.viewYearlyDetail('${arc.id}')">
             
             <div style="position: absolute; top: 0; right: 0; background: #fff; color: #000; font-size: 7px; padding: 2px 5px; font-weight: 900;">
@@ -27508,7 +30813,9 @@ window.refreshDashYearlyCards = function() {
             </div>
 
             <span class="card-tag" style="color:#666; font-size: 8px;">LOG_SERIAL: ${String(arc.id).slice(-6)}</span>
-            <div class="card-month" style="color:#fff; font-size: 15px; margin: 8px 0;">${arc.years_covered.join(' - ')}</div>
+            <div class="card-month" style="color:#fff; font-size: 15px; margin: 8px 0;">
+                ${arc.years_covered ? arc.years_covered.join(' - ') : 'UNKNOWN'}
+            </div>
             
             <div style="border-top: 1px dashed #444; margin-top: 5px; padding-top: 8px;">
                 <span style="font-size: 8px; opacity: 0.6; display: block; margin-bottom: 2px;">ACCUMULATED_EXPENSE:</span>
@@ -27518,43 +30825,25 @@ window.refreshDashYearlyCards = function() {
     `).join('');
 };
 
-// 增加：点击历史年度卡片回看
-window.viewYearlyDetail = function(id) {
-    const charID = window.currentVaultCharID || 'GLOBAL';
-    const list = JSON.parse(localStorage.getItem(`LUNE_VAULT_YEARLY_LIST_${charID}`)) || [];
-    const entry = list.find(e => e.id === id);
-    if (entry) window.renderYearlyVisuals(entry.fullData);
-};
-
 /**
  * 🚀 核心启动序列：自动唤醒月度面板
  */
 window.addEventListener('load', async () => {
-    // 1. 恢复角色 ID
-    const lastCharID = localStorage.getItem('LUNE_LAST_ACTIVE_CHAR_ID');
-    if (lastCharID) {
-        window.currentVaultCharID = lastCharID;
-        console.log(`[系统] 记忆回溯：${lastCharID}`);
-    } else {
-        window.currentVaultCharID = 'GLOBAL'; // 兜底
+    // 1. 🚨 必须先做：恢复 ID
+    const savedID = localStorage.getItem('LUNE_LAST_ACTIVE_CHAR_ID');
+    if (savedID) {
+        window.currentVaultCharID = savedID;
+        console.log("初始化 ID 已恢复:", savedID);
     }
 
-    // 2. 初始化数据库等服务
+    // 2. 初始化其他服务
     if (typeof initSystemServices === 'function') await initSystemServices();
-    if (typeof refreshNPCContainer === 'function') await refreshNPCContainer();
-
-    // 3. 🚨 关键动作：模拟点击“月度”按钮
-    // 这会强制触发 toggleConsumptionView 和 syncVaultDataToUI，解决“切一下才有”的问题
+    
+    // 3. 触发一次点击，就像上面的 switchBankTab 一样
     setTimeout(() => {
-        const monthlyTabBtn = document.querySelector('.consumption-switcher-tabs .con-tab:first-child');
-        if (monthlyTabBtn) {
-            console.log("[系统] 自动校准月度视图...");
-            monthlyTabBtn.click(); // <--- 就是这一脚，踢它一下！
-        } else {
-            // 如果没找到按钮，就手动强制刷一次
-            window.syncVaultDataToUI();
-        }
-    }, 200); // 稍微延迟，等页面喘口气
+        // 假装用户点了一次 Dashboard tab
+        window.switchBankTab(0); 
+    }, 300);
 });
 
 /**
@@ -27697,7 +30986,7 @@ window.closeMonthlyConfig = function() { document.getElementById('monthly-config
 window.updateRangeText = function(val) { document.getElementById('range-val').innerText = val + " MONTHS"; };
 
 /**
- * 3. 核心：AI 生成并持久化存储
+ * 3. 核心：AI 生成并持久化存储 (人设同步 + 兼容性修复版)
  */
 window.generateMonthlyReport = async function() {
     const year = document.getElementById('config-year').value;
@@ -27705,8 +30994,8 @@ window.generateMonthlyReport = async function() {
     const charID = window.currentVaultCharID || 'GLOBAL';
     
     const apiKey = localStorage.getItem('gpt_key');
-    const apiUrl = (localStorage.getItem('gpt_url') || "https://api.openai.com/v1").replace(/\/+$/, "");
-    const model = localStorage.getItem('gpt_model') || "gpt-3.5-turbo";
+    let apiUrl = (localStorage.getItem('gpt_url') || "https://api.openai.com/v1").replace(/\/+$/, "");
+    let model = localStorage.getItem('gpt_model') || "gpt-3.5-turbo";
 
     if (!apiKey) return alert("PROTOCOL_ERROR: 请先配置 AI 密钥");
 
@@ -27724,30 +31013,58 @@ window.generateMonthlyReport = async function() {
     if(overlay) overlay.style.display = 'flex';
     window.closeMonthlyConfig();
 
-    // 氛围感 Prompt
+    // 2. 🛠️ 核心修复：强制从数据库读取精准人设
+    let charName = window.currentVaultCharName || "Ta";
+    let charBio = "未知"; // 默认兜底
+
+    try {
+        if (typeof loadFromDB === 'function') {
+            const charList = await loadFromDB('char_list') || [];
+            const targetChar = charList.find(c => c.id === charID);
+            
+            if (targetChar) {
+                charName = targetChar.name;
+                // 优先取 desc，没有再取 bio
+                charBio = targetChar.desc || targetChar.bio || charBio;
+                console.log(`[AI] 月度报告生成 - 已锁定人设: ${charName}`);
+            }
+        }
+    } catch (e) {
+        console.warn("读取人设失败，将使用缓存值", e);
+    }
+
+    // 🚨 自动修正：如果是 DeepSeek，强制切换模型名
+    if (apiUrl.includes("deepseek")) {
+        console.log("检测到 DeepSeek 环境，自动修正模型名称...");
+        model = "deepseek-chat"; 
+    }
+
+    // 3. Prompt 设计
     const systemPrompt = `你是一个冷峻的财务观测者。必须输出严格的 JSON 数组。
-文风需具备工业酸涩感，使用第二人称“你”来描述这笔开销与用户之间的秘密联系。
-格式: [{"month":"月份", "amount":数字, "summary":"150字左右的排版优美的故事"}]`;
+    文风需具备工业酸涩感，使用第二人称“你”来描述这笔开销与用户之间的秘密联系。
+    
+    【重要】：必须只返回纯 JSON 格式，不要包含 Markdown 标记。
+    格式: [{"month":"月份", "amount":数字, "summary":"150字左右的排版优美的故事"}]`;
 
-    const userPrompt = `主角：${window.currentVaultCharName}。背景：${window.currentVaultCharBio}。
-请为“你”和 ${window.currentVaultCharName} 生成 ${year} 年连续 ${monthsCount} 个月的财务纠葛记录。`;
+    const userPrompt = `主角：${charName}。
+    主角人设背景：${charBio}。
+    
+    请根据上述人设，为“你”(${charName}) 和用户之间，生成 ${year} 年连续 ${monthsCount} 个月的财务纠葛记录。
+    每一笔记录的 summary 都要体现出主角独特的性格和经历。`;
 
-    // 1. 🚨 在容器内插入局部动画 (只动这几行)
+    // 4. 🚨 在容器内插入局部动画
     const listContainer = document.getElementById('monthly-records-list');
     if (listContainer) {
-        listContainer.style.position = 'relative'; // 确保定位
+        listContainer.style.position = 'relative'; 
         listContainer.innerHTML = `
             <div class="scanning-overlay">
                 <div class="scan-line"></div>
                 <div class="loading-text">DECRYPTING_VAULT_DATA...</div>
-                <div style="font-size:8px; font-family:monospace; margin-top:5px;">ANALYZING_ENTITY: ${window.currentVaultCharName}</div>
+                <div style="font-size:8px; font-family:monospace; margin-top:5px;">ANALYZING_ENTITY: ${charName}</div>
             </div>
         `;
     }
     
-    // 关闭配置弹窗 (你原本的逻辑)
-    window.closeMonthlyConfig();
-
     try {
         const response = await fetch(`${apiUrl}/chat/completions`, {
             method: 'POST',
@@ -27755,13 +31072,27 @@ window.generateMonthlyReport = async function() {
             body: JSON.stringify({
                 model: model,
                 messages: [{role:"system", content:systemPrompt}, {role:"user", content:userPrompt}],
-                response_format: { type: "json_object" }
+                temperature: 0.85
+                // 🚨 移除了 response_format 以防止 400 报错
             })
         });
 
         const data = await response.json();
-        const rawContent = data.choices[0].message.content;
+        
+        // 🚨 错误捕捉
+        if (data.error) throw new Error(`API Error: ${data.error.message}`);
+        if (!data.choices || data.choices.length === 0) throw new Error("API 返回了空数据");
+
+        let rawContent = data.choices[0].message.content;
+        
+        // 🚨 正则提取 JSON
         const jsonMatch = rawContent.match(/\[[\s\S]*\]/);
+        
+        if (!jsonMatch) {
+            console.error("AI 返回原始内容:", rawContent);
+            throw new Error("AI 未返回有效的 JSON 数组格式");
+        }
+        
         const reportData = JSON.parse(jsonMatch[0]);
 
         // --- ⚡ 持久化档案存储逻辑 ---
@@ -28584,32 +31915,35 @@ window.openProfilesApp = async function() {
     
     // 初始加载角色数据
     await profRenderList();
+    // 在切换角色逻辑的最后加上：
+    renderCharExpenseList();
 };
 
 /**
- * 🔄 渲染滑动列表 (精简纯净版)
+ * 🔄 渲染滑动列表 (修复系统分页为空的问题)
  */
 window.profRenderList = async function() {
     const ring = document.getElementById('prof-avatar-ring');
     if (!ring) return;
     ring.innerHTML = "";
     
-    // 1. 从数据库读取所有实体
-    const dbData = await loadFromDB('char_list') || [];
     let displayData = [];
 
+    // 🚀 核心修复：根据当前分类，去不同的数据库取数据
     if (currentProfCategory === 'ENTITIES') {
-        // 【角色页】：只看非系统类的
-        displayData = dbData.filter(c => c.category !== 'SYSTEM');
+        // 【角色页】：读取 char_list
+        const charList = await loadFromDB('char_list') || [];
+        // 双重保险：过滤掉可能残留的 SYSTEM
+        displayData = charList.filter(c => c.category !== 'SYSTEM');
     } else {
-        // 【系统页】：只看分类为 SYSTEM 的服务号
-        // 🚀 删掉了之前的 hardcodedSystem，现在只从数据库里取
-        displayData = dbData.filter(c => c.category === 'SYSTEM');
+        // 【系统页】：读取 system_services_db (您刚才存的地方)
+        const systemList = await loadFromDB('system_services_db') || [];
+        displayData = systemList;
     }
 
     // 2. 物理渲染
-    if (displayData.length === 0) {
-        document.getElementById('prof-main-viewer').innerHTML = `<div class="prof-empty">NO ARCHIVES FOUND</div>`;
+    if (!displayData || displayData.length === 0) {
+        document.getElementById('prof-main-viewer').innerHTML = `<div class="prof-empty">NO DATA FOUND</div>`;
         return;
     }
 
@@ -28619,7 +31953,7 @@ window.profRenderList = async function() {
         div.onclick = () => profSelectEntity(item, div);
         
         // 头像逻辑
-        const avatarUrl = item.avatar || `https://api.dicebear.com/7.x/notionists/svg?seed=${item.name}`;
+        const avatarUrl = item.avatar || `https://api.dicebear.com/7.x/identicon/svg?seed=${item.name}`;
         div.innerHTML = `<img src="${avatarUrl}">`;
         
         ring.appendChild(div);
@@ -28630,19 +31964,20 @@ window.profRenderList = async function() {
 };
 
 /**
- * 🔍 深度展示：角色主卡片 + 绑定的 NPC 矩阵
+ * 🔍 深度展示：角色主卡片 + 绑定的 NPC 矩阵 (修复版)
  */
 window.profSelectEntity = async function(entity, el) {
+    // 1. UI 选中态切换
     document.querySelectorAll('.prof-avatar-item').forEach(i => i.classList.remove('active'));
-    el.classList.add('active');
+    if (el) el.classList.add('active');
     
     const viewer = document.getElementById('prof-main-viewer');
     
-    // 1. 获取绑定在该实体下的所有 NPC
+    // 2. 获取绑定在该实体下的所有 NPC
     const allNpcs = await loadFromDB('npc_list') || [];
     const linkedNpcs = allNpcs.filter(n => n.bind_id === entity.id);
 
-    // 2. 构造 NPC 卡片 HTML (极简黑白艺术风)
+    // 3. 构造 NPC 卡片 HTML (极简黑白艺术风)
     let npcCardsHtml = linkedNpcs.map(npc => `
         <div class="prof-npc-mini-card" onclick="profOpenNpcDetail('${npc.id}')">
             <div class="npc-card-side">
@@ -28660,11 +31995,11 @@ window.profSelectEntity = async function(entity, el) {
         </div>
     `).join('');
 
-    // 3. 渲染主视图
+    // 4. 渲染主视图
     viewer.innerHTML = `
         <div class="prof-card">
             <div class="prof-entity-name">${entity.name}</div>
-            <div class="prof-entity-tag">${currentProfCategory}</div>
+            <div class="prof-entity-tag">${currentProfCategory || 'ENTITY'}</div>
             <p class="prof-entity-desc">${entity.desc || 'No profile data available.'}</p>
             
             ${linkedNpcs.length > 0 ? `
@@ -28676,18 +32011,31 @@ window.profSelectEntity = async function(entity, el) {
         </div>
     `;
 
-    // 🚨 核心改动：在切换角色时，物理锁定当前金库的角色 ID
+    // 5. 🚨 核心改动：物理锁定当前金库的角色 ID
     window.currentVaultCharID = entity.id;
     window.currentVaultCharName = entity.name;
-    window.currentVaultCharBio = entity.desc || ""; 
+    // 兼容 bio 和 desc 字段
+    window.currentVaultCharBio = entity.desc || entity.bio || ""; 
 
-    // 🚨 关键：只要选中了角色，立刻强制刷新金库的渲染，保证数据同步
+    // 6. 🚨 关键修复：这里之前报错是因为直接用了 id，必须用 entity.id
+    localStorage.setItem('LUNE_LAST_SELECTED_CHAR_ID', entity.id);
+    localStorage.setItem('LUNE_LAST_SELECTED_CHAR_NAME', entity.name);
+    localStorage.setItem('LUNE_LAST_SELECTED_CHAR_BIO', window.currentVaultCharBio);
+
+    console.log(`[系统] 角色已切换: ${entity.name} (ID: ${entity.id})`);
+
+    // 7. 触发金库数据同步
     if (typeof window.syncVaultDataToUI === 'function') {
         window.syncVaultDataToUI();
-        console.log(`[同步协议] 已切换至角色 ${entity.name}，金库数据已重载。`);
     }
     
-    if(navigator.vibrate) navigator.vibrate(5);
+    // 8. 刷新记录页列表
+    if (typeof renderCharExpenseList === 'function') {
+        renderCharExpenseList();
+    }
+    
+    // 9. 震动反馈
+    if(navigator.vibrate) navigator.vibrate(10);
 };
 
 /**
@@ -29366,7 +32714,11 @@ window.openChatWindow = async function(contactId) {
 // 🚨 终极解决方案：在页面加载完成时立刻刷新列表 🚨
 // ----------------------------------------------------
 document.addEventListener('DOMContentLoaded', () => {
-    setTimeout(renderLmsgList, 500); // 延迟半秒确保 IndexedDB 已就绪
+    // 如果当前默认显示的是 Dashboard，立即初始化
+    const dashPanel = document.getElementById('tab-dashboard');
+    if (dashPanel && (dashPanel.classList.contains('active') || dashPanel.style.display !== 'none')) {
+        setTimeout(window.triggerDashboardInit, 200); // 延迟200ms等待数据库就绪
+    }
 });
 
 window.closeChatWindow = function() {
@@ -48062,7 +51414,7 @@ async function profInitSelectors() {
 }
 
 /**
- * 🛠️ 统一系统服务初始化 (强力校准版)
+ * 🛠️ 统一系统服务初始化 (完整同步版)
  */
 async function initSystemServices() {
     const SYSTEM_SERVICES = [
@@ -48072,7 +51424,8 @@ async function initSystemServices() {
             avatar: "https://api.dicebear.com/7.x/identicon/svg?seed=weather&backgroundColor=00aaff",
             desc: "提供精准的实时天气预报与气象灾害预警。",
             category: "SYSTEM",
-            type: "UTILITY"
+            type: "UTILITY",
+            isSystem: true // 标记方便后续识别
         },
         {
             id: "SERVICE_CARRIER",
@@ -48080,7 +51433,8 @@ async function initSystemServices() {
             avatar: "https://api.dicebear.com/7.x/identicon/svg?seed=carrier&backgroundColor=44ff44",
             desc: "管理您的移动网络、话费账单及套餐余量。",
             category: "SYSTEM",
-            type: "UTILITY"
+            type: "UTILITY",
+            isSystem: true
         },
         {
             id: "SERVICE_SECURITY",
@@ -48088,7 +51442,8 @@ async function initSystemServices() {
             avatar: "https://api.dicebear.com/7.x/identicon/svg?seed=security&backgroundColor=ff4444",
             desc: "系统安全协议核心。负责发放动态验证码、拦截风险访问。",
             category: "SYSTEM",
-            type: "UTILITY"
+            type: "UTILITY",
+            isSystem: true
         },
         {
             id: "SERVICE_CALENDAR",
@@ -48096,7 +51451,8 @@ async function initSystemServices() {
             avatar: "https://api.dicebear.com/7.x/identicon/svg?seed=calendar&backgroundColor=ffaa00",
             desc: "同步您的所有待办事项与节假日。",
             category: "SYSTEM",
-            type: "UTILITY"
+            type: "UTILITY",
+            isSystem: true
         },
         {
             id: "SYSTEM_ARCHIVE_ENTITY", 
@@ -48104,7 +51460,8 @@ async function initSystemServices() {
             avatar: "https://api.dicebear.com/7.x/shapes/svg?seed=ArchiveCore&backgroundColor=000000",
             desc: "存储所有断连的实体节点与碎片协议。",
             category: "SYSTEM",
-            type: "STORAGE"
+            type: "STORAGE",
+            isSystem: true
         },
         {
             id: "SERVICE_FINANCE_CORE", 
@@ -48112,73 +51469,56 @@ async function initSystemServices() {
             avatar: "https://api.dicebear.com/7.x/identicon/svg?seed=finance&backgroundColor=ffd700",
             desc: "Lune 系统财务协议的核心。负责监控每一笔资产流入。",
             category: "SYSTEM",
-            type: "FINANCE"
+            type: "FINANCE",
+            isSystem: true
         }
     ];
-
-    // --- 🚀 核心修改开始 ---
 
     // 1. 获取当前的角色书列表
     let charList = await loadFromDB('char_list') || [];
     
-    // 2. 执行“去系统化”：如果角色书里藏着系统 NPC，直接删掉
-    // 我们只保留那些 ID 不在 SYSTEM_SERVICES 里的角色
+    // 2. 执行“去系统化”：从 char_list 中移除系统服务
     const systemIds = SYSTEM_SERVICES.map(s => s.id);
     let cleanedCharList = charList.filter(c => !systemIds.includes(c.id));
 
-    // 3. 如果角色书被清理了，存回数据库
     if (charList.length !== cleanedCharList.length) {
         await saveToDB('char_list', cleanedCharList);
         console.log("Character Book cleaned: System services removed.");
     }
 
-    // 4. 独立存储：将系统服务存入专用的“受保护”键位
-    // 这样短信 App 渲染 SYSTEM 标签时，去读 system_services_db 即可
+    // 3. 独立存储：存入 system_services_db (给档案App的System分页用)
     await saveToDB('system_services_db', SYSTEM_SERVICES);
     
-    // --- 🚀 核心修改结束 ---
+    // 4. 🚀 关键同步：必须同步到 chat_friends (通讯录)，否则短信搜不到
+    let friends = await loadFromDB('chat_friends') || [];
+    let updatedFriends = [...friends];
+    let hasChange = false;
+
+    for (let sys of SYSTEM_SERVICES) {
+        // 检查通讯录里有没有这个系统号
+        const exists = updatedFriends.some(f => f.id === sys.id);
+        if (!exists) {
+            updatedFriends.push({
+                id: sys.id,
+                name: sys.name,
+                avatar: sys.avatar,
+                desc: sys.desc,
+                isSystem: true, // 标记为系统号
+                isGroup: false
+            });
+            hasChange = true;
+        }
+    }
+
+    if (hasChange) {
+        await saveToDB('chat_friends', updatedFriends);
+        console.log("System Services synced to Contact List.");
+    }
 
     console.log("Lune System: Core Services Initialized & Isolated.");
 }
 
-// 切换导航 Tab
-function switchWTab(index, title) {
-    // 1. 切换页面显隐
-    const sections = document.querySelectorAll('.wallet-section');
-    sections.forEach(s => s.classList.remove('active'));
-    if(sections[index]) sections[index].classList.add('active');
 
-    // 2. 切换底部按钮高亮
-    const btns = document.querySelectorAll('.nav-btn');
-    btns.forEach(b => b.classList.remove('active'));
-    if(btns[index]) btns[index].classList.add('active');
-
-    // --- 🚀 联动逻辑开始 ---
-    
-    // 如果是 CARD 页面 (索引 0)
-    if (index === 0) {
-        if (typeof renderSavedCards === 'function') renderSavedCards();
-    }
-    
-    // 如果是 SEND 页面 (索引 1)
-    if (index === 1) {
-        if (typeof refreshPickers === 'function') refreshPickers();
-    }
-
-    // ⚡【新增】如果是 LOG/档案 页面 (索引 2)
-    if (index === 2) {
-        // 强制触发角色书数据同步，渲染票据卡片
-        if (typeof renderCharacterArchives === 'function') {
-            renderCharacterArchives();
-        }
-    }
-
-    // --- 联动逻辑结束 ---
-
-    if (window.navigator && window.navigator.vibrate) {
-        window.navigator.vibrate(10);
-    }
-}
 
 // 适配原系统的 openApp 函数
 // 请在你的原有 openApp 函数中的 idMap 里添加这一行：
@@ -48843,8 +52183,10 @@ async function processTransfer() {
         if (window.selectedCharId === null) return showWalletNotice("请选择转账目标角色");
         if (parseFloat(targetCard.balance || 0) < amount) return showWalletNotice("余额不足");
 
+        // 扣用户的钱
         targetCard.balance = (parseFloat(targetCard.balance || 0) - amount).toFixed(2);
 
+        // 记一笔用户流出账
         saveLogToStorage({
             date: new Date().toLocaleDateString('en-US',{month:'short',day:'2-digit'}).toUpperCase(),
             name: "SENT TO CHARACTER",
@@ -48853,25 +52195,27 @@ async function processTransfer() {
             type: 'outflow',
             cardIndex: window.selectedCardIdx
         });
+
+        // 🔥🔥🔥 关键新增：把这笔收入写入角色的日记录本！！！ 🔥🔥🔥
+        // 这一步如果不加，你那边的“刷新转账”按钮就读不到数据
+        addIncomeToEntityLog(window.selectedCharId, amount, memo);
     }
 
     // 5. 资产数据持久化
     localStorage.setItem('lune_wallets', JSON.stringify(cards));
 
-    // 6. 准备通知所需的关键变量 (统一使用 last4)
+    // 6. 准备通知所需的关键变量
     const last4 = targetCard.number.slice(-4);
 
-    // 7. 发送短信及系统通知 (异步执行，确保不阻塞 UI)
+    // 7. 发送短信及系统通知 (异步)
     try {
         if (window.currentSendMode === 'recharge') {
-            // 充值模式通知
             await sendFinanceSMS('recharge', {
                 last4: last4,
                 amount: amount.toFixed(2),
                 balance: targetCard.balance
             });
         } else {
-            // 转账模式通知：需先获取角色名单
             const charList = await loadFromDB('char_list') || [];
             const targetChar = charList.find(c => String(c.id) === String(window.selectedCharId));
             
@@ -48887,7 +52231,7 @@ async function processTransfer() {
         console.error("Notification Error:", e);
     }
     
-    // 8. 全局 UI 同步：刷卡片、刷总额、刷记录
+    // 8. 全局 UI 同步
     if (typeof renderSavedCards === 'function') renderSavedCards();
     if (typeof updateBalanceDisplay === 'function') updateBalanceDisplay();
     if (typeof applyFilterProtocol === 'function') applyFilterProtocol();
@@ -49282,7 +52626,7 @@ async function renderCharacterArchives() {
 }
 
 /**
- * 核心修复：增加 null 检查，防止找不到元素时报错
+ * 核心修复：增加 null 检查，并联动强制刷新月度账单
  */
 async function openDeepArchive(input) {
     const overlay = document.getElementById('bank-detail-overlay');
@@ -49292,34 +52636,49 @@ async function openDeepArchive(input) {
     }
 
     let charData = null;
+    // 1. 确定角色数据源
     if (typeof input === 'object' && input !== null) {
         charData = input;
     } else {
-        // 如果你的数据库函数叫 loadFromDB，确保它能正常工作
         const allChars = await loadFromDB('char_list') || [];
         charData = allChars.find(c => c.id.toString() === input.toString());
     }
 
+    // 2. 锁定全局状态
     if (charData) {
         window.currentVaultCharName = charData.name;
-        window.currentVaultCharID = charData.id || charData.name;
+        window.currentVaultCharID = charData.id || charData.name; // 👈 ID 更新了
         window.currentVaultCharBio = charData.bio || charData.description || "身份已加密。";
         
-        // --- 修复点：使用 ?.innerText 确保不崩溃 ---
+        // 更新顶部的余额显示
         const b1 = document.getElementById('current-balance-num');
         const b2 = document.getElementById('detail-balance-value');
         
         if (b1) b1.innerText = charData.balance || "0.00";
         if (b2) b2.innerText = charData.balance || "0.00";
         
-        console.log(`[档案中心] 锁定: ${window.currentVaultCharName}`);
+        console.log(`[档案中心] 锁定角色: ${window.currentVaultCharName} (ID: ${window.currentVaultCharID})`);
     }
 
+    // 3. 显示弹窗
     overlay.classList.add('show');
     if (window.navigator.vibrate) window.navigator.vibrate(15);
     
-    // 确保 renderNPCRecords 函数也存在且无误
+    // 4. 刷新 NPC 列表 (保留原有逻辑)
     if (typeof renderNPCRecords === 'function') renderNPCRecords(); 
+
+    // --- 🚨🚨🚨 核心修复补丁开始 🚨🚨🚨 ---
+    // ID 变了，必须通知月度模块“重新加载数据并强制显示”
+    // 否则这里显示的还是上一个角色的账单，或者干脆是空白
+    if (typeof window.triggerDashboardInit === 'function') {
+        // 稍微延迟 50ms，等 overlay 的动画开始后再渲染，避免卡顿
+        setTimeout(() => {
+            window.triggerDashboardInit(); 
+        }, 50);
+    } else {
+        console.warn("⚠️ 警告：缺少 triggerDashboardInit，月度账单可能未刷新");
+    }
+    // --- 核心修复补丁结束 ---
 }
 
 /**
@@ -49375,60 +52734,10 @@ function confirmBalanceEdit() {
 }
 
 /**
- * 消费模块内部切换 (不影响主页面导航)
- */
-function toggleConsumptionView(type, btn) {
-    // 切换 Tab 高亮
-    const tabs = btn.parentElement.querySelectorAll('.con-tab');
-    tabs.forEach(t => t.classList.remove('active'));
-    btn.classList.add('active');
-
-    // 切换内容显示
-    document.getElementById('view-monthly').classList.remove('active');
-    document.getElementById('view-yearly').classList.remove('active');
-    
-    if(type === 'monthly') document.getElementById('view-monthly').classList.add('active');
-    else document.getElementById('view-yearly').classList.add('active');
-
-    if (window.navigator.vibrate) window.navigator.vibrate(5);
-}
-
-/**
  * 2. 关闭函数
  */
 function closeBankDetail() {
     document.getElementById('bank-detail-overlay').classList.remove('show');
-}
-
-/**
- * 3. 独立标签页切换
- */
-function switchBankTab(index, element) {
-    // 更新导航按钮
-    document.querySelectorAll('.nav-b-item').forEach(item => item.classList.remove('active'));
-    element.classList.add('active');
-
-    // 更新显示页面
-    const panels = document.querySelectorAll('.bank-tab-panel');
-    panels.forEach((panel, i) => {
-        panel.classList.remove('active');
-        if (i === index) panel.classList.add('active');
-    });
-
-    if (window.navigator.vibrate) window.navigator.vibrate(8);
-}
-
-/**
- * 4. 联动你的 Filter Modal (可选)
- * 如果你想在点击“APPLY PROTOCOL”后进入详情页，可以这样写：
- */
-function applyFilterProtocol() {
-    // 隐藏原来的筛选框
-    const filterModal = document.getElementById('wallet-filter-modal');
-    if(filterModal) filterModal.style.display = 'none';
-    
-    // 打开银行详情页
-    openDeepArchive();
 }
 
 /**
@@ -49683,6 +52992,173 @@ function getStoredNPCBindings() {
 // 关闭控制
 function closeNPCList() { document.getElementById('npc-binding-list-overlay').style.display = 'none'; }
 function closeStoryModal() { document.getElementById('binding-story-modal').style.display = 'none'; }
+
+/**
+ * 🛠️ 通用工具：调用 AI 接口
+ */
+async function callAIForStory(sysPrompt, usrPrompt) {
+    const apiKey = localStorage.getItem('gpt_key');
+    const apiUrl = (localStorage.getItem('gpt_url') || "https://api.openai.com/v1").replace(/\/+$/, "");
+    const model = localStorage.getItem('gpt_model') || "gpt-3.5-turbo";
+
+    if (!apiKey) throw new Error("API Key Missing");
+
+    const response = await fetch(`${apiUrl}/chat/completions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+        body: JSON.stringify({
+            model: model,
+            messages: [{role:"system", content:sysPrompt}, {role:"user", content:usrPrompt}],
+            temperature: 0.85 // 提高一点创造性
+        })
+    });
+
+    const data = await response.json();
+    return data.choices[0].message.content;
+}
+
+/**
+ * 🛠️ 通用工具：格式化文本 (换行转HTML)
+ */
+function formatStoryText(text) {
+    // 把 \n 换成 <br>, 并且给每一段加一点间距
+    return text.replace(/\n/g, '<br>');
+}
+
+function renderTransfersInModal(transfers) {
+    const box = document.getElementById('pending-transfer-box');
+    const list = document.getElementById('transfer-list-content');
+    
+    if (transfers.length > 0) {
+        box.style.display = 'block';
+        list.innerHTML = transfers.map(t => `
+            <div class="transfer-item-row">
+                <span>USER_TRANSFER (用户转账)</span>
+                <span style="font-weight:bold;">+￥${parseFloat(t.amount).toLocaleString()}</span>
+            </div>
+            <div style="font-size:9px; color:#666;">NOTE: ${t.note || '无备注'}</div>
+        `).join('');
+    } else {
+        box.style.display = 'none';
+    }
+}
+
+/**
+ * 💾 4. 保存并渲染 (确保历史不丢失版)
+ */
+function saveAndRenderEntityDaily(data) {
+    const charID = window.currentVaultCharID;
+    const today = new Date().toISOString().split('T')[0];
+    
+    // 1. 计算今日总额
+    const dayTotal = data.reduce((acc, item) => item.type === 'income' ? acc + item.amount : acc - item.amount, 0);
+
+    const newRecord = {
+        date: today,
+        items: data,
+        total: dayTotal,
+        timestamp: Date.now() // 加个时间戳，确保唯一性
+    };
+
+    // --- 🚨 核心逻辑：历史记录保护 ---
+    
+    // A. 读取历史：先看看以前存了多少
+    const listKey = `LUNE_ENTITY_LOGS_${charID}`;
+    let allLogs = JSON.parse(localStorage.getItem(listKey)) || [];
+
+    // B. 防重复：如果“今天”已经生成过一次了，就把旧的“今天”删掉，换成新的
+    // (注意：这只会覆盖今天的，不会动昨天的)
+    allLogs = allLogs.filter(l => l.date !== today);
+
+    // C. 倒序插入：把新的放在数组第一个 (Top)
+    allLogs.unshift(newRecord); 
+
+    // D. 永久入库
+    localStorage.setItem(listKey, JSON.stringify(allLogs));
+    
+    // --- 逻辑结束 ---
+
+    // UI 反馈
+    closeEntityDailyModal();
+    renderCharExpenseList(); // 刷新主页列表
+    
+    if(navigator.vibrate) navigator.vibrate([50, 50, 50]);
+    alert("✓ 今日数据流已录入实体矩阵");
+}
+
+/**
+ * 📝 辅助函数：直接往角色今天的日志里加一笔收入
+ * (用于连接钱包系统和角色日记录系统)
+ */
+function addIncomeToEntityLog(charID, amount, memo) {
+    if (!charID) return;
+    
+    const listKey = `LUNE_ENTITY_LOGS_${charID}`;
+    let logs = JSON.parse(localStorage.getItem(listKey)) || [];
+    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+
+    // 1. 找今天是否已经有日志了
+    let todayLog = logs.find(l => l.date === today);
+
+    // 2. 如果今天还没生成过日志 (AI 还没跑)，先创建一个空的“壳”
+    if (!todayLog) {
+        todayLog = {
+            date: today,
+            items: [], 
+            total: 0,
+            timestamp: Date.now()
+        };
+        logs.unshift(todayLog); // 放到最前面
+    }
+
+    // 3. 往 items 里加这一笔收入
+    todayLog.items.push({
+        type: 'income',
+        amount: parseFloat(amount),
+        desc: `[用户转账] ${memo}` 
+    });
+
+    // 4. 更新总金额 (收入增加)
+    todayLog.total += parseFloat(amount);
+
+    // 5. 保存回去
+    localStorage.setItem(listKey, JSON.stringify(logs));
+    
+    console.log(`[系统] 资金已同步至角色日记录: +${amount}`);
+}
+/**
+ * 🕵️ 4. 检查按钮状态 (进弹窗时调用)
+ */
+function checkDailyButtonState(goal) {
+    const btn = document.getElementById('btn-daily-deposit');
+    const hint = document.getElementById('daily-deposit-hint');
+    if (!btn) return;
+
+    const todayStr = new Date().toLocaleDateString();
+    let isDone = false;
+
+    if (goal && goal.logs && goal.logs.length > 0) {
+        if (goal.logs[0].fullDate === todayStr && goal.logs[0].isDailyCheckIn) {
+            isDone = true;
+        }
+    }
+
+    if (isDone) {
+        btn.innerText = "✓ COMPLETED (今日已完成)";
+        btn.disabled = true;
+        btn.style.background = "#eee";
+        btn.style.color = "#aaa";
+        btn.style.border = "2px solid #eee";
+        if(hint) hint.innerText = "NEXT CHECK-IN: TOMORROW";
+    } else {
+        btn.innerText = "+ EXECUTE_DAILY_DEPOSIT (每日存入)";
+        btn.disabled = false;
+        btn.style.background = "#000";
+        btn.style.color = "#fff";
+        btn.style.border = "2px solid #000";
+        if(hint) hint.innerText = "STATUS: READY // 待打卡";
+    }
+}
 
 </script>
 </body>
