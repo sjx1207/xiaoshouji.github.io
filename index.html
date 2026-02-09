@@ -23295,6 +23295,19 @@ input[type="range"] { width: 100%; accent-color: #000; cursor: pointer; }
     0% { height: 4px; }
     100% { height: 12px; }
 }
+.data-item { position: relative; } /* 必须设为相对定位 */
+.badge-count {
+    position: absolute;
+    top: -5px; right: 5px;
+    background: #FF3B30; /* 苹果红 */
+    color: white;
+    font-size: 10px;
+    font-weight: 800;
+    padding: 2px 6px;
+    border-radius: 10px;
+    border: 2px solid #fff;
+    display: none; /* 默认隐藏 */
+}
 
 </style>
 </head>
@@ -24910,16 +24923,22 @@ input[type="range"] { width: 100%; accent-color: #000; cursor: pointer; }
 
                 <div class="moments-data-dashboard">
                     <div class="data-entry-grid">
-                        <div class="data-item" onclick="/* 进入点赞列表 */">
-                            <div class="data-icon" style="color: #1c1c1e; background: #f2f2f7;">
-                                <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                        <div class="data-item" onclick="handleOpenLikes()">
+                            <div class="badge-count" id="like-badge">0</div> <div class="data-icon" style="color: #1c1c1e; background: #f2f2f7;">
+                                <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                                </svg>
                             </div>
                             <span>赞过</span>
                         </div>
 
-                        <div class="data-item" onclick="/* 进入评论列表 */">
+                        <div class="data-item" onclick="handleOpenComments()" style="position: relative;">
+                            <div class="badge-count" id="comment-badge" style="display: none;">0</div>
+                            
                             <div class="data-icon" style="color: #1c1c1e; background: #f2f2f7;">
-                                <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+                                <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                                    <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
+                                </svg>
                             </div>
                             <span>评论</span>
                         </div>
@@ -24942,14 +24961,16 @@ input[type="range"] { width: 100%; accent-color: #000; cursor: pointer; }
                         </div>
                     </div>
 
-                    <div class="moments-trace-bar" onclick="/* 进入访客详情页 */">
+                    <div class="moments-trace-bar" onclick="handleOpenVisitors()" style="position: relative;">
+                        <div class="badge-count" id="visitor-badge" style="display: none;">0</div>
+                        
                         <div class="trace-info">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                             <span>最近访客</span>
                         </div>
                         <div class="trace-avatars" id="trace-avatars-list">
                             </div>
-                        <div class="trace-count">0</div>
+                        <div class="trace-count" id="trace-count-val">0</div>
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="3"><polyline points="9 18 15 12 9 6"></polyline></svg>
                     </div>
                 </div>
@@ -29978,6 +29999,610 @@ input[type="range"] { width: 100%; accent-color: #000; cursor: pointer; }
 
 <script>
 /**
+ * 👤 Lune Essence - 访客详情页
+ */
+window.openLuneVisitors = function(totalCount, visitors = []) {
+    const old = document.getElementById('lune-visitors-page');
+    if (old) old.remove();
+
+    const style = document.createElement('style');
+    style.id = 'lune-visitors-style';
+    style.innerHTML = `
+        @import url('https://fonts.googleapis.com/css2?family=Urbanist:wght@600;800&display=swap');
+        #lune-visitors-page {
+            position: fixed; inset: 0; z-index: 2147483652; background: #fff;
+            font-family: 'Urbanist', sans-serif; display: flex; flex-direction: column;
+            animation: luneFadeIn 0.3s ease-out;
+        }
+        .lv-header { padding: 70px 30px 20px 30px; border-bottom: 1px solid #f2f2f2; display: flex; justify-content: space-between; align-items: flex-end; }
+        .lv-title-box h1 { font-size: 40px; font-weight: 800; margin: 0; letter-spacing: -2px; }
+        .lv-title-box span { font-size: 14px; color: #888; font-weight: 600; text-transform: uppercase; }
+        .lv-close { width: 40px; height: 40px; background: #000; color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+
+        .lv-main { flex: 1; overflow-y: auto; padding: 10px 30px 100px 30px; }
+        .lv-main::-webkit-scrollbar { width: 0; }
+
+        .lv-item { display: flex; align-items: center; justify-content: space-between; padding: 15px 0; border-bottom: 1px solid #f9f9f9; }
+        .lv-left { display: flex; align-items: center; gap: 15px; }
+        .lv-avatar { width: 52px; height: 52px; border-radius: 50%; object-fit: cover; border: 1px solid #eee; }
+        .lv-info { display: flex; flex-direction: column; }
+        .lv-name { font-weight: 800; font-size: 16px; }
+        .lv-time { font-size: 12px; color: #bbb; margin-top: 2px; }
+
+        /* 关注按钮 */
+        .lv-btn-follow {
+            padding: 8px 18px; background: #000; color: #fff; border-radius: 8px;
+            font-size: 12px; font-weight: 800; cursor: pointer; transition: 0.2s;
+            border: 1px solid #000;
+        }
+        .lv-btn-follow.active { background: #fff; color: #000; border-color: #ddd; }
+
+        @keyframes luneFadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    `;
+    document.head.appendChild(style);
+
+    const html = `
+        <div id="lune-visitors-page">
+            <div class="lv-header">
+                <div class="lv-title-box">
+                    <span>${totalCount.toLocaleString()} Total Views</span>
+                    <h1>Views</h1>
+                </div>
+                <div class="lv-close" onclick="document.getElementById('lune-visitors-page').remove()">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </div>
+            </div>
+            <div class="lv-main">
+                ${visitors.map(v => `
+                    <div class="lv-item">
+                        <div class="lv-left">
+                            <img src="${v.avatar}" class="lv-avatar">
+                            <div class="lv-info">
+                                <span class="lv-name">${v.name}</span>
+                                <span class="lv-time">${v.time || 'JUST NOW'}</span>
+                            </div>
+                        </div>
+                        <div class="lv-btn-follow" onclick="this.classList.toggle('active'); this.innerText = this.classList.contains('active') ? 'FOLLOWING' : 'FOLLOW';">
+                            FOLLOW
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', html);
+};
+
+/**
+ * 🛠️ 进入访客列表，清除红点
+ */
+window.handleOpenVisitors = async function() {
+    const activeIdx = window.currentLuneStoryIndex || 0;
+    let stories = await window.ib.getItem('my_active_story');
+    if (!stories || !stories[activeIdx]) return;
+    
+    let story = stories[activeIdx];
+
+    // 1. 🔥 同步已读访客数
+    story.lastSeenViewers = story.viewers || 0;
+    
+    // 保存到数据库
+    stories[activeIdx] = story;
+    await window.ib.setItem('my_active_story', stories);
+    
+    // 2. 隐藏红点
+    const badge = document.getElementById('visitor-badge');
+    if (badge) badge.style.display = 'none';
+
+    // 3. 准备访客数据 (提取所有评论过的人作为真实访客)
+    const visitors = (story.comments || []).map(c => ({
+        name: c.name,
+        avatar: c.avatar,
+        time: 'STORY VISITOR'
+    }));
+
+    // 4. 打开页面 (传入总浏览量和列表)
+    window.openLuneVisitors(story.viewers || 0, visitors);
+};
+
+window.handleInteraction = async function(mode) {
+    const activeIdx = window.currentLuneStoryIndex || 0;
+    let stories = await window.ib.getItem('my_active_story');
+    if (!stories || !stories[activeIdx]) return;
+    
+    let story = stories[activeIdx];
+
+    // 同步媒体内容
+    const media = story.media || ''; // 图片链接
+    const text = story.text || '';   // 文字内容
+
+    if (mode === 'likes') {
+        story.lastSeenLikes = story.likes || 0;
+        document.getElementById('like-badge').style.display = 'none';
+        const likers = (story.comments || []).map(c => ({ name: c.name, avatar: c.avatar, text: 'Liked this' }));
+        
+        window.openLuneDetail({
+            title: 'Likes',
+            count: story.likes || 0,
+            items: likers,
+            type: 'story',
+            mediaUrl: media,
+            storyText: text
+        });
+    } else {
+        story.lastSeenComments = (story.comments || []).length;
+        document.getElementById('comment-badge').style.display = 'none';
+        
+        window.openLuneDetail({
+            title: 'Comments',
+            count: (story.comments || []).length,
+            items: story.comments || [],
+            type: 'story',
+            mediaUrl: media,
+            storyText: text
+        });
+    }
+
+    stories[activeIdx] = story;
+    await window.ib.setItem('my_active_story', stories);
+};
+
+window.openLuneDetail = function({ title, count, items, type = 'story', mediaUrl = '', storyText = '' }) {
+    const old = document.getElementById('lune-detail-page');
+    if (old) old.remove();
+
+    const style = document.createElement('style');
+    style.id = 'lune-detail-style';
+    style.innerHTML = `
+        @import url('https://fonts.googleapis.com/css2?family=Urbanist:wght@600;800&display=swap');
+        #lune-detail-page {
+            position: fixed; inset: 0; z-index: 2147483650;
+            background: #FAFAFA; font-family: 'Urbanist', sans-serif;
+            display: flex; flex-direction: column;
+            animation: luneSlideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .ld-header { padding: 70px 30px 30px 30px; display: flex; justify-content: space-between; align-items: flex-end; background: #fff; border-bottom: 1px solid #f0f0f0; }
+        .ld-title-box h1 { font-size: 40px; font-weight: 800; margin: 0; letter-spacing: -2px; line-height: 1; }
+        .ld-title-box span { font-size: 14px; color: #aaa; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
+        .ld-exit { width: 40px; height: 40px; background: #000; color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        
+        .ld-main { flex: 1; overflow-y: auto; padding: 20px 0 100px 0; }
+        .ld-item { display: grid; grid-template-columns: 80px 1fr 80px; align-items: center; padding: 20px 30px; }
+        .ld-avatar { width: 50px; height: 50px; border-radius: 50%; object-fit: cover; border: 1.5px solid #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+        .ld-info { display: flex; flex-direction: column; gap: 4px; padding-right: 10px; }
+        .ld-user { font-weight: 800; font-size: 16px; color: #000; }
+        .ld-text { font-size: 14px; color: #666; line-height: 1.4; }
+        .ld-time { font-size: 11px; color: #ccc; font-weight: 600; }
+
+        /* 🔥 缩略图增强：支持文字预览 */
+        .ld-media-window {
+            width: 50px; height: ${type === 'story' ? '75px' : '50px'};
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 6px; overflow: hidden; border: 1px solid rgba(0,0,0,0.08);
+            display: flex; align-items: center; justify-content: center; color: #fff; font-size: 8px; font-weight: 800; text-align: center;
+        }
+        .ld-media-img { width: 100%; height: 100%; object-fit: cover; }
+    `;
+    document.head.appendChild(style);
+
+    // 判断是图片还是纯文字
+    const isImg = mediaUrl && mediaUrl.startsWith('http');
+    const thumbHtml = isImg 
+        ? `<img src="${mediaUrl}" class="ld-media-img" onerror="this.style.display='none'">` 
+        : `<span style="padding:4px">${storyText.substring(0, 10)}...</span>`;
+
+    const html = `
+        <div id="lune-detail-page">
+            <div class="ld-header">
+                <div class="ld-title-box">
+                    <span>${count} Interactions</span>
+                    <h1>${title}</h1>
+                </div>
+                <div class="ld-exit" onclick="document.getElementById('lune-detail-page').remove()">✕</div>
+            </div>
+            <div class="ld-main">
+                ${items.map(item => `
+                    <div class="ld-item">
+                        <div style="display:flex; justify-content:center;">
+                            <img src="${item.avatar || 'https://api.dicebear.com/7.x/notionists/svg?seed='+item.name}" class="ld-avatar">
+                        </div>
+                        <div class="ld-info">
+                            <span class="ld-user">${item.name}</span>
+                            <span class="ld-text">${item.text}</span>
+                            <span class="ld-time">SYNCED NOW</span>
+                        </div>
+                        <div class="ld-media-window">${thumbHtml}</div>
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', html);
+};
+
+/**
+ * 🛠️ 进入评论列表，清除评论红点
+ */
+window.handleOpenComments = async function() {
+    const activeIdx = window.currentLuneStoryIndex || 0;
+    let stories = await window.ib.getItem('my_active_story');
+    if (!stories || !stories[activeIdx]) return;
+    
+    let story = stories[activeIdx];
+
+    // 1. 🔥 关键：同步已读评论数
+    story.lastSeenComments = (story.comments || []).length;
+    
+    // 保存到数据库
+    stories[activeIdx] = story;
+    await window.ib.setItem('my_active_story', stories);
+    
+    // 2. 隐藏红点
+    const badge = document.getElementById('comment-badge');
+    if (badge) badge.style.display = 'none';
+
+    // 3. 打开页面
+    window.openCommentsEssence(story.comments || [], 'story', story.media || '');
+};
+
+/**
+ * 💬 Lune Essence - 评论详情页
+ */
+window.openCommentsEssence = function(comments = [], type = 'story', mediaUrl = '') {
+    const old = document.getElementById('lune-comments-page');
+    if (old) old.remove();
+
+    const style = document.createElement('style');
+    style.id = 'lune-comments-style';
+    style.innerHTML = `
+        #lune-comments-page {
+            position: fixed; inset: 0; z-index: 2147483651; background: #fff;
+            font-family: 'Inter', sans-serif; display: flex; flex-direction: column;
+            animation: essFadeIn 0.3s ease-out;
+        }
+        .ess-header { padding: 60px 8% 20px 8%; display: flex; justify-content: space-between; align-items: baseline; }
+        .ess-title { font-size: 36px; font-weight: 800; letter-spacing: -1.5px; }
+        .ess-count { font-size: 14px; color: #888; margin-left: 8px; }
+        .ess-close { cursor: pointer; font-size: 12px; font-weight: 700; background: #000; color: #fff; padding: 6px 15px; border-radius: 4px; }
+        
+        .ess-main { flex: 1; overflow-y: auto; padding: 0 8% 80px 8%; }
+        .ess-item { 
+            display: grid; 
+            grid-template-columns: 54px 1fr 50px; 
+            align-items: center; 
+            padding: 18px 0; 
+            border-bottom: 1px solid #f2f2f2; 
+        }
+        .ess-avatar { width: 42px; height: 42px; border-radius: 50%; object-fit: cover; border: 1px solid #eee; }
+        .ess-info { display: flex; flex-direction: column; padding-right: 10px; }
+        .ess-user { font-weight: 700; font-size: 15px; color: #1a1a1a; }
+        .ess-comment-text { color: #444; font-size: 14px; margin-top: 3px; line-height: 1.4; }
+        .ess-time { color: #ccc; font-size: 11px; margin-top: 5px; }
+
+        .ess-item-thumb-box { width: 44px; height: 44px; border-radius: 6px; overflow: hidden; background: #f0f0f0; border: 1px solid rgba(0,0,0,0.05); }
+        .ess-item-thumb-box.is-story { height: 60px; }
+        .ess-item-thumb-img { width: 100%; height: 100%; object-fit: cover; }
+    `;
+    document.head.appendChild(style);
+
+    const html = `
+        <div id="lune-comments-page">
+            <div class="ess-header">
+                <div>
+                    <span class="ess-title">Comments</span>
+                    <span class="ess-count">/ ${comments.length}</span>
+                </div>
+                <div class="ess-close" onclick="document.getElementById('lune-comments-page').remove()">EXIT</div>
+            </div>
+            <div class="ess-main">
+                ${comments.map(c => `
+                    <div class="ess-item">
+                        <img src="${c.avatar}" class="ess-avatar">
+                        <div class="ess-info">
+                            <span class="ess-user">${c.name}</span>
+                            <span class="ess-comment-text">${c.text}</span>
+                            <span class="ess-time">Just now</span>
+                        </div>
+                        <div class="ess-item-thumb-box ${type === 'story' ? 'is-story' : ''}">
+                            <img src="${mediaUrl}" class="ess-item-thumb-img">
+                        </div>
+                    </div>
+                `).reverse().join('')} </div>
+        </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', html);
+};
+
+/**
+ * 🛠️ 只有进入列表，红点才会消失
+ */
+window.handleOpenLikes = async function() {
+    const activeIdx = window.currentLuneStoryIndex || 0;
+    let stories = await window.ib.getItem('my_active_story');
+    if (!stories || !stories[activeIdx]) return;
+    
+    let story = stories[activeIdx];
+
+    // 1. 🔥 关键：在这里才同步已读状态
+    story.lastSeenLikes = story.likes || 0; 
+    
+    // 2. 保存到数据库，确保下次刷新不会再跳出旧的红点
+    stories[activeIdx] = story;
+    await window.ib.setItem('my_active_story', stories);
+    
+    // 3. 立即手动隐藏红点
+    const badge = document.getElementById('like-badge');
+    if (badge) badge.style.display = 'none';
+
+    // 4. 打开列表页
+    const realLikers = (story.comments || []).map(c => ({
+        user: c.name, avatar: c.avatar, action: 'liked your story', time: 'Just now'
+    }));
+    window.openLikesEssence(story.likes || 0, 'story', story.media || '', realLikers);
+};
+
+/**
+ * 💎 Lune Essence - 最终版 (缩略图挂在右侧)
+ */
+window.openLikesEssence = function(totalCount, type = 'story', mediaUrl = '', realLikers = []) {
+    const old = document.getElementById('lune-essence-page');
+    if (old) {
+        // 实时更新逻辑
+        const list = document.getElementById('ess-list');
+        if (list) {
+            list.innerHTML = renderLikersList(totalCount, type, mediaUrl, realLikers);
+            document.getElementById('ess-dynamic-count').innerText = `/ ${totalCount.toLocaleString()}`;
+            return;
+        }
+    }
+
+    const style = document.createElement('style');
+    style.id = 'lune-essence-style';
+    style.innerHTML = `
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
+        #lune-essence-page {
+            position: fixed; inset: 0; z-index: 2147483650; background: #fff;
+            font-family: 'Inter', sans-serif; display: flex; flex-direction: column;
+            animation: essFadeIn 0.3s ease-out;
+        }
+        /* 顶部保留极简风格 */
+        .ess-header { padding: 60px 8% 20px 8%; display: flex; justify-content: space-between; align-items: baseline; }
+        .ess-title { font-size: 36px; font-weight: 800; letter-spacing: -1.5px; }
+        .ess-count { font-size: 14px; color: #888; margin-left: 8px; }
+        .ess-close { cursor: pointer; font-size: 12px; font-weight: 700; background: #000; color: #fff; padding: 6px 15px; border-radius: 4px; }
+        
+        .ess-main { flex: 1; overflow-y: auto; padding: 0 8% 80px 8%; }
+        
+        /* 🔥 关键修改：Grid 布局锁定右侧 50px */
+        .ess-item { 
+            display: grid; 
+            grid-template-columns: 54px 1fr 50px; 
+            align-items: center; 
+            padding: 18px 0; 
+            border-bottom: 1px solid #f2f2f2; 
+        }
+        
+        .ess-avatar { width: 42px; height: 42px; border-radius: 50%; object-fit: cover; border: 1px solid #eee; }
+        .ess-info { display: flex; flex-direction: column; padding-right: 10px; }
+        .ess-user { font-weight: 700; font-size: 15px; color: #1a1a1a; }
+        .ess-action { color: #8e8e93; font-size: 13px; margin-top: 1px; }
+        .ess-time { color: #d1d1d6; font-size: 11px; margin-top: 3px; }
+
+        /* 🔥 右侧缩略图样式 */
+        .ess-item-thumb-box { width: 44px; height: 44px; border-radius: 6px; overflow: hidden; background: #f0f0f0; border: 1px solid rgba(0,0,0,0.05); }
+        .ess-item-thumb-box.is-story { height: 60px; border-radius: 4px; } /* Story 保持长方形感 */
+        .ess-item-thumb-img { width: 100%; height: 100%; object-fit: cover; }
+
+        @keyframes essFadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    `;
+    document.head.appendChild(style);
+
+    const html = `
+        <div id="lune-essence-page">
+            <div class="ess-header">
+                <div>
+                    <span class="ess-title">Likes</span>
+                    <span class="ess-count" id="ess-dynamic-count">/ ${totalCount.toLocaleString()}</span>
+                </div>
+                <div class="ess-close" onclick="document.getElementById('lune-essence-page').remove()">EXIT</div>
+            </div>
+            <div class="ess-main" id="ess-list">
+                ${renderLikersList(totalCount, type, mediaUrl, realLikers)}
+            </div>
+        </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', html);
+};
+
+// ==========================================
+// 🛠️ 弹幕推送函数
+// ==========================================
+window.pushMockDm = function(textInput) {
+    const text = textInput || "New interaction...";
+    const zone = document.getElementById('lf-dm-zone');
+    if(!zone) return;
+    
+    const dm = document.createElement('div');
+    dm.className = 'lf-dm-bubble';
+    dm.innerText = text;
+    zone.appendChild(dm);
+    
+    // 保持界面整洁，超过 6 条删除最早的
+    if(zone.children.length > 6) zone.removeChild(zone.firstChild);
+}
+
+// ==========================================
+// 1️⃣ 好友全员评论 (强力修复版)
+// ==========================================
+window.triggerFriendReaction = async function(story) {
+    console.log("🚀 [Debug] 触发好友评论逻辑...");
+    
+    // 1. 检查 API Key
+    const apiKey = localStorage.getItem('gpt_key');
+    if (!apiKey) {
+        alert("❌ 好友评论失败：未配置 GPT API Key！");
+        return;
+    }
+
+    // 2. 获取好友列表
+    const charList = await loadFromDB('char_list') || [];
+    console.log(`📋 [Debug] 读取到好友数量: ${charList.length}`);
+
+    if (charList.length === 0) {
+        console.warn("⚠️ [Debug] 好友列表为空，无人可评论");
+        return;
+    }
+
+    // 3. 遍历每一个好友 (串行执行，防止 API 并发报错)
+    let successCount = 0;
+    
+    for (const char of charList) {
+        console.log(`🤖 [Debug] 正在请求 AI: ${char.name} ...`);
+
+        // 构建 Prompt
+        const systemPrompt = `你正在扮演用户的朋友。
+        角色名：${char.name}
+        人设：${char.desc || char.bio || "普通朋友"}
+        
+        你的朋友刚刚发了一条限时动态。
+        【动态内容】：${story.text || "[一张图片]"}
+        
+        任务：请以${char.name}的口吻写一条简短的评论。
+        要求：
+        1. 必须符合人设语气（傲娇/温柔/搞笑等）。
+        2. 字数控制在 20 字以内。
+        3. 直接输出内容，不要带引号。`;
+
+        // 调用 AI
+        const commentText = await callSocialAI(systemPrompt, "生成评论");
+
+        if (commentText) {
+            // 写入数据库
+            await addCommentToStory(story.id, {
+                name: char.name,
+                avatar: char.avatar, // 确保这里用的是角色真实头像
+                text: commentText,
+                isFriend: true,
+                time: Date.now()
+            });
+            
+            successCount++;
+            console.log(`✅ [Debug] ${char.name} 评论成功: ${commentText}`);
+        } else {
+            console.error(`❌ [Debug] ${char.name} AI 返回为空`);
+        }
+
+        // ⏳ 稍微停顿 300ms，防止 API 速率限制
+        await new Promise(r => setTimeout(r, 300));
+    }
+
+    console.log(`🎉 [Debug] 全部好友评论结束，成功: ${successCount}/${charList.length}`);
+};
+
+// ==========================================
+// 🚀 AI 刷新逻辑 (修复暴涨 + 智能转化率)
+// ==========================================
+window.triggerStrangerRefresh = async function() {
+    // 1. 获取当前 Story
+    const activeIdx = window.currentLuneStoryIndex || 0;
+    let stories = await window.ib.getItem('my_active_story');
+    const charList = await loadFromDB('char_list') || [];
+    
+    if (!stories || !stories[activeIdx]) return alert("数据同步错误");
+    
+    let story = stories[activeIdx]; 
+    const friendCount = charList.length;
+
+    // --- 分支 A: 陌生人模式关闭 ---
+    if (!story.strangerMode) {
+        // 强制转为 Number，防止出错
+        story.viewers = Number(friendCount) + 1; 
+        // 修正：如果点赞数也坏了，重置一下
+        if (typeof story.likes !== 'number') story.likes = 0;
+        
+        stories[activeIdx] = story;
+        await window.ib.setItem('my_active_story', stories);
+        if (window.updateViewerUI) window.updateViewerUI(story);
+        return;
+    }
+
+    // --- 分支 B: 陌生人模式开启 ---
+    console.log("🌊 [Stranger] 流量模拟中...");
+
+    // =================================================
+    // 🔥 核心修复：防止 T/B 暴涨 & 匹配转化率
+    // =================================================
+    
+    // 1. 确保原始数据是数字 (Number)，如果不是，转为 0
+    let currentView = parseInt(story.viewers) || friendCount;
+    let currentLike = parseInt(story.likes) || 0;
+    let currentSave = parseInt(story.saves) || 0;
+
+    // 2. 生成【新增】流量 (控制幅度，每次 +100 到 +300，不会太夸张)
+    const newViews = Math.floor(Math.random() * 200) + 100;
+
+    // 3. 根据【新增】流量计算 点赞/收藏 (符合漏斗模型)
+    // 点赞率：15% - 30%
+    const likeRate = 0.15 + (Math.random() * 0.15); 
+    const newLikes = Math.floor(newViews * likeRate);
+
+    // 收藏率：2% - 8%
+    const saveRate = 0.02 + (Math.random() * 0.06);
+    const newSaves = Math.floor(newViews * saveRate);
+
+    // 4. 累加 (绝对安全的数学加法)
+    story.viewers = currentView + newViews;
+    story.likes = currentLike + newLikes;
+    story.saves = currentSave + newSaves;
+
+    console.log(`📊 数据增长: 浏览+${newViews}, 点赞+${newLikes}, 收藏+${newSaves}`);
+    // =================================================
+
+    // 2. AI 生成评论 (保持原逻辑)
+    const count = 5;
+    const context = story.text ? `用户说：“${story.text}”` : "一张很有氛围感的图片";
+    
+    const systemPrompt = `你是一个虚拟社交网络生成器。
+    【内容】：${context}
+    【任务】：生成 ${count} 条评论。
+    【要求】：
+    1. 必须与内容相关。
+    2. 包含 "name" 和 "comment"。
+    3. 风格：路人、粉丝、简短感叹。
+    4. 格式：纯JSON数组。`;
+
+    callSocialAI(systemPrompt, "生成JSON").then(async (jsonStr) => {
+        try {
+            const match = jsonStr.match(/\[[\s\S]*\]/);
+            const npcList = match ? JSON.parse(match[0]) : [];
+
+            if (npcList.length > 0) {
+                for (const npc of npcList) {
+                    const newComment = {
+                        name: npc.name,
+                        avatar: `https://api.dicebear.com/7.x/identicon/svg?seed=${npc.name}`, 
+                        text: npc.comment,
+                        isFriend: false,
+                        time: Date.now()
+                    };
+                    if (!story.comments) story.comments = [];
+                    story.comments.push(newComment);
+                }
+                
+                stories[activeIdx] = story;
+                await window.ib.setItem('my_active_story', stories);
+                if (window.updateViewerUI) window.updateViewerUI(story);
+            }
+        } catch (e) { console.error("AI Error", e); }
+    });
+
+    // 先保存基础数据
+    stories[activeIdx] = story;
+    await window.ib.setItem('my_active_story', stories);
+    if (window.updateViewerUI) window.updateViewerUI(story);
+};
+
+/**
  * 🎬 Lune Creator Studio: 限时动态发布器
  * 调用方式: window.openCreatorStudio()
  */
@@ -30305,34 +30930,20 @@ window.openCreatorStudio = function() {
 };
 
 /**
- * 🌊 打开全屏动态查看器 (修复版)
- * 调用方式：window.openFullStory()
+ * 🌊 打开全屏动态查看器 (K/M计数 + 无限滚动弹幕版)
  */
 window.openFullStory = async function() {
-    console.log("🚀 正在尝试打开详情页..."); // 调试日志
-
     // 1. 获取数据
     let feedList = await window.ib.getItem('my_active_story');
     const myDbData = await window.ib.getItem('lune_user_data');
 
-    // 🔥 关键修复：防止数据为空
-    if (!feedList) {
-        alert("没有找到发布的动态数据");
-        return;
-    }
+    if (!feedList) return alert("暂无发布的动态");
+    if (!Array.isArray(feedList)) feedList = [feedList];
 
-    // 🔥 关键修复：兼容旧数据 (如果数据库里存的是单条对象，强行转为数组)
-    if (!Array.isArray(feedList)) {
-        feedList = [feedList];
-    }
-
-    console.log("✅ 获取到动态数据:", feedList);
-
-    // 2. 准备用户信息
+    // 2. 准备我的信息
     let myData = myDbData || window.userData || {};
     let myName = myData.name || 'Me';
     let myAvatarUrl = "https://via.placeholder.com/100"; 
-
     if (myData.avatarValue) {
         if (myData.avatarValue.includes('url(')) {
             myAvatarUrl = myData.avatarValue.replace(/url\(['"]?(.*?)['"]?\)/, '$1');
@@ -30341,31 +30952,86 @@ window.openFullStory = async function() {
         }
     }
 
-    // 3. 样式注入 (如果之前没注入过)
-    if (!document.getElementById('lune-flux-v2-style')) {
-        const style = document.createElement('style');
-        style.id = 'lune-flux-v2-style';
-        style.innerHTML = `
-            #lune-story-overlay { position: fixed; inset: 0; z-index: 2147483647; background: #000; font-family: sans-serif; display: flex; align-items: center; justify-content: center; }
-            .lf-container { width: 100%; height: 100%; max-width: 450px; position: relative; background: #000; overflow: hidden; display: flex; flex-direction: column; }
-            .lf-media-wrapper { position: absolute; inset: 0; display: flex; transition: transform 0.3s; }
-            .lf-story-item { width: 100%; height: 100%; flex-shrink: 0; position: relative; display: flex; align-items: center; justify-content: center; background: #111; }
-            .lf-media-img { width: 100%; height: 100%; object-fit: cover; }
-            .lf-text-mode { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-            .lf-overlay-text { position: absolute; transform: translate(-50%, -50%); color: #fff; font-size: 24px; font-weight: 700; text-shadow: 0 2px 10px rgba(0,0,0,0.5); pointer-events: none; text-align: center; width: 100%; }
-            .lf-bg-gradient { width: 100%; height: 100%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-            .lf-top-bar { position: absolute; top: 0; left: 0; right: 0; z-index: 30; padding: 15px 10px; background: linear-gradient(to bottom, rgba(0,0,0,0.5), transparent); }
-            .lf-progress-wrapper { display: flex; gap: 4px; margin-bottom: 10px; }
-            .lf-progress-seg { flex: 1; height: 2px; background: rgba(255,255,255,0.3); border-radius: 2px; }
-            .lf-progress-fill { height: 100%; background: #fff; width: 0%; }
-            .lf-progress-fill.active { width: 100%; transition: width 5s linear; }
-            .lf-progress-fill.done { width: 100%; }
-            .lf-icon-close { position: absolute; top: 20px; right: 20px; color: #fff; cursor: pointer; z-index: 40; width: 30px; height: 30px; }
-            .lf-tap-left { position: absolute; top: 0; bottom: 0; left: 0; width: 30%; z-index: 25; }
-            .lf-tap-right { position: absolute; top: 0; bottom: 0; right: 0; width: 30%; z-index: 25; }
-        `;
-        document.head.appendChild(style);
-    }
+    // 3. 样式注入 (增加了滚动动画)
+    const cssId = 'lune-flux-v5-style';
+    if (document.getElementById(cssId)) document.getElementById(cssId).remove();
+    
+    const style = document.createElement('style');
+    style.id = cssId;
+    style.innerHTML = `
+        #lune-story-overlay { position: fixed; inset: 0; z-index: 2147483647; background: #000; font-family: sans-serif; display: flex; align-items: center; justify-content: center; }
+        .lf-container { width: 100%; height: 100%; max-width: 450px; position: relative; background: #000; overflow: hidden; display: flex; flex-direction: column; }
+        
+        .lf-media-wrapper { position: absolute; inset: 0; display: flex; transition: transform 0.3s; z-index: 10; }
+        .lf-story-item { width: 100%; height: 100%; flex-shrink: 0; position: relative; display: flex; align-items: center; justify-content: center; background: #111; }
+        .lf-media-img { width: 100%; height: 100%; object-fit: cover; }
+        .lf-text-mode { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .lf-overlay-text { position: absolute; transform: translate(-50%, -50%); color: #fff; font-size: 24px; font-weight: 700; text-shadow: 0 2px 10px rgba(0,0,0,0.5); pointer-events: none; text-align: center; width: 100%; }
+        .lf-bg-gradient { width: 100%; height: 100%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+
+        .lf-top-bar { position: absolute; top: 0; left: 0; right: 0; z-index: 30; padding: 45px 10px 15px 10px; background: linear-gradient(to bottom, rgba(0,0,0,0.6), transparent); }
+        .lf-progress-wrapper { display: flex; gap: 4px; margin-bottom: 10px; }
+        .lf-progress-seg { flex: 1; height: 2px; background: rgba(255,255,255,0.3); border-radius: 2px; }
+        .lf-progress-fill { height: 100%; background: #fff; width: 0%; transition: none; }
+        .lf-progress-fill.active { width: 100%; transition: width 5s linear; }
+        .lf-progress-fill.done { width: 100%; transition: none; }
+        .lf-top-btns { display: flex; justify-content: flex-end; gap: 15px; padding-right: 5px; }
+        .lf-icon-action { color: #fff; cursor: pointer; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.5)); transition: transform 0.2s; }
+        .lf-icon-action:active { transform: scale(0.9); }
+
+        /* 底部信息层 (加高，为了容纳滚动区域) */
+        .lf-info-layer { position: absolute; bottom: 0; left: 0; right: 0; z-index: 50; padding: 20px 16px 40px 16px; background: linear-gradient(to top, #000 10%, rgba(0,0,0,0.8) 90%, transparent 100%); display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
+        .lf-info-layer > * { pointer-events: auto; }
+
+        /* 🔥 滚动弹幕容器 */
+        .lf-danmaku-mask { 
+            height: 180px; /* 限制高度 */
+            overflow: hidden; 
+            position: relative; 
+            margin-bottom: 5px;
+            mask-image: linear-gradient(to bottom, transparent, black 10%, black 90%, transparent);
+            -webkit-mask-image: linear-gradient(to bottom, transparent, black 10%, black 90%, transparent);
+        }
+        
+        /* 🔥 滚动轨道 */
+        .lf-dm-track {
+            display: flex;
+            flex-direction: column;
+            gap: 8px; /* 间距 */
+            /* 动画将在 JS 中动态计算时长 */
+        }
+        
+        /* 🔥 滚动动画关键帧 */
+        @keyframes scrollUp {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(-50%); } /* 移动一半高度，实现无缝循环 */
+        }
+
+        .lf-dm-bubble { align-self: flex-start; background: rgba(0,0,0,0.5); backdrop-filter: blur(5px); padding: 6px 12px; border-radius: 16px; font-size: 13px; color: #fff; border: 1px solid rgba(255,255,255,0.15); max-width: 85%; width: fit-content; text-shadow: 0 1px 1px rgba(0,0,0,0.5); }
+        .lf-dm-name { font-weight: 700; color: #FFD700; margin-right: 6px; font-size: 12px; opacity: 0.9; }
+
+        .lf-meta-row { display: flex; justify-content: space-between; align-items: flex-end; width: 100%; }
+        .lf-author-box { display: flex; align-items: center; gap: 10px; }
+        .lf-avatar { width: 40px; height: 40px; border-radius: 50%; border: 2px solid #fff; object-fit: cover; background: #333; }
+        .lf-name { font-weight: 700; font-size: 15px; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.8); }
+        .lf-time { font-size: 11px; opacity: 0.8; color: #ddd; margin-top: 2px; }
+        
+        .lf-viewers-box { display: flex; flex-direction: column; align-items: flex-end; }
+        .lf-pile { display: flex; padding-left: 10px; height: 24px; align-items: center; }
+        .lf-pile-img { width: 24px; height: 24px; border-radius: 50%; border: 1px solid #fff; margin-left: -10px; background: #555; object-fit: cover; }
+        .lf-seen-txt { font-size: 12px; color: #fff; margin-top: 4px; font-weight: 700; text-shadow: 0 1px 2px rgba(0,0,0,0.5); }
+
+        .lf-action-bar { display: flex; align-items: center; gap: 12px; border-top: 1px solid rgba(255,255,255,0.2); padding-top: 12px; width: 100%; }
+        .lf-input { flex: 1; height: 40px; background: rgba(255,255,255,0.15); border-radius: 20px; display: flex; align-items: center; padding: 0 15px; font-size: 13px; color: #eee; border: 1px solid rgba(255,255,255,0.1); }
+        
+        .lf-stat-btn { display: flex; align-items: center; gap: 5px; color: #fff; font-size: 12px; font-weight: 600; cursor: pointer; }
+        .lf-circle-icon { width: 40px; height: 40px; border-radius: 50%; background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; transition: 0.2s; }
+        .lf-circle-icon:active { transform: scale(0.9); background: rgba(255,255,255,0.3); }
+
+        .lf-tap-left { position: absolute; top: 0; bottom: 0; left: 0; width: 30%; z-index: 25; }
+        .lf-tap-right { position: absolute; top: 0; bottom: 0; right: 0; width: 30%; z-index: 25; }
+    `;
+    document.head.appendChild(style);
 
     // 4. 构建 DOM
     const html = `
@@ -30373,80 +31039,235 @@ window.openFullStory = async function() {
             <div class="lf-container">
                 <div class="lf-top-bar">
                     <div class="lf-progress-wrapper" id="lf-bars"></div>
-                    <div class="lf-icon-close" onclick="document.getElementById('lune-story-overlay').remove()">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    <div class="lf-top-btns">
+                        <div class="lf-icon-action" onclick="window.triggerStrangerRefresh()">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+                        </div>
+                        <div class="lf-icon-action" onclick="document.getElementById('lune-story-overlay').remove()">
+                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                        </div>
                     </div>
                 </div>
 
                 <div class="lf-media-wrapper" id="lf-slider"></div>
-
                 <div class="lf-tap-left" id="btn-prev"></div>
                 <div class="lf-tap-right" id="btn-next"></div>
+
+                <div class="lf-info-layer">
+                    <div class="lf-danmaku-mask">
+                        <div class="lf-dm-track" id="lf-dm-track">
+                            </div>
+                    </div>
+
+                    <div class="lf-meta-row">
+                        <div class="lf-author-box">
+                            <img src="${myAvatarUrl}" class="lf-avatar" id="lf-avatar-img">
+                            <div>
+                                <div class="lf-name">${myName}</div>
+                                <div class="lf-time" id="lf-time-txt">Just now</div>
+                            </div>
+                        </div>
+                        <div class="lf-viewers-box">
+                            <div class="lf-pile" id="lf-avatar-pile"></div>
+                            <div class="lf-seen-txt" id="lf-seen-count">0 views</div>
+                        </div>
+                    </div>
+
+                    <div class="lf-action-bar">
+                        <div class="lf-input">Send message...</div>
+                        <div class="lf-stat-btn">
+                            <div class="lf-circle-icon" onclick="this.style.background='rgba(255,59,48,0.2)'; this.querySelector('svg').style.fill='#FF3B30'; this.querySelector('svg').style.stroke='none';">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+                            </div>
+                            <span id="lf-like-count">0</span>
+                        </div>
+                        <div class="lf-stat-btn">
+                            <div class="lf-circle-icon">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
+                            </div>
+                            <span id="lf-save-count">0</span>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     `;
     
-    // 移除旧层
     const old = document.getElementById('lune-story-overlay');
     if (old) old.remove();
     document.body.insertAdjacentHTML('beforeend', html);
 
-    // 5. 渲染内容
+    // 5. 渲染逻辑
     const slider = document.getElementById('lf-slider');
     const barBox = document.getElementById('lf-bars');
-    let curIdx = 0;
-
+    
     feedList.forEach((item, i) => {
-        // 进度条
         barBox.innerHTML += `<div class="lf-progress-seg"><div class="lf-progress-fill" id="lf-bar-${i}"></div></div>`;
-        
-        // 内容
-        let innerHTML = '';
-        
-        // 图片模式
-        if (item.type === 'image' && item.media) {
-            innerHTML = `<img src="${item.media}" class="lf-media-img">`;
-            // 如果有文字，叠加在图片上
-            if (item.text) {
-                const left = item.textPos ? item.textPos.x : 50;
-                const top = item.textPos ? item.textPos.y : 50;
-                innerHTML += `<div class="lf-overlay-text" style="left:${left}%; top:${top}%;">${item.text}</div>`;
-            }
-        } 
-        // 纯文字模式
-        else {
-            innerHTML = `<div class="lf-bg-gradient"></div>`;
-            if (item.text) {
-                const left = item.textPos ? item.textPos.x : 50;
-                const top = item.textPos ? item.textPos.y : 50;
-                innerHTML += `<div class="lf-overlay-text" style="left:${left}%; top:${top}%;">${item.text}</div>`;
-            }
-        }
-        
-        slider.innerHTML += `<div class="lf-story-item">${innerHTML}</div>`;
+        let contentHtml = item.type === 'text' 
+            ? `<div class="lf-text-mode"><div class="lf-bg-gradient"></div><div class="lf-overlay-text" style="left:${item.textPos?.x||50}%; top:${item.textPos?.y||50}%;">${item.text}</div></div>`
+            : `<img src="${item.media}" class="lf-media-img">` + (item.text ? `<div class="lf-overlay-text" style="left:${item.textPos?.x||50}%; top:${item.textPos?.y||50}%;">${item.text}</div>` : '');
+        slider.innerHTML += `<div class="lf-story-item">${contentHtml}</div>`;
     });
 
-    // 6. 切换逻辑
+    // 6. 核心更新函数
     const update = (idx) => {
+        window.currentLuneStoryIndex = idx;
+        const d = feedList[idx];
+
+        // 滑动 & 进度条
         slider.style.transform = `translateX(-${idx * 100}%)`;
         for(let i=0; i<feedList.length; i++) {
             const b = document.getElementById(`lf-bar-${i}`);
             b.className = 'lf-progress-fill';
-            if(i < idx) b.classList.add('done');
-            if(i === idx) requestAnimationFrame(() => b.classList.add('active'));
+            b.style.width = '';
+            if (i < idx) b.classList.add('done');
         }
+        const currBar = document.getElementById(`lf-bar-${idx}`);
+        if(currBar) {
+            currBar.style.width = '0%';
+            requestAnimationFrame(()=> requestAnimationFrame(()=> { currBar.classList.add('active'); currBar.style.width=''; }));
+        }
+
+        // --- 2. 🔥 关键修复：初始化外部计数器 (解决显示为0的问题) ---
+        
+        // A. 访客数初始化
+        const traceCount = document.getElementById('trace-count-val');
+        if (traceCount) traceCount.innerText = formatStat(d.viewers || 0);
+
+        // B. 点赞数初始化
+        const likeBtn = document.getElementById('lf-like-count');
+        if (likeBtn) likeBtn.innerText = formatStat(d.likes || 0);
+
+        // C. 评论数初始化 (如果你的评论按钮也有数字显示，加上这行)
+        // const commentCountEl = document.getElementById('lf-comment-count');
+        // if (commentCountEl) commentCountEl.innerText = (d.comments || []).length;
+
+        // --- 3. 🔥 关键修复：红点初始化 (进入时判断是否该亮红点) ---
+        
+        // 访客红点
+        const vBadge = document.getElementById('visitor-badge');
+        if (vBadge) {
+            const vDiff = (d.viewers || 0) - (d.lastSeenViewers || 0);
+            vBadge.innerText = `+${vDiff}`;
+            vBadge.style.display = vDiff > 0 ? 'flex' : 'none';
+        }
+
+        // 点赞红点
+        const lBadge = document.getElementById('like-badge');
+        if (lBadge) {
+            const lDiff = (d.likes || 0) - (d.lastSeenLikes || 0);
+            lBadge.innerText = `+${lDiff}`;
+            lBadge.style.display = lDiff > 0 ? 'flex' : 'none';
+        }
+
+        // 评论红点
+        const cBadge = document.getElementById('comment-badge');
+        if (cBadge) {
+            const cDiff = (d.comments || []).length - (d.lastSeenComments || 0);
+            cBadge.innerText = `+${cDiff}`;
+            cBadge.style.display = cDiff > 0 ? 'flex' : 'none';
+        }
+
+        // --- 4. 其它渲染 (弹幕、头像堆叠、时间) ---
+        renderMarqueeComments(d.comments || []); // 刷新弹幕墙
+        
+        // 访客头像堆叠
+        const avatarList = document.getElementById('trace-avatars-list');
+        if (avatarList && d.comments) {
+            avatarList.innerHTML = '';
+            const recent = [...new Map(d.comments.map(c => [c.name, c])).values()].slice(-3);
+            recent.forEach(v => {
+                avatarList.innerHTML += `<img src="${v.avatar}" class="trace-avatar-img" style="width:18px; height:18px; border-radius:50%; border:1.5px solid #fff; margin-left:-6px;">`;
+            });
+        }
+
+        // --- 数据渲染 ---
+        
+        // 1. K/M 计数格式化
+        document.getElementById('lf-seen-count').innerText = `${formatStat(d.viewers || 0)} views`;
+        document.getElementById('lf-like-count').innerText = formatStat(d.likes || 0);
+        document.getElementById('lf-save-count').innerText = formatStat(d.saves || 0);
+
+        // 2. 时间
+        const timeDiff = Math.floor((Date.now() - d.timestamp) / 1000 / 60);
+        let tStr = 'Just now';
+        if(timeDiff > 60) tStr = Math.floor(timeDiff/60) + 'h ago';
+        else if(timeDiff > 0) tStr = timeDiff + 'm ago';
+        document.getElementById('lf-time-txt').innerText = tStr;
+
+        // 3. 头像堆叠
+        const pile = document.getElementById('lf-avatar-pile');
+        pile.innerHTML = '';
+        if (d.comments && d.comments.length > 0) {
+            const unique = [...new Map(d.comments.map(c => [c.name, c])).values()].slice(-3);
+            unique.forEach(c => pile.innerHTML += `<img src="${c.avatar}" class="lf-pile-img">`);
+        }
+
+        // 4. 🔥 启动无限滚动弹幕 (显示所有评论)
+        renderMarqueeComments(d.comments || []);
     };
 
-    document.getElementById('btn-next').onclick = () => {
-        if(curIdx < feedList.length - 1) { curIdx++; update(curIdx); } 
-        else { document.getElementById('lune-story-overlay').remove(); }
-    };
-    document.getElementById('btn-prev').onclick = () => {
-        if(curIdx > 0) { curIdx--; update(curIdx); }
-    };
+    let curIdx = 0;
+    document.getElementById('btn-next').onclick = () => { if(curIdx < feedList.length - 1) { curIdx++; update(curIdx); } else { document.getElementById('lune-story-overlay').remove(); } };
+    document.getElementById('btn-prev').onclick = () => { if(curIdx > 0) { curIdx--; update(curIdx); } };
 
     update(0);
 };
+
+window.updateViewerUI = function(story) {
+    // 1. 更新原有的赞、评论红点逻辑 (略，保持你之前的代码)
+
+    // 2. 🔥 更新访客栏数字
+    const traceCount = document.getElementById('trace-count-val');
+    if (traceCount) traceCount.innerText = formatStat(story.viewers || 0);
+
+    // 3. 🔥 更新访客栏头像堆叠 (取最后3个访客)
+    const avatarList = document.getElementById('trace-avatars-list');
+    if (avatarList && story.comments) {
+        avatarList.innerHTML = '';
+        const recent = [...new Map(story.comments.map(c => [c.name, c])).values()].slice(-3);
+        recent.forEach(v => {
+            avatarList.innerHTML += `<img src="${v.avatar}" class="trace-avatar-img" style="width:18px; height:18px; border-radius:50%; border:1.5px solid #fff; margin-left:-6px;">`;
+        });
+    }
+
+    // 4. 🔥 访客红点逻辑
+    const visitorBadge = document.getElementById('visitor-badge');
+    if (visitorBadge) {
+        const diff = (story.viewers || 0) - (story.lastSeenViewers || 0);
+        if (diff > 0) {
+            visitorBadge.innerText = `+${diff}`;
+            visitorBadge.style.display = 'flex';
+        } else {
+            visitorBadge.style.display = 'none';
+        }
+    }
+};
+
+// 2. 弹幕生成 (支持对象)
+window.pushMockDm = function(input) {
+    const zone = document.getElementById('lf-dm-zone');
+    if(!zone) return;
+
+    // 兼容：如果 input 是字符串，转对象；如果是对象，用对象
+    const name = typeof input === 'object' ? input.name : "Stranger";
+    const text = typeof input === 'object' ? input.text : input;
+    
+    const dm = document.createElement('div');
+    dm.className = 'lf-dm-bubble';
+    
+    // 🔥 显示昵称 + 内容
+    dm.innerHTML = `<span class="lf-dm-name">${name}</span>${text}`;
+    
+    zone.appendChild(dm);
+    
+    // 增加容量到 10 条
+    if(zone.children.length > 10) zone.removeChild(zone.firstChild);
+    
+    // 自动滚动到底部
+    zone.scrollTop = zone.scrollHeight;
+}
+
 // ==========================================
 // 🟢 3. 保存逻辑 (async + ib)
 // ==========================================
@@ -57423,13 +58244,13 @@ function showSentLogModal(messages, avatar) {
 }
 
 // ==========================================
-// 🎞️ 限时动态：角色同步渲染引擎 (纯净复用版)
+// 🎞️ 限时动态：角色同步渲染引擎 (严格一致版)
 // ==========================================
 async function initMomentsStories() {
     const track = document.getElementById('moments-story-track');
     if (!track) return;
 
-    // 1. 获取数据 (好友列表 + 我的资料 + 我的动态状态)
+    // 1. 获取数据
     const [friends, charList, myDbData, myActiveStories] = await Promise.all([
         loadFromDB('chat_friends') || [],
         loadFromDB('char_list') || [],
@@ -57437,16 +58258,14 @@ async function initMomentsStories() {
         window.ib.getItem('my_active_story')
     ]);
     
-    // 2. 物理过滤：只保留真实好友
+    // 2. 物理过滤好友
     const validFriends = friends.filter(f => charList.some(c => c.id === f.id));
 
-    // 3. 准备“我的”头像和昵称 (从 lune_user_data 获取)
+    // 3. 准备我的数据
     let myData = myDbData || window.userData || {};
     let myName = myData.name || 'Me';
-    // 默认灰色占位图
     let myAvatarUrl = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Crect width='100' height='100' fill='%23cccccc'/%3E%3Ctext x='50' y='50' font-family='Arial' font-size='12' fill='%23666' text-anchor='middle' dy='.3em'%3EMe%3C/text%3E%3C/svg%3E";
 
-    // 解析头像 (支持 url() 格式、Base64 或 http 链接)
     if (myData.avatarValue) {
         if (myData.avatarValue.includes('url(')) {
             myAvatarUrl = myData.avatarValue.replace(/url\(['"]?(.*?)['"]?\)/, '$1');
@@ -57455,26 +58274,22 @@ async function initMomentsStories() {
         }
     }
 
-    // 4. 重置轨道，保留 "My Echo" (发布按钮)
+    // 4. 重置轨道，保留 My Echo (发布按钮)
     const myStory = track.querySelector('.story-capsule.me');
-    track.innerHTML = ""; 
-    if (myStory) track.appendChild(myStory); // 放回发布按钮
+    track.innerHTML = "";
+    if (myStory) track.appendChild(myStory);
 
     // ============================================================
-    // 🔥【核心逻辑】如果我发了动态，插入一个“我的卡片”
-    //    完全复用好友卡片的结构和样式，只是点击事件变成了打开详情
+    // 🔥【修正】我的动态卡片：完全使用好友的 Class 和结构
     // ============================================================
     if (Array.isArray(myActiveStories) && myActiveStories.length > 0) {
         const myActiveCapsule = document.createElement('div');
         myActiveCapsule.className = 'story-capsule';
-        
-        // 点击打开全屏查看器
         myActiveCapsule.onclick = () => window.openFullStory(); 
 
-        // 使用马卡龙色系 (取第一个颜色，和好友保持一致)
         const myBgColor = '#E3F2FD'; 
 
-        // HTML 结构严格照抄好友列表
+        // 这里的结构现在和下面好友的完全一样，没有任何额外的 style
         myActiveCapsule.innerHTML = `
             <div class="story-preview-bg" style="background-color: ${myBgColor};">
                 <img src="${myAvatarUrl}" class="story-char-avatar">
@@ -57484,14 +58299,13 @@ async function initMomentsStories() {
             </div>
             <div class="story-ring-status"></div>
         `;
-        // 插入到轨道中 (排在 My Echo 后面)
         track.appendChild(myActiveCapsule);
     }
     // ============================================================
 
     if (validFriends.length === 0) return;
 
-    // 5. 循环生成好友卡片 (原版保留)
+    // 5. 渲染好友动态 (保持原样)
     validFriends.forEach((f, index) => {
         const capsule = document.createElement('div');
         capsule.className = 'story-capsule';
@@ -58079,137 +58893,6 @@ async function initMomentsFeed() {
     console.log(`✅ 已恢复 ${feedList.length} 条历史动态`);
 }
 
-// ==========================================
-// 🌊 Lune Full Story Engine (全屏动态查看器)
-// ==========================================
-
-// 1. 注入样式 (只需运行一次)
-(function injectStoryStyles() {
-    if (document.getElementById('lune-flux-v2-style')) return;
-    const style = document.createElement('style');
-    style.id = 'lune-flux-v2-style';
-    style.innerHTML = `
-        @import url('https://fonts.googleapis.com/css2?family=Urbanist:wght@400;600;700;800&display=swap');
-        
-        #lune-story-overlay {
-            position: fixed; inset: 0; z-index: 2147483647;
-            background: #000; font-family: 'Urbanist', sans-serif;
-            display: flex; align-items: center; justify-content: center;
-            opacity: 0; animation: lfFadeIn 0.3s forwards;
-        }
-
-        .lf-container {
-            width: 100%; height: 100%; max-width: 450px;
-            position: relative; display: flex; flex-direction: column;
-            background: #000; overflow: hidden;
-        }
-
-        /* 顶部栏：进度条 + 按钮 */
-        .lf-top-bar {
-            position: absolute; top: 0; left: 0; right: 0; z-index: 30;
-            padding: 12px 8px;
-            background: linear-gradient(to bottom, rgba(0,0,0,0.5), transparent);
-        }
-        .lf-progress-wrapper { display: flex; gap: 4px; margin-bottom: 10px; }
-        .lf-progress-seg { flex: 1; height: 2px; background: rgba(255,255,255,0.3); border-radius: 2px; overflow: hidden; }
-        .lf-progress-fill { height: 100%; background: #fff; width: 0%; transition: width 0.1s linear; }
-        .lf-progress-fill.active { width: 100%; transition: width 5s linear; }
-        .lf-progress-fill.done { width: 100%; }
-
-        .lf-top-btns { display: flex; justify-content: flex-end; gap: 15px; padding-right: 10px; }
-        .lf-icon-action { opacity: 0.8; cursor: pointer; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5)); }
-
-        /* 媒体层 */
-        .lf-media-wrapper {
-            position: absolute; inset: 0; z-index: 10;
-            display: flex; transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
-        }
-        .lf-story-item {
-            width: 100%; height: 100%; flex-shrink: 0;
-            position: relative; background: #111;
-            display: flex; align-items: center; justify-content: center;
-        }
-        .lf-media-img { width: 100%; height: 100%; object-fit: cover; }
-        
-        .lf-text-mode {
-            width: 100%; height: 100%; padding: 40px; text-align: center;
-            display: flex; align-items: center; justify-content: center;
-            background: linear-gradient(135deg, #1c1c1e 0%, #2c2c2e 100%);
-        }
-        .lf-big-text { font-size: 24px; font-weight: 800; color: #fff; line-height: 1.5; }
-
-        /* 底部信息层 (沉浸式) */
-        .lf-info-layer {
-            position: absolute; bottom: 0; left: 0; right: 0; z-index: 20;
-            padding: 0 16px 30px 16px;
-            background: linear-gradient(to top, #000 10%, rgba(0,0,0,0.8) 50%, transparent 100%);
-            display: flex; flex-direction: column; gap: 16px;
-        }
-
-        /* 弹幕区 */
-        .lf-danmaku-zone {
-            height: 120px; display: flex; flex-direction: column; justify-content: flex-end; align-items: flex-start;
-            mask-image: linear-gradient(to top, black 80%, transparent 100%);
-            -webkit-mask-image: linear-gradient(to top, black 80%, transparent 100%);
-            pointer-events: none; margin-bottom: 5px;
-        }
-        .lf-dm-bubble {
-            background: rgba(255,255,255,0.15); backdrop-filter: blur(10px);
-            padding: 6px 14px; border-radius: 20px;
-            font-size: 13px; color: #fff; margin-top: 8px;
-            border: 1px solid rgba(255,255,255,0.1);
-            animation: slideUpFade 0.3s ease-out; max-width: 85%;
-        }
-
-        /* 作者 & 数据 */
-        .lf-meta-row { display: flex; justify-content: space-between; align-items: flex-end; }
-        .lf-author-box { display: flex; align-items: center; gap: 12px; }
-        .lf-avatar { width: 42px; height: 42px; border-radius: 50%; border: 2px solid #fff; object-fit: cover; }
-        .lf-name { font-weight: 800; font-size: 16px; color: #fff; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
-        .lf-time { font-size: 12px; opacity: 0.7; font-weight: 500; margin-top: 2px; }
-
-        .lf-viewers-box { display: flex; flex-direction: column; align-items: flex-end; }
-        .lf-pile { display: flex; padding-left: 10px; }
-        .lf-pile-img { width: 22px; height: 22px; border-radius: 50%; border: 1.5px solid #000; margin-left: -8px; background: #333; }
-        .lf-seen-txt { font-size: 11px; color: rgba(255,255,255,0.6); margin-top: 4px; font-weight: 600; }
-
-        /* 操作栏 */
-        .lf-action-bar { display: flex; align-items: center; gap: 12px; border-top: 1px solid rgba(255,255,255,0.15); padding-top: 16px; }
-        .lf-input {
-            flex: 1; height: 46px; background: rgba(255,255,255,0.1); border-radius: 23px;
-            display: flex; align-items: center; padding: 0 18px;
-            font-size: 14px; color: rgba(255,255,255,0.5); border: 1px solid rgba(255,255,255,0.1);
-        }
-        .lf-circle-btn {
-            width: 46px; height: 46px; border-radius: 50%; background: rgba(255,255,255,0.1);
-            display: flex; align-items: center; justify-content: center;
-            color: #fff; border: 1px solid rgba(255,255,255,0.1); transition: 0.2s;
-        }
-        .lf-circle-btn:active { transform: scale(0.9); background: rgba(255,255,255,0.25); }
-
-        /* 热区 */
-        .lf-tap-left { position: absolute; top: 0; bottom: 0; left: 0; width: 30%; z-index: 25; }
-        .lf-tap-right { position: absolute; top: 0; bottom: 0; right: 0; width: 30%; z-index: 25; }
-
-        @keyframes lfFadeIn { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes slideUpFade { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-    `;
-    document.head.appendChild(style);
-})();
-
-// 辅助：模拟弹幕
-function pushMockDm() {
-    const texts = ["Vibe check ✅", "This is art.", "Where is this??", "Love the colors", "Amazing!"];
-    const text = texts[Math.floor(Math.random() * texts.length)];
-    const zone = document.getElementById('lf-dm-zone');
-    if(!zone) return;
-    
-    const dm = document.createElement('div');
-    dm.className = 'lf-dm-bubble';
-    dm.innerText = text;
-    zone.appendChild(dm);
-    if(zone.children.length > 3) zone.removeChild(zone.firstChild);
-}
 
 // ==========================================
 // ✨ Lune Success Modal: 视觉预览
@@ -58319,6 +59002,186 @@ function showPublishSuccess() {
 
 // 4. 立即执行预览
 showPublishSuccess();
+
+// 更新整个 Story 对象
+async function updateStoryData(updatedStory) {
+    let stories = await window.ib.getItem('my_active_story');
+    if (!stories) return;
+    const idx = stories.findIndex(s => s.id === updatedStory.id);
+    if (idx !== -1) {
+        stories[idx] = updatedStory;
+        await window.ib.setItem('my_active_story', stories);
+    }
+}
+// ==========================================
+// 🧠 通用 AI 调用核心 (复用现有的配置)
+// ==========================================
+async function callSocialAI(systemPrompt, userPrompt) {
+    const apiKey = localStorage.getItem('gpt_key');
+    let apiUrl = (localStorage.getItem('gpt_url') || "https://api.openai.com/v1").replace(/\/+$/, "");
+    let model = localStorage.getItem('gpt_model') || "gpt-3.5-turbo";
+    if (apiUrl.includes("deepseek")) model = "deepseek-chat";
+
+    if (!apiKey) {
+        console.warn("⚠️ [SocialAI] 无 API Key，无法生成评论");
+        return null;
+    }
+
+    try {
+        const res = await fetch(`${apiUrl}/chat/completions`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+            body: JSON.stringify({
+                model: model,
+                messages: [
+                    {role: "system", content: systemPrompt},
+                    {role: "user", content: userPrompt}
+                ],
+                temperature: 0.9 // 高创造性
+            })
+        });
+        const data = await res.json();
+        return data.choices[0].message.content.trim();
+    } catch (e) {
+        console.error("❌ [SocialAI] API 请求失败:", e);
+        return null;
+    }
+}
+
+// ==========================================
+// 🛠️ 辅助：写入单条评论 (加固版)
+// ==========================================
+async function addCommentToStory(storyId, commentObj) {
+    try {
+        // 1. 读取最新数据 (防止覆盖)
+        let stories = await window.ib.getItem('my_active_story');
+        if (!stories) {
+            console.error("❌ [Write] 找不到动态数据库");
+            return;
+        }
+        
+        // 2. 找到对应的那条动态
+        const targetIndex = stories.findIndex(s => s.id === storyId);
+        if (targetIndex !== -1) {
+            // 初始化数组
+            if (!stories[targetIndex].comments) stories[targetIndex].comments = [];
+            
+            // 插入评论
+            stories[targetIndex].comments.push(commentObj);
+            
+            // 3. 浏览量逻辑：好友评论了 = 好友已读
+            // 如果浏览量还没加上这个好友，就 +1
+            // (这里简化逻辑：直接保存，让刷新函数去处理具体的数字)
+            
+            // 4. 写回数据库
+            await window.ib.setItem('my_active_story', stories);
+            
+            // 5. 实时推送到屏幕 (如果详情页正开着)
+            if (window.pushMockDm && document.getElementById('lune-story-overlay')) {
+                window.pushMockDm(commentObj);
+            }
+        } else {
+            console.error("❌ [Write] 找不到 ID 为 " + storyId + " 的动态");
+        }
+    } catch (e) {
+        console.error("❌ [Write] 写入评论失败:", e);
+    }
+}
+
+// 3. 时间格式化
+function getTimeStr(ts) {
+    const diff = Math.floor((Date.now() - ts) / 1000 / 60);
+    if(diff > 1440) return Math.floor(diff/1440) + 'd ago';
+    if(diff > 60) return Math.floor(diff/60) + 'h ago';
+    if(diff > 0) return diff + 'm ago';
+    return 'Just now';
+}
+
+// ==========================================
+// 🛠️ 格式化工具 (控制 K/M 显示)
+// ==========================================
+function formatStat(num) {
+    // 强制转为数字，防止 undefined 或 string 进来报错
+    const n = Number(num);
+    if (isNaN(n)) return "0";
+
+    // 使用标准库，保留 1 位小数 (1.2k, 1.5m)
+    return Intl.NumberFormat('en-US', {
+        notation: "compact",
+        maximumFractionDigits: 1
+    }).format(n).toLowerCase();
+}
+// 2. 渲染循环滚动弹幕
+function renderMarqueeComments(comments) {
+    const track = document.getElementById('lf-dm-track');
+    if (!track) return;
+    
+    track.innerHTML = ''; // 清空
+    track.style.animation = 'none'; // 重置动画
+    
+    if (comments.length === 0) return;
+
+    // 构造 HTML：将评论列表复制一份用于无缝循环 [A,B,C] -> [A,B,C,A,B,C]
+    // 为了保证滚动顺滑，如果是少量评论，多复制几遍填满高度
+    let displayList = [...comments];
+    while(displayList.length < 5) displayList = displayList.concat(comments); // 至少补足到5条
+    
+    // 生成两套 HTML (原始 + 副本)
+    const generateHTML = (list) => list.map(c => 
+        `<div class="lf-dm-bubble"><span class="lf-dm-name">${c.name}</span>${c.text}</div>`
+    ).join('');
+
+    track.innerHTML = generateHTML(displayList) + generateHTML(displayList); // 拼两份
+
+    // 计算动画时长：越长越慢。设每条评论走过需要 2 秒
+    const duration = displayList.length * 3; 
+    
+    // 强制重绘后启动动画
+    track.offsetHeight; 
+    track.style.animation = `scrollUp ${Math.max(duration, 10)}s linear infinite`;
+}
+
+/**
+ * 🔥 渲染函数：同步缩略图到每一行
+ */
+function renderLikersList(totalCount, type, mediaUrl, realLikers) {
+    let listHtml = '';
+    let displayList = [...realLikers];
+    
+    // 补充模拟数据
+    const fillCount = Math.min(totalCount - displayList.length, 30);
+    for (let i = 0; i < fillCount; i++) {
+        displayList.push({ user: "guest_" + (100+i), action: 'liked this', time: i+1 + "m" });
+    }
+
+    // 图片加载失败的兜底图 (灰色占位)
+    const fallbackImg = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==";
+
+    displayList.forEach(item => {
+        const avatar = item.avatar || `https://api.dicebear.com/7.x/notionists/svg?seed=${item.user}`;
+        
+        // 缩略图 HTML：增加 onerror 防止图挂
+        const thumbHtml = `
+            <div class="ess-item-thumb-box ${type === 'story' ? 'is-story' : ''}">
+                <img src="${mediaUrl}" class="ess-item-thumb-img" 
+                     onerror="this.src='${fallbackImg}'; this.parentElement.style.background='#eee';">
+            </div>
+        `;
+
+        listHtml += `
+            <div class="ess-item">
+                <img src="${avatar}" class="ess-avatar">
+                <div class="ess-info">
+                    <span class="ess-user">${item.user}</span>
+                    <span class="ess-action">${item.action || 'liked your ' + type}</span>
+                    <span class="ess-time">${item.time} ago</span>
+                </div>
+                <div class="ess-right">${thumbHtml}</div>
+            </div>
+        `;
+    });
+    return listHtml;
+}
 
 </script>
 </body>
