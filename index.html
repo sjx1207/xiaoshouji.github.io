@@ -24886,6 +24886,845 @@ input[type="range"] { width: 100%; accent-color: #000; cursor: pointer; }
 .lfs-progress-container { width: 60px; height: 4px; background: #f0f0f0; border-radius: 2px; overflow: hidden; }
 .lfs-progress-bar { height: 100%; background: #000; border-radius: 2px; }
 
+/* --- 金融子页面组件 --- */
+.fin-tab-item.active { background: #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.1); font-weight: 600; color: #000; }
+.fin-tab-item { color: #8e8e93; transition: 0.3s; }
+
+/* --- 转账气泡 (拉丝金) --- */
+.bubble.transfer-exclusive {
+    width: 220px !important; background: linear-gradient(135deg, #e67e22 0%, #d35400 100%) !important;
+    padding: 0 !important; border-radius: 12px !important; color: #fff; border: 0.5px solid rgba(255,255,255,0.2); overflow: hidden;
+}
+.tf-chip-set { display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; }
+.tf-micro-chip { width: 30px; height: 22px; background: linear-gradient(135deg, #f1c40f, #f39c12); border-radius: 3px; }
+.tf-brand { font-size: 10px; font-weight: 700; letter-spacing: 2px; opacity: 0.8; }
+.tf-amount-row { padding: 0 15px 12px 15px; }
+.tf-val { font-size: 20px; font-weight: 800; }
+.tf-note { font-size: 11px; opacity: 0.7; }
+.tf-bar { background: rgba(0,0,0,0.1); padding: 6px 15px; font-size: 9px; display: flex; justify-content: space-between; }
+
+/* --- 红包气泡 (宫廷红) --- */
+.bubble.redpacket-exclusive {
+    width: 190px !important; background: #96281B !important; padding: 0 !important; 
+    border-radius: 12px !important; color: #fff; position: relative; overflow: hidden; border: 1px solid #7B241C;
+}
+.bubble.redpacket-exclusive::before {
+    content: ''; position: absolute; inset: 0;
+    background: repeating-linear-gradient(45deg, rgba(212,175,55,0.05) 0px, rgba(212,175,55,0.05) 1px, transparent 1px, transparent 10px);
+}
+.rp-top-flap { height: 45px; background: #A93226; border-radius: 12px 12px 80px 80px; border-bottom: 1.5px solid #D4AF37; position: relative; z-index: 2; }
+.rp-gold-seal {
+    width: 38px; height: 38px; background: radial-gradient(circle, #F7DC6F, #D4AF37);
+    border-radius: 50%; position: absolute; bottom: -19px; left: 50%; transform: translateX(-50%); z-index: 3;
+    display: flex; align-items: center; justify-content: center; border: 1px solid #B7950B;
+}
+.rp-seal-inner { width: 28px; height: 28px; border: 1px solid rgba(0,0,0,0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 900; color: #7B241C; }
+.rp-body { padding: 30px 15px 12px 15px; text-align: center; position: relative; z-index: 1; }
+.rp-msg { font-size: 14px; font-weight: 600; color: #F7DC6F; }
+.rp-action { font-size: 10px; opacity: 0.6; }
+/* 确保子页面初始在屏幕下方 100% 处 */
+.ios-sub-page, #lune-location-overlay {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    transform: translateY(100%); /* 藏在地板下面 */
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    z-index: 20000;
+}
+
+/* 当激活 active 类时，回到 0 的位置 */
+.ios-sub-page.active, #lune-location-overlay.active {
+    transform: translateY(0) !important;
+}
+/* 强制覆盖所有可能的隐藏逻辑 */
+#subpage-finance {
+    display: none; /* 初始状态 */
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    background: #F2F2F7 !important; /* 确保背景不是透明的，否则你以为没弹出来 */
+    z-index: 999999 !important;
+    transform: translateY(100%);
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+/* 激活状态 */
+#subpage-finance.active {
+    display: flex !important;
+    transform: translateY(0) !important;
+}
+/* --- 500万层级：建筑快门系统全域规范 --- */
+#lune-ins-overlay {
+    position: fixed; inset: 0; z-index: 5000000;
+    background: rgba(255, 255, 255, 0.4);
+    backdrop-filter: blur(50px) saturate(150%); -webkit-backdrop-filter: blur(50px) saturate(150%);
+    display: none; align-items: center; justify-content: center;
+    opacity: 0; transition: opacity 0.8s ease;
+}
+#lune-ins-overlay.active { opacity: 1; display: flex; }
+
+/* 容器底座 */
+.ins-shutter-container {
+    width: 320px; height: 480px; position: relative;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; overflow: hidden; background: #ffffff;
+    box-shadow: 0 60px 120px rgba(0,0,0,0.12); border-radius: 4px;
+}
+
+/* 物理快门逻辑 */
+.shutter-line {
+    position: absolute; width: 1px; height: 100px; background: #000; z-index: 10;
+    transition: 1s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.shutter-blade {
+    position: absolute; top: 0; width: 50.5%; height: 100%;
+    background: #fdfdfd; z-index: 5; transition: 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.blade-left { left: 0; border-right: 0.5px solid #eee; }
+.blade-right { right: 0; border-left: 0.5px solid #eee; }
+
+/* 开启状态位移 */
+.ins-shutter-container.opened .shutter-line { height: 0; opacity: 0; }
+.ins-shutter-container.opened .blade-left { transform: translateX(-100%); }
+.ins-shutter-container.opened .blade-right { transform: translateX(100%); }
+
+/* --- 模式 A：Ledger (左对齐工业票据) --- */
+.ledger-layout {
+    width: 100%; height: 100%; padding: 50px 30px;
+    display: flex; flex-direction: column; text-align: left;
+    opacity: 0; transform: translateY(20px);
+    transition: 1s 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.ledger-tag { 
+    position: absolute; right: 20px; top: 120px;
+    writing-mode: vertical-rl; font-size: 8px; letter-spacing: 4px; color: #ddd; 
+}
+.ledger-amt-box { border-left: 1.5px solid #000; padding-left: 20px; margin: 60px 0 40px; }
+.ledger-amt { font-family: 'Helvetica Neue', Arial; font-size: 50px; font-weight: 200; letter-spacing: -2px; color: #000; }
+.ledger-row { display: flex; justify-content: space-between; font-size: 10px; color: #999; margin-bottom: 12px; }
+.ledger-val { color: #000; font-weight: 600; font-family: monospace; }
+
+/* --- 模式 B：Vessel (居中绽放容器) --- */
+.vessel-layout {
+    width: 100%; height: 100%; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; padding: 40px;
+    opacity: 0; transform: scale(0.95);
+    transition: 1.2s 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.vessel-bloom {
+    width: 40px; height: 40px; border: 0.5px solid #000; border-radius: 50%;
+    margin-bottom: 40px; opacity: 0.1; transition: 1.5s 0.6s;
+}
+.ins-shutter-container.opened .vessel-bloom { transform: scale(2.5); opacity: 0; }
+.vessel-amt { font-family: 'Helvetica Neue', Arial; font-size: 60px; font-weight: 200; letter-spacing: -4px; color: #000; }
+.vessel-note { font-size: 14px; color: #666; font-style: italic; margin-top: 30px; letter-spacing: 0.5px; line-height: 1.6; }
+
+/* 内容激活显示 */
+.ins-shutter-container.opened .ledger-layout,
+.ins-shutter-container.opened .vessel-layout { opacity: 1; transform: none; }
+
+/* 物理按钮 */
+.ins-btn-black {
+    margin-top: auto; align-self: center; background: #000; color: #fff;
+    border: none; padding: 12px 45px; border-radius: 40px;
+    font-size: 9px; letter-spacing: 3px; text-transform: uppercase; cursor: pointer; transition: 0.3s;
+}
+.ins-btn-white {
+    margin-top: 50px; background: #fff; color: #000; border: 1px solid #000;
+    padding: 12px 45px; border-radius: 40px; font-size: 9px; letter-spacing: 3px; cursor: pointer;
+}
+/* 🚨 金融卡片变暗协议 */
+.message-bubble.opponent.is-claimed {
+    filter: grayscale(1); /* 彻底变灰 */
+    opacity: 0.6;        /* 半透明 */
+    pointer-events: none; /* 锁死点击，防止二次触发 */
+}
+
+/* 🚨 居中系统通知协议 */
+.msg-finance_notice {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    margin: 12px 0;
+    clear: both;
+}
+
+.msg-finance_notice .notice-text {
+    background: rgba(0, 0, 0, 0.05);
+    color: #8E8E93;
+    font-size: 12px;
+    padding: 4px 12px;
+    border-radius: 12px;
+}
+/* ============================================================
+   LUNE.LIVE V3 - COMPLETE CORE STYLES
+   ============================================================ */
+
+/* 1. 全局容器与动画基础 */
+#liveApp-v3 {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #FFFFFF;
+    z-index: 2000000;
+    display: none;
+    flex-direction: column;
+    font-family: 'Montserrat', sans-serif;
+    overflow: hidden;
+    color: #1a1a1a;
+    -webkit-font-smoothing: antialiased;
+}
+
+#liveApp-v3.active {
+    display: flex;
+    animation: v3SlideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes v3SlideUp {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+}
+
+@keyframes v3FadeIn {
+    from { opacity: 0; transform: translateY(15px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* 2. 系统元数据条 */
+.v3-status-bar {
+    padding: 55px 25px 5px;
+    font-family: monospace;
+    font-size: 7px;
+    display: flex;
+    justify-content: space-between;
+    color: #BBB;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    background: #fff;
+}
+
+/* 3. 顶部导航头 */
+.v3-header {
+    padding: 10px 25px 15px;
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 0.5px solid #F2F2F2;
+    z-index: 10;
+}
+
+.v3-logo {
+    font-family: 'Cinzel';
+    font-weight: 900;
+    font-size: 22px;
+    letter-spacing: -1px;
+    color: #000;
+}
+
+.v3-close-trigger {
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 2px;
+    cursor: pointer;
+    color: #000;
+}
+
+/* 4. 视窗管理 */
+.v3-viewport {
+    flex: 1;
+    overflow-y: auto;
+    scrollbar-width: none;
+    background: #fff;
+}
+
+.v3-viewport::-webkit-scrollbar {
+    display: none;
+}
+
+.v3-content-gate {
+    display: none;
+    padding-bottom: 120px;
+}
+
+.v3-content-gate.active {
+    display: block;
+    animation: v3FadeIn 0.5s ease-out forwards;
+}
+
+/* 5. [首页] 频道故事流 */
+.v3-story-flow {
+    display: flex;
+    gap: 18px;
+    padding: 25px 25px 15px;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+
+.v3-story-flow::-webkit-scrollbar {
+    display: none;
+}
+
+.story-item {
+    width: 65px;
+    height: 65px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    padding: 2.5px;
+    background: linear-gradient(135deg, #FFDDE2, #E3F2FD);
+    border: 0.5px solid #F0F0F0;
+}
+
+.story-ring {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: #F8F8F8;
+    border: 2px solid #FFF;
+    overflow: hidden;
+}
+
+/* 6. [首页] 分类标签系统 */
+.v3-category-nav {
+    display: flex;
+    gap: 10px;
+    padding: 5px 25px 25px;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+
+.v3-cat-btn {
+    padding: 9px 22px;
+    border-radius: 40px;
+    font-size: 10px;
+    font-weight: 800;
+    white-space: nowrap;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 1px solid transparent;
+}
+
+.v3-cat-btn.pink { background: #FFF0F2; color: #FF8A9D; }
+.v3-cat-btn.blue { background: #F0F7FF; color: #7DB9FF; }
+
+.v3-cat-btn.active {
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.05);
+    border: 0.5px solid rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+}
+
+/* 7. [首页] 排行榜模块 */
+.v3-rank-module {
+    padding: 10px 25px 30px;
+}
+
+.rank-meta-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 30px;
+}
+
+.rank-display-title {
+    font-family: 'Cinzel';
+    font-size: 32px;
+    line-height: 0.85;
+    font-weight: 900;
+    color: #000;
+}
+
+.rank-toggle-group {
+    display: flex;
+    gap: 15px;
+    font-size: 9px;
+    font-weight: 800;
+    color: #CCC;
+}
+
+.rank-toggle-btn {
+    cursor: pointer;
+    transition: 0.3s;
+    padding-bottom: 4px;
+    border-bottom: 2px solid transparent;
+}
+
+.rank-toggle-btn.active {
+    color: #000;
+    border-bottom: 2px solid #000;
+}
+
+.rank-data-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.rank-item-v3 {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 18px;
+    background: #FFF;
+    border: 0.5px solid #F5F5F5;
+    border-radius: 20px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+}
+
+.rank-idx {
+    font-family: 'Cinzel';
+    font-size: 20px;
+    font-weight: 900;
+    color: #EEE;
+    font-style: italic;
+    width: 25px;
+}
+
+.rank-main-name {
+    font-size: 14px;
+    font-weight: 700;
+    color: #1a1a1a;
+}
+
+.rank-sub-heat {
+    font-size: 9px;
+    color: #AAA;
+    margin-top: 5px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+/* 8. [首页] 推荐网格 */
+.v3-recommend-grid {
+    padding: 0 25px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+}
+
+.grid-card-item {
+    aspect-ratio: 1/1.2;
+    background: #F9F9F9;
+    border: 0.5px solid #EEE;
+    border-radius: 24px;
+    overflow: hidden;
+}
+
+/* 9. [私信] 列表样式 */
+.v3-page-title {
+    padding: 40px 25px 20px;
+}
+
+.v3-page-title span {
+    font-family: monospace;
+    font-size: 8px;
+    color: #BBB;
+    letter-spacing: 3px;
+}
+
+.v3-page-title h1 {
+    font-family: 'Cinzel';
+    font-size: 32px;
+    margin-top: 8px;
+    font-weight: 900;
+}
+
+.v3-msg-container {
+    padding: 0 25px;
+}
+
+.msg-row {
+    display: flex;
+    gap: 18px;
+    padding: 22px 0;
+    border-bottom: 0.5px solid #F9F9F9;
+}
+
+.msg-avatar-box {
+    width: 52px;
+    height: 52px;
+    border-radius: 20px;
+    flex-shrink: 0;
+}
+
+.msg-avatar-box.pink { background: #FFF0F2; }
+.msg-avatar-box.blue { background: #F0F7FF; }
+
+.msg-info-box {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.msg-user-line {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+}
+
+.msg-user-line span {
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.msg-user-line time {
+    font-size: 9px;
+    color: #CCC;
+}
+
+.msg-info-box p {
+    font-size: 12px;
+    color: #777;
+    margin: 0;
+    line-height: 1.4;
+}
+
+/* 10. [个人空间] 样式 */
+.v3-profile-header {
+    padding: 50px 25px;
+    text-align: center;
+}
+
+.profile-avatar-v3 {
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    margin: 0 auto 25px;
+    padding: 6px;
+    border: 0.5px solid #E0E0E0;
+}
+
+.avatar-inner-fill {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: #F5F5F5;
+}
+
+.profile-name {
+    font-family: 'Cinzel';
+    font-size: 24px;
+    font-weight: 900;
+    margin-bottom: 8px;
+}
+
+.profile-stat-row {
+    display: flex;
+    justify-content: center;
+    gap: 45px;
+    margin-top: 30px;
+}
+
+.stat-unit {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.stat-unit b {
+    font-family: 'Cinzel';
+    font-size: 18px;
+    font-weight: 900;
+}
+
+.stat-unit small {
+    font-size: 8px;
+    color: #BBB;
+    letter-spacing: 1.5px;
+}
+
+/* 11. 底部常驻导航栏 */
+.v3-bottom-bar {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    height: 95px;
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(25px);
+    -webkit-backdrop-filter: blur(25px);
+    border-top: 0.5px solid #F2F2F2;
+    display: flex;
+    justify-content: space-around;
+    padding-top: 15px;
+    z-index: 100;
+}
+
+.v3-tab-trigger {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    color: #DDD;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    width: 70px;
+}
+
+.v3-tab-trigger.active {
+    color: #000;
+}
+
+.tab-svg {
+    width: 24px;
+    height: 24px;
+    stroke-width: 1.5px;
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.v3-tab-trigger.active .tab-svg {
+    transform: scale(1.1);
+    stroke-width: 2px;
+}
+
+.v3-tab-trigger span {
+    font-size: 8px;
+    font-weight: 800;
+    letter-spacing: 1px;
+}
+/* ============================================================
+   LUNE GALLERY V4 - EDITORIAL LUXE STYLES
+   ============================================================ */
+
+#liveApp-v3 {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    background: #FFFFFF; z-index: 2000000; display: none;
+    flex-direction: column; font-family: 'Montserrat', sans-serif;
+    overflow: hidden; color: #1a1a1a;
+}
+
+#liveApp-v3.active { display: flex; animation: v3SlideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+
+@keyframes v3SlideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+
+/* 顶部同步轨 */
+.v3-sync-rail-wrap { padding: 55px 25px 5px; }
+.v3-sync-rail {
+    width: 100%; height: 40px; border: 0.5px solid #F0F0F0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 8px; font-weight: 500; letter-spacing: 5px; color: #BBB;
+    cursor: pointer; position: relative; overflow: hidden;
+    background: #FFF; border-radius: 4px; transition: 0.3s;
+}
+.v3-sync-rail:active { background: #000; color: #fff; border-color: #000; }
+
+/* 核心导航切换 */
+.v3-nav-group { margin: 25px 25px 20px; display: flex; gap: 40px; }
+.v3-nav-item {
+    font-family: 'Cinzel'; font-size: 16px; font-weight: 800;
+    color: #DCDCDC; cursor: pointer; transition: 0.3s; position: relative;
+}
+.v3-nav-item.active { color: #000; }
+.v3-nav-item.active::after {
+    content: ''; position: absolute; bottom: -8px; left: 0;
+    width: 15px; height: 1.5px; background: #000;
+}
+
+/* 视窗管理 */
+.v3-viewport { flex: 1; overflow-y: auto; scrollbar-width: none; }
+.v3-viewport::-webkit-scrollbar { display: none; }
+.v3-hide { display: none !important; }
+
+/* 马卡龙圆角胶囊标签 (Pills) */
+.v3-pastel-pills { padding: 0 25px 25px; display: flex; gap: 10px; overflow-x: auto; }
+.v3-pill {
+    padding: 7px 18px; font-size: 9px; font-weight: 700; letter-spacing: 0.5px;
+    border-radius: 50px; transition: 0.3s; white-space: nowrap; border: 0.5px solid transparent;
+}
+.pill-mint { background: #F2FAF7; color: #88B0A8; }
+.pill-blue { background: #F2F7FA; color: #889DB0; }
+.pill-pink { background: #FAF2F4; color: #B0888F; }
+.pill-purple { background: #F5F2FA; color: #9B88B0; }
+.v3-pill.active { border-color: rgba(0,0,0,0.1); box-shadow: 0 4px 10px rgba(0,0,0,0.03); transform: translateY(-1px); }
+
+/* GALLERY 画报信息流卡片 */
+.v3-gallery-flow { padding: 0 25px 120px; display: flex; flex-direction: column; gap: 45px; }
+.v4-card { display: flex; flex-direction: column; gap: 15px; animation: v3FadeIn 0.6s ease forwards; }
+
+.v4-visual-box {
+    width: 100%; aspect-ratio: 16/10; background: #F9F9F9;
+    border-radius: 12px; border: 0.5px solid #EEE; position: relative; overflow: hidden;
+}
+.v4-visual-box::before {
+    content: 'LUNE_ARCHIVE_IMAGE'; position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -50%); font-family: 'Cinzel'; font-size: 10px; color: #DDD;
+}
+
+.v4-info-box { display: flex; flex-direction: column; gap: 8px; }
+.v4-host-line { display: flex; align-items: center; gap: 8px; font-size: 10px; font-weight: 800; }
+.v4-host-dot { width: 6px; height: 6px; border-radius: 50%; background: #FFDDE2; }
+.v4-title { font-family: 'Cinzel'; font-size: 19px; font-weight: 900; line-height: 1.2; letter-spacing: 0.5px; }
+.v4-abstract { font-size: 11px; color: #888; line-height: 1.6; padding-right: 15px; }
+.v4-meta-row { 
+    margin-top: 5px; padding-top: 12px; border-top: 0.5px solid #F0F0F0;
+    display: flex; justify-content: space-between; font-family: monospace; font-size: 8px; color: #BBB;
+}
+
+/* RANKING 精英勋章排行榜 */
+.v3-rank-view { padding: 0 25px 120px; }
+.rank-type-switcher { display: flex; gap: 25px; margin: 0 25px 30px; }
+.rank-type-opt { font-size: 11px; font-weight: 800; color: #CCC; cursor: pointer; transition: 0.3s; padding-bottom: 5px; border-bottom: 1.5px solid transparent; }
+.rank-type-opt.active { color: #000; border-color: #000; }
+
+.rank-elite-card {
+    background: #FFF; border: 0.5px solid #F0F0F0; border-radius: 18px;
+    padding: 22px; margin: 0 25px 15px; display: flex; align-items: center; gap: 20px;
+    animation: v3FadeIn 0.5s ease forwards;
+}
+.rank-elite-card.top-1 { border-color: #000; background: #FDFDFD; }
+.elite-num { font-family: 'Cinzel'; font-size: 24px; font-weight: 900; color: #EEE; font-style: italic; width: 40px; }
+.rank-elite-card.top-1 .elite-num { color: #000; }
+.elite-avatar { width: 48px; height: 48px; border-radius: 14px; background: #F8F8F8; border: 0.5px solid #EEE; }
+.elite-main { flex: 1; }
+.elite-name { font-size: 14px; font-weight: 800; margin-bottom: 4px; }
+.elite-status { font-size: 9px; color: #AAA; letter-spacing: 1px; text-transform: uppercase; }
+.elite-val { font-family: 'Cinzel'; font-size: 14px; font-weight: 800; }
+
+@keyframes v3FadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+/* ============================================================
+   LUNE MESSAGES V4 - DIGITAL ARCHIVE STYLES
+   ============================================================ */
+
+/* 顶部协议验证器 */
+.v3-msg-sync-wrap { padding: 55px 25px 20px; background: #fff; }
+
+.protocol-verifier {
+    width: 100%; height: 2px; background: #F0F0F0;
+    position: relative; cursor: pointer; display: flex; align-items: center;
+}
+
+.verifier-label {
+    position: absolute; top: -14px; left: 0;
+    font-family: monospace; font-size: 7px; color: #BBB; letter-spacing: 1.5px;
+}
+
+.verifier-scanner {
+    position: absolute; left: 0; top: 0; width: 0%; height: 100%;
+    background: #000; transition: width 0.8s cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+.protocol-verifier.loading .verifier-scanner { width: 100%; }
+
+/* 标题设计：高张力 Cinzel */
+.inbox-header { padding: 10px 25px 35px; }
+
+.inbox-header h1 { 
+    font-family: 'Cinzel'; font-size: 38px; font-weight: 900; 
+    margin: 0; line-height: 0.8; letter-spacing: -1.5px; color: #000;
+}
+
+.inbox-header p { 
+    font-size: 9px; color: #CCC; letter-spacing: 3px; margin-top: 12px;
+    text-transform: uppercase; font-weight: 500;
+}
+
+/* 消息索引卡列表 */
+.v3-msg-archive { padding: 0 25px 120px; display: flex; flex-direction: column; }
+
+.msg-slip {
+    display: flex; gap: 20px; padding: 25px 0;
+    border-bottom: 0.5px solid #F5F5F5;
+    transition: 0.3s; position: relative;
+}
+
+.msg-slip:active { background: #FAFAFA; }
+
+/* 极淡马卡龙头像块 */
+.slip-avatar-v3 {
+    width: 48px; height: 48px; border-radius: 2px;
+    flex-shrink: 0; border: 0.5px solid rgba(0,0,0,0.03);
+}
+
+.avatar-mint { background: #F5FAF9; }
+.avatar-blue { background: #F5F8FA; }
+.avatar-pink { background: #FAF5F6; }
+
+/* 消息主体 */
+.slip-body { flex: 1; display: flex; flex-direction: column; gap: 7px; }
+
+.slip-top-line { display: flex; justify-content: space-between; align-items: flex-end; }
+
+.slip-user { font-family: 'Cinzel'; font-size: 15px; font-weight: 800; color: #1a1a1a; }
+
+.slip-time { font-family: monospace; font-size: 8px; color: #DDD; }
+
+.slip-content {
+    font-size: 11px; color: #666; line-height: 1.4; padding-right: 35px;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
+/* 消息元数据标签 */
+.slip-meta { display: flex; gap: 10px; margin-top: 4px; }
+
+.meta-tag {
+    font-size: 7px; font-family: monospace; color: #CCC;
+    padding: 2px 6px; border: 0.5px solid #F0F0F0; border-radius: 1px;
+}
+
+/* 档案滑入动画 */
+.v3-slip-anim { animation: v3SlipIn 0.6s cubic-bezier(0.23, 1, 0.32, 1) forwards; opacity: 0; }
+
+@keyframes v3SlipIn {
+    from { opacity: 0; transform: translateX(-15px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+/* 个人空间增强样式 */
+.v3-space-hero { cursor: pointer; transition: 0.5s; background-size: cover; background-position: center; }
+.hero-meta-tag { position: absolute; bottom: 15px; right: 20px; font-size: 7px; color: rgba(0,0,0,0.1); letter-spacing: 3px; }
+
+.v3-avatar-wrap { cursor: pointer; overflow: hidden; }
+#user-avatar-display img { width: 100%; height: 100%; object-fit: cover; border-radius: 16px; }
+.v3-user-name, .v3-user-signature { cursor: pointer; transition: 0.3s; }
+.v3-user-name:hover { opacity: 0.7; }
+
+/* 编辑弹窗遮罩 */
+.v3-edit-mask {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(255,255,255,0.8); backdrop-filter: blur(15px);
+    z-index: 3000000; display: none; align-items: center; justify-content: center;
+    opacity: 0; transition: 0.4s;
+}
+.v3-edit-mask.active { display: flex; opacity: 1; }
+
+/* 弹窗主体 */
+.v3-edit-modal {
+    width: 85%; background: #FFF; border: 0.5px solid #000;
+    padding: 30px; box-shadow: 0 30px 60px rgba(0,0,0,0.1);
+    transform: translateY(20px); transition: 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.v3-edit-mask.active .v3-edit-modal { transform: translateY(0); }
+
+.edit-modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; }
+.edit-protocol-title { font-family: monospace; font-size: 8px; color: #AAA; letter-spacing: 2px; }
+.edit-close-btn { font-size: 10px; font-weight: 800; cursor: pointer; }
+
+.edit-modal-body h2 { font-family: 'Cinzel'; font-size: 24px; margin-bottom: 30px; }
+
+/* 输入控件样式 */
+.edit-input-label { font-size: 8px; color: #BBB; margin-bottom: 8px; display: block; letter-spacing: 1px; }
+.edit-text-input {
+    width: 100%; border: none; border-bottom: 0.5px solid #000;
+    padding: 10px 0; font-size: 14px; outline: none; margin-bottom: 25px;
+    font-family: 'Montserrat', sans-serif;
+}
+.edit-file-input { display: none; }
+.edit-file-label {
+    display: block; width: 100%; padding: 15px; border: 0.5px dashed #CCC;
+    text-align: center; font-size: 10px; color: #999; cursor: pointer; margin-bottom: 25px;
+}
+
+.edit-confirm-btn {
+    width: 100%; height: 45px; background: #000; color: #FFF;
+    border: none; font-size: 10px; font-weight: 800; letter-spacing: 3px;
+    cursor: pointer; transition: 0.3s;
+}
+.edit-confirm-btn:active { transform: scale(0.98); opacity: 0.8; }
+
 </style>
 </head>
 <body>
@@ -32103,6 +32942,134 @@ input[type="range"] { width: 100%; accent-color: #000; cursor: pointer; }
 
     <div id="ai-writing-log" style="margin-top:30px; font-size:13px; color:#666; height:20px; text-align:center; z-index:10;">Loading story world...</div>
 </div>
+<div id="liveApp-v3">
+    <div class="v3-status-bar">
+        <span>LUNE_SYSTEM_LIVE_V3</span>
+        <span id="v3-current-time">00:00:00</span>
+    </div>
+
+    <header class="v3-header">
+        <div class="v3-logo">LUNE.LIVE</div>
+        <div class="v3-close-trigger" onclick="closeLiveV3()">CLOSE</div>
+    </header>
+
+    <main class="v3-viewport">
+        <section id="v3-tab-home" class="v3-content-gate active">
+    
+            <div class="v3-sync-rail-wrap">
+                <div id="v3-sync-bar" class="v3-sync-rail" onclick="triggerV3Sync()">
+                    SYNC_DATABASE_TO_LOAD
+                </div>
+            </div>
+
+            <div class="v3-nav-group">
+                <span class="v3-nav-item active" onclick="switchV3MainView('gallery')">GALLERY</span>
+                <span class="v3-nav-item" onclick="switchV3MainView('rank')">RANKING</span>
+            </div>
+
+            <div id="v3-view-gallery">
+                <nav class="v3-pastel-pills" id="v3-gallery-tags">
+                    </nav>
+
+                <div class="v3-gallery-flow" id="v3-gallery-content">
+                    </div>
+            </div>
+
+            <div id="v3-view-ranking" class="v3-hide">
+                <div class="rank-type-switcher">
+                    <span class="rank-type-opt active" onclick="renderEliteRank('live')">LIVE_CHANNELS</span>
+                    <span class="rank-type-opt" onclick="renderEliteRank('host')">ELITE_HOSTS</span>
+                </div>
+                
+                <div id="v3-elite-list-content">
+                    </div>
+            </div>
+
+        </section>
+
+        <section id="v3-tab-inbox" class="v3-content-gate">
+    
+            <div class="v3-msg-sync-wrap">
+                <div id="protocol-trigger" class="protocol-verifier" onclick="verifyMessages()">
+                    <div class="verifier-label" id="verifier-status-text">IDENTITY_PROTOCOL: PENDING_VERIFICATION</div>
+                    <div class="verifier-scanner"></div>
+                </div>
+            </div>
+
+            <div class="inbox-header">
+                <h1>Inbox<br>Archive</h1>
+                <p>Decrypted_Signal // Station_BKK</p>
+            </div>
+
+            <div class="v3-msg-archive" id="inbox-content-list">
+                </div>
+
+        </section>
+
+        <section id="v3-tab-space" class="v3-content-gate">
+            <div class="v3-space-hero" id="space-hero-bg" onclick="openEditModal('background')">
+                <div class="hero-scan-line"></div>
+                <div class="hero-meta-tag">IDENTITY_SPACE_V4</div>
+            </div>
+
+            <div class="v3-space-header">
+                <div class="v3-avatar-wrap" onclick="openEditModal('avatar')">
+                    <div class="v3-avatar-inner" id="user-avatar-display">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#CCC" stroke-width="1.2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    </div>
+                </div>
+                <div class="v3-user-info">
+                    <div class="v3-user-name" id="user-name-display" onclick="openEditModal('nickname')">Lune_User</div>
+                    <div class="v3-user-signature" id="user-bio-display" onclick="openEditModal('signature')">
+                        "INITIALIZING_IDENTITY_PROTOCOL..."
+                    </div>
+                </div>
+            </div>
+
+            <div class="v3-space-stats">
+                <div class="stat-item"><span class="stat-val" id="stat-followers">0</span><span class="stat-lab">FOLLOWERS</span></div>
+                <div class="stat-item"><span class="stat-val" id="stat-following">0</span><span class="stat-lab">FOLLOWING</span></div>
+                <div class="stat-item"><span class="stat-val" id="stat-influence">0</span><span class="stat-lab">INFLUENCE</span></div>
+            </div>
+
+            <div class="v3-action-matrix" id="space-matrix-container">
+                </div>
+        </section>
+    </main>
+
+    <nav class="v3-bottom-bar">
+        <div class="v3-tab-trigger active" onclick="switchV3Tab('home')">
+            <svg viewBox="0 0 24 24" class="tab-svg"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+            <span>EXPLORE</span>
+        </div>
+        <div class="v3-tab-trigger" onclick="switchV3Tab('inbox')">
+            <svg viewBox="0 0 24 24" class="tab-svg"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            <span>INBOX</span>
+        </div>
+        <div class="v3-tab-trigger" onclick="switchV3Tab('space')">
+            <svg viewBox="0 0 24 24" class="tab-svg"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            <span>SPACE</span>
+        </div>
+    </nav>
+</div>
+<div id="v3-edit-overlay" class="v3-edit-mask">
+    <div class="v3-edit-modal">
+        <div class="edit-modal-header">
+            <div class="edit-protocol-title">IDENTITY_UPDATE_PROTOCOL</div>
+            <div class="edit-close-btn" onclick="closeEditModal()">CLOSE</div>
+        </div>
+        <div class="edit-modal-body">
+            <h2 id="edit-target-title">UPDATE_DATA</h2>
+            
+            <div id="edit-input-group">
+                </div>
+
+            <div class="edit-action-row">
+                <button class="edit-confirm-btn" onclick="applySpaceEdit()">CONFIRM_CHANGES</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <script>
 class ImmersiveReader {
@@ -32269,6 +33236,581 @@ class ImmersiveReader {
 }
 
 /**
+ * 🛠 1. LUNE_PROTOCOL_MODAL - 独立弹窗管理器 (极高级别)
+ * 职责：控制 z-index: 5000000 的弹窗、双模修改、持久化存储
+ */
+class LuneProtocolModal {
+    constructor() {
+        this.currentType = ''; // background | avatar | nickname | signature
+        this.tempBase64 = null;
+        this.DB_KEYS = {
+            background: 'live_user_background_data',
+            avatar: 'live_user_avatar_data',
+            nickname: 'live_user_nickname',
+            signature: 'live_user_signature'
+        };
+        this.injectGlobalStyles();
+    }
+
+    // 锁定 500 万层级的 CSS
+    injectGlobalStyles() {
+        if (document.getElementById('lune-protocol-modal-css')) return;
+        const style = document.createElement('style');
+        style.id = 'lune-protocol-modal-css';
+        style.innerHTML = `
+            .v3-edit-mask {
+                position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+                background: rgba(255,255,255,0.8); backdrop-filter: blur(20px);
+                z-index: 8000000 !important; /* 强制最高层级 */
+                display: none; align-items: center; justify-content: center;
+                opacity: 0; transition: 0.4s;
+            }
+            .v3-edit-mask.active { display: flex; opacity: 1; }
+            .v3-edit-modal {
+                width: 85%; max-width: 400px; background: #FFF; border: 0.5px solid #000;
+                padding: 30px; box-shadow: 0 30px 60px rgba(0,0,0,0.1);
+                transform: translateY(20px); transition: 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            }
+            .v3-edit-mask.active .v3-edit-modal { transform: translateY(0); }
+            .edit-modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+            .edit-protocol-title { font-family: monospace; font-size: 7px; color: #AAA; letter-spacing: 2px; }
+            .edit-close-btn { font-size: 10px; font-weight: 800; cursor: pointer; }
+            .edit-text-input { width: 100%; border: none; border-bottom: 0.5px solid #000; padding: 12px 0; font-size: 15px; outline: none; margin-bottom: 25px; font-family: inherit; }
+            .edit-file-label { display: block; width: 100%; padding: 15px; border: 0.5px dashed #CCC; text-align: center; font-size: 10px; color: #999; cursor: pointer; margin-bottom: 25px; }
+            .edit-confirm-btn { width: 100%; height: 45px; background: #000; color: #FFF; border: none; font-size: 10px; font-weight: 800; letter-spacing: 3px; cursor: pointer; }
+        `;
+        document.head.appendChild(style);
+    }
+
+    /**
+     * 🔓 打开弹窗并渲染内容
+     */
+    open(type) {
+        this.currentType = type;
+        this.tempBase64 = null;
+        const overlay = document.getElementById('v3-edit-overlay');
+        const titleEl = document.getElementById('edit-target-title');
+        const inputGroup = document.getElementById('edit-input-group');
+
+        if (!overlay) return;
+
+        overlay.style.display = 'flex';
+        setTimeout(() => overlay.classList.add('active'), 10);
+        titleEl.innerText = `UPDATE_${type.toUpperCase()}`;
+
+        if (type === 'background' || type === 'avatar') {
+            inputGroup.innerHTML = `
+                <span style="font-size:8px; color:#BBB; margin-bottom:8px; display:block;">OPTION_01: IMAGE_URL</span>
+                <input type="text" id="modal-url-input" class="edit-text-input" placeholder="https://...">
+                <span style="font-size:8px; color:#BBB; margin-bottom:8px; display:block;">OPTION_02: LOCAL_FILE</span>
+                <label class="edit-file-label" for="modal-file-input" id="modal-file-label">CLICK_TO_UPLOAD_IMAGE</label>
+                <input type="file" id="modal-file-input" style="display:none" onchange="window.protocolModal.handleFile(this)">
+            `;
+        } else {
+            const currentVal = (type === 'nickname') ? 
+                document.getElementById('user-name-display').innerText : 
+                document.getElementById('user-bio-display').innerText.replace(/"/g, '');
+            inputGroup.innerHTML = `
+                <span style="font-size:8px; color:#BBB; margin-bottom:8px; display:block;">INPUT_NEW_VALUE</span>
+                <input type="text" id="modal-text-input" class="edit-text-input" value="${currentVal}">
+            `;
+        }
+    }
+
+    handleFile(input) {
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                this.tempBase64 = e.target.result;
+                document.getElementById('modal-file-label').innerText = "IMAGE_PROTOCOL_READY";
+                document.getElementById('modal-file-label').style.borderColor = "#000";
+            };
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    async submit() {
+        const type = this.currentType;
+        let finalVal = "";
+
+        if (type === 'background' || type === 'avatar') {
+            finalVal = document.getElementById('modal-url-input').value || this.tempBase64;
+            if (!finalVal) return this.close();
+            if (type === 'background') {
+                document.getElementById('space-hero-bg').style.backgroundImage = `url(${finalVal})`;
+            } else {
+                document.getElementById('user-avatar-display').innerHTML = `<img src="${finalVal}">`;
+            }
+        } else {
+            finalVal = document.getElementById('modal-text-input').value;
+            if (!finalVal) return this.close();
+            if (type === 'nickname') {
+                document.getElementById('user-name-display').innerText = finalVal;
+            } else {
+                document.getElementById('user-bio-display').innerText = `"${finalVal}"`;
+            }
+        }
+
+        // 存入 IndexedDB
+        if (window.ib) await window.ib.setItem(this.DB_KEYS[type], finalVal);
+        this.close();
+    }
+
+    close() {
+        const overlay = document.getElementById('v3-edit-overlay');
+        if (overlay) {
+            overlay.classList.remove('active');
+            setTimeout(() => overlay.style.display = 'none', 400);
+        }
+    }
+}
+
+/**
+ * 🌌 2. LUNE_SPACE_MANAGER - 页面管理器
+ * 职责：渲染 Space 布局，并调用弹窗类
+ */
+class LuneSpaceManager {
+    constructor() {
+        this.defaults = {
+            name: 'LUNE_MASTER',
+            bio: '"RESTRUCTURING_IDENTITY_PROTOCOL..."',
+        };
+    }
+
+    async forceRender() {
+        this.injectBaseStyles();
+        this.renderLayout();
+        await this.loadInitialData();
+    }
+
+    injectBaseStyles() {
+        if (document.getElementById('space-v4-base-styles')) return;
+        const style = document.createElement('style');
+        style.id = 'space-v4-base-styles';
+        style.innerHTML = `
+            #v3-tab-space { padding-bottom: 120px; overflow-y: auto; scrollbar-width: none; height: 100%; }
+            #v3-tab-space::-webkit-scrollbar { display: none; }
+            .v3-space-hero { width: 100%; height: 180px; background: #F5F5F5; background-size: cover; background-position: center; position: relative; cursor: pointer; overflow: hidden; }
+            .hero-scan-line { position: absolute; top: 0; left: 0; width: 100%; height: 1px; background: rgba(0,0,0,0.05); animation: scanDown 4s linear infinite; }
+            .hero-meta { position: absolute; bottom: 12px; right: 20px; font-size: 7px; color: rgba(0,0,0,0.2); letter-spacing: 2px; font-family: monospace; }
+            .v3-space-header { padding: 0 25px; margin-top: -40px; z-index: 5; position: relative; }
+            .v3-avatar-wrap { width: 90px; height: 90px; border-radius: 20px; background: #fff; padding: 5px; border: 0.5px solid #EEE; box-shadow: 0 10px 30px rgba(0,0,0,0.05); cursor: pointer; overflow: hidden; }
+            .v3-avatar-inner { width: 100%; height: 100%; border-radius: 16px; background: #F9F9F9; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+            .v3-avatar-inner img { width: 100%; height: 100%; object-fit: cover; }
+            .v3-user-name { font-family: 'Cinzel'; font-size: 26px; font-weight: 900; color: #000; cursor: pointer; margin-top: 20px; }
+            .v3-user-signature { font-size: 11px; color: #999; margin-top: 10px; line-height: 1.6; font-style: italic; cursor: pointer; }
+            .v3-space-stats { display: flex; gap: 35px; margin-top: 30px; padding: 0 25px; }
+            .stat-val { font-family: 'Cinzel'; font-size: 18px; font-weight: 800; }
+            .stat-lab { font-size: 8px; color: #BBB; letter-spacing: 1.5px; }
+            .v3-action-matrix { padding: 40px 25px; display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+            .matrix-btn { background: #fff; border: 0.5px solid #F0F0F0; border-radius: 4px; padding: 20px 15px; display: flex; flex-direction: column; gap: 8px; cursor: pointer; transition: 0.3s; }
+            .matrix-btn:active { transform: scale(0.96); border-color: #000; }
+            .btn-recharge { background: #F5F8FA; } .btn-live { background: #F2FAF7; } .btn-member { background: #FAF2F4; }
+            .btn-title-v3 { font-size: 11px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; }
+            .btn-desc-v3 { font-size: 7px; color: #AAA; font-family: monospace; }
+            @keyframes scanDown { from { top: 0; } to { top: 100%; } }
+        `;
+        document.head.appendChild(style);
+    }
+
+    renderLayout() {
+        const container = document.getElementById('v3-tab-space');
+        if (!container) return;
+
+        container.innerHTML = `
+            <div class="v3-space-hero" id="space-hero-bg" onclick="window.protocolModal.open('background')">
+                <div class="hero-scan-line"></div>
+                <div class="hero-meta">IDENTITY_PROTOCOL_V4</div>
+            </div>
+            <div class="v3-space-header">
+                <div class="v3-avatar-wrap" onclick="window.protocolModal.open('avatar')">
+                    <div class="v3-avatar-inner" id="user-avatar-display">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#CCC" stroke-width="1.2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    </div>
+                </div>
+                <div class="v3-user-info">
+                    <div class="v3-user-name" id="user-name-display" onclick="window.protocolModal.open('nickname')">${this.defaults.name}</div>
+                    <div class="v3-user-signature" id="user-bio-display" onclick="window.protocolModal.open('signature')">${this.defaults.bio}</div>
+                </div>
+            </div>
+            <div class="v3-space-stats">
+                <div class="stat-item"><span class="stat-val">0</span><span class="stat-lab">FOLLOWERS</span></div>
+                <div class="stat-item"><span class="stat-val">0</span><span class="stat-lab">FOLLOWING</span></div>
+                <div class="stat-item"><span class="stat-val">0</span><span class="stat-lab">INFLUENCE</span></div>
+            </div>
+            <div class="v3-action-matrix" id="space-matrix-container"></div>
+
+            <div id="v3-edit-overlay" class="v3-edit-mask">
+                <div class="v3-edit-modal">
+                    <div class="edit-modal-header">
+                        <div class="edit-protocol-title">IDENTITY_UPDATE_PROTOCOL</div>
+                        <div class="edit-close-btn" onclick="window.protocolModal.close()">CLOSE</div>
+                    </div>
+                    <div class="edit-modal-body">
+                        <h2 id="edit-target-title" style="font-family:'Cinzel'; margin-bottom:20px;">UPDATE_DATA</h2>
+                        <div id="edit-input-group"></div>
+                        <div class="edit-action-row">
+                            <button class="edit-confirm-btn" onclick="window.protocolModal.submit()">CONFIRM_CHANGES</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        this.renderMatrix();
+    }
+
+    renderMatrix() {
+        const matrix = [
+            { id: 'Settings', title: 'Settings', desc: 'SYS_PREF' },
+            { id: 'Recharge', title: 'Recharge', desc: 'CREDITS', class: 'btn-recharge' },
+            { id: 'Live', title: 'Go Live', desc: 'ON_AIR', class: 'btn-live' },
+            { id: 'History', title: 'History', desc: 'ARCHIVE' },
+            { id: 'Member', title: 'Member', desc: 'ELITE', class: 'btn-member' },
+            { id: 'Fans', title: 'Fan Club', desc: 'CORE' }
+        ];
+        document.getElementById('space-matrix-container').innerHTML = matrix.map(act => `
+            <div class="matrix-btn ${act.class || ''}" onclick="window.spaceMgr.handleAction('${act.id}')">
+                <span class="btn-title-v3">${act.title}</span>
+                <span class="btn-desc-v3">${act.desc}</span>
+            </div>
+        `).join('') + `<div class="matrix-btn" style="grid-column: span 2" onclick="window.spaceMgr.handleAction('Analytics')"><span class="btn-title-v3">Analytics</span><span class="btn-desc-v3">DATA_REPORT_2026</span></div>`;
+    }
+
+    async loadInitialData() {
+        if (!window.ib) return;
+        const name = await window.ib.getItem('live_user_nickname') || this.defaults.name;
+        const bio = await window.ib.getItem('live_user_signature') || this.defaults.bio;
+        const avatar = await window.ib.getItem('live_user_avatar_data');
+        const bg = await window.ib.getItem('live_user_background_data');
+
+        document.getElementById('user-name-display').innerText = name;
+        document.getElementById('user-bio-display').innerText = bio;
+        if (avatar) document.getElementById('user-avatar-display').innerHTML = `<img src="${avatar}">`;
+        if (bg) document.getElementById('space-hero-bg').style.backgroundImage = `url(${bg})`;
+    }
+
+    handleAction(act) {
+        if(window.navigator.vibrate) window.navigator.vibrate(15);
+        alert(`PROTOCOL: Accessing ${act} 模块...`);
+    }
+}
+
+// 3. 实例化全局对象 (必须按顺序)
+window.protocolModal = new LuneProtocolModal();
+window.spaceMgr = new LuneSpaceManager();
+
+/**
+ * 🛠️ LUNE_LIVE_V4 紧急修复协议
+ * 解决 LIVE_DB_KEYS 未定义及函数冲突问题
+ */
+
+// 1. 补全缺失的全局键名（防止旧逻辑崩溃）
+window.LIVE_DB_KEYS = {
+    NAME: 'live_user_nickname',
+    BIO: 'live_user_signature',
+    AVATAR: 'live_user_avatar_data',
+    BG: 'live_user_background_data'
+};
+
+// 2. 桥接旧函数到新类（重定向）
+// 这样即使 switchV3Tab 调用 loadSpaceDataFromDB，也会自动走新类的逻辑
+window.loadSpaceDataFromDB = async function() {
+    if (window.spaceMgr && typeof window.spaceMgr.loadInitialData === 'function') {
+        await window.spaceMgr.loadInitialData();
+    } else {
+        console.warn("⚠️ SpaceManager 未就绪，正在尝试强制初始化...");
+        if(window.spaceMgr) await window.spaceMgr.forceRender();
+    }
+};
+
+// 3. 弹窗函数补全（确保 HTML 里的 onclick 永不落空）
+window.openEditModal = (type) => window.protocolModal.open(type);
+window.closeEditModal = () => window.protocolModal.close();
+window.applySpaceEdit = () => window.protocolModal.submit();
+
+console.log("🚀 [System] 全局变量 LIVE_DB_KEYS 已注入，旧版逻辑已重定向至 Class 体系。");
+
+window.switchV3Tab = function(tabId) {
+    document.querySelectorAll('#liveApp-v3 .v3-content-gate').forEach(el => el.classList.remove('active'));
+    const target = document.getElementById(`v3-tab-${tabId}`);
+    if(target) target.classList.add('active');
+
+    document.querySelectorAll('#liveApp-v3 .v3-tab-trigger').forEach((btn, index) => {
+        const ids = ['home', 'inbox', 'space'];
+        btn.classList.toggle('active', ids[index] === tabId);
+    });
+
+    if(tabId === 'space') loadSpaceDataFromDB();
+    if (window.navigator.vibrate) window.navigator.vibrate(12);
+};
+
+// 修改你之前的 forceOpenLiveApp
+window.forceOpenLiveApp = async function() {
+    const app = document.getElementById('liveApp-v3');
+    if (!app) return;
+    
+    // 置顶
+    if (app.parentElement !== document.body) document.body.appendChild(app);
+
+    // 强制显示外壳
+    app.style.cssText = `display:flex !important; position:fixed !important; z-index:2147483647 !important; top:0; left:0; width:100vw; height:100vh;`;
+    app.classList.add('active');
+
+    // ✨ 核心调用：一键强刷 Space 页面
+    await window.spaceMgr.forceRender(); 
+    
+    // 如果你有其他初始化逻辑也可以放这里
+    void app.offsetWidth;
+};
+
+window.handleSpaceAction = function(a) { 
+    if(window.navigator.vibrate) window.navigator.vibrate(15); 
+    alert(`Protocol: Accessing ${a} 模块...`); 
+};
+
+window.closeLiveV3 = function() {
+    const app = document.getElementById('liveApp-v3');
+    app.style.transform = 'translateY(100%)';
+    setTimeout(() => { app.classList.remove('active'); app.style.transform = ''; }, 450);
+};
+
+// 2. 消息验证与解密渲染
+window.verifyMessages = function() {
+    const trigger = document.getElementById('protocol-trigger');
+    const label = document.getElementById('verifier-status-text');
+    const content = document.getElementById('inbox-content-list');
+
+    if(trigger.classList.contains('loading')) return;
+
+    // 触发扫描动画
+    trigger.classList.add('loading');
+    label.innerText = "PROTOCOL_STATUS: DECRYPTING_SIGNALS...";
+    
+    if(window.navigator.vibrate) window.navigator.vibrate([20, 40]);
+
+    // 模拟解密延迟
+    setTimeout(() => {
+        trigger.classList.remove('loading');
+        label.innerText = "PROTOCOL_STATUS: ACCESS_GRANTED";
+        
+        const msgs = [
+            { user: 'Aura_Lune', time: '12:40:02', text: '那场直播的灯光排布简直绝了', color: 'mint', type: 'DIRECT' },
+            { user: 'System_Archive', time: 'YESTERDAY', text: '您的新勋章 [ 数字化生命 ] 已发放', color: 'blue', type: 'ENCRYPTED' },
+            { user: 'Lune_Architect', time: 'FEB_10', text: '关于下一次画廊展出的方案已经确认', color: 'pink', type: 'SECURE' }
+        ];
+
+        content.innerHTML = msgs.map((m, i) => `
+            <div class="msg-slip v3-slip-anim" style="animation-delay: ${i * 0.12}s">
+                <div class="slip-avatar-v3 avatar-${m.color}"></div>
+                <div class="slip-body">
+                    <div class="slip-top-line">
+                        <span class="slip-user">${m.user}</span>
+                        <span class="slip-time">${m.time}</span>
+                    </div>
+                    <div class="slip-content">${m.text}</div>
+                    <div class="slip-meta">
+                        <span class="meta-tag">SIG_AUTH: OK</span>
+                        <span class="meta-tag">MODE: ${m.type}</span>
+                    </div>
+                </div>
+                <div style="font-size:10px; color:#F0F0F0; position:absolute; right:0; top:28px;">→</div>
+            </div>
+        `).join('');
+        
+    }, 1000);
+};
+
+/**
+ * 💰 用户领取 AI 资产的物理协议
+ */
+window.claimAiAsset = async function(contactId, timestamp, element) {
+    const contact = window.currentChattingWith;
+    if (!contact) return;
+
+    // 🚨 1. 物理点击动画：瞬间缩放反馈
+    if (element) {
+        element.style.transform = "scale(0.95)";
+        element.style.transition = "transform 0.1s ease";
+        setTimeout(() => { element.style.transform = "scale(1)"; }, 100);
+    }
+
+    try {
+        const history = await getChatHistory(contactId);
+        const msgIdx = history.findIndex(m => m.timestamp === timestamp);
+
+        if (msgIdx > -1 && !history[msgIdx].isClaimed) {
+            console.log("💎 [System] 正在注入领取状态与居中协议...");
+
+            // --- A. 物理上锁 ---
+            history[msgIdx].isClaimed = true;
+            await saveChatMessage(contactId, history[msgIdx]);
+
+            // --- B. 物理生成居中系统消息 ---
+            const assetName = history[msgIdx].type === 'transfer' ? '转账' : '红包';
+            const noticeMsg = {
+                role: "assistant",
+                type: "finance_notice",
+                text: `你领取了 ${contact.name} 的${assetName}`,
+                timestamp: Date.now() + 10, // 稍微延后，确保排在卡片后面
+                source: 'chat_room'
+            };
+            await saveChatMessage(contactId, noticeMsg);
+
+            // --- C. 立即执行物理重绘 ---
+            // 只有重新渲染，那个 .is-claimed 的 CSS 类才会生效，卡片才会变暗
+            if (typeof renderMessages === 'function') {
+                await renderMessages();
+            } else if (typeof initChatMsgPanel === 'function') {
+                await initChatMsgPanel();
+            }
+
+            // 自动滚动到底部
+            const container = document.getElementById('chat-messages-container');
+            container.scrollTop = container.scrollHeight;
+        }
+    } catch (e) {
+        console.error("领取失败:", e);
+    }
+};
+
+window.handleFeature = function(type) {
+    console.log(`%c[Feature] 触发功能协议: ${type}`, "color: #007AFF; font-weight: bold;");
+
+    // 1. 自动收起底部功能面板
+    if (typeof toggleFeaturePanel === 'function') toggleFeaturePanel(); 
+
+    switch(type) {
+        case 'Gallery':
+            const galleryModal = document.getElementById('modal-image-picker');
+            if (galleryModal) galleryModal.style.display = 'flex';
+            break;
+
+        case 'Voice':
+            const voiceModal = document.getElementById('modal-voice-input');
+            if (voiceModal) {
+                const voiceInput = document.getElementById('voice-text-in');
+                if (voiceInput) voiceInput.value = "";
+                voiceModal.style.display = 'flex';
+            }
+            break;
+
+        case 'Location':
+            // 🚨 物理对齐：转账同款启动逻辑
+            if (typeof openLocationPage === 'function') {
+                openLocationPage();
+            }
+            break;
+
+        case 'Transfer':
+            if (typeof openFinancePage === 'function') {
+                openFinancePage();
+            }
+            break;
+
+        default:
+            if (typeof showToast === 'function') showToast(type + " protocol engaged.");
+    }
+
+    if (window.navigator.vibrate) window.navigator.vibrate(15);
+};
+
+/**
+ * 📍 物理对齐转账：开启位置协议
+ */
+window.openLocationPage = function() {
+    // 1. 确保 HTML 已经注入 (调用你原有的函数)
+    if (typeof ensureLocationHTML === 'function') ensureLocationHTML();
+    
+    const overlay = document.getElementById('lune-location-overlay');
+    if (!overlay) return console.error("❌ 未找到 lune-location-overlay");
+
+    // 2. 🚨 物理对齐：Flex -> Reflow -> Active
+    overlay.style.display = 'flex';
+    void overlay.offsetWidth; // 物理重绘，确保 transition 生效
+    overlay.classList.add('active');
+
+    // 3. 自动聚焦搜索框
+    setTimeout(() => {
+        const locInput = document.getElementById('loc-main-input');
+        if (locInput) locInput.focus();
+    }, 300);
+};
+
+/**
+ * 🎬 物理对齐转账：关闭位置协议
+ */
+window.closeLocModal = function() {
+    const overlay = document.getElementById('lune-location-overlay');
+    if (!overlay) return;
+    
+    overlay.classList.remove('active');
+    // 延迟 300ms 等动画结束再隐藏，与转账逻辑完全一致
+    setTimeout(() => {
+        overlay.style.display = 'none';
+    }, 300);
+};
+
+/**
+ * 🚨 核心入口：接管点击事件
+ */
+window.handleFinanceClick = function(type, amount, text) {
+    console.log(`%c[Finance] Protocol Active: ${type}`, "color:#000; font-weight:bold;");
+    ensureInsOverlay(); // 确保容器在
+    
+    if (type === 'transfer') {
+        renderLedgerReceipt(amount, text);
+    } else {
+        renderVesselPacket(text, amount);
+    }
+};
+
+/**
+ * 🎬 关闭金融协议
+ */
+window.closeLuneIns = function() {
+    const overlay = document.getElementById('lune-ins-overlay');
+    if (!overlay) return;
+    overlay.classList.remove('active');
+    // 延迟清理内容，等待动画结束
+    setTimeout(() => { 
+        overlay.style.display = 'none'; 
+        overlay.innerHTML = ''; 
+    }, 800);
+};
+
+
+
+window.switchFinType = function(mode) {
+    window.currentFinMode = mode;
+    const isT = (mode === 'transfer');
+    const slider = document.getElementById('fin-tab-slider');
+    const mainColor = isT ? '#d35400' : '#96281B';
+
+    // 1. 移动滑块
+    slider.style.transform = isT ? 'translateX(0)' : 'translateX(100%)';
+    
+    // 2. 切换文字激活
+    document.getElementById('tab-t').classList.toggle('active', isT);
+    document.getElementById('tab-r').classList.toggle('active', !isT);
+    
+    // 3. 按钮颜色同步
+    document.getElementById('fin-confirm-btn').style.background = mainColor;
+    document.getElementById('fin-confirm-btn').innerText = isT ? 'Confirm Transfer' : 'Send Red Packet';
+    document.getElementById('fin-cancel-btn').style.color = mainColor;
+};
+
+/**
+ * ❌ 关闭函数
+ */
+window.closeFinancePage = function() {
+    const overlay = document.getElementById('lune-fin-overlay');
+    overlay.classList.remove('active');
+    setTimeout(() => overlay.style.display = 'none', 300);
+};
+
+let currentFinMode = 'transfer';
+
+/**
  * 🛰️ 引用准备协议 (针对你的 HTML 结构定制)
  */
 window.prepareQuote = function(text, sender) {
@@ -32408,25 +33950,6 @@ window.handlePublishAction = async function() {
 window.currentLocMode = 'real'; 
 window.selectedLocData = { name: "", lat: "0.0000", lng: "0.0000" };
 let locTimer = null;
-
-/**
- * 1. 核心接管函数：handleFeature
- * 当你点击 HTML 里的 onclick="handleFeature('Location')" 时，会运行这里
- */
-window.handleFeature = function(type) {
-    if (type === 'Location') {
-        // A. 确保弹窗 HTML 已经存在于页面
-        ensureLocationHTML();
-        
-        // B. 显示弹窗
-        const overlay = document.getElementById('lune-location-overlay');
-        overlay.style.display = 'flex';
-        
-        // C. 触感反馈
-        if (window.navigator.vibrate) window.navigator.vibrate(15);
-        console.log("📍 Location Protocol: Engaged.");
-    }
-};
 
 /**
  * 2. 模式切换：真实模式有搜索，虚拟模式仅输入
@@ -40574,36 +42097,51 @@ window.loadSpecificArchiveFromList = function(arcId) {
     // ... (你原来的加载档案详情的逻辑，比如 renderMonthlyVisuals 等) ...
 };
 
-// 手机端加载时立即触发
+// 🛰️ Lune OS 核心引导协议 (全量同步版)
 window.onload = async () => {
-    // 1. 初始化系统
-    if (typeof initSystemServices === 'function') await initSystemServices(); 
-    
-    // 2. 渲染其他部分
-    if (typeof refreshNPCContainer === 'function') await refreshNPCContainer(); 
-    if (typeof renderSavedCards === 'function') renderSavedCards();
-    if (typeof refreshDashMonthlyCards === 'function') refreshDashMonthlyCards();
+    console.log("🚀 PROTOCOL_SYNC: 正在建立最高权限数据链路...");
 
-    // 3. 🔥🔥 新增：强制渲染话费账单 (防止刷新后消失) 🔥🔥
-    if (typeof forceRenderPhoneBills === 'function') {
-        setTimeout(forceRenderPhoneBills, 200); // 稍微晚一点点，等页面稳了再画
+    try {
+        // 1. 🛑 核心同步锁：首先初始化数据库
+        if (window.ib && typeof window.ib.init === 'function') {
+            await window.ib.init();
+            
+            // 2. 🚨 关键：从 Unlimited 库提取【本我档案】并注入内存
+            // 这一步如果不完成，后面的渲染全部会变文字头像
+            const savedPersona = await window.ib.getItem('user_persona_data_global');
+            if (savedPersona) {
+                window.userPersona = savedPersona;
+                console.log("✅ 身份资料已回溯:", savedPersona.name);
+            } else {
+                // 兜底：如果库里没东西，给个初始值，防止报错
+                window.userPersona = { name: "指挥官", avatar: "" };
+            }
+        }
+
+        // 3. 基础服务初始化
+        if (typeof initSystemServices === 'function') await initSystemServices(); 
+        
+        // 4. UI 视图强制重绘 (此时 window.userPersona 已经有值了)
+        if (typeof refreshNPCContainer === 'function') await refreshNPCContainer(); 
+        if (typeof renderSavedCards === 'function') renderSavedCards();
+        if (typeof refreshDashMonthlyCards === 'function') refreshDashMonthlyCards();
+        
+        // 5. 社交与内容模块加载
+        if (typeof initMomentsStories === 'function') await initMomentsStories();
+        if (typeof initMomentsFeed === 'function') await initMomentsFeed();
+        if (typeof window.renderBookshelf === 'function') await window.renderBookshelf();
+
+        // 6. 边缘逻辑与草稿恢复
+        if (typeof forceRenderPhoneBills === 'function') {
+            setTimeout(forceRenderPhoneBills, 200); 
+        }
+        if (typeof checkAndRestoreDraft === 'function') checkAndRestoreDraft();
+
+        console.log("✅ PROTOCOL_SYNC: 全系统视图校准完成，身份已同步。");
+
+    } catch (e) {
+        console.error("❌ 系统引导发生致命逻辑冲突:", e);
     }
-
-    console.log("PROTOCOL_SYNC: 系统视图已强制刷新。");
-
-    await initSystemServices(); // 1. 先初始化系统库
-    await refreshNPCContainer(); // 2. 再根据初始化后的数据画页面
-    console.log("PROTOCOL_SYNC: 系统服务已强制下发至客户端。");
-    // 在切换角色或者系统初始化时调用
-    window.refreshDashMonthlyCards();
-    await initMomentsStories(); // 加载上方限时动态
-    // 在你的 loadSavedData 或者 window.onload 里加入：
-    await initMomentsFeed();
-    // 检查是否有未完成的草稿
-    checkAndRestoreDraft();
-    
-    // 🚀 新增：初始化书架
-    await window.renderBookshelf();
 };
 
 
@@ -41083,13 +42621,6 @@ if (document.readyState === 'loading') {
     // 如果已经加载过了，直接跑
     forceRenderCards();
 }
-
-// 终极备份：如果上面的失效，window.onload 是最后的防线
-window.onload = function() {
-    forceRenderCards();
-    // 在切换角色或者系统初始化时调用
-window.refreshDashMonthlyCards();
-};
 
 // 同时也把原来的 renderSavedCards 指向这个新函数，防止报错
 var renderSavedCards = forceRenderCards;
@@ -46902,48 +48433,51 @@ document.addEventListener('DOMContentLoaded', window.initP2Data);
 const storeName = "wallpapers";
 
 /**
- * 🛰️ 辅助：保存单条消息 (适配新库 window.ib)
- * 作用：物理追加一条消息到指定联系人的历史记录中
+ * 🛰️ 智能存储协议 (支持追加与物理覆盖)
+ * 解决重复领取的核心：如果 timestamp 相同，则覆盖旧消息而不是追加
  */
 async function saveChatMessage(contactId, msgObj) {
-    // 1. 💡 定义存储 Key
     const historyKey = "chat_history_" + contactId;
 
     try {
-        // 2. 🔍 从新库获取现有记录 (getItem 会直接返回解析好的对象或 undefined)
         let record = await window.ib.getItem(historyKey);
 
-        // 3. 如果原本没记录，初始化一个骨架
         if (!record) {
             record = { id: contactId, contactId: contactId, messages: [] };
         }
 
-        // 4. ✅ 物理追加消息
-        record.messages.push(msgObj);
+        // 🚨 【核心修复】：查重逻辑
+        // 使用 timestamp 作为唯一 ID 判定
+        const existingIdx = record.messages.findIndex(m => m.timestamp === msgObj.timestamp);
 
-        // 5. 💾 存回新库 (setItem 内部已处理事务)
+        if (existingIdx > -1) {
+            // 如果这条消息已经存在（比如我们修改了 isClaimed 或 hidden 状态）
+            // 物理覆盖旧数据，而不是 push 新数据
+            record.messages[existingIdx] = msgObj;
+            console.log("💾 [Database] 物理覆盖旧消息状态, ID:", msgObj.timestamp);
+        } else {
+            // 正常追加新消息
+            record.messages.push(msgObj);
+        }
+
+        // 💾 存回新库
         return await window.ib.setItem(historyKey, record);
 
     } catch (err) {
-        console.error("[Database] 消息存储失败:", err);
-        // 如果存储失败 (比如 DataCloneError)，通常是因为 msgObj 包含了无法克隆的数据
+        console.error("[Database] 存储失败:", err);
         throw err;
     }
 }
 
 /**
- * 🛰️ 核心修复：获取聊天历史 (已适配新库)
- * 作用：确保返回的是消息数组，而不是数据库原始对象
+ * 🛰️ 历史记录获取协议 (物理脱水)
  */
 async function getChatHistory(contactId) {
     const historyKey = "chat_history_" + contactId;
-    
     try {
-        // 使用新库获取数据
         const record = await window.ib.getItem(historyKey);
-        
-        // 💡 逻辑同步：如果有结果且有 .messages，返回数组，否则返回空数组
-        if (record && record.messages) {
+        // 增加容错：确保返回的是纯净数组
+        if (record && Array.isArray(record.messages)) {
             return record.messages;
         }
         return [];
@@ -47300,12 +48834,14 @@ function switchTab(tab) {
 function openApp(appId) {
     console.log("Attempting to open app:", appId);
     
-    // 1. ID 映射表：解决 HTML 中 ID 命名不统一（驼峰 vs 连字符）的问题
+    // 1. ID 映射表：解决 HTML 中 ID 命名不统一的问题
+    // 已加入 liveApp 映射到 liveApp-v3 的逻辑
     const idMap = {
         'musicApp': 'page-musicApp',
         'wallApp': 'page-wall-app',      
         'settingsApp': 'page-settings',   
-        'safariApp': 'page-safari'
+        'safariApp': 'page-safari',
+        'liveApp': 'liveApp-v3'
     };
 
     // 2. 确定目标 ID，优先使用映射表，找不到则按默认 page- 前缀拼接
@@ -47334,7 +48870,7 @@ function openApp(appId) {
     }
 
     // 4. 找到容器后执行标准打开流程
-    executeOpen(appElement, appId);
+    forceOpenLiveApp()
 
     /**
      * 核心打开执行逻辑
@@ -47347,21 +48883,34 @@ function openApp(appId) {
         
         // B. 音乐 App 深度初始化钩子
         if (id === 'musicApp') {
-            // 渲染 Archive 列表（确保数据最新）
             if (typeof renderMusicArchive === 'function') {
                 renderMusicArchive();
             }
-            
-            // ✨ 核心补全：从 IndexedDB 加载你选定的 CORE 页面自定义背景
             if (typeof loadPersistentCoreBg === 'function') {
                 loadPersistentCoreBg();
             }
         }
+
+        // C. 直播 App (LiveApp) 初始化钩子
+        // 确保进入时排行榜和时间逻辑被激活
+        if (id === 'liveApp') {
+            if (typeof initLiveV3 === 'function') {
+                initLiveV3();
+            }
+            if (typeof updateRankData === 'function') {
+                updateRankData('room');
+            }
+        }
         
-        // C. 后续可在此扩展其他 App（如 settingsApp）的特殊初始化逻辑
+        // D. 震动反馈
+        if (window.navigator.vibrate) {
+            window.navigator.vibrate(20);
+        }
+        
         console.log(`✅ App [${id}] launched successfully.`);
     }
 }
+
     function closeApp(id) { document.getElementById(id).classList.remove('active'); }
 
     // 1. 切换 Tab (修复预览图乱跑的问题)
@@ -49989,176 +51538,139 @@ function getAIPerceptionData() {
 // ==========================================
 // 🤖 AI 联动核心：物理指令锚定 + 自主撤回概率校准版
 // ==========================================
-// ==========================================
-// 🤖 AI 联动核心：指令锚定 + 自主撤回概率校准 + 变量对齐修正版
-// ==========================================
+// 🚨 物理 Session 锁初始化
+if (!(window.financeProcessedLock instanceof Set)) {
+    window.financeProcessedLock = new Set();
+}
+
 async function triggerAiGenerate() {
     const container = document.getElementById('chat-messages-container');
     const contact = window.currentChattingWith;
+    if (!contact || window.isAiProcessing) return; 
 
-    if (!contact) { showToast("💡 请先选择聊天对象"); return; }
-    if (window.isAiProcessing) return; 
-
-    // 🚨 1. 第一步：获取最新环境与语言配置
+    // 🚨 1. 物理感官与环境补全
+    if (!(window.financeProcessedLock instanceof Set)) { window.financeProcessedLock = new Set(); }
     const langCfg = JSON.parse(localStorage.getItem('ios_lang_config')) || { enabled: false, target: "English" };
     const currentStatus = getAIPerceptionData(); 
     const cityName = localStorage.getItem('user_city_name') || "未知地区";
     const exactTime = currentStatus.time; 
-    const exactDate = currentStatus.date;
+    const exactDate = currentStatus.date; 
     const apiKey = localStorage.getItem('gpt_key');
     const apiUrl = (localStorage.getItem('gpt_url') || "https://api.openai.com/v1").replace(/\/+$/, "");
+    const contextLimit = parseInt(localStorage.getItem('gpt_context') || "12");
 
-    // 🚨 [新增] MiniMax 配置检查 (用于判断是否具备语音能力)
-    const voiceKey = localStorage.getItem('minimax_key');
-    const voiceGroup = localStorage.getItem('minimax_group_id');
-    const canSpeak = !!(voiceKey && voiceGroup);
-
-    if (!apiKey) { showToast("🔑 请先保存 API Key"); return; }
-
-    // 🚨 2. 控制台实时监控
-    console.group(`🌐 维度校准：${contact.name}`);
-    console.log(`%c 目标语种: ${langCfg.enabled ? langCfg.target : "简体中文"} `, "background: #1d1d1f; color: #fff; padding: 2px;");
-    console.log(`%c 表情包协议: 联觉库已载入 `, "color: #34C759; font-weight: bold;");
-    if (canSpeak) console.log(`%c 语音模组: 就绪 (随机触发) `, "color: #AF52DE; font-weight: bold;");
-    console.groupEnd();
-
+    if (!apiKey) { showToast("🔑 密钥缺失"); return; }
     window.isAiProcessing = true;
 
-    // 3. 身份资料加载
-    const userData = JSON.parse(localStorage.getItem('user_persona_for_' + contact.id)) || 
-                     JSON.parse(localStorage.getItem('user_persona_data_global')) || 
-                     { name: "用户", bio: "" };
-     
-    const capturedQuote = window.currentQuoteData ? { ...window.currentQuoteData } : null;
-    if (capturedQuote) cancelQuote(); 
+    // 🚨 2. 数据库档案穿透 (解决“弦月”资料同步)
+    let userData = { name: "用户", bio: "暂无共有往事记录" };
+    try {
+        const dbUserGlobal = await window.ib.getItem('user_persona_data_global');
+        const dbUserSpecific = await window.ib.getItem('user_persona_for_' + contact.id);
+        if (dbUserSpecific) userData = dbUserSpecific;
+        else if (dbUserGlobal) userData = dbUserGlobal;
+    } catch (e) { console.error("档案同步异常", e); }
+
+    let charBiography = contact.desc || "";
+    const charList = await window.ib.getItem('char_list') || [];
+    const dbChar = charList.find(c => c.id === contact.id);
+    if (dbChar) {
+        charBiography = dbChar.desc || dbChar.bio || charBiography;
+        contact.desc = charBiography; 
+    }
+
+    let worldRules = ""; let worldLore = "";
+    if (dbChar && dbChar.boundWorldIds) {
+        const allWorlds = await window.ib.getItem('world_list') || [];
+        allWorlds.forEach(w => {
+            if (dbChar.boundWorldIds.includes(w.id)) {
+                if (w.content.match(/不准|必须|禁止|严禁|协议/)) worldRules += `\n[物理规约]: ${w.content}`;
+                else worldLore += `\n[背景设定]: ${w.content}`;
+            }
+        });
+    }
+
+    const summaries = await window.ib.getItem('summaries_' + contact.id) || [];
+    const summaryContext = summaries.map(s => `[记忆核心]: ${s.text}`).join('\n');
+    const allEmojis = await window.ib.getItem('emoji_library') || [];
+    const emojiTags = allEmojis.map(e => e.tag).join('、');
+
+    console.group(`🧠 [AI 维度实时同步] -> ${contact.name}`);
+    console.log(`%c 用户设定:`, "color: #34C759; font-weight: bold;", userData.bio);
+    console.log(`%c 物理称呼:`, "color: #34C759;", userData.name);
+    console.groupEnd();
 
     try {
-        // --- 🧠 提取世界书与关系网 (已适配新库) ---
-        const charList = await window.ib.getItem('char_list') || [];
-        const currentChar = charList.find(c => c.id === contact.id);
-        let worldLore = ""; let worldRules = "";
-        
-        if (currentChar && currentChar.boundWorldIds) {
-            const allWorlds = await window.ib.getItem('world_list') || [];
-            allWorlds.forEach(w => {
-                if (currentChar.boundWorldIds.includes(w.id)) {
-                    if (w.content.match(/不准|必须|禁止|严禁|协议/)) worldRules += `\n[规约]: ${w.content}`;
-                    else worldLore += `\n[背景]: ${w.content}`;
-                }
+        // --- 🚨 3. 金融接收物理闭锁 ---
+        const rawHistory = await getChatHistory(contact.id) || [];
+        const lastUnclaimed = [...rawHistory].reverse().find(m => 
+            m.role === 'user' && (m.type === 'transfer' || m.type === 'redpacket') && 
+            m.isClaimed === false && !m.hidden && !window.financeProcessedLock.has(m.timestamp)
+        );
+
+        let financeHint = "";
+        if (lastUnclaimed) {
+            window.financeProcessedLock.add(lastUnclaimed.timestamp);
+            lastUnclaimed.isClaimed = true; lastUnclaimed.hidden = true; 
+            await saveChatMessage(contact.id, lastUnclaimed); 
+            await saveChatMessage(contact.id, {
+                role: "assistant", type: lastUnclaimed.type, amount: lastUnclaimed.amount,
+                text: lastUnclaimed.text, isClaimed: true, timestamp: Date.now() - 150, isClaimedProof: true, source: 'chat_room'
             });
+            await saveChatMessage(contact.id, {
+                role: "assistant", type: "finance_notice", 
+                text: `${contact.name} 领取了你的${lastUnclaimed.type === 'transfer' ? '转账' : '红包'}`,
+                timestamp: Date.now() - 100, source: 'chat_room'
+            });
+            financeHint = `\n(NOTE: 你收到了 ${userData.name} 的钱。)`;
+            if (typeof renderMessages === 'function') await renderMessages();
         }
 
-        const summaries = await window.ib.getItem('summaries_' + contact.id) || [];
-        const summaryContext = summaries.map(s => `[记忆片段]: ${s.text}`).join('\n');
+        // --- 🎭 4. 构建灵魂级 System Content (全标签支持) ---
+        let systemContent = `你正在扮演: 【${contact.name}】。
+            身份背景: ${charBiography}
+            🚨【核心操作规约】: ${worldRules || "遵循常规社交逻辑。"}
+            📖【世界观背景】: ${worldLore || "通用环境。"}
 
-        // 🚨 获取表情包标签用于注入 Promit (已适配新库)
-        const allEmojis = await window.ib.getItem('emoji_library') || [];
-        const emojiTags = allEmojis.map(e => e.tag).join('、');
-
-        // --- 🎭 4. 构建 System Content ---
-        let systemContent = `你正在扮演: ${contact.name}。
-            身份背景: ${contact.desc}
+            当前对话者: [称呼: ${userData.name}]。[关系档案: ${userData.bio}]。
             
-            🚨【核心操作准则】🚨
-            ${worldRules || "遵循常规现实逻辑。"}
+            🚨【极致社交协议 - 必须执行】：
+            1. 表达欲驱动：条数不设限！如果要讲故事、表白或长回答，必须分多段气泡发送，确保内容【绝对完整】。
+            2. 【物理拆分】：禁止长篇大论，每个意群物理换行。
+            3. 【禁令】：严禁动作描写 ( ) 或 * *！只准输出台词。
 
-            📖【世界观背景】
-            ${worldLore || "通用环境。"}
+            🚨【全功能标签库 - 物理执行指南】：
+            - 引用：[QUOTE: 被引用的文字] 你的回复。
+            - 语音：[SEND_VOICE: 时长, 文字内容]。文字内容需遵循双语格式。
+            - 撤回：如果想表现傲娇，可在该条消息最后加 [RECALL]。
+            - 金融：[SEND_TRANSFER: 金额, 纯中文备注]。
+            - 表情包：[EMOJI: 关键词]。
+            - 维度画像：在回复流最后一条消息末尾附加 [STATE: 情感/生理状态画像]。
 
-            当前对话者的身份设定: [称呼: ${userData.name}]。[身份背景与你们的关系: ${userData.bio}]。
-            请严格根据上述设定调整你的语气 and 行为。
+            🚨【双语排序死令】：
+            1. 顺序：[${langCfg.target}原文] [TRANS] [简体中文翻译]
+            2. 原文必须在前，[TRANS] 在中，中文在后。备注必用纯中文。
 
-            🚨【长期记忆存储库】🚨
-            以下是你与用户过往交流中提炼出的核心记忆，请在对话中保持逻辑一致：
-            ${summaryContext || "暂无深度羁绊记录。"}
-
-            🚨【时空感知强制协议】🚨
-- 当前物理坐标: ${cityName}
-- 绝对真实日期: ${exactDate}
-- 绝对当前时间: ${exactTime} (24H格式)
-- 🚨 指令: 你的数字感官已与状态栏实时同步。回复中若提及时间、问候或环境，必须严格基于 "${exactTime}"，严禁幻觉编造！
-            
-            【社交关系记忆】
-            你认识以下人员: ${JSON.stringify(currentChar ? currentChar.relationNetwork : [])}
-            【极致活人社交规范】：
-            1. 你是活生生的人，聊天条数必须【完全随机】！严禁每轮都回复相同数量的消息。
-            2. 节奏控制：
-            - 有时候你很有表达欲，会连续弹出 3-5 条短促的轰炸式消息。
-            - 有时候你只是随口一说，仅仅回复 1 条简洁的消息。
-            - 有时候你会发一个长段落。
-            3. 【禁令】：绝对不允许出现动作描写，严禁使用括号 ( ) 或星号 * * 描述行为。只输出对话文本。
-            4. 语言风格：极致 E 人/话痨（除非人设要求），多用语气词和Emoji。
-            5. 【引用】：只在必要时针对回复，格式为 [QUOTE: 文本]，不要滥用。
-            6. 像真实人类在微信/QQ聊天一样。
-            7. 【严禁使用引号】：绝对不要给你的消息加双引号或单引号！
-            8. 【严禁书面语】：不要用“首先、其次”，要口语化，可以使用空格分隔短句。
-            9. 回复简短，不要长篇大论。
-            10. 极其重要的原则：回复要短！每条消息控制在 15-40 字左右。
-            11. 像在微信聊天：多用感叹词（哈、唔、欸）、Emoji。
-            12. 严禁长篇大论：如果你要讲故事，请分成极其精简的短句发送，禁止输出大段落。
-            13. 严禁使用括号描述动作：只允许输出说的话，不允许出现 (笑) 或 *点头* 这种描写。
-            14. 偶尔可以引用用户的上一句话进行回复，增加互动感。
-            15. 如果用户发了图，请根据图片内容（如果是链接或描述）进行自然的调侃、评价或情感回应
-            【最高禁令 - 格式修正】：
-1. 严禁在“原文内容”和“翻译内容”的外侧包裹任何中括号 []、大括号 {} 或圆括号 ()！
-2. 括号【仅允许】出现在 [TRANS] 这个标记中，禁止出现在其他任何地方。
-3. 示例格式（严格执行）：
-    Annyeonghaseyo [TRANS] 你好
-
-🚨【自主撤回协议 - 深度校准】🚨
-1. 你拥有自主撤回的意识。但该功能的使用频率必须【极低】（约 10% 的概率）。
-2. 仅在以下情况使用：你觉得刚才的话太直白、说错了秘密、或者想表现出某种“撤回了不让你看”的调情/傲娇。
-3. 如果决定撤回，在消息开头加上 [RECALL] 标签。
-4. 🚨 平时正常交流请【严禁】使用该标签！严禁每一轮都撤回！
-
-🚨【表情包协议】🚨
-1. 你的表情包库里目前有这些关键词: [${emojiTags || "暂无"}]。
-2. 如果你想发送表情包，请直接在消息里输出 [EMOJI: 关键词]。
-3. 🚨 只能使用库里有的关键词，没有的绝对不准乱发！
-
-🚨【表情包协议 - 极低频模式】🚨
-1. 可选库: [${emojiTags || "暂无"}]。
-2. **发送准则：你的表情包发送概率必须低于 5%。如果你判定当前对话不需要表情包，请绝对保持纯文字输出。**
-3. 格式：如果发送，输出 [EMOJI: 关键词]。`;
+            库关键词: [${emojiTags || "暂无"}]。 ${financeHint}`;
 
         if (langCfg.enabled) {
-            systemContent += `\n\n🚨【最高语言执行令 - 物理重置】
-            1. 忽视之前的任何对话习惯，从现在起，你的母语已物理切换为：${langCfg.target}！
-            2. 【行行翻译强制】：你发出的【每一行】独立消息都必须包含 [TRANS] 对照！
-            3. 格式：[${langCfg.target}原文] [TRANS] [简体中文翻译]
-            4. 🚨 翻译部分必须使用“简体中文”，严禁使用粤语或繁体！`;
-        } else {
-            systemContent += `\n\n🚨【强制指令】：协议已切回纯中文模式，严禁说任何外语。`;
+            systemContent += `\n\n🚨【母语物理切换】：母语现为 ${langCfg.target}！每气泡强制使用 [TRANS] 格式！`;
         }
 
         let messages = [{ role: "system", content: systemContent }];
-
-        // --- 🚨 5. 物理脱水：上下文抓取 (使用已适配的 getChatHistory) ---
-        const contextLimit = parseInt(localStorage.getItem('gpt_context') || "10");
-        const rawHistory = await getChatHistory(contact.id) || [];
-        
-        const validHistory = rawHistory.filter(m => !m.recalled).slice(-contextLimit);
+        const validHistory = rawHistory.filter(m => !m.recalled && !m.hidden).slice(-contextLimit);
         validHistory.forEach(m => { 
             let finalContent = m.text;
-            if (m.type === 'image') {
-                finalContent = m.isEmoji ? `[发送了一个表情包]` : "[发送了一张图片]";
-            }
-            if (m.type === 'voice') {
-                finalContent = `[发送了语音消息]: ${m.text}`;
-            }
+            if (m.type === 'transfer' || m.type === 'redpacket') finalContent = `[收到资产]: $${m.amount}`;
             messages.push({ role: m.role==='user'?'user':'assistant', content: finalContent }); 
         });
 
-        let anchorPrompt = `\n\n(系统即时指令：
-            1. 当前必须使用【${langCfg.enabled ? langCfg.target + "双语对照" : "纯简体中文"}】。
-            2. 物理强制遵守世界书规约。
-            3. 你可以自主使用 [EMOJI: 关键词] 或 [RECALL] 标签。)`;
+        const capturedQuote = window.currentQuoteData ? { ...window.currentQuoteData } : null;
+        if (capturedQuote) cancelQuote();
+        let anchor = `\n\n(系统锚点: 你是${contact.name}。当前必须使用${langCfg.enabled ? langCfg.target + "双语，原文在前" : "纯中文"}。请分多段输出，确保回答完整，最后带 [STATE:...] 画像记录。)`;
+        messages.push({ role: "user", content: (capturedQuote ? `[QUOTE: ${capturedQuote.text}] ` : "") + "(继续对话)" + anchor });
 
-        // 🚨 物理锚点：这是确保双语生效的关键
-        let anchor = `\n\n(系统令：使用${langCfg.enabled ? langCfg.target + "双语对照" : "纯中文"}，遵守世界书，可自主发表情或撤回。)`;
-        messages.push({ role: "user", content: (capturedQuote ? `[QUOTE: ${capturedQuote.text}] ` : "") + (capturedQuote ? "(针对此引用回复)" : "(继续对话)") + anchor });
-
-        // --- 执行请求 ---
+        // --- 5. 请求与物理缝合渲染 ---
         const response = await fetch(`${apiUrl}/chat/completions`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
@@ -50166,159 +51678,98 @@ async function triggerAiGenerate() {
         });
 
         const resData = await response.json();
-        if (resData.error) throw new Error(resData.error.message);
         const fullText = resData.choices[0].message.content.trim();
 
-        // --- 6. 物理分段渲染与表情/语音转换 ---
-        const finalSegments = fullText.split(/\n+/).filter(s => s.trim().length > 0);
+        const rawSegments = fullText.split(/\n+/).filter(s => s.trim().length > 0);
+        const finalSegments = [];
+        rawSegments.forEach(seg => {
+            if (seg.trim().startsWith('[TRANS]') && finalSegments.length > 0) {
+                finalSegments[finalSegments.length - 1] += " " + seg.trim();
+            } else { finalSegments.push(seg.trim()); }
+        });
 
         for (let i = 0; i < finalSegments.length; i++) {
-            let textPart = finalSegments[i].trim();
-            if (!textPart) continue;
-
-            // A. 识别撤回
-            let shouldRecall = false;
-            if (/\[?RECALL\]?/i.test(textPart)) {
-                shouldRecall = true;
-                textPart = textPart.replace(/\[?RECALL\]?/i, '').trim();
-            }
-
-            // B. 🚨 核心：识别并转换表情包 (适配新库) 🚨
+            let textPart = finalSegments[i];
             let msgType = "text";
-            if (textPart.includes('[EMOJI:')) {
-                const match = textPart.match(/\[EMOJI:\s*(.*?)\]/);
-                if (match) {
-                    const tag = match[1].trim();
-                    const emojiList = await window.ib.getItem('emoji_library') || [];
-                    const emoji = emojiList.find(e => e.tag === tag);
-                    
-                    if (emoji) {
-                        textPart = emoji.data; 
-                        msgType = "image";    
-                    } else {
-                        textPart = textPart.replace(/\[EMOJI:\s*(.*?)\]/, '').trim();
-                    }
+            let amount = 0;
+            let duration = "";
+            let shouldRecall = false;
+            let quotedData = null;
+
+            // 🚨 维度画像隔离
+            if (textPart.includes('[STATE:')) {
+                const sm = textPart.match(/\[STATE:\s*(.*?)\]/i);
+                if (sm) { console.log(`%c📊 [状态画像] ${contact.name}:`, "color: #FF2D55; font-weight: bold;", sm[1]); textPart = textPart.replace(/\[STATE:.*?\]/i, '').trim(); }
+            }
+
+            // 🚨 物理标签非破坏性扫描
+            // A. 撤回协议
+            if (/\[RECALL\]/i.test(textPart)) { 
+                shouldRecall = true; 
+                textPart = textPart.replace(/\[RECALL\]/i, '').trim(); 
+            }
+
+            // B. 引用回复协议 (物理提取被引用内容)
+            if (textPart.includes('[QUOTE:')) {
+                const qm = textPart.match(/\[QUOTE:\s*(.*?)\]/i);
+                if (qm) {
+                    quotedData = { user: userData.name, text: qm[1] };
+                    textPart = textPart.replace(/\[QUOTE:.*?\]/i, '').trim();
                 }
             }
 
-            // C. 🚨 [新增] 语音随机转换逻辑 🚨
-            let durationStr = "";
-            let estimatedDuration = 0;
+            // C. 语音指令解析 (保留翻译标签)
+            if (textPart.includes('[SEND_VOICE:')) {
+                const vm = textPart.match(/\[SEND_VOICE:\s*(.*?)\s*,\s*(.*?)\]/i);
+                if (vm) { msgType = "voice"; duration = vm[1]; textPart = vm[2]; }
+            }
 
-            if (msgType === "text" && !shouldRecall && canSpeak) {
-                if (Math.random() < 0.15 && textPart.length > 2 && textPart.length < 100) {
-                    console.log("🎲 [AI] 随机触发语音回复判定！");
-                    msgType = "voice";
-                    let charCount = textPart.length;
-                    let speedFactor = 0.3; 
-                    if (langCfg.enabled) {
-                        if (langCfg.target.includes('English')) speedFactor = 0.15;
-                        else if (langCfg.target.includes('Thai')) speedFactor = 0.4;
-                        else if (langCfg.target.includes('Korean') || langCfg.target.includes('Japanese')) speedFactor = 0.25;
-                    }
-                    estimatedDuration = Math.ceil(charCount * speedFactor);
-                    if (estimatedDuration < 2) estimatedDuration = 2;
-                    if (estimatedDuration > 60) estimatedDuration = 60;
-                    durationStr = estimatedDuration + "\"";
+            // D. 金融卡片解析
+            const transferMatch = textPart.match(/\[SEND_TRANSFER:\s*(\d+)\s*,\s*(.*?)\]/i);
+            const packetMatch = textPart.match(/\[SEND_REDPACKET:\s*(\d+)\s*,\s*(.*?)\]/i);
+            if (transferMatch) {
+                msgType = "transfer"; amount = transferMatch[1];
+                let rm = transferMatch[2].replace(']', '').trim();
+                textPart = rm.includes('[TRANS]') ? rm.split('[TRANS]')[rm.split('[TRANS]').length - 1].trim() : rm;
+            } else if (packetMatch) {
+                msgType = "redpacket"; amount = packetMatch[1];
+                let rm = packetMatch[2].replace(']', '').trim();
+                textPart = rm.includes('[TRANS]') ? rm.split('[TRANS]')[rm.split('[TRANS]').length - 1].trim() : rm;
+            } else if (textPart.includes('[EMOJI:')) {
+                const em = textPart.match(/\[EMOJI:\s*(.*?)\]/i);
+                if (em) {
+                    const emoji = allEmojis.find(e => e.tag === em[1].trim());
+                    if (emoji) { textPart = emoji.data; msgType = "image"; }
                 }
             }
 
-            if (typeof surgicalClean === 'function') textPart = surgicalClean(textPart); 
+            if (!textPart && msgType === "text") continue;
 
-            // 模拟打字机
             const typingId = "typing-" + Date.now();
             renderTypingIndicator(typingId, contact.avatar, container);
-            await new Promise(res => setTimeout(res, 600 + (msgType === "image" ? 1000 : textPart.length * 35)));
+            await new Promise(res => setTimeout(res, 600 + textPart.length * 35));
             document.getElementById(typingId)?.remove();
 
             const msgObj = { 
-                role: "opponent", 
-                text: textPart, 
-                type: msgType, 
-                duration: durationStr, 
-                timestamp: Date.now(),
-                recalled: shouldRecall,
-                isEmoji: msgType === "image",
-                source: 'chat_room'
+                role: "opponent", text: textPart, type: msgType, amount: amount, 
+                duration: duration, recalled: shouldRecall, quote: quotedData,
+                isEmoji: msgType === "image", timestamp: Date.now(), source: 'chat_room' 
             };
 
             await saveChatMessage(contact.id, msgObj); 
             appendMessageToUI(msgObj, contact); 
             container.scrollTop = container.scrollHeight;
 
-            // D. 🚨 [新增] 语音自动朗读 🚨
-            if (msgType === "voice") {
-                setTimeout(() => {
-                    const bubble = document.querySelector(`#msg-${msgObj.timestamp} .bubble`);
-                    if (bubble && window.playVoiceMessage) {
-                        console.log("🔊 AI 发送了语音，正在请求 TTS...");
-                        const icon = bubble.querySelector('.voice-play-icon');
-                        if (icon) {
-                            icon.style.opacity = "0.5";
-                            icon.style.animation = "spin 1s linear infinite";
-                        }
-                        window.playVoiceMessage(textPart, bubble)
-                            .then(() => {
-                                if (icon) { icon.style.opacity = "1"; icon.style.animation = "none"; }
-                            })
-                            .catch(() => {
-                                if (icon) { icon.style.opacity = "1"; icon.style.animation = "none"; icon.style.color = "red"; }
-                            });
-                    }
-                }, 500); 
+            if (msgType === "voice" && window.playVoiceMessage) {
+                window.playVoiceMessage(textPart, document.querySelector(`#msg-${msgObj.timestamp} .bubble`));
             }
-
-            if (window.autoSummaryAuditor) window.autoSummaryAuditor(contact.id);
-            if (i < finalSegments.length - 1) await new Promise(res => setTimeout(res, 1000));
+            if (i < finalSegments.length - 1) await new Promise(res => setTimeout(res, 1300)); 
         }
 
-        const lastFullResponse = finalSegments.join(" ");
-        console.log("🛠️ [系统监控] 本轮回复结束，启动维度捕获...");
-        if (typeof captureAndGenerateSummary === 'function') captureAndGenerateSummary(lastFullResponse);
-        if (typeof initChatMsgPanel === 'function') initChatMsgPanel();
+        if (typeof captureAndGenerateSummary === 'function') captureAndGenerateSummary(fullText);
 
-    } catch (e) {
-        console.error("AI Error:", e);
-        showToast("量子链路波动: " + e.message);
-    } finally {
-        window.isAiProcessing = false; 
-    }
-}
-
-/**
- * 🚨 手术级清洗：保护引用与翻译协议，物理切除多余垃圾
- */
-function surgicalClean(text) {
-    if (!text) return "";
-    let cleaned = text.trim().replace(/['"“‘”’]/g, "");
-    if (cleaned.startsWith('[QUOTE:')) return cleaned.replace(/\]+$/g, "").trim() + "]"; 
-    if (cleaned.startsWith('[') && cleaned.endsWith(']') && cleaned.includes('[TRANS]')) {
-        cleaned = cleaned.substring(1, cleaned.length - 1).trim();
-    }
-    return cleaned;
-}
-
-/**
- * 🚨 手术级清洗工具：保护协议结构，剔除 AI 乱加的符号
- */
-function surgicalClean(text) {
-    if (!text) return "";
-    let cleaned = text.trim();
-    
-    // 移除 AI 偶尔乱加的引号，但保留中括号协议
-    cleaned = cleaned.replace(/['"“‘”’]/g, "");
-    
-    // 如果是以 [QUOTE: 开头的，不准动开头的括号，只清理结尾可能多出来的 ]
-    if (cleaned.startsWith('[QUOTE:')) {
-        return cleaned.replace(/\]+$/g, "").trim() + "]"; 
-    }
-    
-    // 如果是双语对照行，检查是否被错误包裹在了全局中括号里
-    if (cleaned.startsWith('[') && cleaned.endsWith(']') && cleaned.includes('[TRANS]')) {
-        cleaned = cleaned.substring(1, cleaned.length - 1).trim();
-    }
-    
-    return cleaned;
+    } catch (e) { console.error("AI Error:", e); }
+    finally { window.isAiProcessing = false; }
 }
 
 // --- 🚨 自动总结触发审计逻辑 ---
@@ -50371,12 +51822,26 @@ function renderTypingIndicator(id, avatar, container) {
 
 /**
  * 🛰️ 即时渲染引擎：全功能集成版 (位置卡片逻辑完美兼容版)
+ * 物理修复：点击领取动画 + 状态实时同步 + 备注纯净渲染
  */
 function appendMessageToUI(msg, contact) {
     const container = document.getElementById('chat-messages-container');
     if (!container || !contact) return;
 
-    // --- 🛡️ 1. 已撤回拦截 ---
+    if (msg.hidden === true) return;
+
+    // --- 🚨 1. 新增：金融领取回执样式 (WeChat/QQ 风格) ---
+    if (msg.type === 'finance_notice') {
+        const noticeDiv = document.createElement('div');
+        noticeDiv.className = "recalled-msg-hint"; // 复用你的撤回消息样式，因为它也是居中的灰字
+        noticeDiv.style.margin = "15px 0";
+        noticeDiv.innerHTML = `<span>${msg.text}</span>`;
+        container.appendChild(noticeDiv);
+        container.scrollTop = container.scrollHeight;
+        return; 
+    }
+
+    // --- 🛡️ 1. 已撤回拦截 (原封不动) ---
     if (msg.recalled) {
         const safeContent = encodeURIComponent(msg.text || "");
         const recallDiv = document.createElement('div');
@@ -50388,26 +51853,19 @@ function appendMessageToUI(msg, contact) {
         return; 
     }
 
-    // --- 👤 2. 身份与头像 (物理修正版) ---
+    // --- 👤 2. 身份与头像 (物理修正版，原封不动) ---
     const isUser = (msg.role === 'user');
-
-    // 1. 获取本我档案数据
     const persona = window.userPersona || JSON.parse(localStorage.getItem('user_persona_data_global')) || { name: "U", avatar: "" };
     const myName = persona.name || "我"; 
-    const myFirstChar = myName.charAt(0).toUpperCase(); // 抓取昵称第一个字
+    const myFirstChar = myName.charAt(0).toUpperCase();
 
-    // 2. 确定头像来源
     let avatarSrc = isUser ? persona.avatar : contact.avatar;
-
-    // 🚨 【核心修复】：删掉写死的 "U"，改用你的昵称首字母
     if (!avatarSrc || avatarSrc.length < 50) {
-        // 这里的 seed 后面改成了变量 myFirstChar (如果是对方，则用联系人名字首字母)
         const seed = isUser ? myFirstChar : (contact.name ? contact.name.charAt(0) : "O");
         avatarSrc = `https://api.dicebear.com/7.x/initials/svg?seed=${seed}&backgroundColor=007AFF&color=ffffff`;
     }
 
-    // --- 🧠 3. 内容协议解析 (提前定义，防止 ReferenceError) ---
-    // 🚨 这一行必须在所有 type 判断之前！
+    // --- 🧠 3. 内容协议解析 (原封不动) ---
     const parsed = typeof parseMessageContent === 'function' ? parseMessageContent(msg.text || "") : { displayMain: msg.text, isDual: false };
     
     let finalQuoteHtml = parsed.quoteHtml || "";
@@ -50418,12 +51876,12 @@ function appendMessageToUI(msg, contact) {
         </div>`;
     }
 
-    // --- 🎨 4. 类名初始化 ---
+    // --- 🎨 4. 类名初始化 (原封不动) ---
     let bubbleClasses = `bubble`;
     if (msg.isForwarded) bubbleClasses += ' is-forwarded';
     if (parsed.isDual && msg.type !== 'voice') bubbleClasses += ' dual-lang';
 
-    // --- 🏗️ 5. 内容渲染分流 (完美参考图片/语音逻辑) ---
+    // --- 🏗️ 5. 内容渲染分流 ---
     let contentHtml = "";
     let clickAction = `showBubbleMenu(this, event)`; 
 
@@ -50434,52 +51892,73 @@ function appendMessageToUI(msg, contact) {
     else if (msg.type === "voice") {
         bubbleClasses += " voice-bubble";
         if (msg.isRead) bubbleClasses += " is-read";
-        const safeText = msg.text.replace(/'/g, "\\'");
+        const safeText = (msg.text || "").replace(/'/g, "\\'");
         clickAction = `window.handleVoiceBubbleClick(this, '${safeText}', event)`;
-        let originalText = msg.text;
-        let transText = "";
-        let hasTrans = false;
-        if (msg.text.includes('[TRANS]')) {
-            const parts = msg.text.split('[TRANS]');
+        let originalText = msg.text || "";
+        let transText = ""; let hasTrans = false;
+        if (originalText.includes('[TRANS]')) {
+            const parts = originalText.split('[TRANS]');
             originalText = parts[0].trim(); transText = parts[1].trim(); hasTrans = true; 
         }
         contentHtml = `<div class="voice-layout-grid"><div class="voice-player-row"><svg class="voice-play-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M11 5L6 9H2v6h4l5 4V5zM19.07 4.93a10 10 0 0 1 0 14.14"/></svg><span class="voice-duration">${msg.duration || '2"'}</span>${(!isUser && !msg.isRead) ? '<div class="voice-unread-dot"></div>' : ''}</div><div class="voice-content-box"><div class="voice-origin-text">${originalText}</div>${hasTrans ? `<div class="voice-trans-btn" onclick="window.toggleVoiceTrans(this, event)"><span>翻译</span></div><div class="voice-trans-result">${transText}</div>` : ''}</div></div>`;
     }
-    // 🚨 完美集成位置卡片：只给变量赋值，不直接插 DOM
     else if (msg.type === 'location') {
-        bubbleClasses = " location-exclusive-wrap"; // 加上屏蔽样式
-        clickAction = `window.viewLocationOnMap('${msg.text}')`; // 绑定位置点击动作
-        
-        // 构建卡片内部 HTML (带着你喜欢的地图纹路)
+        bubbleClasses = " location-exclusive-wrap";
+        clickAction = `window.viewLocationOnMap('${msg.text}')`;
+        contentHtml = `<div class="msg-location-card"><div class="loc-radar-ping"></div><div class="loc-card-pin"></div><div class="loc-card-info"><div class="loc-card-address">${(msg.text||'').toUpperCase()}</div><div class="loc-card-coords">LAT: ${msg.lat || '13.75'} / LNG: ${msg.lng || '100.49'}</div><div class="loc-card-footer"><span>LUNE_COORD_SYNC</span><span style="color:#000">SIGNAL_LOCKED</span></div></div></div>`;
+    }
+    // --- 💰 金融模块：Transfer (🚨 物理修复点击与变暗) ---
+    else if (msg.type === 'transfer') {
+        bubbleClasses = "location-exclusive-wrap"; 
+        const isClaimed = msg.isClaimed === true;
+        const statusLabel = isClaimed ? `RECEIVED` : "SUCCESS";
+        // 🚨 修正：如果未领取则绑定领取函数，领过了则显示常规菜单
+        clickAction = isClaimed ? `showBubbleMenu(this, event)` : `window.claimAiAsset('${contact.id}', ${msg.timestamp}, this)`;
         contentHtml = `
-            <div class="msg-location-card">
-                <div class="loc-card-map-preview">
-                    <div class="loc-radar-ping"></div>
-                    <div class="loc-card-pin"></div>
+            <div class="msg-location-card" style="background: linear-gradient(135deg, #e67e22, #d35400) !important; border:none !important; filter: ${isClaimed ? 'grayscale(0.8)' : 'none'}; opacity: ${isClaimed ? 0.6 : 1}; transition: all 0.3s ease;">
+                <div class="tf-chip-set"><div class="tf-micro-chip"></div><div class="tf-brand">LUNE PAY</div></div>
+                <div class="tf-amount-row">
+                    <div class="tf-val">$ ${msg.amount || '0.00'}</div>
+                    <div class="tf-note" style="opacity:0.8; font-size:11px;">${msg.text || ''}</div>
                 </div>
-                <div class="loc-card-info">
-                    <div class="loc-card-address">${msg.text.toUpperCase()}</div>
-                    <div class="loc-card-coords">LAT: ${msg.lat || '13.75'} / LNG: ${msg.lng || '100.49'}</div>
-                    <div class="loc-card-footer">
-                        <span>LUNE_COORD_SYNC</span>
-                        <span style="color:#000">SIGNAL_LOCKED</span>
+                <div class="tf-bar" style="background:rgba(0,0,0,0.1); padding:8px 15px; font-size:9px; display:flex; justify-content:space-between;">
+                    <span>ELECTRONIC REMITTANCE</span>
+                    <span style="font-weight:700;">${statusLabel}</span>
+                </div>
+            </div>`;
+    }
+    // --- 🧧 金融模块：Red Packet (🚨 物理修复点击与变暗) ---
+    else if (msg.type === 'redpacket') {
+        bubbleClasses = "location-exclusive-wrap";
+        const isClaimed = msg.isClaimed === true;
+        const actionLabel = isClaimed ? "Opened" : "Open Red Packet";
+        // 🚨 修正：绑定领取函数并支持变暗
+        clickAction = isClaimed ? `showBubbleMenu(this, event)` : `window.claimAiAsset('${contact.id}', ${msg.timestamp}, this)`;
+        contentHtml = `
+            <div class="msg-location-card" style="background: #96281B !important; border:none !important; width:200px !important; filter: ${isClaimed ? 'grayscale(0.8)' : 'none'}; opacity: ${isClaimed ? 0.6 : 1}; transition: all 0.3s ease;">
+                <div class="rp-top-flap" style="height:40px; background:#A93226; border-radius:12px 12px 60px 60px; border-bottom:1.5px solid #D4AF37; position:relative;">
+                    <div class="rp-gold-seal" style="width:34px; height:34px; background:radial-gradient(circle, #F7DC6F, #D4AF37); border-radius:50%; position:absolute; bottom:-17px; left:50%; transform:translateX(-50%); display:flex; align-items:center; justify-content:center; border:1px solid #B7950B;">
+                        <span style="font-size:12px; font-weight:900; color:#7B241C;">L</span>
                     </div>
                 </div>
+                <div class="rp-body" style="padding:25px 15px 12px; text-align:center;">
+                    <div class="rp-msg" style="color:#F7DC6F; font-size:14px; font-weight:600;">${msg.text || ''}</div>
+                    <div class="rp-action" style="font-size:10px; opacity:0.6; color:#fff; margin-top:5px;">${actionLabel}</div>
+                </div>
+                <div style="font-size:8px; opacity:0.3; color:#fff; text-align:center; padding-bottom:8px; letter-spacing:1px;">LUNE PREMIUM GIFT</div>
             </div>`;
     }
     else {
         contentHtml = `<div class="msg-text-main">${parsed.displayMain}</div>`;
     }
 
-    // --- 6. 统一渲染模板 (保持系统一致性) ---
+    // --- 6. 统一渲染模板 ---
     const transHtml = (parsed.isDual && msg.type !== "image" && msg.type !== "voice" && msg.type !== "location") ? `
         <div class="bubble-translation-box" style="display:block;">
             <div class="trans-line"></div>
             <div class="msg-text-trans">${parsed.transHtml}</div>
         </div>
-        <div class="trans-toggle-btn" onclick="toggleTranslation(this, event)">
-            <span>翻译</span>
-        </div>` : "";
+        <div class="trans-toggle-btn" onclick="toggleTranslation(this, event)"><span>翻译</span></div>` : "";
 
     const bubbleTimeStr = formatChatTime(msg.timestamp, false);
     const msgDiv = document.createElement('div');
@@ -50497,8 +51976,7 @@ function appendMessageToUI(msg, contact) {
                 ${transHtml}
             </div>
             <div class="bubble-time">${bubbleTimeStr}</div>
-        </div>
-    `;
+        </div>`;
 
     container.appendChild(msgDiv);
     requestAnimationFrame(() => { container.scrollTop = container.scrollHeight; });
@@ -55787,54 +57265,6 @@ function toggleFeaturePanel() {
         }, 300);
     }
 }
-
-// ==========================================
-// 🚀 全功能路由：处理“更多”面板中的点击事件
-// ==========================================
-function handleFeature(type) {
-    console.log(`%c[Feature] 触发功能: ${type}`, "color: #007AFF; font-weight: bold;");
-    
-    switch(type) {
-        case 'Emoji':
-            // 🚨 修正：直接调用点击处理函数
-            window.handleEmojiButtonClick(); 
-            break;
-            
-        case 'Gallery':
-            document.getElementById('modal-image-picker').style.display = 'flex';
-            toggleFeaturePanel(); // 发送图片前收起面板
-            break;
-
-        case 'Voice':
-            // 1. 打开语音输入弹窗
-            document.getElementById('voice-text-in').value = ""; // 清空
-            document.getElementById('modal-voice-input').style.display = 'flex';
-            toggleFeaturePanel(); // 收起底部面板
-            break;
-
-        case 'Location':
-            showToast("正在获取量子地理坐标...");
-            break;
-
-        // ... 其他功能保持原样 ...
-        default:
-            showToast(type + " protocol starting...");
-    }
-}
-// 2. 核心：重写 handleFeature 函数，把按钮和 Modal 连起来
-window.handleFeature = function(type) {
-    if (type === 'Location') {
-        ensureLocationModal(); // 确保 HTML 准备好了
-        const overlay = document.getElementById('lune-location-overlay');
-        overlay.style.display = 'flex';
-        
-        // 自动聚焦输入框
-        setTimeout(() => document.getElementById('loc-main-input').focus(), 100);
-        
-        if (window.navigator.vibrate) window.navigator.vibrate(15);
-        console.log("System: Location protocol engaged.");
-    }
-};
 
 // 🚨 补充：点击消息区域时，自动关闭面板，提升交互感
 document.getElementById('chat-messages-container').addEventListener('click', function() {
@@ -65195,6 +66625,343 @@ async function confirmLocation(lat, lng, address) {
         console.error("位置发送失败:", e);
         showToast("位置传输中断");
     }
+}
+
+// 🚀 模式切换：Transfer vs Red Packet
+function switchFinType(mode) {
+    currentFinMode = mode;
+    const isT = mode === 'transfer';
+    const mainColor = isT ? '#d35400' : '#96281B';
+    
+    // UI 反馈
+    document.querySelectorAll('.fin-tab-item').forEach(el => el.classList.remove('active'));
+    document.getElementById('tab-' + (isT ? 't' : 'r')).classList.add('active');
+    
+    document.getElementById('fin-header-title').innerText = isT ? 'Transfer' : 'Red Packet';
+    document.getElementById('fin-amount-input').placeholder = "0.00";
+    document.querySelector('#subpage-finance .app-header div:last-child').style.color = mainColor;
+}
+
+/**
+ * 🚀 执行发送并自动闭环
+ */
+async function executeFinanceSend() {
+    const amtInput = document.getElementById('fin-amount-input');
+    const noteInput = document.getElementById('fin-note-input');
+    const amt = amtInput.value;
+    const note = noteInput.value || (window.currentFinMode === 'transfer' ? "Transfer" : "Best Wishes");
+    const contact = window.currentChattingWith;
+
+    if (!amt || amt <= 0) return alert("Enter Amount");
+
+    // 🚨 核心：构造带有“未领取”物理属性的消息对象
+    const msgObj = {
+        role: "user",
+        type: window.currentFinMode || 'transfer', // 确保是 'transfer' 或 'redpacket'
+        amount: parseFloat(amt).toFixed(2),
+        text: note,
+        timestamp: Date.now(),
+        isClaimed: false, // 物理埋点：标记 AI 尚未领取
+        source: 'chat_room'
+    };
+
+    try {
+        // 1. 保存到数据库
+        await saveChatMessage(contact.id, msgObj); 
+        
+        // 2. 🚨 强制重绘：这是解决你不渲染的关键
+        if (typeof renderMessages === 'function') {
+            await renderMessages(); 
+        } else {
+            appendMessageToUI(msgObj, contact);
+        }
+
+        // 3. 关闭弹窗并清空
+        closeFinancePage(); 
+        amtInput.value = '';
+        noteInput.value = '';
+    } catch (e) { 
+        console.error("Critical Send Error:", e); 
+    }
+}
+
+/**
+ * 📍 位置执行官：先注入，再强制显示
+ */
+function openLocationPicker() {
+    // 1. 强制注入 HTML (使用你定义的函数名)
+    if (typeof ensureLocationHTML === 'function') {
+        ensureLocationHTML(); 
+    }
+
+    const overlay = document.getElementById('lune-location-overlay');
+    if (overlay) {
+        // 2. 物理显示
+        overlay.style.display = 'flex';
+        // 3. 强制聚焦
+        setTimeout(() => {
+            const input = document.getElementById('loc-main-input');
+            if (input) input.focus();
+            overlay.classList.add('active'); // 触发滑出动画
+        }, 50);
+        console.log("✅ Location Overlay Engaged.");
+    } else {
+        console.error("❌ 严重错误：物理层找不到 lune-location-overlay");
+    }
+}
+
+/**
+ * 💰 Lune Finance: 精英版居中弹窗协议
+ */
+function openFinancePage() {
+    // 1. 注入 CSS (增加了物理滑块和无气泡包装样式)
+    if (!document.getElementById('lune-fin-elite-css')) {
+        const style = document.createElement('style');
+        style.id = 'lune-fin-elite-css';
+        style.innerHTML = `
+            #lune-fin-overlay {
+                position: fixed; inset: 0; z-index: 9000000;
+                display: none; align-items: center; justify-content: center;
+                background: rgba(0,0,0,0.4); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+                opacity: 0; transition: 0.3s;
+            }
+            #lune-fin-overlay.active { opacity: 1; display: flex; }
+            .fin-elite-card {
+                width: 300px; background: #fff; border-radius: 28px; padding: 25px;
+                box-shadow: 0 30px 60px rgba(0,0,0,0.2); transform: scale(0.8); transition: 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            }
+            #lune-fin-overlay.active .fin-elite-card { transform: scale(1); }
+
+            /* 物理滑块切换器 */
+            .fin-tab-container { position: relative; display: flex; background: #f2f2f7; border-radius: 12px; padding: 3px; margin-bottom: 20px; }
+            #fin-tab-slider {
+                position: absolute; width: calc(50% - 3px); height: calc(100% - 6px);
+                background: #fff; border-radius: 10px; left: 3px; top: 3px;
+                transition: transform 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.1);
+                box-shadow: 0 2px 6px rgba(0,0,0,0.1); z-index: 0;
+            }
+            .fin-tab-item { flex: 1; padding: 8px; font-size: 13px; font-weight: 600; color: #8e8e93; cursor: pointer; z-index: 1; transition: 0.3s; }
+            .fin-tab-item.active { color: #000; }
+
+            /* 金融卡片通用 (模仿位置功能) */
+            .msg-finance-card {
+                width: 260px; border-radius: 14px; overflow: hidden;
+                box-shadow: 10px 10px 0px rgba(0,0,0,0.05); margin: 5px 0; cursor: pointer;
+            }
+        `;
+        document.head.appendChild(style);
+    }
+
+    // 2. 物理注入 HTML
+    if (!document.getElementById('lune-fin-overlay')) {
+        const html = `
+            <div id="lune-fin-overlay" onclick="if(event.target===this) closeFinancePage()">
+                <div class="fin-elite-card" onclick="event.stopPropagation()">
+                    <div class="fin-tab-container">
+                        <div id="fin-tab-slider"></div>
+                        <div id="tab-t" class="fin-tab-item active" onclick="switchFinType('transfer')">Transfer</div>
+                        <div id="tab-r" class="fin-tab-item" onclick="switchFinType('redpacket')">Red Packet</div>
+                    </div>
+                    <div style="color:#8e8e93; font-size:12px; text-transform:uppercase; letter-spacing:1px;">Amount</div>
+                    <div style="display:flex; align-items:center; justify-content:center; border-bottom:1.5px solid #eee; margin-top:5px;">
+                        <span style="font-size:28px; font-weight:700; margin-right:5px;">$</span>
+                        <input type="number" id="fin-amount-input" style="width:160px; border:none; background:transparent; font-size:40px; font-weight:700; outline:none; text-align:center;" placeholder="0.00">
+                    </div>
+                    <input type="text" id="fin-note-input" style="width:100%; border:none; background:#f2f2f7; padding:12px; border-radius:14px; margin-top:20px; outline:none; font-size:14px; box-sizing:border-box;" placeholder="Add a remark...">
+                    <button id="fin-confirm-btn" onclick="executeFinanceSend()" style="width:100%; padding:16px; border-radius:18px; border:none; background:#d35400; color:#fff; font-weight:700; margin-top:25px; cursor:pointer;">Confirm Transfer</button>
+                    <div id="fin-cancel-btn" onclick="closeFinancePage()" style="margin-top:15px; color:#d35400; font-size:14px; cursor:pointer; font-weight:500;">Cancel</div>
+                </div>
+            </div>`;
+        document.body.insertAdjacentHTML('beforeend', html);
+    }
+
+    // 3. 启动
+    const overlay = document.getElementById('lune-fin-overlay');
+    overlay.style.display = 'flex';
+    void overlay.offsetWidth;
+    overlay.classList.add('active');
+    setTimeout(() => document.getElementById('fin-amount-input').focus(), 300);
+}
+
+/**
+ * 🛠️ 辅助函数：确保交互容器存在
+ */
+function ensureInsOverlay() {
+    if (document.getElementById('lune-ins-overlay')) return;
+    const overlay = document.createElement('div');
+    overlay.id = 'lune-ins-overlay';
+    // 点击背景空白处关闭
+    overlay.onclick = (e) => { if (e.target.id === 'lune-ins-overlay') closeLuneIns(); };
+    document.body.appendChild(overlay);
+}
+
+/**
+ * 💰 渲染：工业转账票据 (Ledger)
+ */
+function renderLedgerReceipt(amount, note) {
+    const overlay = document.getElementById('lune-ins-overlay');
+    overlay.innerHTML = `
+        <div class="ins-shutter-container" onclick="this.classList.add('opened')">
+            <div class="shutter-line"></div>
+            <div class="shutter-blade blade-left"></div>
+            <div class="shutter-blade blade-right"></div>
+            <div class="ledger-layout">
+                <div class="ledger-tag">AUTH_KEY_${Date.now().toString().slice(-6)}</div>
+                <div style="font-size:9px; letter-spacing:4px; font-weight:800; color:#ccc;">LUNE_LEDGER</div>
+                <div class="ledger-amt-box">
+                    <div style="font-size:10px; color:#999; margin-bottom:5px;">SETTLED_CREDIT</div>
+                    <div class="ledger-amt">$ ${amount}</div>
+                </div>
+                <div style="width:100%; height:1px; background:#f0f0f0; margin-bottom:30px;"></div>
+                <div class="ledger-row"><span>PROTOCOL</span><span class="ledger-val">P2P_TRANSFER</span></div>
+                <div class="ledger-row"><span>REMARK</span><span class="ledger-val" style="font-family:inherit">${note}</span></div>
+                <div class="ledger-row"><span>TIMESTAMP</span><span class="ledger-val">${new Date().toLocaleTimeString()}</span></div>
+                <button class="ins-btn-black" onclick="event.stopPropagation(); closeLuneIns();">Archive Receipt</button>
+            </div>
+        </div>`;
+    overlay.style.display = 'flex';
+    setTimeout(() => overlay.classList.add('active'), 50);
+}
+
+/**
+ * 🧧 渲染：艺术绽放容器 (Vessel)
+ */
+function renderVesselPacket(note, amount) {
+    const overlay = document.getElementById('lune-ins-overlay');
+    const finalAmt = amount || "8.88";
+    overlay.innerHTML = `
+        <div class="ins-shutter-container" onclick="this.classList.add('opened'); if(window.navigator.vibrate) window.navigator.vibrate(40);">
+            <div class="shutter-line"></div>
+            <div class="shutter-blade blade-left"></div>
+            <div class="shutter-blade blade-right"></div>
+            <div class="vessel-layout">
+                <div class="vessel-bloom"></div>
+                <div style="font-size:8px; letter-spacing:5px; color:#bbb; margin-bottom:15px;">GIFT_UNVEILED</div>
+                <div class="vessel-amt">$ ${finalAmt}</div>
+                <div class="vessel-note">“ ${note} ”</div>
+                <div style="width:1px; height:40px; background:#000; margin-top:40px;"></div>
+                <button class="ins-btn-white" onclick="event.stopPropagation(); closeLuneIns();">Collect Asset</button>
+            </div>
+        </div>`;
+    overlay.style.display = 'flex';
+    setTimeout(() => overlay.classList.add('active'), 50);
+}
+/**
+ * 📱 LUNE LIVE APP V4 - 完整逻辑控制器
+ * 集成了持久化存储 (IndexedDB) 与 高定交互
+ */
+
+// --- [ 核心初始化逻辑 ] ---
+
+async function initLiveV4() {
+    // A. 重置 UI 状态
+    switchV3MainView('gallery');
+    
+    // B. 清空内容容器 (实现进入时什么都没有的状态)
+    const galleryTags = document.getElementById('v3-gallery-tags');
+    const galleryContent = document.getElementById('v3-gallery-content');
+    const rankContent = document.getElementById('v3-elite-list-content');
+    const inboxContent = document.getElementById('inbox-content-list');
+
+    if(galleryTags) galleryTags.innerHTML = '';
+    if(galleryContent) galleryContent.innerHTML = '';
+    if(rankContent) rankContent.innerHTML = '';
+    if(inboxContent) inboxContent.innerHTML = '';
+    
+    // C. 重置同步条
+    const syncBar = document.getElementById('v3-sync-bar');
+    if(syncBar) syncBar.innerText = "SYNC_DATABASE_TO_LOAD";
+
+    // D. 从数据库加载个人空间数据
+    await loadSpaceDataFromDB();
+}
+
+// 加载数据库中的用户信息
+async function loadSpaceDataFromDB() {
+    try {
+        const name = await window.ib.getItem(LIVE_DB_KEYS.NAME) || 'LUNE_MASTER';
+        const bio = await window.ib.getItem(LIVE_DB_KEYS.BIO) || '"INITIALIZING_IDENTITY_PROTOCOL..."';
+        const avatar = await window.ib.getItem(LIVE_DB_KEYS.AVATAR);
+        const bg = await window.ib.getItem(LIVE_DB_KEYS.BG);
+
+        const nameEl = document.getElementById('user-name-display');
+        const bioEl = document.getElementById('user-bio-display');
+        const avatarEl = document.getElementById('user-avatar-display');
+        const heroBg = document.getElementById('space-hero-bg');
+
+        if(nameEl) nameEl.innerText = name;
+        if(bioEl) bioEl.innerText = bio;
+        if(avatarEl && avatar) avatarEl.innerHTML = `<img src="${avatar}" style="width:100%;height:100%;object-fit:cover;border-radius:16px;">`;
+        if(heroBg && bg) heroBg.style.backgroundImage = `url(${bg})`;
+
+        // 渲染功能按钮矩阵
+        renderSpaceMatrix();
+    } catch (e) { console.error("Space Data Load Error:", e); }
+}
+
+// --- [ 视图切换逻辑 ] ---
+
+function switchV3MainView(view) {
+    const gallery = document.getElementById('v3-view-gallery');
+    const ranking = document.getElementById('v3-view-ranking');
+    const navs = document.querySelectorAll('.v3-nav-item');
+
+    if (view === 'gallery') {
+        if(gallery) gallery.classList.remove('v3-hide');
+        if(ranking) ranking.classList.add('v3-hide');
+        navs[0].classList.add('active');
+        navs[1].classList.remove('active');
+    } else {
+        if(gallery) gallery.classList.add('v3-hide');
+        if(ranking) ranking.classList.remove('v3-hide');
+        navs[1].classList.add('active');
+        navs[0].classList.remove('active');
+        renderEliteRank('live');
+    }
+}
+
+function renderGalleryFlow() {
+    document.getElementById('v3-gallery-tags').innerHTML = `
+        <div class="v3-pill pill-mint active">#ALL</div><div class="v3-pill pill-blue">#AURA</div>
+        <div class="v3-pill pill-pink">#SILENT</div><div class="v3-pill pill-purple">#VOICE</div>
+    `;
+
+    const data = [
+        { host: 'Aura_Lune', title: '夜间巡游：光影重塑计划', abstract: '探讨光线如何在数字空间中构建情感边界。', meta: ['1080P', 'BKK-01', '12.4K'] },
+        { host: 'Architect_X', title: '代码中的诗意：极简架构', abstract: '从 0 到 1 的逻辑构建，一场关于秩序的修行。', meta: ['HI-RES', 'HKG-02', '8.1K'] }
+    ];
+
+    document.getElementById('v3-gallery-content').innerHTML = data.map(item => `
+        <div class="v4-card">
+            <div class="v4-visual-box"></div>
+            <div class="v4-info-box">
+                <div class="v4-host-line"><div class="v4-host-dot"></div><span>${item.host}</span></div>
+                <div class="v4-title">${item.title}</div>
+                <div class="v4-abstract">${item.abstract}</div>
+                <div class="v4-meta-row"><span>${item.meta[0]}</span><span>${item.meta[1]}</span><span>${item.meta[2]}</span></div>
+            </div>
+        </div>
+    `).join('');
+}
+
+function renderEliteRank(type) {
+    const list = document.getElementById('v3-elite-list-content');
+    const opts = document.querySelectorAll('.rank-type-opt');
+    opts[0].classList.toggle('active', type === 'live');
+    opts[1].classList.toggle('active', type === 'host');
+
+    const data = type === 'live' ? 
+        [{ num: '01', name: 'Midnight Jazz', status: 'IN_COLLECTION', val: '124k' }, { num: '02', name: 'Art Museum', status: 'STREAMING', val: '89k' }] :
+        [{ num: '01', name: 'Aura_Architect', status: 'VERIFIED', val: 'LV.99' }, { num: '02', name: 'System_Core', status: 'PRODUCER', val: 'LV.82' }];
+
+    list.innerHTML = data.map((item, i) => `
+        <div class="rank-elite-card ${i === 0 ? 'top-1' : ''}">
+            <div class="elite-num">${item.num}</div>
+            <div class="elite-avatar"></div>
+            <div class="elite-main"><div class="elite-name">${item.name}</div><div class="elite-status">${item.status}</div></div>
+            <div class="elite-val">${item.val}</div>
+        </div>
+    `).join('');
 }
 
 </script>
