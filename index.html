@@ -34933,10 +34933,646 @@ class ImmersiveReader {
     }
 }
 
+(function injectLiveRoomUI() {
+    const styleId = 'lune-live-room-style';
+    if (document.getElementById(styleId)) return;
+
+    const style = document.createElement('style');
+    style.id = styleId;
+    style.innerHTML = `
+        /* === 直播间全屏容器 === */
+        #live-room-overlay {
+            position: fixed; inset: 0; z-index: 6000000;
+            background: #000; color: #fff;
+            display: none; flex-direction: column;
+            font-family: 'Urbanist', sans-serif;
+            background-size: cover; background-position: center;
+        }
+        /* 背景遮罩，让文字更清晰 */
+        #live-room-overlay::before {
+            content: ''; position: absolute; inset: 0;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0) 30%, rgba(0,0,0,0.6) 80%, rgba(0,0,0,0.9) 100%);
+            pointer-events: none;
+        }
+
+        /* === 1. 头部区域 === */
+        .lr-header {
+            position: absolute; top: 0; left: 0; right: 0; z-index: 10;
+            padding: 50px 16px 10px; display: flex; justify-content: space-between; align-items: center;
+        }
+        
+        /* 左侧主播信息 */
+        .lr-host-pill {
+            display: flex; align-items: center; background: rgba(0,0,0,0.3);
+            backdrop-filter: blur(10px); border-radius: 30px; padding: 4px; padding-right: 12px;
+            border: 0.5px solid rgba(255,255,255,0.1);
+        }
+        .lr-avatar { width: 32px; height: 32px; border-radius: 50%; border: 1px solid #fff; margin-right: 8px; }
+        .lr-info { display: flex; flex-direction: column; margin-right: 10px; }
+        .lr-name { font-size: 12px; font-weight: 700; color: #fff; line-height: 1.2; }
+        .lr-status { font-size: 9px; color: #ccc; }
+        
+        /* 关注按钮 (默认显示) */
+        .lr-btn-follow {
+            background: #FF2D55; color: #fff; font-size: 11px; font-weight: 800;
+            padding: 4px 12px; border-radius: 14px; cursor: pointer; transition: 0.3s;
+        }
+        /* 粉丝团与会员图标 (默认隐藏) */
+        .lr-badges-group { display: none; gap: 6px; }
+        .lr-badge-icon {
+            width: 20px; height: 20px; background: rgba(255,255,255,0.2);
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+        }
+        
+        /* 右侧观众数 */
+        .lr-right-tools { display: flex; align-items: center; gap: 10px; }
+        .lr-viewers-pill {
+            background: rgba(0,0,0,0.3); padding: 4px 10px; border-radius: 20px;
+            font-size: 10px; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 4px;
+        }
+        .lr-close-btn {
+            width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
+            background: rgba(255,255,255,0.1); border-radius: 50%; cursor: pointer;
+        }
+
+        /* === 🌟 核心升级：主播实时语录卡片 (灵动岛风格) === */
+.lr-content-card {
+    position: absolute; 
+    top: 150px; /* 放在头部下方，占据视觉中心 */
+    left: 50%; transform: translateX(-50%); /* 绝对水平居中 */
+    width: 85%; max-width: 340px;
+    
+    background: rgba(255, 255, 255, 0.35); /* 高透亮白玻璃 */
+    backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    box-shadow: 0 8px 32px rgba(31, 38, 135, 0.1);
+    
+    border-radius: 24px;
+    padding: 20px;
+    display: flex; flex-direction: column; align-items: center; text-align: center;
+    z-index: 5; /* 保证在礼物图层之下，但在背景之上 */
+    transition: all 0.3s ease;
+}
+
+/* 顶部的小标签栏 */
+.lr-card-header {
+    display: flex; align-items: center; gap: 8px; margin-bottom: 12px;
+}
+
+.lr-live-tag {
+    background: #1d1d1f; color: #fff;
+    font-size: 9px; font-weight: 800; letter-spacing: 1px;
+    padding: 3px 8px; border-radius: 6px;
+    text-transform: uppercase;
+}
+
+/* 🎵 动态声波纹 (模拟说话) */
+.lr-audio-wave {
+    display: flex; align-items: center; gap: 3px; height: 12px;
+}
+.lr-wave-bar {
+    width: 3px; background: #FF2D55; border-radius: 2px;
+    animation: waveJump 1s ease-in-out infinite;
+}
+.lr-wave-bar:nth-child(1) { height: 60%; animation-delay: 0s; }
+.lr-wave-bar:nth-child(2) { height: 100%; animation-delay: 0.1s; }
+.lr-wave-bar:nth-child(3) { height: 40%; animation-delay: 0.2s; }
+.lr-wave-bar:nth-child(4) { height: 80%; animation-delay: 0.3s; }
+
+/* 核心文字 */
+.lr-content-text {
+    font-size: 15px; line-height: 1.6; 
+    color: #000; font-weight: 600;
+    min-height: 50px; /* 撑开高度 */
+    display: flex; align-items: center; justify-content: center;
+    transition: opacity 0.3s, transform 0.3s;
+}
+.lr-content-text.fading { opacity: 0; transform: scale(0.95); }
+
+/* 底部的小装饰线 */
+.lr-card-line {
+    width: 40px; height: 3px; background: rgba(0,0,0,0.1); 
+    border-radius: 2px; margin-top: 10px;
+}
+
+/* 动画帧 */
+@keyframes waveJump {
+    0%, 100% { height: 30%; opacity: 0.5; }
+    50% { height: 100%; opacity: 1; background: #FF2D55; }
+}
+
+        /* === 3. 礼物显示区 (位置调整到弹幕上方) === */
+.lr-gift-banner-zone {
+    position: absolute; 
+    bottom: 480px; /* 位置你自己定 */
+    left: 16px; 
+    right: 0;
+    
+    /* 👇 核心修改：固定高度，只够放2个 (一个大概50px，给110px足够了) */
+    height: 110px; 
+    
+    /* 👇 核心修改：让礼物沉底显示 (新来的在下面) */
+    justify-content: flex-end; 
+    
+    pointer-events: none; 
+    display: flex; 
+    flex-direction: column; 
+    gap: 8px; /* 礼物之间的间距 */
+    z-index: 50;
+    
+    /* 防止溢出 */
+    overflow: hidden; 
+}
+
+/* === 单个礼物条 (高级磨砂卡片) === */
+.gift-toast-item {
+    display: inline-flex; 
+    align-items: center; 
+    gap: 10px;
+    
+    /* 背景：高透白玻璃 + 霓虹边框 */
+    background: rgba(255, 255, 255, 0.75);
+    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    border: 1.5px solid rgba(255, 255, 255, 0.9);
+    border-left: 4px solid #FF2D55; /* 左侧粉色装饰线 */
+    
+    padding: 6px 16px 6px 6px; 
+    border-radius: 30px;
+    
+    box-shadow: 0 8px 20px rgba(255, 45, 85, 0.15);
+    
+    /* 进场动画 */
+    animation: giftSlideIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    
+    width: fit-content;
+    transform-origin: left center;
+}
+
+/* 离场动画类 (JS添加) */
+.gift-toast-item.leaving {
+    animation: giftFloatAway 0.4s ease-in forwards;
+}
+
+/* 头像 */
+.gt-avatar { 
+    width: 32px; height: 32px; 
+    border-radius: 50%; 
+    border: 2px solid #fff; 
+    background: #eee;
+}
+
+/* 文字区 */
+.gt-info { display: flex; flex-direction: column; line-height: 1.1; }
+.gt-user { font-size: 10px; color: #8E8E93; font-weight: 700; }
+.gt-gift-name { font-size: 13px; color: #1d1d1f; font-weight: 800; }
+.gt-highlight { color: #FF2D55; } /* 礼物名高亮 */
+
+/* 🎁 礼物图标 + 心跳特效 */
+.gt-icon-wrapper {
+    width: 28px; height: 28px;
+    display: flex; align-items: center; justify-content: center;
+    /* 🔥 核心：心跳动画 */
+    animation: heartBeatIcon 0.8s infinite ease-in-out;
+}
+
+/* 连击数 x1 */
+.gt-combo-num {
+    font-family: 'Urbanist', sans-serif;
+    font-size: 20px; font-weight: 900; 
+    font-style: italic;
+    color: #FF9500;
+    text-shadow: 2px 2px 0px rgba(255,255,255,1);
+    margin-left: 5px;
+    animation: comboPop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+/* === 关键帧动画 === */
+@keyframes giftSlideIn {
+    0% { opacity: 0; transform: translateX(-50px) scale(0.8); }
+    100% { opacity: 1; transform: translateX(0) scale(1); }
+}
+
+@keyframes giftFloatAway {
+    0% { opacity: 1; transform: translateY(0); }
+    100% { opacity: 0; transform: translateY(-30px); }
+}
+
+@keyframes heartBeatIcon {
+    0% { transform: scale(1); }
+    15% { transform: scale(1.3); } /* 猛跳一下 */
+    30% { transform: scale(1); }
+    45% { transform: scale(1.15); } /* 轻跳一下 */
+    100% { transform: scale(1); }
+}
+
+@keyframes comboPop {
+    0% { transform: scale(0); opacity: 0; }
+    80% { transform: scale(1.5); opacity: 1; }
+    100% { transform: scale(1); }
+}
+
+        /* === 4. 弹幕滚动区 (背景全透明，区域大) === */
+.lr-chat-scroller {
+    position: absolute; 
+    bottom: 90px; 
+    left: 16px; right: 80px;
+    height: 400px; /* 保持大区域 */
+    
+    overflow-y: hidden;
+    display: flex; flex-direction: column; justify-content: flex-end;
+    
+    /* 👇 核心修改：背景改回透明！ */
+    background: transparent !important; 
+    pointer-events: none;
+    
+    /* 顶部遮罩保留，让弹幕滚出去时自然消失 */
+    mask-image: linear-gradient(to top, black 85%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to top, black 85%, transparent 100%);
+}
+
+/* === 单条弹幕 (基础样式) === */
+.lr-chat-item {
+    /* 👇 背景色删掉了，交给 JS 随机生成 */
+    /* border-left 也删掉了，不需要金线了 */
+    
+    padding: 8px 14px;      
+    margin-bottom: 8px;    
+    width: fit-content;    
+    max-width: 90%;        
+    
+    border-radius: 16px;    /* 更圆润一点，像糖果 */
+    border: 1px solid rgba(255,255,255,0.4); /* 加个白描边增加层次 */
+    
+    /* 👇 因为背景是浅色马卡龙，文字要深一点才看得清 */
+    color: #1d1d1f; 
+    font-weight: 700;
+    font-size: 13px;
+    text-shadow: none;
+    
+    animation: msgPopIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); /* 弹性弹出动画 */
+    
+    display: flex; align-items: baseline; flex-wrap: wrap;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05); /* 轻微投影 */
+}
+
+/* 进场动画：像泡泡一样冒出来 */
+@keyframes msgPopIn { 
+    from { opacity: 0; transform: scale(0.8) translateY(20px); } 
+    to { opacity: 1; transform: scale(1) translateY(0); } 
+}
+
+/* 修正一下里面名字的颜色，防止看不清 */
+.lr-u-name { color: #555 !important; font-weight: 800; margin-right: 5px; opacity: 1; }
+.lr-u-msg { color: #000 !important; font-weight: 500; }
+        .lr-u-level {
+            background: #4facfe; font-size: 9px; padding: 1px 4px; border-radius: 3px;
+            margin-right: 5px; font-weight: 800; transform: translateY(-1px);
+        }
+        .lr-u-fans {
+            background: #FF2D55; font-size: 9px; padding: 1px 4px; border-radius: 3px;
+            margin-right: 5px; font-weight: 800;
+        }
+
+        /* 系统消息 */
+        .lr-sys-msg {
+            background: rgba(255,255,255,0.15); padding: 4px 8px; border-radius: 8px;
+            font-size: 11px; color: #FFD700; margin-bottom: 6px; width: fit-content;
+        }
+
+        /* === 5. 底部操作栏 (透明背景) === */
+        .lr-bottom-dock {
+            position: absolute; bottom: 0; left: 0; right: 0;
+            height: 80px; padding: 0 16px;
+            display: flex; align-items: center; gap: 10px;
+            background: transparent; /* 你的要求：透明背景 */
+            z-index: 20;
+        }
+
+        /* 聊天输入框 */
+        .lr-input-box {
+            flex: 1; height: 36px; background: rgba(0,0,0,0.4); border-radius: 18px;
+            display: flex; align-items: center; padding: 0 12px;
+            border: 1px solid rgba(255,255,255,0.15); backdrop-filter: blur(5px);
+        }
+        .lr-input {
+            flex: 1; background: transparent; border: none; outline: none;
+            color: #fff; font-size: 13px;
+        }
+        .lr-input::placeholder { color: rgba(255,255,255,0.5); }
+
+        /* 右侧功能图标组 */
+        .lr-action-btn {
+            width: 36px; height: 36px; border-radius: 50%;
+            background: rgba(0,0,0,0.2); backdrop-filter: blur(5px);
+            display: flex; align-items: center; justify-content: center;
+            border: 1px solid rgba(255,255,255,0.1); cursor: pointer;
+            transition: transform 0.1s;
+        }
+        .lr-action-btn:active { transform: scale(0.9); background: rgba(255,255,255,0.2); }
+        
+        /* 礼物按钮特殊样式 */
+        .btn-gift { 
+            background: linear-gradient(135deg, #FF2D55, #FF5E3A); 
+            border: none; box-shadow: 0 4px 15px rgba(255, 45, 85, 0.4);
+            animation: pulse 2s infinite;
+        }
+
+        /* === 动画关键帧 === */
+        @keyframes slideInLeft { from { transform: translateX(-100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        @keyframes msgFloatUp { from { transform: translateY(10px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        @keyframes heartBeat { 0% { transform: scale(1); } 15% { transform: scale(1.3); } 30% { transform: scale(1); } 45% { transform: scale(1.3); } 100% { transform: scale(1); } }
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(255, 45, 85, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(255, 45, 85, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 45, 85, 0); } }
+    `;
+    document.head.appendChild(style);
+
+    const html = `
+    <div id="live-room-overlay">
+        <div class="lr-header">
+            <div class="lr-host-pill">
+                <img id="lr-host-avatar" src="" class="lr-avatar">
+                <div class="lr-info">
+                    <div id="lr-host-name" class="lr-name">主播名</div>
+                    <div id="lr-host-stats" class="lr-status">5.2M 本场点赞</div>
+                </div>
+                <div id="lr-follow-btn" class="lr-btn-follow" onclick="window.handleLiveFollow()">关注</div>
+                <div id="lr-fan-badges" class="lr-badges-group">
+                    <div class="lr-badge-icon" style="background:#FF2D55;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></div>
+                    <div class="lr-badge-icon" style="background:#007AFF;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg></div>
+                </div>
+            </div>
+
+            <div class="lr-right-tools">
+                <div class="lr-viewers-pill">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                    <span id="lr-viewer-count">12.5k</span>
+                </div>
+                <div class="lr-close-btn" onclick="window.closeLiveRoom()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </div>
+            </div>
+        </div>
+
+        <div class="lr-content-card">
+            <div class="lr-card-header">
+                <div class="lr-live-tag">ON AIR</div>
+                <div class="lr-audio-wave">
+                    <div class="lr-wave-bar"></div>
+                    <div class="lr-wave-bar"></div>
+                    <div class="lr-wave-bar"></div>
+                    <div class="lr-wave-bar"></div>
+                </div>
+            </div>
+            
+            <div id="lr-room-desc" class="lr-content-text">
+                正在接入全频段信号...
+            </div>
+            
+            <div class="lr-card-line"></div>
+        </div>
+
+        <div id="lr-gift-zone" class="lr-gift-banner-zone"></div>
+
+        <div id="lr-chat-flow" class="lr-chat-scroller">
+            <div class="lr-sys-msg">✨ 欢迎来到直播间！请遵守社区规范。</div>
+            <div class="lr-sys-msg">🔥 热门榜单第 3 名</div>
+        </div>
+
+        <div class="lr-bottom-dock">
+            <div class="lr-input-box">
+                <input type="text" class="lr-input" placeholder="说点什么...">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" onclick="window.sendLiveChat()"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+            </div>
+
+            <div class="lr-action-btn" onclick="window.refreshLiveStream()">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M23 4v6h-6"/><path d="M1 20v6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l1.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+            </div>
+
+            <div class="lr-action-btn" onclick="window.openLiveShop()">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+            </div>
+
+            <div class="lr-action-btn" onclick="window.requestLinkMic()">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+            </div>
+
+            <div class="lr-action-btn btn-gift" onclick="window.triggerLiveGift()">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>
+            </div>
+        </div>
+    </div>`;
+
+    document.body.insertAdjacentHTML('beforeend', html);
+})();
+
+// 🎭 主播实时字幕库
+const ANCHOR_SCRIPTS = {
+    "Aura": [
+        "大家晚上好，今天我们聊聊那个消失的信号站...",
+        "这首歌的贝斯线简直是灵魂，你们听到了吗？",
+        "刚才弹幕说想听《Neon Rain》，安排！",
+        "深夜电台不打烊，感谢榜一大哥的星光币✨"
+    ],
+    "Neon": [
+        "东京还在下雨，今天的街景有点赛博朋克那味儿了。",
+        "走到涩谷路口了，人还是这么多。",
+        "这种光影效果，只有在下雨天才能捕捉到。",
+        "稍微休息一下，喝口咖啡，你们想看哪边的风景？"
+    ],
+    "Echo": [
+        "（翻书声）...这一章的理论非常有趣...",
+        "专注模式开启，接下来的25分钟大家一起自习。",
+        "不要刷礼物了，专心看书。",
+        "休息5分钟，刚才那个番茄钟大家都跟上了吗？"
+    ],
+    // 默认剧本 (兜底用)
+    "default": [
+        "欢迎新进来的朋友，点点关注不迷路！",
+        "感谢送出的礼物，老板大气！",
+        "今天的氛围真好，我们继续下一个话题。",
+        "声音清楚吗？清楚的扣个 1。"
+    ]
+};
 
 // ==========================================
-// 🌟 Fans Club System: 粉丝团核心引擎
+// 🎥 Live Room Engine: 直播间核心业务
 // ==========================================
+var liveSimTimer = null; // 模拟器定时器
+var currentHostId = null;
+var captionTimer = null; // 全局变量，用来控制字幕轮播
+
+window.openLiveRoom = function(username, title, viewers, desc) {
+    const overlay = document.getElementById('live-room-overlay');
+    if (!overlay) return;
+
+    // 1. 基础信息填充 (保持原样)
+    document.getElementById('lr-host-name').innerText = username;
+    document.getElementById('lr-viewer-count').innerText = viewers;
+    const seed = username.charAt(0).toUpperCase();
+    document.getElementById('lr-host-avatar').src = `https://api.dicebear.com/7.x/initials/svg?seed=${username}`;
+
+    // 2. 浅色马卡龙背景 (之前教你的)
+    const gradients = [
+        "linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%)",
+        "linear-gradient(to top, #a18cd1 0%, #fbc2eb 100%)",
+        "linear-gradient(120deg, #84fab0 0%, #8fd3f4 100%)",
+        "linear-gradient(120deg, #fccb90 0%, #d57eeb 100%)"
+    ];
+    overlay.style.backgroundImage = gradients[Math.floor(Math.random() * gradients.length)];
+    overlay.style.color = "#1d1d1f"; 
+
+    // 3. UI 重置
+    document.getElementById('lr-follow-btn').style.display = 'block';
+    document.getElementById('lr-fan-badges').style.display = 'none';
+    document.getElementById('lr-chat-flow').innerHTML = `<div class="lr-sys-msg">✨ 欢迎来到 ${username} 的直播间！</div>`;
+    
+    // ==========================================
+    // 🎙️ 核心：启动主播实时字幕系统
+    // ==========================================
+    const descBox = document.getElementById('lr-room-desc');
+    const scripts = ANCHOR_SCRIPTS[username] || ANCHOR_SCRIPTS["default"];
+    let scriptIdx = 0;
+
+    // 清除旧的定时器 (防止语速过快)
+    if (captionTimer) clearInterval(captionTimer);
+
+    // 立即显示第一句
+    descBox.innerText = scripts[0];
+
+    // 开启轮播 (每 4 秒换一句)
+    captionTimer = setInterval(() => {
+        // A. 淡出
+        descBox.classList.add('fading');
+        
+        setTimeout(() => {
+            // B. 换词
+            scriptIdx = (scriptIdx + 1) % scripts.length;
+            descBox.innerText = scripts[scriptIdx];
+            // C. 淡入
+            descBox.classList.remove('fading');
+        }, 300); // 等待 CSS transition 完成
+    }, 4000);
+
+    // ==========================================
+
+    overlay.style.display = 'flex';
+    if(typeof startLiveSimulator === 'function') startLiveSimulator();
+};
+
+// 🚨 别忘了在关闭函数里停止它，不然后台一直跑
+window.closeLiveRoom = function() {
+    const overlay = document.getElementById('live-room-overlay');
+    if (overlay) overlay.style.display = 'none';
+    
+    // 停止弹幕模拟
+    if (window.liveSimTimer) clearInterval(window.liveSimTimer);
+    // 停止字幕轮播
+    if (captionTimer) clearInterval(captionTimer); 
+};
+
+// 3. 关注逻辑 (图标替换)
+window.handleLiveFollow = function() {
+    const btn = document.getElementById('lr-follow-btn');
+    const badges = document.getElementById('lr-fan-badges');
+
+    if (navigator.vibrate) navigator.vibrate(20);
+
+    // 动画：按钮缩小消失 -> 图标弹出
+    btn.style.transform = 'scale(0)';
+    setTimeout(() => {
+        btn.style.display = 'none';
+        badges.style.display = 'flex';
+        badges.style.animation = 'iosPop 0.4s ease'; // 假设你有这个动画，没有也没事
+        
+        // 发送一条弹幕
+        addChatMessage("System", "关注了主播", true);
+    }, 200);
+};
+
+// 4. 发送弹幕
+window.sendLiveChat = function() {
+    const input = document.querySelector('.lr-input');
+    const text = input.value.trim();
+    if (!text) return;
+
+    addChatMessage("Me", text, false, true); // true 表示是自己发的
+    input.value = "";
+    if (navigator.vibrate) navigator.vibrate(10);
+};
+
+// 🎁 触发礼物特效 (实打实的 HTML 生成)
+window.triggerLiveGift = function() {
+    const zone = document.getElementById('lr-gift-zone');
+    if (!zone) return;
+
+    // 1. 定义礼物数据 (无需链接，纯代码)
+    // 这里我们手写一个 "星际飞船" 的 SVG 图标
+    const giftIconSvg = `
+        <svg width="100%" height="100%" viewBox="0 0 24 24" fill="none" stroke="none">
+            <path d="M12 2L2 22h20L12 2z" fill="url(#giftGrad)" />
+            <path d="M12 6L6 22h12L12 6z" fill="#fff" opacity="0.3"/>
+            <defs>
+                <linearGradient id="giftGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" style="stop-color:#FF2D55" />
+                    <stop offset="100%" style="stop-color:#FF5E3A" />
+                </linearGradient>
+            </defs>
+        </svg>
+    `;
+
+    // 模拟的用户数据
+    const senderName = "Neon_Boy";
+    const giftName = "星际飞船";
+    const avatarUrl = `https://api.dicebear.com/7.x/initials/svg?seed=${senderName}`;
+
+    // 2. 创建 DOM 元素
+    const toast = document.createElement('div');
+    toast.className = 'gift-toast-item';
+    
+    // 3. 填充内容
+    toast.innerHTML = `
+        <img src="${avatarUrl}" class="gt-avatar">
+        
+        <div class="gt-info">
+            <span class="gt-user">${senderName}</span>
+            <span class="gt-gift-name">送出 <span class="gt-highlight">${giftName}</span></span>
+        </div>
+
+        <div class="gt-icon-wrapper">
+            ${giftIconSvg}
+        </div>
+
+        <div class="gt-combo-num">x1</div>
+    `;
+
+    // 如果当前显示的礼物已经达到或超过 2 个
+    while (zone.children.length >= 2) {
+        // 直接移除最上面（最老）的那一个，给新的腾地儿
+        zone.removeChild(zone.firstChild);
+    }
+    
+    // 4. 插入页面 (显示动画会自动播放 css里的 animation)
+    zone.appendChild(toast);
+    
+    // 震动反馈
+    if (navigator.vibrate) navigator.vibrate([20, 50, 20]);
+
+    // 5. 自动消失逻辑
+    // 3秒后添加消失动画类，再过0.4秒彻底删除 DOM
+    setTimeout(() => {
+        toast.classList.add('leaving'); // 触发 CSS 里的 giftFloatAway 动画
+        
+        setTimeout(() => {
+            if (toast.parentElement) {
+                toast.remove(); // 物理删除
+            }
+        }, 400); // 等待消失动画播完
+    }, 3000); // 3秒展示时间
+};
+
+// 8. 占位功能
+window.refreshLiveStream = () => { showToast("Refreshing Stream..."); };
+window.openLiveShop = () => { showToast("Shop is empty."); };
+window.requestLinkMic = () => { showToast("Request Sent (Waiting...)"); };
 
 // ==========================================
 // 🌟 Fans Club Hub: 粉丝中心核心引擎 (改名版)
@@ -70018,6 +70654,80 @@ async function renderMyClubManager(clubData) {
             </div>
         `;
     });
+}
+
+// 6. 弹幕模拟器 (核心)
+function startLiveSimulator() {
+    if (liveSimTimer) clearInterval(liveSimTimer);
+
+    const msgs = ["666", "好听！", "背景音乐是什么？", "主播好帅", "Next song pls", "Vibe is crazy", "LOL", "???"];
+    const users = ["User_A", "Guest_99", "NeonBoy", "CyberGirl", "Bot_01"];
+
+    liveSimTimer = setInterval(() => {
+        // 50% 概率产生弹幕
+        if (Math.random() > 0.5) {
+            const u = users[Math.floor(Math.random() * users.length)];
+            const t = msgs[Math.floor(Math.random() * msgs.length)];
+            addChatMessage(u, t);
+        }
+        
+        // 10% 概率有人送礼
+        if (Math.random() > 0.9) {
+            // 模拟别人送礼 (简化版)
+            // 你可以复用 triggerLiveGift 里的渲染逻辑改改参数
+        }
+    }, 800); // 每800ms循环一次
+}
+
+// 7. 渲染单条弹幕 (马卡龙随机色版)
+function addChatMessage(user, text, isSystem = false, isMe = false) {
+    const flow = document.getElementById('lr-chat-flow');
+    if (!flow) return;
+
+    const div = document.createElement('div');
+    
+    if (isSystem) {
+        div.className = 'lr-sys-msg';
+        div.innerHTML = `<span>${user} ${text}</span>`;
+    } else {
+        div.className = 'lr-chat-item';
+        
+        // 🎨 定义浅色马卡龙色盘 (半透明版)
+        const macaronColors = [
+            "rgba(255, 209, 220, 0.85)", // 樱花粉
+            "rgba(193, 237, 255, 0.85)", // 冰川蓝
+            "rgba(209, 247, 196, 0.85)", // 抹茶绿
+            "rgba(255, 245, 186, 0.85)", // 奶油黄
+            "rgba(230, 215, 255, 0.85)", // 香芋紫
+            "rgba(255, 228, 225, 0.85)", // 迷雾玫瑰
+            "rgba(224, 255, 255, 0.85)"  // 淡青色
+        ];
+        
+        // 🎲 随机抽取一个颜色
+        const randomBg = macaronColors[Math.floor(Math.random() * macaronColors.length)];
+        
+        // ⚡ 直接赋值给 style
+        div.style.background = randomBg;
+
+        // 随机等级
+        const lv = Math.floor(Math.random() * 20) + 1;
+        
+        div.innerHTML = `
+            <span class="lr-u-level" style="background:#000; color:#fff;">Lv.${lv}</span>
+            ${Math.random() > 0.7 ? '<span class="lr-u-fans" style="background:#FF2D55; color:#fff;">真爱</span>' : ''}
+            <span class="lr-u-name">${user}:</span>
+            <span class="lr-u-msg">${text}</span>
+        `;
+    }
+
+    flow.appendChild(div);
+    if (flow.children.length > 15) flow.removeChild(flow.firstChild);
+    flow.scrollTop = flow.scrollHeight;
+}
+
+function showToast(msg) {
+    // 复用你已有的 Toast，或者简单的 alert
+    alert(msg);
 }
 
 </script>
