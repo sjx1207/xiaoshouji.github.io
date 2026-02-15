@@ -28834,6 +28834,20 @@ input[type="range"] { width: 100%; accent-color: #000; cursor: pointer; }
                     </div>
                     <span class="app-name">Lost & Found</span>
                 </div>
+
+                <div class="app-cell" style="grid-area: 3 / 2 / 4 / 3;" onclick="openCineSyncApp()">
+                    <div class="glass-icon-bg">
+                        <span class="app-name" style="display: none;">CineSync</span>
+                        
+                        <svg class="glass-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="2" y="4" width="20" height="16" rx="2" ry="2"></rect>
+                            <line x1="6" y1="4" x2="6" y2="20"></line>
+                            <line x1="18" y1="4" x2="18" y2="20"></line>
+                            <polygon points="10 9 15 12 10 15 10 9"></polygon>
+                        </svg>
+                    </div>
+                    <span class="app-name">CineSync</span>
+                </div>
             </div>
         </div>
     </div>
@@ -37907,6 +37921,729 @@ class ImmersiveReader {
     `;
     document.head.appendChild(style);
 })();
+
+// 关闭弹窗的物理逻辑
+window.closeSyncSuccessPopup = function() {
+    const popup = document.getElementById('sync-success-popup');
+    if (popup) {
+        popup.style.opacity = '0';
+        document.getElementById('ssp-card').style.transform = 'scale(0.85)';
+        setTimeout(() => { popup.style.display = 'none'; }, 300);
+    }
+};
+
+
+// ==========================================
+// 🎟️ 影院通行证：交互操作引擎
+// ==========================================
+
+// 3. 极简数据库 (Film 全中文影院，其他保留剧集数据)
+const CINESYNC_DB = {
+    film: [
+        { name: "星曜全景大剧院", loc: "市中心 // 1.2 KM", tags: ["巨幕 4K", "杜比全景声", "双人私密舱"], status: "营业中", bg: "cs-bg-blue" },
+        { name: "零点露天放映室", loc: "郊野星空 // 15.4 KM", tags: ["车载音响", "星空穹顶", "复古胶片"], status: "已包场", bg: "cs-bg-pink" },
+        { name: "霓虹全息影像馆", loc: "赛博街区 // 0.5 KM", tags: ["全息投影", "神经链接", "感官同步"], status: "营业中", bg: "cs-bg-mint" },
+        { name: "黑丝绒私人影厅", loc: "艺术特区 // 3.8 KM", tags: ["独立放映", "黑胶唱片", "特调微醺"], status: "专属预留", bg: "cs-bg-peach" }
+    ],
+    series: [
+        { t: "黑镜 (Black Mirror)", sub: "第六季完结", bg: "cs-bg-mint" },
+        { t: "怪奇物语", sub: "第四季全集", bg: "cs-bg-pink" },
+        { t: "绝命毒师", sub: "神剧补完", bg: "cs-bg-peach" }
+    ],
+    variety: [
+        { t: "明星大侦探", sub: "脱口秀 / EP 24", bg: "cs-bg-blue" },
+        { t: "奇葩说", sub: "推理解谜 / EP 08", bg: "cs-bg-peach" }
+    ],
+    anime: [
+        { t: "新世纪福音战士", sub: "终章剧场版", bg: "cs-bg-mint" },
+        { t: "赛博朋克：边缘行者", sub: "全10集", bg: "cs-bg-pink" },
+        { t: "进击的巨人", sub: "最终季完结篇", bg: "cs-bg-blue" }
+    ],
+    live: [
+        { t: "Coldplay Live", sub: "阿根廷演唱会 2023", bg: "cs-bg-blue" },
+        { t: "Taylor Swift", sub: "时代巡回演唱会", bg: "cs-bg-pink" },
+        { t: "Hans Zimmer", sub: "布拉格电影原声音乐会", bg: "cs-bg-mint" }
+    ]
+};
+
+// 1. 🎬 核心：渲染影院列表 (含绝美空状态)
+window.renderCinemaList = function(containerId, dailyList) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    // 抓取用户定制的影院
+    let customVenues = JSON.parse(localStorage.getItem('cinesync_custom_venues') || "[]");
+    
+    // 合并列表：定制在前，AI 每日排片在后
+    const fullList = [...customVenues, ...dailyList];
+
+    // 🚨 极简高级空状态：没有任何影院时显示
+    if (fullList.length === 0) {
+        container.innerHTML = `
+            <div style="grid-column: 1 / -1; display:flex; flex-direction:column; align-items:center; justify-content:center; padding: 70px 20px; text-align:center;">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#d2d2d7" stroke-width="1"><rect x="2" y="7" width="20" height="15" rx="2" ry="2"></rect><polyline points="17 2 12 7 7 2"></polyline><circle cx="12" cy="14" r="3"></circle></svg>
+                <div style="font-family:'Cinzel', serif; font-size:18px; font-weight:900; color:#1d1d1f; margin-top:20px; letter-spacing:1px;">NO VENUES FOUND</div>
+                <div style="font-size:11px; color:#8e8e93; margin-top:10px; line-height:1.7; font-weight:600; letter-spacing:0.5px;">
+                    当前时空尚无可用放映室。<br>点击上方 <span style="color:#1d1d1f;">NEW VENUE</span> 亲自建造，<br>或点击 <span style="color:#1d1d1f;">SYNC LIST</span> 接入今日随机排片。
+                </div>
+            </div>`;
+        return;
+    }
+
+    container.innerHTML = fullList.map((item, i) => {
+        const isCustom = item.isCustom === true;
+        const cardClass = isCustom ? "cs-cinema-custom-card" : "cs-cinema-vip-card";
+        
+        // 状态颜色判定 (加入更多随机状态的颜色映射)
+        let statusClass = "open";
+        if (item.status.includes("包场") || item.status.includes("预留") || item.status.includes("定制")) {
+            statusClass = "private";
+        } else if (item.status.includes("午夜") || item.status.includes("维护")) {
+            statusClass = "closed"; // 我们可以用灰色或其他颜色，这里简化用默认
+        }
+        
+        const tagsHtml = (item.tags || []).map(tag => `<span class="cs-cv-tag">${tag}</span>`).join('');
+        const badgeHtml = isCustom ? `<div class="cs-custom-badge">CREATOR EDITION</div>` : ``;
+
+        const iconSvg = isCustom 
+            ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path></svg>`
+            : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="15" rx="2" ry="2"></rect><polyline points="17 2 12 7 7 2"></polyline><circle cx="12" cy="14" r="3"></circle></svg>`;
+
+        return `
+        <div class="${cardClass}" onclick="openTheatreMode('${item.name}')" style="animation: csFadeIn 0.5s ease backwards ${i * 0.08}s; z-index: ${fullList.length - i};">
+            ${badgeHtml}
+            <div class="cs-cv-header">
+                <div class="cs-cv-loc">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                    ${item.loc}
+                </div>
+                <div class="cs-cv-status ${statusClass}" style="${statusClass==='closed'?'background:rgba(255,255,255,0.05); color:#888;':''}">${item.status}</div>
+            </div>
+            <div class="cs-cv-body" style="display:flex; align-items:center; gap:15px;">
+                <div class="csc-visual" style="background: ${isCustom ? 'linear-gradient(135deg, #d4af37, #aa7700)' : 'transparent'}; border: ${isCustom ? 'none' : '1px solid rgba(255,255,255,0.1)'}; width:50px; height:50px; border-radius:12px;">
+                    ${iconSvg}
+                </div>
+                <div class="cs-cv-name" style="margin:0;">${item.name}</div>
+            </div>
+            <div class="cs-cv-footer">
+                <div class="cs-cv-tags">${tagsHtml}</div>
+                <div class="cs-cv-enter" style="${isCustom ? 'background:#D4AF37; color:#000; box-shadow: 0 0 15px rgba(212,175,55,0.4);' : 'background:#fff; color:#000;'}">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                </div>
+            </div>
+        </div>
+        `;
+    }).join('');
+};
+
+// 3. 🚀 覆盖 App 启动函数：确保读取的是动态数据，而不是写死的数据
+window.openCineSyncApp = function() {
+    console.log("System: 暴力唤醒 CineSync 引擎...");
+    initCineSyncStyles();
+    initCineSyncDOM();
+
+    const app = document.getElementById('page-cinesync');
+    app.style.cssText = `
+        display: flex !important; position: fixed !important; inset: 0 !important; z-index: 6000000 !important;
+        background: #FAFAFC !important; visibility: visible !important; pointer-events: auto !important;
+    `;
+    
+    // 🚨 核心修改：读取上次保存的 AI 排片表，如果从未获取过，则传入空数组 []
+    const dailyVenues = JSON.parse(localStorage.getItem('cinesync_daily_venues') || "[]");
+    
+    renderCinemaList('cs-grid-film', dailyVenues);
+    // 其他频道的假数据保持不变，因为重点在于影院选择
+    renderCineList('cs-grid-series', CINESYNC_DB.series);
+    renderCineList('cs-grid-variety', CINESYNC_DB.variety);
+    renderCineList('cs-grid-anime', CINESYNC_DB.anime);
+    renderCineList('cs-grid-live', CINESYNC_DB.live);
+
+    void app.offsetWidth;
+    app.classList.add('active');
+    
+    if (navigator.vibrate) navigator.vibrate(15);
+};
+
+window.closeCineSyncApp = function() {
+    const app = document.getElementById('page-cinesync');
+    if(app) {
+        app.classList.remove('active');
+        setTimeout(() => { app.style.display = 'none'; }, 400);
+    }
+};
+
+// 5. 底部导航切换
+window.switchCineTab = function(viewId, el, title) {
+    document.querySelectorAll('.cs-nav-item').forEach(i => i.classList.remove('active'));
+    if(el) el.classList.add('active');
+
+    document.querySelectorAll('.cs-view-page').forEach(v => v.classList.remove('active'));
+    const targetPage = document.getElementById('cs-view-' + viewId);
+    if(targetPage) targetPage.classList.add('active');
+
+    const titleEl = document.getElementById('cs-top-title');
+    if(titleEl) titleEl.innerText = title;
+
+    if (navigator.vibrate) navigator.vibrate(10);
+};
+
+// ==========================================
+// 🎟️ 影院通行证：真 AI 状态重组与无尽排片引擎
+// ==========================================
+
+window.triggerSyncShowtimes = async function(btn) {
+    if (btn.classList.contains('spin-anim')) return;
+    
+    // 1. 物理防抖与视觉反馈
+    btn.classList.add('spin-anim');
+    const textSpan = btn.querySelector('span');
+    const originalText = textSpan.innerText;
+    textSpan.innerText = "SYNCING...";
+    if (window.navigator.vibrate) window.navigator.vibrate([10, 30]);
+
+    try {
+        // --- 🎯 步骤 1：获取目前所有的存量影院 ---
+        let customVenues = JSON.parse(localStorage.getItem('cinesync_custom_venues') || "[]");
+        let dailyVenues = JSON.parse(localStorage.getItem('cinesync_daily_venues') || "[]");
+        
+        // 计算当前一共有多少家影院，以便让 AI 生成足够多的新状态词汇
+        const existingCount = customVenues.length + dailyVenues.length;
+        const statusCountNeeded = Math.max(existingCount, 4); // 至少要4个保底
+
+        const apiKey = localStorage.getItem('gpt_key');
+        let apiUrl = (localStorage.getItem('gpt_url') || "https://api.openai.com/v1").replace(/\/+$/, "");
+        let model = localStorage.getItem('gpt_model') || "gpt-3.5-turbo";
+        if (apiUrl.includes("deepseek")) model = "deepseek-chat";
+
+        if (!apiKey) throw new Error("API 密钥未配置");
+
+        // --- 🎯 步骤 2：强力 Prompt 注入 ---
+        // 任务 1：生成 3-4 家新影院。
+        // 任务 2：生成一批绝不重复的高级营业状态，用于覆盖老影院。
+        const prompt = `你是一个高端影院预订平台的主理人。
+        任务1：随机生成 3-4 个极具质感且符合现实逻辑的【全新】实体私人影院、点播影厅或汽车影院。名字和设定要真实、高级、有格调（例如：拾光私人影院、星空汽车影院、蓝丝绒放映厅等）。
+        任务2：随机生成 ${statusCountNeeded} 个符合现实生活中影院或包厢的【真实营业状态】词汇。（例如：营业中、已满座、空闲可订、即将散场、VIP包场、今日休息、打扫中、即将开场 等）。
+
+        【绝对规则】：
+        必须严格输出一个 JSON 对象，严禁任何其他解释性文字或 Markdown 符号！
+        格式要求如下：
+        {
+          "new_venues": [
+            {"name": "真实的影院名字", "loc": "现实中的地点与距离(如: 核心商圈 // 2.5 KM)", "tags": ["真实硬件或服务标签(如: 杜比全景声, 零食畅吃, 4K巨幕, 情侣沙发)"], "status": "当前状态"}
+          ],
+          "new_statuses": ["状态1", "状态2", "状态3"] // 数组长度必须严格等于 ${statusCountNeeded}
+        }`;
+
+        const res = await fetch(`${apiUrl}/chat/completions`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+            body: JSON.stringify({
+                model: model,
+                messages: [{ role: "user", content: prompt }],
+                temperature: 0.95 // 高随机性，保证神仙脑洞
+            })
+        });
+
+        const data = await res.json();
+        if (data.error) throw new Error(data.error.message);
+
+        const rawContent = data.choices[0].message.content.trim();
+        // 精准抓取 JSON 对象 {}
+        const jsonMatch = rawContent.match(/\{[\s\S]*\}/);
+        if (!jsonMatch) throw new Error("AI 数据格式损坏");
+
+        const aiResult = JSON.parse(jsonMatch[0]);
+        let newVenues = aiResult.new_venues || [];
+        let newStatuses = aiResult.new_statuses || [];
+
+        // 兜底状态词，防止 AI 算错数量
+        const fallbackStatuses = ["营业中", "已包场", "即将散场", "信号微弱", "禁止访问"];
+
+        // --- 🎯 步骤 3：赋予旧影院全新的生命力 ---
+        // 修改用户专属影院的状态
+        customVenues.forEach(v => {
+            v.status = newStatuses.length > 0 ? newStatuses.shift() : fallbackStatuses[Math.floor(Math.random() * fallbackStatuses.length)];
+        });
+
+        // 修改以往 AI 生成的老影院的状态
+        dailyVenues.forEach(v => {
+            v.status = newStatuses.length > 0 ? newStatuses.shift() : fallbackStatuses[Math.floor(Math.random() * fallbackStatuses.length)];
+        });
+
+        // --- 🎯 步骤 4：追加新影院并洗牌 ---
+        // 将 AI 新造的影院【追加】到原有列表前面
+        dailyVenues = [...newVenues, ...dailyVenues];
+        
+        // 🚨 物理洗牌：打乱所有系统影院的顺序，产生“逛新街”的错觉
+        dailyVenues.sort(() => 0.5 - Math.random());
+
+        // 🚨 容量锁：防止无限点击导致手机内存爆炸，最多保留 20 家历史影院
+        if (dailyVenues.length > 20) {
+            dailyVenues = dailyVenues.slice(0, 20);
+        }
+
+        // 物理存入缓存
+        localStorage.setItem('cinesync_custom_venues', JSON.stringify(customVenues));
+        localStorage.setItem('cinesync_daily_venues', JSON.stringify(dailyVenues));
+
+        // --- 🎯 步骤 5：动画重绘 ---
+        const grid = document.getElementById('cs-grid-film');
+        if (grid) {
+            // 先渐隐旧列表
+            grid.style.opacity = '0';
+            setTimeout(() => {
+                // 调用融合渲染器 (会把定制的排最前面，打乱的排后面)
+                renderCinemaList('cs-grid-film', dailyVenues);
+                // 再渐显新列表
+                grid.style.opacity = '1';
+                grid.style.transition = 'opacity 0.4s ease';
+            }, 300);
+        }
+
+        // 唤起极简高级确认弹窗
+        showSyncSuccessPopup();
+
+    } catch (e) {
+        console.error("Sync Error:", e);
+        if (typeof showToast === 'function') showToast("排片获取失败：" + e.message);
+        
+        // 失败兜底：静默读取本地状态重绘
+        const fallbackVenues = JSON.parse(localStorage.getItem('cinesync_daily_venues') || "[]");
+        renderCinemaList('cs-grid-film', fallbackVenues);
+    } finally {
+        // 恢复按钮状态
+        btn.classList.remove('spin-anim');
+        textSpan.innerText = originalText;
+    }
+};
+
+// ==========================================
+// 🎟️ 影院定制：AI 图纸审核引擎
+// ==========================================
+
+// 全局暂存变量：用来保存 AI 刚生成、还没确认写入的图纸
+window.tempGeneratedVenue = null;
+
+// 1. 唤出弹窗 (强制重置为输入状态)
+window.triggerAddNewVenue = function() {
+    if (window.navigator.vibrate) window.navigator.vibrate(15);
+    const modal = document.getElementById('modal-custom-venue');
+    const input = document.getElementById('cs-venue-idea-input');
+    
+    // 每次打开都切回“状态一：输入期”
+    document.getElementById('cv-input-state').style.display = 'flex';
+    document.getElementById('cv-preview-state').style.display = 'none';
+    window.tempGeneratedVenue = null; // 清空暂存图纸
+
+    if (modal) {
+        modal.style.display = 'flex';
+        void modal.offsetWidth;
+        modal.classList.add('active');
+        if (input) {
+            input.value = "";
+            setTimeout(() => input.focus(), 300);
+        }
+    }
+};
+
+// 关闭弹窗
+window.closeCustomVenueModal = function() {
+    const modal = document.getElementById('modal-custom-venue');
+    if (modal) {
+        modal.classList.remove('active');
+        setTimeout(() => modal.style.display = 'none', 300);
+    }
+};
+
+// 2. 核心：提交灵感，生成预览图纸
+window.submitBuildVenue = async function() {
+    const input = document.getElementById('cs-venue-idea-input').value.trim();
+    if (!input) return showToast("请给出一点灵感关键词");
+
+    // 判断是第一次生成，还是点击“重塑”按钮
+    const isRedrawing = document.getElementById('cv-preview-state').style.display === 'flex';
+    const btn = isRedrawing ? document.getElementById('cs-btn-redraw') : document.getElementById('cs-btn-build-venue');
+    const originalHtml = btn.innerHTML;
+    
+    // 物理防抖与加载动画
+    btn.innerHTML = `<svg class="spin-anim" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right:4px;"><path d="M21 12a9 9 0 1 1-6.219-8.56"></path></svg> 演算中...`;
+    btn.style.pointerEvents = 'none';
+    btn.style.opacity = '0.7';
+
+    try {
+        const apiKey = localStorage.getItem('gpt_key');
+        const apiUrl = (localStorage.getItem('gpt_url') || "https://api.openai.com/v1").replace(/\/+$/, "");
+        if (!apiKey) throw new Error("API Key 缺失");
+
+        // 加入极强的随机因子，保证每次“重塑”结果绝对不同
+        const randomSeed = Math.floor(Math.random() * 99999);
+        const prompt = `你是一个高级空间建筑师。用户希望建立一个虚拟私人影院，灵感是：“${input}”。
+        请以此为基础，生成一个极具画面感、昂贵感、科幻或诗意的高级放映室。
+        当前熵值扰动系数：${randomSeed} (必须生成与之前完全不同的创意)。
+        
+        【严格要求】只输出一个 JSON 对象，严禁任何额外文字！
+        格式必须如下：
+        {
+            "name": "影院中文名(如: 沉沦深海全息剧院)",
+            "loc": "虚拟坐标与特征(如: 11,000M // 太平洋底)",
+            "tags": ["特征1", "特征2", "特征3"],
+            "status": "专属定制"
+        }`;
+
+        const res = await fetch(`${apiUrl}/chat/completions`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+            body: JSON.stringify({
+                model: localStorage.getItem('gpt_model') || "gpt-3.5-turbo",
+                messages: [{ role: "user", content: prompt }],
+                temperature: 0.95 // 调高温度，增加脑洞
+            })
+        });
+
+        const data = await res.json();
+        if (data.error) throw new Error(data.error.message);
+
+        // 提取并清洗 JSON
+        let rawContent = data.choices[0].message.content.trim();
+        const jsonMatch = rawContent.match(/\{[\s\S]*\}/);
+        if (!jsonMatch) throw new Error("空间数据解析失败");
+        
+        const newVenue = JSON.parse(jsonMatch[0]);
+        newVenue.isCustom = true; 
+        newVenue.bg = "cs-bg-blue"; // 兜底颜色
+
+        // 🚨 核心改动：只暂存，不写入本地数据库！
+        window.tempGeneratedVenue = newVenue;
+
+        // 渲染预览卡片
+        renderPreviewCard(newVenue);
+
+        // 切换 UI 到“状态二：预览期”
+        document.getElementById('cv-input-state').style.display = 'none';
+        document.getElementById('cv-preview-state').style.display = 'flex';
+        
+        if (navigator.vibrate) navigator.vibrate([10, 30, 10]);
+
+    } catch (e) {
+        console.error("Venue Gen Error:", e);
+        if (typeof showToast === 'function') showToast("构建失败：" + e.message);
+    } finally {
+        btn.innerHTML = originalHtml;
+        btn.style.pointerEvents = 'auto';
+        btn.style.opacity = '1';
+    }
+};
+
+// 3. 渲染预览卡片 (复用黑卡样式，但不加 onClick 避免在预览时点进去)
+function renderPreviewCard(item) {
+    const zone = document.getElementById('cv-preview-zone');
+    const tagsHtml = item.tags.map(tag => `<span class="cs-cv-tag">${tag}</span>`).join('');
+    
+    zone.innerHTML = `
+        <div class="cs-cinema-custom-card" style="margin: 0; box-shadow: none; transform: scale(1); pointer-events: none;">
+            <div class="cs-custom-badge">CREATOR EDITION</div>
+            
+            <div class="cs-cv-header">
+                <div class="cs-cv-loc">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                    ${item.loc}
+                </div>
+                <div class="cs-cv-status private">${item.status}</div>
+            </div>
+            
+            <div class="cs-cv-body" style="display:flex; align-items:center; gap:15px;">
+                <div class="csc-visual" style="background: linear-gradient(135deg, #d4af37, #aa7700); border: none; width:50px; height:50px; border-radius:12px;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path></svg>
+                </div>
+                <div class="cs-cv-name" style="margin:0;">${item.name}</div>
+            </div>
+            
+            <div class="cs-cv-footer">
+                <div class="cs-cv-tags">${tagsHtml}</div>
+            </div>
+        </div>
+    `;
+}
+
+// ==========================================
+// 🎟️ 影院定制：确认入库与强制渲染引擎
+// ==========================================
+
+// 1. 用户点赞确认，正式入库！
+window.confirmAndSaveVenue = function() {
+    if (!window.tempGeneratedVenue) return;
+
+    const newVenue = window.tempGeneratedVenue;
+
+    // 💾 真正写入本地数据库 (置于最顶端)
+    let customVenues = JSON.parse(localStorage.getItem('cinesync_custom_venues') || "[]");
+    customVenues.unshift(newVenue); 
+    localStorage.setItem('cinesync_custom_venues', JSON.stringify(customVenues));
+
+    // 销毁缓存，关闭背后的生成弹窗
+    window.tempGeneratedVenue = null;
+    closeCustomVenueModal();
+
+    // 🚨 核心修复：强制延迟 100ms，避开 CSS 动画冲突，确保数据绝对挂载！
+    setTimeout(() => {
+        // 确保能拿到官方数据兜底
+        const baseFilm = (typeof CINESYNC_DB !== 'undefined' && CINESYNC_DB.film) ? CINESYNC_DB.film : [];
+        
+        // 物理强制重绘底层列表 (这一步决定了你能不能看到新卡片)
+        if (typeof renderCinemaList === 'function') {
+            renderCinemaList('cs-grid-film', baseFilm);
+        }
+        
+        // 自动替换头部的当前选定影院
+        const nameEl = document.getElementById('display-venue-name');
+        if (nameEl) {
+            nameEl.style.opacity = '0';
+            setTimeout(() => {
+                nameEl.innerText = newVenue.name;
+                nameEl.style.opacity = '1';
+            }, 200);
+        }
+    }, 150);
+
+    // 呼出极致奢华的确认签收弹窗
+    showVenueBuiltPopup(newVenue.name);
+};
+
+// 3. 🎬 关闭弹窗，正式检阅新卡片
+window.closeVenueBuiltPopup = function() {
+    const popup = document.getElementById('venue-built-popup');
+    if (popup) {
+        // 缩放退场动画
+        popup.style.opacity = '0';
+        document.getElementById('vbp-card').style.transform = 'scale(0.85)';
+        
+        setTimeout(() => {
+            popup.style.display = 'none';
+        }, 300);
+    }
+};
+
+// ==========================================
+// 🎟️ 候场大厅：角色选择与修罗场 AI 群聊
+// ==========================================
+
+window.currentCinemaName = "";
+window.selectedGuests = [];
+window.lobbyHistory = []; // 用于让 AI 知道前面聊了什么
+
+// 1. 拦截原有的点选影院，改为打开选人界面
+window.openTheatreMode = async function(venueName) {
+    window.currentCinemaName = venueName;
+    const picker = document.getElementById('cs-guest-picker');
+    const grid = document.getElementById('cs-gp-grid');
+    
+    // 清空上次的选择
+    window.selectedGuests = [];
+    grid.innerHTML = `<div style="grid-column:1/-1; text-align:center; font-size:12px; color:#aaa;">LOADING DATABASE...</div>`;
+    
+    picker.style.display = 'flex';
+    void picker.offsetWidth;
+    picker.classList.add('active');
+
+    // 获取角色库数据
+    const charList = await loadFromDB('char_list') || [];
+    
+    if (charList.length === 0) {
+        grid.innerHTML = `<div style="grid-column:1/-1; text-align:center; font-size:12px; color:#aaa;">角色书为空，无法邀请。</div>`;
+        return;
+    }
+
+    // 渲染头像网格
+    grid.innerHTML = charList.map(c => `
+        <div class="cs-gp-item" id="gp-item-${c.id}" onclick="toggleGuestSelection('${c.id}', '${c.name}', '${c.avatar}', '${c.desc.replace(/'/g, "\\'")}')">
+            <div class="cs-gp-avatar-box">
+                <img src="${c.avatar}" class="cs-gp-avatar">
+                <div class="cs-gp-check">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                </div>
+            </div>
+            <div class="cs-gp-name">${c.name}</div>
+        </div>
+    `).join('');
+};
+
+window.closeGuestPicker = function() {
+    const picker = document.getElementById('cs-guest-picker');
+    picker.classList.remove('active');
+    setTimeout(() => picker.style.display = 'none', 300);
+};
+
+// 2. 勾选/取消勾选机制 (支持多选)
+window.toggleGuestSelection = function(id, name, avatar, desc) {
+    const itemEl = document.getElementById('gp-item-' + id);
+    const idx = window.selectedGuests.findIndex(g => g.id === id);
+    
+    if (idx !== -1) {
+        // 取消选中
+        window.selectedGuests.splice(idx, 1);
+        itemEl.classList.remove('selected');
+    } else {
+        // 选中
+        window.selectedGuests.push({ id, name, avatar, desc });
+        itemEl.classList.add('selected');
+    }
+    if (navigator.vibrate) navigator.vibrate(5);
+};
+
+// 3. 确认选人，进入候场大厅
+window.confirmGuestSelection = function() {
+    if (window.selectedGuests.length === 0) {
+        if(typeof showToast === 'function') showToast("至少邀请一位同行者");
+        return;
+    }
+
+    closeGuestPicker();
+    window.lobbyHistory = []; // 清空聊天记录
+
+    const lobby = document.getElementById('cs-lobby-room');
+    const flow = document.getElementById('cs-lobby-flow');
+    
+    // 初始化大厅数据
+    document.getElementById('lobby-venue-name').innerText = window.currentCinemaName;
+    document.getElementById('lobby-guest-count').innerText = `${window.selectedGuests.length} GUEST(S) PRESENT`;
+    
+    flow.innerHTML = `<div style="text-align:center; color:#ccc; font-size:10px; font-weight:800; letter-spacing:2px; margin: 20px 0;">SYSTEM: [ ${window.currentCinemaName} ] 候场区已激活</div>`;
+
+    lobby.style.display = 'flex';
+    void lobby.offsetWidth;
+    lobby.classList.add('active');
+};
+
+window.closeLobbyRoom = function() {
+    const lobby = document.getElementById('cs-lobby-room');
+    lobby.classList.remove('active');
+    setTimeout(() => lobby.style.display = 'none', 400);
+};
+
+// 4. 用户发送消息
+window.sendLobbyMessage = function() {
+    const input = document.getElementById('cs-lobby-input');
+    const text = input.value.trim();
+    if (!text) return;
+
+    appendLobbyBubble("我", text, "https://api.dicebear.com/7.x/initials/svg?seed=Me", true);
+    window.lobbyHistory.push({ role: "user", content: text });
+    
+    input.value = "";
+};
+
+// 5. 占位：发送精美邀请函卡片
+window.sendLobbyInvitation = function() {
+    const text = `[系统] 发送了一张前往「${window.currentCinemaName}」的黑色烫金观影票根。`;
+    appendLobbyBubble("我", text, "https://api.dicebear.com/7.x/initials/svg?seed=Me", true);
+    window.lobbyHistory.push({ role: "user", content: text });
+};
+
+// 6. 🚨 核心：唤醒修罗场 AI，必须手动点击才回复
+window.triggerLobbyAI = async function() {
+    const btn = document.getElementById('cs-btn-ai-reply');
+    if (btn.classList.contains('processing')) return;
+    
+    // 防止没说话就点回复
+    if (window.lobbyHistory.length === 0) {
+        if(typeof showToast === 'function') showToast("你还没有说话呢");
+        return;
+    }
+
+    btn.classList.add('processing');
+    btn.innerHTML = `<svg class="spin-anim" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 12a9 9 0 1 1-6.219-8.56"></path></svg> <span>信号同步中...</span>`;
+    if(navigator.vibrate) navigator.vibrate(10);
+
+    try {
+        const apiKey = localStorage.getItem('gpt_key');
+        let apiUrl = (localStorage.getItem('gpt_url') || "https://api.openai.com/v1").replace(/\/+$/, "");
+        if (!apiKey) throw new Error("API Key缺失");
+
+        // 构建群聊背景
+        const guestContext = window.selectedGuests.map(g => `- 姓名: ${g.name}, 背景/人设: ${g.desc}`).join("\n");
+        const chatContext = window.lobbyHistory.map(m => `${m.role === 'user' ? '用户' : m.name}: ${m.content}`).join("\n");
+        
+        // 动态判断单聊还是群聊
+        const isGroup = window.selectedGuests.length > 1;
+        const prompt = `你是一个多角色模拟器。
+        当前场景：用户邀请了以下角色来到 "${window.currentCinemaName}" 的候场厅：
+        ${guestContext}
+
+        ${isGroup ? '🚨【警告：这是一场群聊！】这些角色能看到彼此！如果他们的身份有冲突（比如前任、情敌、兄弟），必须在对话中体现出暗流涌动或直接对峙。不要每个人都客客气气，要符合人设。' : '这是一个私密的双人约会候场。'}
+
+        【之前的对话记录】：
+        ${chatContext}
+
+        【任务】：
+        请根据上下文，生成 ${isGroup ? '1 到 3 个' : '1 个'} 角色的最新回复。
+        严格输出一个 JSON 数组，格式必须为：
+        [
+            {"id": "角色的ID", "name": "角色的名字", "text": "回复的内容"}
+        ]
+        不要输出任何其他文字，只准输出 JSON 数组！`;
+
+        const res = await fetch(`${apiUrl}/chat/completions`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+            body: JSON.stringify({
+                model: localStorage.getItem('gpt_model') || "gpt-3.5-turbo",
+                messages: [{ role: "user", content: prompt }],
+                temperature: 0.9
+            })
+        });
+
+        const data = await res.json();
+        const jsonMatch = data.choices[0].message.content.match(/\[[\s\S]*\]/);
+        if (!jsonMatch) throw new Error("数据崩塌");
+        
+        const replies = JSON.parse(jsonMatch[0]);
+
+        // 逐条渲染并加入历史
+        for (let i = 0; i < replies.length; i++) {
+            const r = replies[i];
+            const targetChar = window.selectedGuests.find(g => g.name === r.name || g.id === r.id);
+            if (targetChar) {
+                // 制造一点打字延迟感
+                await new Promise(resolve => setTimeout(resolve, 800));
+                appendLobbyBubble(targetChar.name, r.text, targetChar.avatar, false);
+                window.lobbyHistory.push({ role: "ai", name: targetChar.name, content: r.text });
+            }
+        }
+
+    } catch(e) {
+        console.error("AI Error:", e);
+        if(typeof showToast === 'function') showToast("信号中断");
+    } finally {
+        btn.classList.remove('processing');
+        btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 2v4M12 18v4M4 12H2M22 12h-2"/><path d="M16 8v8H8V8h8zM9 12h6"/></svg> <span>等待回应 (AI)</span>`;
+    }
+};
+
+// 8. 占位：进场看片
+window.enterFinalCinema = function() {
+    alert("🎬 检票成功！即将为您关闭候场大厅，切入暗房同频放映模式...\n（这里留作下一步视频播放器的入口）");
+};
+
+window.closeTheatreMode = function() {
+    const room = document.getElementById('cs-theatre-room');
+    room.classList.remove('active');
+    setTimeout(() => { room.style.display = 'none'; }, 400);
+};
+
+// 10. 影厅聊天逻辑
+window.sendTheatreWhisper = function() {
+    const input = document.getElementById('th-whisper-input');
+    const text = input.value.trim();
+    if (!text) return;
+
+    appendTheatreWhisper("YOU", text, true);
+    input.value = "";
+
+    const charName = window.currentVaultCharName || "TA";
+    setTimeout(() => {
+        appendTheatreWhisper(charName, "（偏头看着你笑了笑）专心看，别错过了好戏。", false);
+    }, 1500);
+};
 
 /* ==========================================
    🌐 LUNE COMMUNITY: 物理强显版 (评价 + 二手)
@@ -60025,6 +60762,7 @@ async function initChatMsgPanel() {
         isMsgPanelRendering = false; // 无论成功失败，最后都要解锁
     }
 }
+
 // ==========================================
 // 👤 打开社交名片详情
 // ==========================================
@@ -78574,6 +79312,1007 @@ async function fetchLunePostsFromAI() {
         return null;
     }
 }
+
+// 1. 注入顶级美术馆 & VIP 黑卡 CSS
+function initCineSyncStyles() {
+    if (document.getElementById('cinesync-pro-styles')) return;
+    const style = document.createElement('style');
+    style.id = 'cinesync-pro-styles';
+    style.innerHTML = `
+        /* 主 App 容器 */
+        #page-cinesync {
+            position: fixed; inset: 0; z-index: 6000000 !important;
+            background: #FAFAFC; display: none; flex-direction: column;
+            transform: translateY(100%); opacity: 0; visibility: hidden;
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+            color: #1d1d1f; overflow: hidden;
+        }
+        #page-cinesync.active {
+            transform: translateY(0) !important;
+            opacity: 1 !important;
+            visibility: visible !important;
+        }
+
+        /* 🎬 终极高定：美术馆展牌风 Header */
+        .cs-app-header {
+            padding: 60px 20px 15px; 
+            background: rgba(250, 250, 252, 0.85);
+            backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
+            display: grid; grid-template-columns: 1fr auto 1fr;
+            align-items: flex-end; border-bottom: 0.5px solid rgba(0,0,0,0.05);
+            position: relative; z-index: 10;
+        }
+
+        .cs-close-btn {
+            display: flex; align-items: center; gap: 4px;
+            font-size: 10px; font-weight: 900; letter-spacing: 1px; color: #1d1d1f;
+            cursor: pointer; padding-bottom: 2px; transition: opacity 0.2s;
+        }
+        .cs-close-btn:active { opacity: 0.4; }
+        .cs-close-btn svg { width: 14px; height: 14px; stroke-width: 2.5; }
+
+        .cs-header-center { text-align: center; display: flex; flex-direction: column; gap: 2px; }
+        .cs-header-sub { font-size: 8px; font-weight: 800; color: #a1a1a6; letter-spacing: 4px; text-transform: uppercase; }
+        .cs-header-title {
+            font-family: 'Cinzel', serif; font-size: 22px; font-weight: 900; color: #1d1d1f; 
+            letter-spacing: 3px; text-transform: uppercase; line-height: 1;
+        }
+        .cs-header-right { text-align: right; font-family: monospace; font-size: 8px; color: #ccc; letter-spacing: 1px; padding-bottom: 2px; }
+
+        /* 视图切换层 */
+        .cs-view-page { flex: 1; overflow-y: auto; display: none; padding-bottom: 100px; animation: csFadeIn 0.3s ease forwards; }
+        .cs-view-page.active { display: block; }
+        @keyframes csFadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* 🚨 核心：底部五大导航栏 */
+        .cs-bottom-nav {
+            position: absolute; bottom: 0; left: 0; width: 100%; height: 85px;
+            background: rgba(255,255,255,0.9); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(0,0,0,0.05); display: flex; justify-content: space-between;
+            padding: 0 15px 20px; z-index: 20; box-sizing: border-box;
+        }
+        .cs-nav-item {
+            flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            color: #8e8e93; cursor: pointer; transition: 0.2s; gap: 4px; padding-top: 10px;
+        }
+        .cs-nav-item svg { width: 22px; height: 22px; stroke-width: 2; transition: 0.2s; }
+        .cs-nav-item span { font-size: 9px; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase; }
+        .cs-nav-item.active { color: #1d1d1f; }
+        .cs-nav-item.active svg { stroke-width: 2.5; transform: translateY(-2px); }
+
+        /* 🎬 影院通行证枢纽 (Theatre Hub) */
+        .cs-theatre-hub { padding: 20px 20px 0; display: flex; flex-direction: column; gap: 15px; animation: csFadeIn 0.5s cubic-bezier(0.19, 1, 0.22, 1) backwards; }
+        .cs-venue-card {
+            background: #111; border-radius: 20px; padding: 20px; position: relative; overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15); border: 1px solid rgba(255,255,255,0.08); display: flex; flex-direction: column; justify-content: space-between;
+        }
+        .cs-venue-card::before {
+            content: ''; position: absolute; top: 0; left: -100%; width: 50%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent);
+            transform: skewX(-20deg); animation: venueShine 6s infinite;
+        }
+        @keyframes venueShine { 0% { left: -100%; } 20%, 100% { left: 200%; } }
+        .cs-venue-header { display: flex; justify-content: space-between; align-items: flex-start; }
+        .cs-v-tag { font-size: 9px; font-weight: 800; color: #8e8e93; letter-spacing: 2px; text-transform: uppercase; }
+        .cs-v-status { display: flex; align-items: center; gap: 5px; background: rgba(255,255,255,0.1); padding: 4px 8px; border-radius: 10px; font-size: 8px; color: #fff; font-weight: 900; letter-spacing: 1px; }
+        .cs-v-dot { width: 4px; height: 4px; background: #34C759; border-radius: 50%; box-shadow: 0 0 5px #34C759; }
+        .cs-venue-body { margin: 25px 0 15px; }
+        .cs-venue-name { font-family: 'Cinzel', serif; font-size: 24px; font-weight: 900; color: #fff; letter-spacing: 1px; line-height: 1.1; margin-bottom: 6px; }
+        .cs-venue-coord { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: rgba(255,255,255,0.4); letter-spacing: 1px; }
+        .cs-venue-footer { border-top: 1px dashed rgba(255,255,255,0.2); padding-top: 15px; display: flex; justify-content: space-between; align-items: flex-end; }
+        .cs-barcode { height: 18px; width: 120px; background: repeating-linear-gradient(90deg, #fff 0, #fff 2px, transparent 2px, transparent 5px, #fff 5px, #fff 6px, transparent 6px, transparent 9px, #fff 9px, #fff 12px); opacity: 0.3; }
+        
+        .cs-action-row { display: flex; gap: 12px; margin-top: 5px; }
+        .cs-action-btn { flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; background: #fff; border: 1px solid rgba(0,0,0,0.05); padding: 14px 0; border-radius: 16px; font-size: 12px; font-weight: 800; color: #1d1d1f; letter-spacing: 1px; cursor: pointer; transition: all 0.3s; box-shadow: 0 4px 10px rgba(0,0,0,0.02); }
+        .cs-action-btn svg { width: 16px; height: 16px; stroke-width: 2.5; }
+        .cs-action-btn:active { transform: scale(0.95); background: #f0f0f2; }
+        .cs-action-btn.dark { background: #1d1d1f; color: #fff; border: none; box-shadow: 0 8px 20px rgba(0,0,0,0.1); }
+        .cs-action-btn.dark svg { stroke: #fff; }
+        .cs-action-btn.dark:active { background: #000; }
+        .spin-anim svg { animation: spin 1s linear infinite; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        .cs-divider-box { display: flex; align-items: center; gap: 15px; margin: 25px 20px 5px; }
+        .cs-divider-line { flex: 1; height: 1px; background: rgba(0,0,0,0.05); }
+        .cs-divider-text { font-size: 10px; font-weight: 900; color: #8e8e93; letter-spacing: 3px; text-transform: uppercase;}
+
+        /* 🎬 极致奢华：私人影院预订卡片 */
+        .cs-grid-container { padding: 20px; display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+        .cs-cinema-vip-card {
+            grid-column: 1 / -1; background: #151515; border-radius: 20px; padding: 24px; color: #ffffff;
+            position: relative; overflow: hidden; display: flex; flex-direction: column; gap: 20px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.15); border: 1px solid rgba(255,255,255,0.08);
+            cursor: pointer; transition: all 0.4s cubic-bezier(0.19, 1, 0.22, 1);
+        }
+        .cs-cinema-vip-card:active { transform: scale(0.96); background: #0a0a0a; }
+        .cs-cinema-vip-card::before {
+            content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+            background: radial-gradient(circle at 50% 0%, rgba(255,255,255,0.08), transparent 60%); pointer-events: none;
+        }
+        .cs-cv-header { display: flex; justify-content: space-between; align-items: center; z-index: 2; }
+        .cs-cv-loc { font-size: 10px; font-family: 'JetBrains Mono', monospace; color: rgba(255,255,255,0.5); letter-spacing: 1px; display: flex; align-items: center; gap: 6px; }
+        .cs-cv-status { font-size: 10px; font-weight: 800; padding: 4px 10px; border-radius: 20px; letter-spacing: 1px; }
+        .cs-cv-status.open { background: rgba(255,255,255,0.1); color: #fff; }
+        .cs-cv-status.private { background: #D4AF37; color: #000; box-shadow: 0 0 10px rgba(212,175,55,0.2); }
+        .cs-cv-body { z-index: 2; }
+        .cs-cv-name { font-size: 22px; font-weight: 900; letter-spacing: 2px; margin-bottom: 8px; font-family: -apple-system, "PingFang SC", "Songti SC", serif; }
+        .cs-cv-footer { display: flex; justify-content: space-between; align-items: flex-end; z-index: 2; }
+        .cs-cv-tags { display: flex; flex-wrap: wrap; gap: 8px; }
+        .cs-cv-tag { font-size: 10px; color: rgba(255,255,255,0.7); border: 0.5px solid rgba(255,255,255,0.2); padding: 4px 8px; border-radius: 6px; letter-spacing: 0.5px; }
+        .cs-cv-enter { width: 36px; height: 36px; border-radius: 50%; background: #fff; color: #000; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 4px 10px rgba(255,255,255,0.2); }
+        .cs-cv-enter svg { width: 16px; height: 16px; stroke-width: 2.5; }
+
+        /* 普通马卡龙海报 (给动漫/综艺用) */
+        .cs-movie-card { cursor: pointer; display: flex; flex-direction: column; gap: 8px; }
+        .cs-poster-box { width: 100%; aspect-ratio: 3/4; border-radius: 12px; position: relative; overflow: hidden; box-shadow: 0 10px 20px rgba(0,0,0,0.04); border: 1px solid rgba(0,0,0,0.05); }
+        .cs-bg-blue { background: linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%); }
+        .cs-bg-pink { background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%); }
+        .cs-bg-mint { background: linear-gradient(135deg, #d4fc79 0%, #96e6a1 100%); }
+        .cs-bg-peach { background: linear-gradient(135deg, #f6d365 0%, #fda085 100%); }
+        .cs-play-overlay { position: absolute; inset: 0; background: rgba(255,255,255,0.25); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; opacity: 0; transition: 0.3s; }
+        .cs-poster-box:active .cs-play-overlay { opacity: 1; }
+        .cs-play-btn-svg { width: 36px; height: 36px; fill: #1d1d1f; }
+        .cs-meta { margin-top: 8px; padding: 0 4px; }
+        .cs-meta-title { font-size: 14px; font-weight: 800; color: #1d1d1f; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .cs-meta-sub { font-size: 10px; color: #8e8e93; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; }
+
+        /* 放映室暗房模式 */
+        #cs-theatre-room {
+            position: fixed; inset: 0; background: #000; z-index: 6000010 !important;
+            display: none; flex-direction: column; transform: translateY(100%); opacity: 0;
+            transition: transform 0.5s cubic-bezier(0.19, 1, 0.22, 1), opacity 0.4s; color: #fff;
+        }
+        #cs-theatre-room.active { transform: translateY(0); opacity: 1; }
+        .th-header { padding: 50px 20px 15px; display: flex; justify-content: space-between; align-items: center; background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent); position:absolute; top:0; width:100%; box-sizing:border-box; z-index:10;}
+        .th-close { background: rgba(255,255,255,0.1); color: #fff; font-size: 10px; font-weight:800; letter-spacing: 1px; padding: 8px 16px; border-radius: 20px; cursor: pointer; backdrop-filter: blur(10px); }
+        .th-video-area { width: 100%; aspect-ratio: 16/9; background: #111; position: relative; margin-top: 100px; border-radius:12px; overflow:hidden;}
+        .th-placeholder { position: absolute; inset: 0; display: flex; flex-direction:column; align-items: center; justify-content: center; color: #444; font-size: 12px; font-family:monospace; letter-spacing: 2px; }
+        .th-whisper-zone { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; scrollbar-width: none; }
+        .th-whisper-zone::-webkit-scrollbar { display: none; }
+        .th-whisper-msg { display: flex; flex-direction: column; gap: 6px; animation: fadeInUp 0.4s ease backwards; }
+        .th-whisper-msg.user { align-items: flex-end; }
+        .th-whisper-name { font-size: 10px; color: #666; font-weight: 800; letter-spacing: 1px; text-transform: uppercase;}
+        .th-whisper-text { font-size: 15px; color: #ddd; line-height: 1.5; font-weight: 500; background:rgba(255,255,255,0.05); padding:10px 15px; border-radius:12px; max-width:80%; border:1px solid rgba(255,255,255,0.02);}
+        .th-whisper-msg.user .th-whisper-text { background:#fff; color:#000; }
+        .th-input-bar { padding: 15px 20px 30px; background: #000; border-top: 1px solid rgba(255,255,255,0.05); display:flex; gap:10px; align-items:center; }
+        .th-input { flex: 1; background: rgba(255,255,255,0.1); border: none; padding: 12px 16px; border-radius: 20px; color: #fff; font-size: 14px; outline: none; }
+        .th-input::placeholder { color: #666; }
+        .th-send-btn { background: #fff; color: #000; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: none; cursor: pointer; }
+    `;
+    document.head.appendChild(style);
+}
+
+// 2. 注入 DOM 结构
+function initCineSyncDOM() {
+    if (document.getElementById('page-cinesync')) return;
+    const html = `
+    <div id="page-cinesync">
+        <div class="cs-app-header">
+            <div class="cs-close-btn" onclick="closeCineSyncApp()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M15 18l-6-6 6-6"/>
+                </svg>
+                <span>EXIT</span>
+            </div>
+            <div class="cs-header-center">
+                <div class="cs-header-sub">LUNE CINEMA</div>
+                <div class="cs-header-title" id="cs-top-title">FILM</div>
+            </div>
+            <div class="cs-header-right">V.1.0</div>
+        </div>
+
+        <div id="cs-view-film" class="cs-view-page active">
+            <div class="cs-theatre-hub">
+                <div class="cs-venue-card" onclick="window.navigator.vibrate(5)">
+                    <div class="cs-venue-header">
+                        <div class="cs-v-tag">CURRENT VENUE</div>
+                        <div class="cs-v-status">
+                            <div class="cs-v-dot"></div> CONNECTED
+                        </div>
+                    </div>
+                    <div class="cs-venue-body">
+                        <div class="cs-venue-name" id="display-venue-name">星曜全景大剧院</div>
+                        <div class="cs-venue-coord">LOC: 31°14'N 121°29'E // PRIVATE</div>
+                    </div>
+                    <div class="cs-venue-footer">
+                        <div class="cs-barcode"></div>
+                        <div style="font-family:monospace; font-size:9px; color:rgba(255,255,255,0.3); font-weight:bold;">TKT-04892</div>
+                    </div>
+                </div>
+                <div class="cs-action-row">
+                    <div class="cs-action-btn" onclick="triggerAddNewVenue(this)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                        <span>自定义包厢</span>
+                    </div>
+                    <div class="cs-action-btn dark" onclick="triggerSyncShowtimes(this)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+                        <span>刷新排片</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="cs-divider-box">
+                <div class="cs-divider-line"></div>
+                <div class="cs-divider-text">SELECT VENUE</div>
+                <div class="cs-divider-line"></div>
+            </div>
+
+            <div class="cs-grid-container" id="cs-grid-film"></div>
+        </div>
+
+        <div id="cs-view-series" class="cs-view-page">
+            <div class="cs-grid-container" id="cs-grid-series"></div>
+        </div>
+
+        <div id="cs-view-variety" class="cs-view-page">
+            <div class="cs-grid-container" id="cs-grid-variety"></div>
+        </div>
+
+        <div id="cs-view-anime" class="cs-view-page">
+            <div class="cs-grid-container" id="cs-grid-anime"></div>
+        </div>
+
+        <div id="cs-view-live" class="cs-view-page">
+            <div class="cs-grid-container" id="cs-grid-live"></div>
+        </div>
+
+        <div class="cs-bottom-nav">
+            <div class="cs-nav-item active" onclick="switchCineTab('film', this, 'FILM')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="2" y="4" width="20" height="16" rx="2" ry="2"></rect><line x1="6" y1="4" x2="6" y2="20"></line><line x1="18" y1="4" x2="18" y2="20"></line><polygon points="10 9 15 12 10 15 10 9"></polygon></svg>
+                <span>电影</span>
+            </div>
+            <div class="cs-nav-item" onclick="switchCineTab('series', this, 'SERIES')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="2" y="7" width="20" height="15" rx="2" ry="2"></rect><polyline points="17 2 12 7 7 2"></polyline></svg>
+                <span>剧集</span>
+            </div>
+            <div class="cs-nav-item" onclick="switchCineTab('variety', this, 'VARIETY')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="22"></line></svg>
+                <span>综艺</span>
+            </div>
+            <div class="cs-nav-item" onclick="switchCineTab('anime', this, 'ANIME')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                <span>动画</span>
+            </div>
+            <div class="cs-nav-item" onclick="switchCineTab('live', this, 'CONCERT')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>
+                <span>演唱会</span>
+            </div>
+        </div>
+    </div>
+
+    <div id="cs-theatre-room">
+        <div class="th-header">
+            <div style="font-size: 14px; font-weight: 900; letter-spacing: 1px;" id="th-title-display">SYNCING...</div>
+            <div class="th-close" onclick="closeTheatreMode()">EXIT</div>
+        </div>
+        <div class="th-video-area">
+            <div class="th-placeholder">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2" style="margin-bottom:10px;"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                WAITING FOR VIDEO STREAM
+            </div>
+        </div>
+        <div class="th-whisper-zone" id="th-whisper-flow"></div>
+        <div class="th-input-bar">
+            <input type="text" id="th-whisper-input" class="th-input" placeholder="Say something...">
+            <button class="th-send-btn" onclick="sendTheatreWhisper()">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+            </button>
+        </div>
+    </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', html);
+}
+
+// 1. 注入顶级美术馆 & VIP 黑卡 CSS
+function initCineSyncStyles() {
+    if (document.getElementById('cinesync-pro-styles')) return;
+    const style = document.createElement('style');
+    style.id = 'cinesync-pro-styles';
+    style.innerHTML = `
+        /* 主 App 容器 */
+        #page-cinesync {
+            position: fixed; inset: 0; z-index: 6000000 !important;
+            background: #FAFAFC; display: none; flex-direction: column;
+            transform: translateY(100%); opacity: 0; visibility: hidden;
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+            color: #1d1d1f; overflow: hidden;
+        }
+        #page-cinesync.active {
+            transform: translateY(0) !important;
+            opacity: 1 !important;
+            visibility: visible !important;
+        }
+
+        /* 🎬 终极高定：美术馆展牌风 Header */
+        .cs-app-header {
+            padding: 60px 20px 15px; 
+            background: rgba(250, 250, 252, 0.85);
+            backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
+            display: grid; grid-template-columns: 1fr auto 1fr;
+            align-items: flex-end; border-bottom: 0.5px solid rgba(0,0,0,0.05);
+            position: relative; z-index: 10;
+        }
+
+        .cs-close-btn {
+            display: flex; align-items: center; gap: 4px;
+            font-size: 10px; font-weight: 900; letter-spacing: 1px; color: #1d1d1f;
+            cursor: pointer; padding-bottom: 2px; transition: opacity 0.2s;
+        }
+        .cs-close-btn:active { opacity: 0.4; }
+        .cs-close-btn svg { width: 14px; height: 14px; stroke-width: 2.5; }
+
+        .cs-header-center { text-align: center; display: flex; flex-direction: column; gap: 2px; }
+        .cs-header-sub { font-size: 8px; font-weight: 800; color: #a1a1a6; letter-spacing: 4px; text-transform: uppercase; }
+        .cs-header-title {
+            font-family: 'Cinzel', serif; font-size: 22px; font-weight: 900; color: #1d1d1f; 
+            letter-spacing: 3px; text-transform: uppercase; line-height: 1;
+        }
+        .cs-header-right { text-align: right; font-family: monospace; font-size: 8px; color: #ccc; letter-spacing: 1px; padding-bottom: 2px; }
+
+        /* 视图切换层 */
+        .cs-view-page { flex: 1; overflow-y: auto; display: none; padding-bottom: 100px; animation: csFadeIn 0.3s ease forwards; }
+        .cs-view-page.active { display: block; }
+        @keyframes csFadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* 🚨 核心：底部五大导航栏 */
+        .cs-bottom-nav {
+            position: absolute; bottom: 0; left: 0; width: 100%; height: 85px;
+            background: rgba(255,255,255,0.9); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(0,0,0,0.05); display: flex; justify-content: space-between;
+            padding: 0 15px 20px; z-index: 20; box-sizing: border-box;
+        }
+        .cs-nav-item {
+            flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            color: #8e8e93; cursor: pointer; transition: 0.2s; gap: 4px; padding-top: 10px;
+        }
+        .cs-nav-item svg { width: 22px; height: 22px; stroke-width: 2; transition: 0.2s; }
+        .cs-nav-item span { font-size: 9px; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase; }
+        .cs-nav-item.active { color: #1d1d1f; }
+        .cs-nav-item.active svg { stroke-width: 2.5; transform: translateY(-2px); }
+
+        /* 🎬 影院通行证枢纽 (Theatre Hub) */
+        .cs-theatre-hub { padding: 20px 20px 0; display: flex; flex-direction: column; gap: 15px; animation: csFadeIn 0.5s cubic-bezier(0.19, 1, 0.22, 1) backwards; }
+        .cs-venue-card {
+            background: #111; border-radius: 20px; padding: 20px; position: relative; overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15); border: 1px solid rgba(255,255,255,0.08); display: flex; flex-direction: column; justify-content: space-between;
+        }
+        .cs-venue-card::before {
+            content: ''; position: absolute; top: 0; left: -100%; width: 50%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent);
+            transform: skewX(-20deg); animation: venueShine 6s infinite;
+        }
+        @keyframes venueShine { 0% { left: -100%; } 20%, 100% { left: 200%; } }
+        .cs-venue-header { display: flex; justify-content: space-between; align-items: flex-start; }
+        .cs-v-tag { font-size: 9px; font-weight: 800; color: #8e8e93; letter-spacing: 2px; text-transform: uppercase; }
+        .cs-v-status { display: flex; align-items: center; gap: 5px; background: rgba(255,255,255,0.1); padding: 4px 8px; border-radius: 10px; font-size: 8px; color: #fff; font-weight: 900; letter-spacing: 1px; }
+        .cs-v-dot { width: 4px; height: 4px; background: #34C759; border-radius: 50%; box-shadow: 0 0 5px #34C759; }
+        .cs-venue-body { margin: 25px 0 15px; }
+        .cs-venue-name { font-family: 'Cinzel', serif; font-size: 24px; font-weight: 900; color: #fff; letter-spacing: 1px; line-height: 1.1; margin-bottom: 6px; }
+        .cs-venue-coord { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: rgba(255,255,255,0.4); letter-spacing: 1px; }
+        .cs-venue-footer { border-top: 1px dashed rgba(255,255,255,0.2); padding-top: 15px; display: flex; justify-content: space-between; align-items: flex-end; }
+        .cs-barcode { height: 18px; width: 120px; background: repeating-linear-gradient(90deg, #fff 0, #fff 2px, transparent 2px, transparent 5px, #fff 5px, #fff 6px, transparent 6px, transparent 9px, #fff 9px, #fff 12px); opacity: 0.3; }
+        
+        .cs-action-row { display: flex; gap: 12px; margin-top: 5px; }
+        .cs-action-btn { flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; background: #fff; border: 1px solid rgba(0,0,0,0.05); padding: 14px 0; border-radius: 16px; font-size: 12px; font-weight: 800; color: #1d1d1f; letter-spacing: 1px; cursor: pointer; transition: all 0.3s; box-shadow: 0 4px 10px rgba(0,0,0,0.02); }
+        .cs-action-btn svg { width: 16px; height: 16px; stroke-width: 2.5; }
+        .cs-action-btn:active { transform: scale(0.95); background: #f0f0f2; }
+        .cs-action-btn.dark { background: #1d1d1f; color: #fff; border: none; box-shadow: 0 8px 20px rgba(0,0,0,0.1); }
+        .cs-action-btn.dark svg { stroke: #fff; }
+        .cs-action-btn.dark:active { background: #000; }
+        .spin-anim svg { animation: spin 1s linear infinite; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        .cs-divider-box { display: flex; align-items: center; gap: 15px; margin: 25px 20px 5px; }
+        .cs-divider-line { flex: 1; height: 1px; background: rgba(0,0,0,0.05); }
+        .cs-divider-text { font-size: 10px; font-weight: 900; color: #8e8e93; letter-spacing: 3px; text-transform: uppercase;}
+
+        /* 🎬 极致奢华：私人影院预订卡片 */
+        .cs-grid-container { padding: 20px; display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+        .cs-cinema-vip-card {
+            grid-column: 1 / -1; background: #151515; border-radius: 20px; padding: 24px; color: #ffffff;
+            position: relative; overflow: hidden; display: flex; flex-direction: column; gap: 20px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.15); border: 1px solid rgba(255,255,255,0.08);
+            cursor: pointer; transition: all 0.4s cubic-bezier(0.19, 1, 0.22, 1);
+        }
+        .cs-cinema-vip-card:active { transform: scale(0.96); background: #0a0a0a; }
+        .cs-cinema-vip-card::before {
+            content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+            background: radial-gradient(circle at 50% 0%, rgba(255,255,255,0.08), transparent 60%); pointer-events: none;
+        }
+        .cs-cv-header { display: flex; justify-content: space-between; align-items: center; z-index: 2; }
+        .cs-cv-loc { font-size: 10px; font-family: 'JetBrains Mono', monospace; color: rgba(255,255,255,0.5); letter-spacing: 1px; display: flex; align-items: center; gap: 6px; }
+        .cs-cv-status { font-size: 10px; font-weight: 800; padding: 4px 10px; border-radius: 20px; letter-spacing: 1px; }
+        .cs-cv-status.open { background: rgba(255,255,255,0.1); color: #fff; }
+        .cs-cv-status.private { background: #D4AF37; color: #000; box-shadow: 0 0 10px rgba(212,175,55,0.2); }
+        .cs-cv-body { z-index: 2; }
+        .cs-cv-name { font-size: 22px; font-weight: 900; letter-spacing: 2px; margin-bottom: 8px; font-family: -apple-system, "PingFang SC", "Songti SC", serif; }
+        .cs-cv-footer { display: flex; justify-content: space-between; align-items: flex-end; z-index: 2; }
+        .cs-cv-tags { display: flex; flex-wrap: wrap; gap: 8px; }
+        .cs-cv-tag { font-size: 10px; color: rgba(255,255,255,0.7); border: 0.5px solid rgba(255,255,255,0.2); padding: 4px 8px; border-radius: 6px; letter-spacing: 0.5px; }
+        .cs-cv-enter { width: 36px; height: 36px; border-radius: 50%; background: #fff; color: #000; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 4px 10px rgba(255,255,255,0.2); }
+        .cs-cv-enter svg { width: 16px; height: 16px; stroke-width: 2.5; }
+
+        /* 普通马卡龙海报 (给动漫/综艺用) */
+        .cs-movie-card { cursor: pointer; display: flex; flex-direction: column; gap: 8px; }
+        .cs-poster-box { width: 100%; aspect-ratio: 3/4; border-radius: 12px; position: relative; overflow: hidden; box-shadow: 0 10px 20px rgba(0,0,0,0.04); border: 1px solid rgba(0,0,0,0.05); }
+        .cs-bg-blue { background: linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%); }
+        .cs-bg-pink { background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%); }
+        .cs-bg-mint { background: linear-gradient(135deg, #d4fc79 0%, #96e6a1 100%); }
+        .cs-bg-peach { background: linear-gradient(135deg, #f6d365 0%, #fda085 100%); }
+        .cs-play-overlay { position: absolute; inset: 0; background: rgba(255,255,255,0.25); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; opacity: 0; transition: 0.3s; }
+        .cs-poster-box:active .cs-play-overlay { opacity: 1; }
+        .cs-play-btn-svg { width: 36px; height: 36px; fill: #1d1d1f; }
+        .cs-meta { margin-top: 8px; padding: 0 4px; }
+        .cs-meta-title { font-size: 14px; font-weight: 800; color: #1d1d1f; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .cs-meta-sub { font-size: 10px; color: #8e8e93; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; }
+
+        /* 放映室暗房模式 */
+        #cs-theatre-room {
+            position: fixed; inset: 0; background: #000; z-index: 6000010 !important;
+            display: none; flex-direction: column; transform: translateY(100%); opacity: 0;
+            transition: transform 0.5s cubic-bezier(0.19, 1, 0.22, 1), opacity 0.4s; color: #fff;
+        }
+        #cs-theatre-room.active { transform: translateY(0); opacity: 1; }
+        .th-header { padding: 50px 20px 15px; display: flex; justify-content: space-between; align-items: center; background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent); position:absolute; top:0; width:100%; box-sizing:border-box; z-index:10;}
+        .th-close { background: rgba(255,255,255,0.1); color: #fff; font-size: 10px; font-weight:800; letter-spacing: 1px; padding: 8px 16px; border-radius: 20px; cursor: pointer; backdrop-filter: blur(10px); }
+        .th-video-area { width: 100%; aspect-ratio: 16/9; background: #111; position: relative; margin-top: 100px; border-radius:12px; overflow:hidden;}
+        .th-placeholder { position: absolute; inset: 0; display: flex; flex-direction:column; align-items: center; justify-content: center; color: #444; font-size: 12px; font-family:monospace; letter-spacing: 2px; }
+        .th-whisper-zone { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; scrollbar-width: none; }
+        .th-whisper-zone::-webkit-scrollbar { display: none; }
+        .th-whisper-msg { display: flex; flex-direction: column; gap: 6px; animation: fadeInUp 0.4s ease backwards; }
+        .th-whisper-msg.user { align-items: flex-end; }
+        .th-whisper-name { font-size: 10px; color: #666; font-weight: 800; letter-spacing: 1px; text-transform: uppercase;}
+        .th-whisper-text { font-size: 15px; color: #ddd; line-height: 1.5; font-weight: 500; background:rgba(255,255,255,0.05); padding:10px 15px; border-radius:12px; max-width:80%; border:1px solid rgba(255,255,255,0.02);}
+        .th-whisper-msg.user .th-whisper-text { background:#fff; color:#000; }
+        .th-input-bar { padding: 15px 20px 30px; background: #000; border-top: 1px solid rgba(255,255,255,0.05); display:flex; gap:10px; align-items:center; }
+        .th-input { flex: 1; background: rgba(255,255,255,0.1); border: none; padding: 12px 16px; border-radius: 20px; color: #fff; font-size: 14px; outline: none; }
+        .th-input::placeholder { color: #666; }
+        .th-send-btn { background: #fff; color: #000; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: none; cursor: pointer; }
+
+        /* 🚨 专属定制影院卡片 (铂金全息质感) */
+        .cs-cinema-custom-card {
+            grid-column: 1 / -1; 
+            background: linear-gradient(145deg, #1d1d1f 0%, #151515 100%);
+            border-radius: 20px; padding: 24px; color: #ffffff;
+            position: relative; overflow: hidden; display: flex; flex-direction: column; gap: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            /* 铂金高光边框 */
+            border: 1px solid rgba(212, 175, 55, 0.4); 
+            cursor: pointer; transition: all 0.4s cubic-bezier(0.19, 1, 0.22, 1);
+        }
+        .cs-cinema-custom-card:active { transform: scale(0.96); }
+        
+        /* 定制卡片的动态流光背景 */
+        .cs-cinema-custom-card::after {
+            content: ''; position: absolute; inset: 0;
+            background: linear-gradient(120deg, transparent, rgba(255,215,0,0.05), transparent);
+            z-index: 1; pointer-events: none;
+        }
+
+        /* 专属定制标签 */
+        .cs-custom-badge {
+            position: absolute; top: 0; right: 0;
+            background: linear-gradient(90deg, #D4AF37, #FFD700);
+            color: #000; font-size: 8px; font-weight: 900; letter-spacing: 1px;
+            padding: 4px 12px; border-bottom-left-radius: 12px; z-index: 5;
+        }
+
+        /* 🎬 灵感构建弹窗 (AI 建造控制台) */
+        #modal-custom-venue {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+            z-index: 6000020; display: none; align-items: center; justify-content: center;
+            opacity: 0; transition: opacity 0.3s;
+        }
+        #modal-custom-venue.active { opacity: 1; }
+        
+        .cs-cv-modal-box {
+            background: #FAFAFC; width: 320px; border-radius: 28px; padding: 30px 24px;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.2); transform: scale(0.9); transition: 0.4s;
+            display: flex; flex-direction: column; position: relative;
+        }
+        #modal-custom-venue.active .cs-cv-modal-box { transform: scale(1); }
+
+        .cs-cv-m-title { font-size: 20px; font-weight: 900; color: #1d1d1f; letter-spacing: -0.5px; text-align: center; }
+        .cs-cv-m-sub { font-size: 11px; color: #8e8e93; font-weight: 600; text-align: center; margin-top: 6px; margin-bottom: 25px; }
+
+        .cs-cv-m-input {
+            background: #fff; border: 1px solid rgba(0,0,0,0.08); padding: 16px;
+            border-radius: 16px; font-size: 15px; outline: none; width: 100%; box-sizing: border-box;
+            transition: 0.3s; box-shadow: inset 0 2px 5px rgba(0,0,0,0.02);
+        }
+        .cs-cv-m-input:focus { border-color: #007AFF; box-shadow: 0 0 0 3px rgba(0,122,255,0.1); }
+
+        .cs-cv-m-btn-row { display: flex; gap: 12px; margin-top: 25px; }
+        .cs-cv-m-btn {
+            flex: 1; padding: 16px 0; border-radius: 16px; font-size: 14px; font-weight: 800;
+            border: none; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center;
+        }
+        .cs-cv-m-btn.cancel { background: #f2f2f7; color: #8e8e93; }
+        .cs-cv-m-btn.build { background: #1d1d1f; color: #fff; box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
+        .cs-cv-m-btn.build:active { transform: scale(0.95); background: #000; }
+
+        /* 🎬 预览态特制容器 */
+        .cv-preview-zone {
+            margin: 20px 0;
+            /* 给预览卡片加一点呼吸感的光晕，证明它是刚刚生成出来的 */
+            animation: pulseGlow 2s infinite alternate;
+            border-radius: 20px;
+        }
+        @keyframes pulseGlow {
+            0% { box-shadow: 0 0 15px rgba(212, 175, 55, 0.1); }
+            100% { box-shadow: 0 0 30px rgba(212, 175, 55, 0.3); }
+        }
+        
+        /* 状态容器切换 */
+        #cv-input-state { display: flex; flex-direction: column; }
+        #cv-preview-state { display: none; flex-direction: column; }
+
+        /* 🎟️ 选人名单弹窗 (The Guest List) */
+        #cs-guest-picker {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+            z-index: 6000020; display: none; align-items: flex-end; justify-content: center;
+            opacity: 0; transition: opacity 0.3s;
+        }
+        #cs-guest-picker.active { opacity: 1; }
+        .cs-gp-card {
+            background: #FAFAFC; width: 100%; height: 75vh; border-radius: 32px 32px 0 0;
+            padding: 30px 20px; box-shadow: 0 -20px 60px rgba(0,0,0,0.15);
+            transform: translateY(100%); transition: 0.4s cubic-bezier(0.19, 1, 0.22, 1);
+            display: flex; flex-direction: column; box-sizing: border-box;
+        }
+        #cs-guest-picker.active .cs-gp-card { transform: translateY(0); }
+        
+        .cs-gp-header { text-align: center; margin-bottom: 20px; position: relative; }
+        .cs-gp-title { font-size: 18px; font-weight: 900; color: #1d1d1f; letter-spacing: 1px; font-family: 'Cinzel', serif; }
+        .cs-gp-sub { font-size: 10px; color: #8e8e93; font-weight: 800; letter-spacing: 2px; margin-top: 4px; }
+        
+        .cs-gp-grid { flex: 1; overflow-y: auto; display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; padding-bottom: 20px; }
+        .cs-gp-item { display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer; }
+        .cs-gp-avatar-box {
+            width: 54px; height: 54px; border-radius: 50%; padding: 3px;
+            border: 1.5px solid transparent; transition: 0.3s; position: relative;
+        }
+        .cs-gp-item.selected .cs-gp-avatar-box { border-color: #1d1d1f; }
+        .cs-gp-avatar { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
+        .cs-gp-check {
+            position: absolute; bottom: 0; right: 0; width: 16px; height: 16px;
+            background: #1d1d1f; border-radius: 50%; color: #fff; display: none;
+            align-items: center; justify-content: center; border: 2px solid #FAFAFC;
+        }
+        .cs-gp-item.selected .cs-gp-check { display: flex; }
+        .cs-gp-check svg { width: 10px; height: 10px; stroke-width: 3; }
+        .cs-gp-name { font-size: 11px; font-weight: 700; color: #555; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%; }
+
+        /* 🎬 候场大厅 (The Lobby) */
+        #cs-lobby-room {
+            position: fixed; inset: 0; background: #FAFAFC; z-index: 6000030;
+            display: none; flex-direction: column; transform: translateX(100%);
+            transition: transform 0.4s cubic-bezier(0.19, 1, 0.22, 1);
+        }
+        #cs-lobby-room.active { transform: translateX(0); }
+        
+        .cs-lb-header {
+            padding: 50px 20px 15px; background: #fff; border-bottom: 1px solid rgba(0,0,0,0.05);
+            display: flex; justify-content: space-between; align-items: center; z-index: 10;
+        }
+        .cs-lb-back { cursor: pointer; display: flex; align-items: center; color: #1d1d1f; }
+        .cs-lb-info { text-align: center; }
+        .cs-lb-venue { font-family: 'Cinzel', serif; font-size: 16px; font-weight: 900; color: #1d1d1f; }
+        .cs-lb-guests { font-size: 9px; color: #8e8e93; font-weight: 800; letter-spacing: 1px; margin-top: 2px; }
+        
+        /* 检票入场大按钮 */
+        .cs-lb-enter-btn {
+            background: #1d1d1f; color: #fff; font-size: 9px; font-weight: 900; letter-spacing: 1px;
+            padding: 8px 14px; border-radius: 20px; display: flex; align-items: center; gap: 4px;
+            cursor: pointer; animation: pulseGlow 2s infinite alternate;
+        }
+        
+        .cs-lb-chat-flow {
+            flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 20px;
+        }
+        
+        /* 候场群聊气泡 */
+        .lb-msg-row { display: flex; gap: 10px; align-items: flex-end; animation: fadeInUp 0.3s ease backwards; }
+        .lb-msg-row.user { flex-direction: row-reverse; }
+        .lb-avatar { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
+        .lb-bubble-wrap { display: flex; flex-direction: column; gap: 4px; max-width: 75%; }
+        .lb-msg-row.user .lb-bubble-wrap { align-items: flex-end; }
+        .lb-name { font-size: 10px; color: #8e8e93; font-weight: 700; margin: 0 4px; }
+        .lb-bubble {
+            background: #fff; padding: 12px 16px; border-radius: 18px; border-bottom-left-radius: 4px;
+            font-size: 14px; color: #1d1d1f; line-height: 1.5; border: 1px solid rgba(0,0,0,0.03);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+        }
+        .lb-msg-row.user .lb-bubble {
+            background: #1d1d1f; color: #fff; border-bottom-left-radius: 18px; border-bottom-right-radius: 4px;
+        }
+
+        /* 底部控制台：三个核心按钮 */
+        .cs-lb-footer {
+            padding: 15px 20px 35px; background: #fff; border-top: 1px solid rgba(0,0,0,0.05);
+            display: flex; flex-direction: column; gap: 12px;
+        }
+        .cs-lb-input-box {
+            display: flex; background: #f2f2f7; border-radius: 20px; padding: 4px; align-items: center;
+        }
+        .cs-lb-input {
+            flex: 1; border: none; background: transparent; padding: 12px 16px; font-size: 14px; outline: none;
+        }
+        .cs-lb-send {
+            width: 36px; height: 36px; border-radius: 50%; background: #1d1d1f; color: #fff;
+            display: flex; align-items: center; justify-content: center; border: none; cursor: pointer; margin-right: 4px;
+        }
+        
+        .cs-lb-tools { display: flex; gap: 10px; }
+        .cs-lb-tool-btn {
+            flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px;
+            padding: 12px; border-radius: 16px; font-size: 11px; font-weight: 800; cursor: pointer;
+            transition: 0.2s; border: 1px solid rgba(0,0,0,0.05); color: #1d1d1f; background: #fff;
+        }
+        .cs-lb-tool-btn:active { transform: scale(0.96); background: #f2f2f7; }
+        .cs-lb-tool-btn svg { width: 16px; height: 16px; stroke-width: 2.5; }
+        .cs-lb-tool-btn.ai-trigger { color: #D4AF37; border-color: rgba(212,175,55,0.3); background: rgba(212,175,55,0.05); }
+    `;
+    document.head.appendChild(style);
+}
+
+// 2. 注入 DOM 结构
+function initCineSyncDOM() {
+    if (document.getElementById('page-cinesync')) return;
+    const html = `
+    <div id="page-cinesync">
+        <div class="cs-app-header">
+            <div class="cs-close-btn" onclick="closeCineSyncApp()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M15 18l-6-6 6-6"/>
+                </svg>
+                <span>EXIT</span>
+            </div>
+            <div class="cs-header-center">
+                <div class="cs-header-sub">LUNE CINEMA</div>
+                <div class="cs-header-title" id="cs-top-title">FILM</div>
+            </div>
+            <div class="cs-header-right">V.1.0</div>
+        </div>
+
+        <div id="cs-view-film" class="cs-view-page active">
+            <div class="cs-theatre-hub">
+                <div class="cs-venue-card" onclick="window.navigator.vibrate(5)">
+                    <div class="cs-venue-header">
+                        <div class="cs-v-tag">CURRENT VENUE</div>
+                        <div class="cs-v-status">
+                            <div class="cs-v-dot"></div> CONNECTED
+                        </div>
+                    </div>
+                    <div class="cs-venue-body">
+                        <div class="cs-venue-name" id="display-venue-name">星曜全景大剧院</div>
+                        <div class="cs-venue-coord">LOC: 31°14'N 121°29'E // PRIVATE</div>
+                    </div>
+                    <div class="cs-venue-footer">
+                        <div class="cs-barcode"></div>
+                        <div style="font-family:monospace; font-size:9px; color:rgba(255,255,255,0.3); font-weight:bold;">TKT-04892</div>
+                    </div>
+                </div>
+                <div class="cs-action-row">
+                    <div class="cs-action-btn" onclick="triggerAddNewVenue(this)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                        <span>自定义包厢</span>
+                    </div>
+                    <div class="cs-action-btn dark" onclick="triggerSyncShowtimes(this)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+                        <span>刷新排片</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="cs-divider-box">
+                <div class="cs-divider-line"></div>
+                <div class="cs-divider-text">SELECT VENUE</div>
+                <div class="cs-divider-line"></div>
+            </div>
+
+            <div class="cs-grid-container" id="cs-grid-film"></div>
+        </div>
+
+        <div id="cs-view-series" class="cs-view-page">
+            <div class="cs-grid-container" id="cs-grid-series"></div>
+        </div>
+
+        <div id="cs-view-variety" class="cs-view-page">
+            <div class="cs-grid-container" id="cs-grid-variety"></div>
+        </div>
+
+        <div id="cs-view-anime" class="cs-view-page">
+            <div class="cs-grid-container" id="cs-grid-anime"></div>
+        </div>
+
+        <div id="cs-view-live" class="cs-view-page">
+            <div class="cs-grid-container" id="cs-grid-live"></div>
+        </div>
+
+        <div class="cs-bottom-nav">
+            <div class="cs-nav-item active" onclick="switchCineTab('film', this, 'FILM')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="2" y="4" width="20" height="16" rx="2" ry="2"></rect><line x1="6" y1="4" x2="6" y2="20"></line><line x1="18" y1="4" x2="18" y2="20"></line><polygon points="10 9 15 12 10 15 10 9"></polygon></svg>
+                <span>电影</span>
+            </div>
+            <div class="cs-nav-item" onclick="switchCineTab('series', this, 'SERIES')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="2" y="7" width="20" height="15" rx="2" ry="2"></rect><polyline points="17 2 12 7 7 2"></polyline></svg>
+                <span>剧集</span>
+            </div>
+            <div class="cs-nav-item" onclick="switchCineTab('variety', this, 'VARIETY')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="22"></line></svg>
+                <span>综艺</span>
+            </div>
+            <div class="cs-nav-item" onclick="switchCineTab('anime', this, 'ANIME')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                <span>动画</span>
+            </div>
+            <div class="cs-nav-item" onclick="switchCineTab('live', this, 'CONCERT')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>
+                <span>演唱会</span>
+            </div>
+        </div>
+    </div>
+
+    <div id="cs-theatre-room">
+        <div class="th-header">
+            <div style="font-size: 14px; font-weight: 900; letter-spacing: 1px;" id="th-title-display">SYNCING...</div>
+            <div class="th-close" onclick="closeTheatreMode()">EXIT</div>
+        </div>
+        <div class="th-video-area">
+            <div class="th-placeholder">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2" style="margin-bottom:10px;"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                WAITING FOR VIDEO STREAM
+            </div>
+        </div>
+        <div class="th-whisper-zone" id="th-whisper-flow"></div>
+        <div class="th-input-bar">
+            <input type="text" id="th-whisper-input" class="th-input" placeholder="Say something...">
+            <button class="th-send-btn" onclick="sendTheatreWhisper()">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+            </button>
+        </div>
+    </div>
+
+    <div id="modal-custom-venue" onclick="if(event.target===this) closeCustomVenueModal()">
+        <div class="cs-cv-modal-box" onclick="event.stopPropagation()">
+            
+            <div id="cv-input-state">
+                <div class="cs-cv-m-title">构建专属时空</div>
+                <div class="cs-cv-m-sub">向 AI 描述你想要的观影氛围或场景</div>
+                
+                <input type="text" id="cs-venue-idea-input" class="cs-cv-m-input" placeholder="例如：深海废墟、雪山玻璃房..." autocomplete="off">
+                
+                <div class="cs-cv-m-btn-row">
+                    <button class="cs-cv-m-btn cancel" onclick="closeCustomVenueModal()">取消</button>
+                    <button class="cs-cv-m-btn build" id="cs-btn-build-venue" onclick="submitBuildVenue()">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right:6px;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                        生成图纸
+                    </button>
+                </div>
+            </div>
+
+            <div id="cv-preview-state">
+                <div class="cs-cv-m-title">时空图纸已就绪</div>
+                <div class="cs-cv-m-sub" style="color:#D4AF37;">LUNE AI 为你设计了以下放映室</div>
+                
+                <div id="cv-preview-zone" class="cv-preview-zone"></div>
+
+                <div class="cs-cv-m-btn-row">
+                    <button class="cs-cv-m-btn cancel" id="cs-btn-redraw" onclick="submitBuildVenue()">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right:4px;"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.92-5.27l-3.26-1.5"></path></svg>
+                        重塑 (Redesign)
+                    </button>
+                    <button class="cs-cv-m-btn build" style="background: linear-gradient(90deg, #D4AF37, #FFD700); color: #000; box-shadow: 0 10px 20px rgba(212,175,55,0.3);" onclick="confirmAndSaveVenue()">
+                        确认建造
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div id="cs-guest-picker" onclick="if(event.target===this) closeGuestPicker()">
+        <div class="cs-gp-card" onclick="event.stopPropagation()">
+            <div class="cs-gp-header">
+                <div class="cs-gp-title">THE GUEST LIST</div>
+                <div class="cs-gp-sub">选择你要邀请的同行者</div>
+            </div>
+            <div class="cs-gp-grid" id="cs-gp-grid"></div>
+            <button onclick="confirmGuestSelection()" style="width:100%; padding:18px; border-radius:18px; background:#1d1d1f; color:#fff; font-size:15px; font-weight:900; border:none; cursor:pointer;">
+                发送邀请并前往候场
+            </button>
+        </div>
+    </div>
+
+    <div id="cs-lobby-room">
+        <div class="cs-lb-header">
+            <div class="cs-lb-back" onclick="closeLobbyRoom()">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 18l-6-6 6-6"/></svg>
+            </div>
+            <div class="cs-lb-info">
+                <div class="cs-lb-venue" id="lobby-venue-name">CINEMA</div>
+                <div class="cs-lb-guests" id="lobby-guest-count">WAITING FOR GUESTS</div>
+            </div>
+            <div class="cs-lb-enter-btn" onclick="enterFinalCinema()">
+                BOARDING <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </div>
+        </div>
+
+        <div class="cs-lb-chat-flow" id="cs-lobby-flow">
+            <div style="text-align:center; color:#ccc; font-size:10px; font-weight:800; letter-spacing:2px; margin: 20px 0;">LOBBY CREATED</div>
+        </div>
+
+        <div class="cs-lb-footer">
+            <div class="cs-lb-input-box">
+                <input type="text" id="cs-lobby-input" class="cs-lb-input" placeholder="输入你想说的话...">
+                <button class="cs-lb-send" onclick="sendLobbyMessage()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                </button>
+            </div>
+            <div class="cs-lb-tools">
+                <div class="cs-lb-tool-btn" onclick="sendLobbyInvitation()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                    <span>发送邀请函</span>
+                </div>
+                <div class="cs-lb-tool-btn ai-trigger" id="cs-btn-ai-reply" onclick="triggerLobbyAI()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 2v4M12 18v4M4 12H2M22 12h-2"/><path d="M16 8v8H8V8h8zM9 12h6"/></svg>
+                    <span>等待回应 (AI)</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', html);
+}
+
+// 7. 通用渲染：双列马卡龙海报卡片 (用于剧集、综艺、动画、演唱会)
+function renderCineList(containerId, list) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    if (list.length === 0) {
+        container.innerHTML = `<div style="grid-column: span 2; text-align:center; padding:50px; color:#aaa; font-size:11px; letter-spacing:2px;">NO ARCHIVES</div>`;
+        return;
+    }
+
+    container.innerHTML = list.map((item, i) => `
+        <div class="cs-movie-card" onclick="openTheatreMode('${item.t}')" style="animation: csFadeIn 0.4s ease backwards ${i * 0.05}s;">
+            <div class="cs-poster-box ${item.bg}">
+                <div class="cs-play-overlay">
+                    <svg class="cs-play-btn-svg" viewBox="0 0 24 24"><polygon points="8 5 19 12 8 19"></polygon></svg>
+                </div>
+            </div>
+            <div class="cs-meta">
+                <div class="cs-meta-title">${item.t}</div>
+                <div class="cs-meta-sub">${item.sub}</div>
+            </div>
+        </div>
+    `).join('');
+}
+
+function appendTheatreWhisper(name, text, isUser) {
+    const flow = document.getElementById('th-whisper-flow');
+    const msg = document.createElement('div');
+    msg.className = `th-whisper-msg ${isUser ? 'user' : ''}`;
+    msg.innerHTML = `
+        <div class="th-whisper-name">${name}</div>
+        <div class="th-whisper-text">${text}</div>
+    `;
+    flow.appendChild(msg);
+    flow.scrollTop = flow.scrollHeight;
+    if (navigator.vibrate) navigator.vibrate(10);
+}
+
+// 2. 🎬 极致奢华：专属时空签收弹窗
+function showVenueBuiltPopup(venueName) {
+    let popup = document.getElementById('venue-built-popup');
+    
+    // 如果没有弹窗容器，现场注入 HTML
+    if (!popup) {
+        const html = `
+        <div id="venue-built-popup" style="position:fixed; inset:0; background:rgba(0,0,0,0.7); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px); z-index:7000000; display:none; align-items:center; justify-content:center; opacity:0; transition:0.3s ease;">
+            <div id="vbp-card" style="background:linear-gradient(145deg, #151515, #0a0a0a); border:1px solid rgba(212,175,55,0.4); border-radius:24px; padding:35px 30px; width:280px; text-align:center; box-shadow:0 20px 60px rgba(0,0,0,0.6); transform:scale(0.85); transition:0.4s cubic-bezier(0.19, 1, 0.22, 1);">
+                
+                <div style="width:54px; height:54px; border-radius:50%; background:linear-gradient(135deg, #D4AF37, #FFD700); margin:0 auto 20px; display:flex; align-items:center; justify-content:center; box-shadow:0 0 25px rgba(212,175,55,0.3);">
+                    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                </div>
+                
+                <div style="font-family:'Cinzel', serif; font-size:18px; font-weight:900; color:#fff; letter-spacing:2px; margin-bottom:12px;">
+                    时空已锚定
+                </div>
+                <div style="font-size:13px; color:rgba(255,255,255,0.6); line-height:1.6; margin-bottom:30px;">
+                    您的私人放映室<br>
+                    <span id="vbp-name" style="color:#D4AF37; font-weight:800; font-size:15px; display:inline-block; margin-top:4px;"></span><br>
+                    已成功注册至系统档案。
+                </div>
+                
+                <button onclick="closeVenueBuiltPopup()" style="width:100%; padding:16px; border-radius:16px; background:#fff; color:#000; font-size:14px; font-weight:800; border:none; cursor:pointer; letter-spacing:1px; box-shadow:0 5px 15px rgba(255,255,255,0.2); transition:0.2s;">
+                    进入影院
+                </button>
+            </div>
+        </div>`;
+        document.body.insertAdjacentHTML('beforeend', html);
+        popup = document.getElementById('venue-built-popup');
+    }
+
+    // 填充名字并触发动画
+    document.getElementById('vbp-name').innerText = "「" + venueName + "」";
+    popup.style.display = 'flex';
+    void popup.offsetWidth; // 强制浏览器重绘
+    popup.style.opacity = '1';
+    document.getElementById('vbp-card').style.transform = 'scale(1)';
+    
+    // 沉甸甸的成功震动反馈
+    if (navigator.vibrate) navigator.vibrate([30, 60, 30]);
+}
+
+// 🎬 专属弹窗：排片刷新成功提示 (极简白高级版)
+function showSyncSuccessPopup() {
+    let popup = document.getElementById('sync-success-popup');
+    
+    // 物理防错：如果没有这个弹窗，就现场用 JS 注入一个绝对居中的高级弹窗
+    if (!popup) {
+        const html = `
+        <div id="sync-success-popup" style="position:fixed; inset:0; background:rgba(0,0,0,0.4); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); z-index:7000000; display:none; align-items:center; justify-content:center; opacity:0; transition:0.3s ease;">
+            <div id="ssp-card" style="background:#fff; border-radius:24px; padding:30px 25px; width:260px; text-align:center; box-shadow:0 20px 50px rgba(0,0,0,0.15); transform:scale(0.85); transition:0.4s cubic-bezier(0.19, 1, 0.22, 1);">
+                
+                <div style="width:54px; height:54px; border-radius:50%; background:#f2f2f7; color:#1d1d1f; margin:0 auto 15px; display:flex; align-items:center; justify-content:center;">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                </div>
+                
+                <div style="font-size:18px; font-weight:900; color:#1d1d1f; margin-bottom:8px; letter-spacing:0.5px;">排片已更新</div>
+                <div style="font-size:13px; color:#8e8e93; line-height:1.5; margin-bottom:25px; font-weight:500;">
+                    已为您拉取最新放映场所<br>及实时营业状态。
+                </div>
+                
+                <button onclick="closeSyncSuccessPopup()" style="width:100%; padding:14px; border-radius:16px; background:#1d1d1f; color:#fff; font-size:15px; font-weight:800; border:none; cursor:pointer; transition:0.2s;">
+                    知道啦
+                </button>
+            </div>
+        </div>`;
+        document.body.insertAdjacentHTML('beforeend', html);
+        popup = document.getElementById('sync-success-popup');
+    }
+
+    // 激活显示与弹出动画
+    popup.style.display = 'flex';
+    void popup.offsetWidth; // 强制重绘
+    popup.style.opacity = '1';
+    document.getElementById('ssp-card').style.transform = 'scale(1)';
+    
+    // 成功震动反馈
+    if (navigator.vibrate) navigator.vibrate([20, 50]);
+}
+
+// 7. 将消息渲染到屏幕
+function appendLobbyBubble(name, text, avatar, isUser) {
+    const flow = document.getElementById('cs-lobby-flow');
+    const row = document.createElement('div');
+    row.className = `lb-msg-row ${isUser ? 'user' : ''}`;
+    
+    // 如果是系统邀请函特殊渲染
+    let bubbleHtml = `<div class="lb-bubble">${text}</div>`;
+    if (text.includes('黑色烫金观影票根')) {
+        bubbleHtml = `<div class="lb-bubble" style="background: linear-gradient(135deg, #1d1d1f, #000); color: #D4AF37; border: 1px solid #D4AF37; box-shadow: 0 0 15px rgba(212,175,55,0.2);">🎟️ ${text}</div>`;
+    }
+
+    row.innerHTML = `
+        <img src="${avatar}" class="lb-avatar">
+        <div class="lb-bubble-wrap">
+            <div class="lb-name">${name}</div>
+            ${bubbleHtml}
+        </div>
+    `;
+    flow.appendChild(row);
+    flow.scrollTop = flow.scrollHeight;
+    if (navigator.vibrate) navigator.vibrate(10);
+}
+
 
 </script>
 </body>
