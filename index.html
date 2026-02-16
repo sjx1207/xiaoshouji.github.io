@@ -95,20 +95,94 @@
         .w-2x2 { grid-column: span 2; }
         .w-4x1 { grid-column: span 4; }
 
-        /* 天气组件 */
-        .weather-content { display: flex; flex-direction: column; height: 100%; justify-content: space-between; position: relative; z-index: 2; }
-        .w-date-block { display: flex; flex-direction: column; }
-        .w-day { font-size: 11px; font-weight: 800; color: #ff3b30; text-transform: uppercase; margin-bottom: 2px; }
-        .w-date { font-size: 13px; font-weight: 600; color: #555; text-transform: uppercase; }
-        .w-icon-area { width: 60px; height: 60px; margin: 5px 0 0 -5px; filter: drop-shadow(0 5px 10px rgba(0,0,0,0.1)); }
-        .w-temp { font-size: 42px; font-weight: 800; color: #1d1d1f; line-height: 1; letter-spacing: -2px; }
-        .w-city { font-size: 13px; font-weight: 600; color: #666; margin-top: 4px; display: flex; align-items: center; gap:4px; }
+        /* 天气组件 (透明悬浮版) */
+.weather-content { display: flex; flex-direction: column; height: 100%; justify-content: space-between; position: relative; z-index: 2; }
+.w-date-block { display: flex; flex-direction: column; }
 
-        /* 图片组件 */
-        .pic-container { height: 100%; display: flex; flex-direction: column; position: relative; z-index: 2; }
-        .pic-text { font-size: 14px; font-weight: 700; font-style: italic; color: #222; margin-bottom: 10px; line-height: 1.3; }
-        .pic-wrapper { flex: 1; width: 100%; border-radius: 16px; overflow: hidden; background: rgba(0,0,0,0.05); position: relative; }
-        .pic-img { width: 100%; height: 100%; object-fit: cover; }
+/* 星期不变，加点发光阴影 */
+.w-day { font-size: 11px; font-weight: 800; color: #ff3b30; text-transform: uppercase; margin-bottom: 2px; text-shadow: 0 1px 4px rgba(0,0,0,0.5); }
+/* 日期改白色带阴影 */
+.w-date { font-size: 13px; font-weight: 800; color: #fff; text-transform: uppercase; text-shadow: 0 2px 8px rgba(0,0,0,0.6); }
+
+.w-icon-area { width: 60px; height: 60px; margin: 5px 0 0 -5px; filter: drop-shadow(0 4px 10px rgba(0,0,0,0.4)); }
+
+/* 温度改白色带阴影 */
+.w-temp { font-size: 42px; font-weight: 900; color: #fff; line-height: 1; letter-spacing: -2px; text-shadow: 0 4px 15px rgba(0,0,0,0.6); }
+/* 城市改白色带阴影，SVG图标强制变白 */
+.w-city { font-size: 13px; font-weight: 700; color: rgba(255,255,255,0.9); margin-top: 4px; display: flex; align-items: center; gap:4px; text-shadow: 0 2px 8px rgba(0,0,0,0.6); }
+.w-city svg { fill: #fff !important; filter: drop-shadow(0 1px 3px rgba(0,0,0,0.5)); }
+
+/* ==========================================
+   🖼️ 2x2 绝对透明双头像组件
+   ========================================== */
+.bond-container {
+    height: 100%;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    -webkit-backdrop-filter: none !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 10px;
+    box-sizing: border-box;
+}
+
+/* 头像区域：居中对齐 */
+.bond-avatars {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 12px;
+}
+
+/* 单个圆形头像 */
+.bond-av {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    object-fit: cover;
+    background: #000;
+    /* 细微的半透明边框让头像和桌面稍微隔开 */
+    border: 1.5px solid rgba(255,255,255,0.6); 
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    position: relative;
+    z-index: 1;
+}
+
+/* 第二个头像左移形成交叠效果 */
+.bond-av.overlap {
+    margin-left: -16px;
+    z-index: 2;
+}
+
+/* 昵称排版 (白色字 + 黑色阴影防看不清) */
+.bond-name {
+    font-size: 14px;
+    font-weight: 900;
+    color: #fff;
+    text-shadow: 0 2px 10px rgba(0,0,0,0.6), 0 0 20px rgba(0,0,0,0.4);
+    margin-bottom: 6px;
+    text-align: center;
+    letter-spacing: 0.5px;
+}
+
+/* 个性签名/文案排版 (白灰字 + 黑色阴影) */
+.bond-quote {
+    font-family: 'Cinzel', "Songti SC", serif;
+    font-size: 11px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.9);
+    font-style: italic;
+    text-align: center;
+    line-height: 1.4;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.8);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
 
         /* 音乐组件 */
         .music-row { display: flex; align-items: center; justify-content: space-between; height: 100%; position: relative; z-index: 2; }
@@ -28533,6 +28607,330 @@ input[type="range"] { width: 100%; accent-color: #000; cursor: pointer; }
     from { transform: translateY(100%); }
     to { transform: translateY(0); }
 }
+/* 彻底抹杀组件及其伪元素的任何背景、白边和毛玻璃 */
+.clear-bg,
+.clear-bg::before,
+.clear-bg::after {
+    background: transparent !important;
+    background-color: transparent !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    box-shadow: none !important;
+    border: none !important;
+}
+/* ==========================================
+   🖼️ 4x2 共享背景双子星组件
+   ========================================== */
+/* 1. 外层大容器：清除默认内边距，锁死大小 */
+.shared-hero-widget {
+    position: relative;
+    grid-column: span 4; /* 占满一整行 4格 */
+    grid-row: span 1;    /* 高度 2格 */
+    padding: 0 !important; /* 清除默认的 20px padding */
+    border-radius: 24px;
+    overflow: hidden;
+    /* 🚨 核心修改：改为马卡龙混合渐变底色 */
+    background: linear-gradient(135deg, #E3FDF5 0%, #FFE6FA 100%) !important;
+}
+
+/* 2. 背景图与遮罩 */
+.shared-bg-img {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%; object-fit: cover;
+    z-index: 1; pointer-events: none;
+}
+
+/* 3. 左右分栏布局 */
+.shared-content-row {
+    position: absolute; inset: 0; z-index: 3;
+    display: flex; width: 100%; height: 100%;
+}
+.hero-half-zone {
+    flex: 1; height: 100%;
+    padding: 16px; box-sizing: border-box;
+    cursor: pointer; transition: background 0.2s;
+}
+.hero-half-zone:active {
+    background: rgba(255, 255, 255, 0.1); /* 点击时半边的微弱白光反馈 */
+}
+
+/* ---------------- 左侧：天气排版微调 ---------------- */
+.weather-content { display: flex; flex-direction: column; height: 100%; justify-content: space-between; }
+.w-date-block { display: flex; flex-direction: column; }
+/* 字体统一转为白色，并带上防眩光阴影 */
+.w-day { font-size: 11px; font-weight: 800; color: #ff3b30; text-transform: uppercase; margin-bottom: 2px; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
+.w-date { font-size: 13px; font-weight: 800; color: #fff; text-transform: uppercase; text-shadow: 0 2px 8px rgba(0,0,0,0.5); }
+.w-icon-area { width: 60px; height: 60px; margin: 5px 0 0 -5px; filter: drop-shadow(0 4px 10px rgba(0,0,0,0.4)); }
+.w-temp { font-size: 42px; font-weight: 900; color: #fff; line-height: 1; letter-spacing: -2px; text-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+.w-city { font-size: 13px; font-weight: 700; color: rgba(255,255,255,0.9); margin-top: 4px; display: flex; align-items: center; gap:4px; text-shadow: 0 2px 8px rgba(0,0,0,0.5); }
+
+/* ---------------- 右侧：羁绊排版微调 ---------------- */
+.bond-container { height: 100%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.bond-avatars { display: flex; align-items: center; justify-content: center; margin-bottom: 12px; }
+.bond-av.overlap { margin-left: -15px; z-index: 2; }
+/* ---------------- 右侧：文字改回深色 ---------------- */
+.bond-name { 
+    font-size: 14px; font-weight: 900; 
+    color: #1d1d1f !important; /* 改为深色 */
+    margin-bottom: 6px; text-align: center; letter-spacing: 0.5px; 
+}
+.bond-quote { 
+    font-family: 'Cinzel', "Songti SC", serif; font-size: 11px; font-weight: 600; 
+    color: #444 !important; /* 改为深灰色 */
+    font-style: italic; text-align: center; line-height: 1.4; 
+}
+
+/* 头像边框微调：由纯白改为浅灰，在浅色背景下更精致 */
+.bond-av { 
+    width: 50px; height: 50px; border-radius: 50%; object-fit: cover; 
+    background: #fff; border: 2px solid #fff; 
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1); /* 阴影减淡 */
+    position: relative; z-index: 1; 
+}
+
+/* 🚨 彻底移除 widget 默认的白底和毛玻璃，确保背景完全由我们控制 */
+.shared-hero-widget, 
+.shared-hero-widget::before, 
+.shared-hero-widget::after {
+    background: transparent !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    box-shadow: none !important;
+}
+
+.hero-bg-click-capture {
+    position: absolute; inset: 0; z-index: 1; cursor: pointer;
+    border-radius: 24px; overflow: hidden;
+}
+
+/* 强显弹窗样式 */
+.lune-config-mask {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(15px);
+    z-index: 2147483647 !important; display: none; align-items: center; justify-content: center;
+}
+.lune-config-card {
+    width: 290px; background: #fff; border-radius: 28px; padding: 25px;
+    box-shadow: 0 25px 50px rgba(0,0,0,0.3); transform: scale(1);
+    animation: iosPopIn 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+}
+.config-header { display: flex; justify-content: space-between; margin-bottom: 20px; font-weight: 900; font-size: 11px; color: #8e8e93; letter-spacing: 1px; }
+.config-group { margin-bottom: 25px; }
+.config-group label { display: block; font-size: 10px; font-weight: 800; margin-bottom: 12px; }
+.config-btn-row { display: flex; gap: 10px; }
+.c-btn-black { flex: 1; background: #000; color: #fff; border: none; padding: 12px; border-radius: 12px; font-weight: 700; font-size: 12px; cursor: pointer; }
+.c-btn-outline { flex: 1; background: transparent; border: 1px solid #eee; padding: 12px; border-radius: 12px; font-weight: 700; font-size: 12px; cursor: pointer; }
+.config-save-btn { width: 100%; background: #007AFF; color: #fff; border: none; padding: 16px; border-radius: 16px; font-weight: 800; cursor: pointer; }
+.slider-labels { display: flex; justify-content: space-between; font-size: 9px; color: #ccc; margin-top: 5px; }
+
+@keyframes iosPopIn { from { transform: scale(0.85); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+/* ==========================================
+   📀 2x2 音乐控制组件 (Luxury Compact)
+   ========================================== */
+.music-card-v3 {
+    /* 严格锁定位置：第3-4行，第1-2列 */
+    grid-column: 1 / 3;
+    grid-row: 3 / 5;
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: 28px;
+    padding: 16px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.05);
+    border: 1px solid rgba(255,255,255,0.3);
+}
+
+.player-container {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+}
+
+/* 圆形封面 */
+.album-cover-v3 {
+    position: relative;
+    width: 75px;
+    height: 75px;
+    margin-top: 5px;
+}
+.cover-inner {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #e0e0e0, #f5f5f7);
+    background-size: cover;
+    background-position: center;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    position: relative;
+    z-index: 2;
+    border: 3px solid #fff;
+}
+
+/* 播放时的动态脉冲效果 (选配) */
+.play-pulse {
+    position: absolute;
+    inset: -5px;
+    border-radius: 50%;
+    background: rgba(0, 122, 255, 0.1);
+    z-index: 1;
+    animation: music-pulse 2s infinite;
+}
+
+@keyframes music-pulse {
+    0% { transform: scale(1); opacity: 0.5; }
+    100% { transform: scale(1.3); opacity: 0; }
+}
+
+/* 文字信息 */
+.track-meta-v3 {
+    text-align: center;
+    width: 100%;
+}
+.track-title-v3 {
+    font-size: 15px;
+    font-weight: 800;
+    color: #1d1d1f;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.track-artist-v3 {
+    font-size: 11px;
+    font-weight: 600;
+    color: #86868b;
+    margin-top: 2px;
+}
+
+/* 进度条 */
+.music-progress-v3 {
+    width: 90%;
+}
+.m-prog-bg {
+    height: 4px;
+    background: rgba(0,0,0,0.05);
+    border-radius: 2px;
+    overflow: hidden;
+}
+.m-prog-fg {
+    height: 100%;
+    background: #1d1d1f; /* 纯黑质感 */
+    border-radius: 2px;
+    transition: width 0.3s linear;
+}
+
+/* 控制按钮 */
+.music-controls-v3 {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    width: 100%;
+    padding-bottom: 5px;
+}
+.m-btn-icon {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform 0.1s;
+}
+.m-btn-icon:active { transform: scale(0.85); }
+.m-btn-icon svg {
+    width: 100%;
+    height: 100%;
+    fill: #1d1d1f;
+}
+
+/* 主播放按钮加大 */
+.m-btn-icon.main-play {
+    width: 32px;
+    height: 32px;
+}
+/* 编辑器弹窗样式 */
+    #modal-btw-editor .btw-edit-card { width: 320px; background: #FAFAFC; border-radius: 28px; padding: 25px; box-shadow: 0 20px 50px rgba(0,0,0,0.2); transform: scale(0.9); transition: 0.4s cubic-bezier(0.19, 1, 0.22, 1); max-height: 85vh; overflow-y: auto; }
+    #modal-btw-editor.active .btw-edit-card { transform: scale(1); }
+    
+    .btw-e-title { font-size: 18px; font-weight: 900; text-align: center; margin-bottom: 20px; letter-spacing: -0.5px; }
+    .btw-e-section { background: #fff; border-radius: 16px; padding: 15px; margin-bottom: 15px; border: 1px solid rgba(0,0,0,0.05); }
+    .btw-e-label { font-size: 10px; color: #888; font-weight: 800; letter-spacing: 1px; margin-bottom: 10px; display: block; text-transform: uppercase; }
+    
+    .btw-e-row { display: flex; align-items: center; gap: 12px; }
+    .btw-e-avatar-btn { width: 44px; height: 44px; border-radius: 50%; background: #f0f0f0; border: 2px dashed #ccc; display: flex; align-items: center; justify-content: center; overflow: hidden; cursor: pointer; flex-shrink: 0; position: relative; }
+    .btw-e-avatar-btn img { width: 100%; height: 100%; object-fit: cover; position: absolute; inset: 0; display: none; }
+    .btw-e-input { flex: 1; background: #f5f5f7; border: none; padding: 12px; border-radius: 12px; font-size: 13px; outline: none; transition: 0.2s; }
+    .btw-e-input:focus { box-shadow: 0 0 0 2px rgba(0,122,255,0.2); }
+
+    .btw-e-bg-box { width: 100%; height: 100px; border-radius: 12px; background: #f0f0f0; border: 2px dashed #ccc; display: flex; align-items: center; justify-content: center; cursor: pointer; overflow: hidden; position: relative; }
+    .btw-e-bg-box img { width: 100%; height: 100%; object-fit: cover; position: absolute; inset: 0; display: none; }
+    .btw-e-bg-box span { font-size: 12px; color: #888; font-weight: 700; position: relative; z-index: 2; }
+    
+    .btw-e-actions { display: flex; gap: 10px; margin-top: 20px; }
+    .btw-e-btn { flex: 1; padding: 14px; border-radius: 14px; border: none; font-weight: 800; font-size: 14px; cursor: pointer; transition: 0.2s; }
+    .btw-e-btn.cancel { background: #f2f2f7; color: #8e8e93; }
+    .btw-e-btn.save { background: #1d1d1f; color: #fff; }
+    .btw-e-btn:active { transform: scale(0.96); }
+
+#modal-mw-editor { position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); z-index: 8000000; display: none; align-items: center; justify-content: center; opacity: 0; transition: 0.3s ease; }
+    #modal-mw-editor.active { opacity: 1; }
+    .mw-edit-card { width: 320px; background: #FAFAFC; border-radius: 28px; padding: 25px; box-shadow: 0 20px 50px rgba(0,0,0,0.2); transform: scale(0.9); transition: 0.4s cubic-bezier(0.19, 1, 0.22, 1); max-height: 85vh; overflow-y: auto; }
+    #modal-mw-editor.active .mw-edit-card { transform: scale(1); }
+    
+    /* 借用之前你定义的 btw 样式前缀，稍加修改 */
+    .mw-e-title { font-size: 18px; font-weight: 900; text-align: center; margin-bottom: 20px; letter-spacing: -0.5px; }
+    .mw-e-section { background: #fff; border-radius: 16px; padding: 15px; margin-bottom: 15px; border: 1px solid rgba(0,0,0,0.05); }
+    .mw-e-label { font-size: 10px; color: #888; font-weight: 800; letter-spacing: 1px; margin-bottom: 10px; display: flex; justify-content: space-between; text-transform: uppercase; }
+    
+    .mw-e-bg-box { width: 100%; height: 100px; border-radius: 12px; background: linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%); border: 2px dashed rgba(0,0,0,0.1); display: flex; align-items: center; justify-content: center; cursor: pointer; overflow: hidden; position: relative; }
+    .mw-e-bg-box img { width: 100%; height: 100%; object-fit: cover; position: absolute; inset: 0; display: none; }
+    .mw-e-bg-box span { font-size: 12px; color: #fff; font-weight: 800; position: relative; z-index: 2; text-shadow: 0 1px 4px rgba(0,0,0,0.3); }
+
+    .mw-e-row { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+    .mw-e-avatar-btn { width: 50px; height: 50px; border-radius: 50%; background: #f0f0f0; border: 2px dashed #ccc; display: flex; align-items: center; justify-content: center; overflow: hidden; cursor: pointer; flex-shrink: 0; position: relative; }
+    .mw-e-avatar-btn img { width: 100%; height: 100%; object-fit: cover; position: absolute; inset: 0; display: none; }
+    
+    .mw-e-input { flex: 1; background: #f5f5f7; border: none; padding: 12px; border-radius: 12px; font-size: 13px; outline: none; transition: 0.2s; font-weight: 600; width: 100%; box-sizing: border-box; }
+    .mw-e-input:focus { box-shadow: 0 0 0 2px rgba(0,122,255,0.2); }
+
+    .mw-e-actions { display: flex; gap: 10px; margin-top: 20px; }
+    .mw-e-btn { flex: 1; padding: 14px; border-radius: 14px; border: none; font-weight: 800; font-size: 14px; cursor: pointer; transition: 0.2s; }
+    .mw-e-btn.cancel { background: #f2f2f7; color: #8e8e93; }
+    .mw-e-btn.save { background: #1d1d1f; color: #fff; }
+    .mw-e-btn:active { transform: scale(0.96); }
+
+    /* 播放中锁定的提示 */
+    .mw-locked-hint { font-size: 11px; color: #FF9500; background: rgba(255,149,0,0.1); padding: 8px 12px; border-radius: 8px; font-weight: 700; text-align: center; display: none; }
+#modal-sw-editor { position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); z-index: 8000010; display: none; align-items: center; justify-content: center; opacity: 0; transition: 0.3s ease; }
+    #modal-sw-editor.active { opacity: 1; }
+    .sw-edit-card { width: 320px; background: #FAFAFC; border-radius: 28px; padding: 25px; box-shadow: 0 20px 50px rgba(0,0,0,0.2); transform: scale(0.9); transition: 0.4s cubic-bezier(0.19, 1, 0.22, 1); max-height: 85vh; overflow-y: auto; }
+    #modal-sw-editor.active .sw-edit-card { transform: scale(1); }
+    
+    .sw-e-title { font-size: 18px; font-weight: 900; text-align: center; margin-bottom: 20px; letter-spacing: -0.5px; color:#1d1d1f; }
+    .sw-e-section { background: #fff; border-radius: 16px; padding: 15px; margin-bottom: 12px; border: 1px solid rgba(0,0,0,0.05); }
+    .sw-e-label { font-size: 10px; color: #888; font-weight: 800; letter-spacing: 1px; margin-bottom: 10px; display: flex; justify-content: space-between; text-transform: uppercase; }
+    
+    /* 上传图片双网格 */
+    .sw-e-img-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .sw-e-img-box { height: 70px; border-radius: 12px; background: #f0f0f0; border: 2px dashed #ccc; display: flex; align-items: center; justify-content: center; cursor: pointer; position: relative; overflow: hidden; }
+    .sw-e-img-box span { font-size: 10px; font-weight: 800; color: #999; z-index: 2; }
+    .sw-e-img-box img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: none; z-index: 1; }
+
+    /* 文字输入框排版 */
+    .sw-e-input { width: 100%; background: #f5f5f7; border: none; padding: 12px; border-radius: 12px; font-size: 13px; font-weight: 600; outline: none; margin-bottom: 8px; box-sizing: border-box; }
+    .sw-e-input:focus { box-shadow: 0 0 0 2px rgba(0,122,255,0.2); }
+    
+    /* 底部按钮 */
+    .sw-e-actions { display: flex; gap: 10px; margin-top: 20px; }
+    .sw-e-btn { flex: 1; padding: 14px; border-radius: 14px; border: none; font-weight: 800; font-size: 14px; cursor: pointer; transition: 0.2s; }
+    .sw-e-btn.cancel { background: #f2f2f7; color: #8e8e93; }
+    .sw-e-btn.save { background: #1d1d1f; color: #fff; }
+    .sw-e-btn:active { transform: scale(0.96); }
 
 </style>
 </head>
@@ -28552,83 +28950,127 @@ input[type="range"] { width: 100%; accent-color: #000; cursor: pointer; }
     <div class="home-screen-scroll-container">
         <div class="home-screen-wrapper">
             
-            <div class="main-container" id="page-1">
-                <div class="widget w-2x2" onclick="showM('weatherM')">
-                    <div class="weather-content">
-                        <div class="w-date-block">
-                            <span class="w-day" id="ui-day">MONDAY</span>
-                            <span class="w-date" id="ui-date">JANUARY 1</span>
+            <div class="main-container" id="page-1" style="display: grid; grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(6, 1fr); gap: 16px; padding: 20px;">
+    
+                <div class="widget w-4x2 shared-hero-widget" style="grid-area: 1 / 1 / 3 / 5;">
+                    <img id="ui-img" class="shared-bg-img" src="" onerror="this.style.display='none'" onload="this.style.display='block'">
+                    <div class="shared-overlay"></div>
+                    <div class="shared-content-row">
+                        <div class="hero-half-zone" onclick="showM('weatherM')">
+                            <div class="weather-content">
+                                <div class="w-date-block">
+                                    <span class="w-day" id="ui-day">MONDAY</span>
+                                    <span class="w-date" id="ui-date">JANUARY 1</span>
+                                </div>
+                                <div class="w-data-stack">
+                                    <div class="w-icon-area" id="ui-icon"></div>
+                                    <div class="w-temp" id="ui-temp">--°</div>
+                                    <div class="w-city">
+                                        <svg style="width:12px;height:12px;fill:#fff" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5z"/></svg>
+                                        <span id="ui-city">Updating...</span>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <div class="w-data-stack">
-                            <div class="w-icon-area" id="ui-icon"></div>
-                            <div class="w-temp" id="ui-temp">--°</div>
-                            <div class="w-city">
-                                <svg style="width:12px;height:12px;fill:#007AFF" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5z"/></svg>
-                                <span id="ui-city">Updating...</span>
+                        <div class="hero-half-zone" onclick="showM('photoM')">
+                            <div class="bond-container">
+                                <div class="bond-avatars">
+                                    <img id="bond-av-1" class="bond-av" src="https://api.dicebear.com/7.x/notionists/svg?seed=A">
+                                    <img id="bond-av-2" class="bond-av overlap" src="https://api.dicebear.com/7.x/notionists/svg?seed=B">
+                                </div>
+                                <div class="bond-name" id="bond-name-ui">Lune & You</div>
+                                <div class="bond-quote" id="ui-quote">"在所有毁灭的结局里，你是唯一的仁慈。"</div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="widget w-2x2" onclick="showM('photoM')">
-                    <div class="pic-container">
-                        <div class="pic-text" id="ui-quote">"Thinking Different."</div>
-                        <div class="pic-wrapper">
-                            <img id="ui-img" class="pic-img" src="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100'><rect width='100' height='100' fill='%23f0f0f0'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' fill='%23aaa' font-weight='bold' font-family='sans-serif'>Tap to Upload</text></svg>">
-                        </div>
-                    </div>
-                </div>
+                <div class="widget w-2x2 music-card-v3" 
+                    style="grid-area: 3 / 1 / 5 / 3; background: linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%); border-radius: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); border: 1px solid rgba(255,255,255,0.5); cursor: pointer; position: relative; overflow: hidden;" 
+                    onclick="forceOpenMusicWidgetEditor()">
+                    
+                    <div id="mw-custom-bg" style="position: absolute; inset: 0; background-size: cover; background-position: center; z-index: 1; transition: opacity 0.3s; opacity: 0;"></div>
+                    
+                    <div class="player-container" style="position: relative; z-index: 3; background: transparent !important; height: 100%;">
+                        
+                        <div onclick="event.stopPropagation(); openApp('musicApp')" style="position: absolute; top: 10px; right: 10px; background: rgba(29, 29, 31, 0.1); backdrop-filter: blur(5px); border-radius: 12px; padding: 4px 8px; font-size: 10px; font-weight: 900; color: #1d1d1f; z-index: 10; cursor: pointer;">APP ↗</div>
 
-                <div class="widget w-4x1" onclick="openApp('musicApp')" style="cursor: pointer;">
-                    <div class="music-row">
-                        <div style="display:flex; align-items:center;">
-                            <div class="album-cover"></div>
-                            <div class="track-info">
-                                <span class="track-title">Luxury Vibe</span>
-                                <span class="track-artist">Lossless Audio</span>
+                        <div class="album-cover-v3" style="width: 70px; height: 70px; margin: 0 auto; border-radius: 50%; overflow: hidden; border: 3px solid #fff; box-shadow: 0 8px 20px rgba(0,0,0,0.15);">
+                            <div class="cover-inner" id="player-cover-v3" style="width: 100%; height: 100%; background-image: url('https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?w=400'); background-size: cover; background-position: center;"></div>
+                            <div class="play-pulse"></div>
+                        </div>
+
+                        <div class="track-meta-v3">
+                            <div class="track-title-v3" id="player-title" style="color: #1d1d1f; text-shadow: 0 1px 3px rgba(255,255,255,0.5);">Luxury Vibe</div>
+                            <div class="track-artist-v3" id="player-artist" style="color: #444; font-weight: 800;">Lossless Audio</div>
+                        </div>
+
+                        <div class="music-progress-v3">
+                            <div class="m-prog-bg" style="background: rgba(0,0,0,0.1) !important;">
+                                <div class="m-prog-fg" id="progress-fill" style="width: 30%; background: #1d1d1f !important;"></div>
                             </div>
                         </div>
-                        <div class="ctrl-btns">
-                            <svg style="width:24px;height:24px;fill:#333" viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
-                            <svg style="width:32px;height:32px;fill:#333" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-                            <svg style="width:24px;height:24px;fill:#333" viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>
+
+                        <div class="music-controls-v3" onclick="event.stopPropagation()">
+                            <div class="m-btn-icon" onclick="playPrevSong()" style="color: #1d1d1f;">
+                                <svg viewBox="0 0 24 24" style="width: 28px; height: 28px; fill: currentColor;"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
+                            </div>
+                            <div class="m-btn-icon main-play" onclick="togglePlay()" style="color: #1d1d1f;">
+                                <div id="play-state-icon">
+                                    <svg viewBox="0 0 24 24" style="width: 38px; height: 38px; fill: currentColor;"><path d="M8 5v14l11-7z"/></svg>
+                                </div>
+                            </div>
+                            <div class="m-btn-icon" onclick="playNextSong()" style="color: #1d1d1f;">
+                                <svg viewBox="0 0 24 24" style="width: 28px; height: 28px; fill: currentColor;"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>
+                            </div>
                         </div>
+
                     </div>
                 </div>
 
-                <div class="widget w-4x1">
-                    <div class="prog-stack">
-                        <div class="prog-header"><span>Daily Progress</span><span id="prog-txt">0.0%</span></div>
-                        <div class="prog-bg"><div class="prog-fg" id="prog-bar"></div></div>
-                    </div>
-                </div>
-
-                <div class="app-cell" onclick="openApp('wallApp')">
-                    <div class="icon-shape" style="background: linear-gradient(135deg, #FF9A9E 0%, #FECFEF 100%);">
-                        <svg class="svg-icon" viewBox="0 0 24 24" style="color:white;"><rect x="3" y="3" width="18" height="18" rx="2" ry="2" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="8.5" cy="8.5" r="1.5" fill="currentColor"/><polyline points="21 15 16 10 5 21" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+                <div class="app-cell" style="grid-area: 3 / 3 / 4 / 4;" onclick="openApp('wallApp')">
+                    <div class="glass-icon-bg">
+                        <svg class="glass-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                            <circle cx="8.5" cy="8.5" r="1.5"/>
+                            <polyline points="21 15 16 10 5 21"/>
+                        </svg>
                     </div>
                     <span class="app-name">Wallpaper</span>
                 </div>
                 
-                <div class="app-cell" onclick="openApp('settingsApp')">
-                    <div class="icon-shape" style="background: linear-gradient(135deg, #e5e5ea 0%, #d1d1d6 100%); color: #3a3a3c;">
-                        <svg class="svg-icon" viewBox="0 0 24 24" style="width:34px; height:34px;"><path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z" fill="currentColor"/></svg>
+                <div class="app-cell" style="grid-area: 3 / 4 / 4 / 5;" onclick="openApp('settingsApp')">
+                    <div class="glass-icon-bg">
+                        <svg class="glass-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                            <circle cx="12" cy="12" r="3"/>
+                        </svg>
                     </div>
                     <span class="app-name">Settings</span>
                 </div>
 
-                <div class="app-cell" onclick="openChatApp()">
-                    <div class="icon-shape" style="background: linear-gradient(135deg, #007AFF 0%, #00C6FF 100%); color: white;">
-                        <svg class="svg-icon" viewBox="0 0 24 24">
-                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" fill="currentColor"/>
+                <div class="app-cell" style="grid-area: 4 / 3 / 5 / 4;" onclick="openChatApp()">
+                    <div class="glass-icon-bg">
+                        <svg class="glass-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
                         </svg>
                     </div>
                     <span class="app-name">Chat</span>
                 </div>
-                <div class="app-cell" onclick="openPhotosApp()">
-                    <div class="icon-shape" style="background: linear-gradient(135deg, #FFD3A5 0%, #FD6585 100%); color: white;">
-                        <svg class="svg-icon" viewBox="0 0 24 24">
-                            <rect x="3" y="3" width="18" height="18" rx="2"/>
+
+                <div class="app-cell" style="grid-area: 4 / 4 / 5 / 5;" onclick="openApp('musicApp')">
+                    <div class="glass-icon-bg">
+                        <svg class="glass-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                            <path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>
+                        </svg>
+                    </div>
+                    <span class="app-name">Music</span>
+                </div>
+
+                <div class="app-cell" style="grid-area: 5 / 1 / 6 / 2;" onclick="openPhotosApp()">
+                    <div class="glass-icon-bg">
+                        <svg class="glass-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
                             <circle cx="8.5" cy="8.5" r="1.5"/>
                             <polyline points="21 15 16 10 5 21"/>
                         </svg>
@@ -28636,67 +29078,127 @@ input[type="range"] { width: 100%; accent-color: #000; cursor: pointer; }
                     <span class="app-name">Photos</span>
                 </div>
 
-                <div class="app-cell" onclick="openApp('musicApp')">
-                    <dThemeiv class="icon-shape" style="background: linear-gradient(135deg, #fb3a4d 0%, #fb6470 100%); color: white;">
-                        <svg class="svg-icon" viewBox="0 0 24 24">
-                            <path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>
-                        </svg>
-                    </dThemeiv>
-                    <span class="app-name">Music</span>
-                </div>
-
-                <div class="app-cell" onclick="openProfilesApp()">
-                    <div class="icon-shape" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
-                        <svg class="svg-icon" viewBox="0 0 24 24">
-                            <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                <div class="app-cell" style="grid-area: 5 / 2 / 6 / 3;" onclick="openProfilesApp()">
+                    <div class="glass-icon-bg">
+                        <svg class="glass-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                            <circle cx="12" cy="7" r="4"/>
                         </svg>
                     </div>
                     <span class="app-name">Profiles</span>
                 </div>
 
-                <div class="app-cell" onclick="openApp('phoneApp')">
-                    <div class="icon-shape" style="background: linear-gradient(135deg, #28C940 0%, #5ee172 100%); color: white;">
-                        <svg class="svg-icon" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                <div class="app-cell" style="grid-area: 6 / 1 / 7 / 2;" onclick="openApp('phoneApp')">
+                    <div class="glass-icon-bg">
+                        <svg class="glass-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+                        </svg>
                     </div>
                     <span class="app-name">Phone</span>
                 </div>
 
-                <div class="app-cell" onclick="openApp('messageApp')">
-                    <div class="icon-shape" style="background: linear-gradient(135deg, #21d4fd 0%, #b721ff 100%); color: white;">
-                        <svg class="svg-icon" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                <div class="app-cell" style="grid-area: 6 / 2 / 7 / 3;" onclick="openApp('messageApp')">
+                    <div class="glass-icon-bg">
+                        <svg class="glass-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                        </svg>
                     </div>
                     <span class="app-name">Messages</span>
                 </div>
+
+                <div class="widget w-2x2 bond-time-widget" style="grid-area: 5 / 3 / 7 / 5; cursor: pointer; position: relative; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; padding: 14px; box-sizing: border-box; border-radius: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); border: 1px solid rgba(255,255,255,0.1);" onclick="forceOpenBtwEditor()">
+    
+                    <div id="btw-bg-layer" style="position: absolute; inset: 0; background-color: #1d1d1f; background-size: cover; background-position: center; z-index: 1; transition: 0.3s;"></div>
+                    <div style="position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.7) 100%); z-index: 2; pointer-events: none;"></div>
+
+                    <div style="position: relative; z-index: 3; display: flex; flex-direction: column; gap: 14px; width: 100%;">
+                        
+                        <div style="display: flex; align-items: center; gap: 10px; background: rgba(255,255,255,0.15); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); padding: 6px 14px 6px 6px; border-radius: 40px; align-self: flex-start; border: 0.5px solid rgba(255,255,255,0.2);">
+                            <img id="btw-av-1" src="https://api.dicebear.com/7.x/notionists/svg?seed=Aura" style="width: 42px; height: 42px; border-radius: 50%; object-fit: cover; background: #fff; flex-shrink: 0;">
+                            <div id="btw-txt-1" style="font-size: 14px; color: #fff; font-weight: 800; max-width: 90px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: 0 1px 3px rgba(0,0,0,0.3);">Waiting...</div>
+                        </div>
+
+                        <div style="display: flex; align-items: center; gap: 10px; flex-direction: row-reverse; background: rgba(0,0,0,0.3); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); padding: 6px 6px 6px 14px; border-radius: 40px; align-self: flex-end; border: 0.5px solid rgba(255,255,255,0.1);">
+                            <img id="btw-av-2" src="https://api.dicebear.com/7.x/notionists/svg?seed=Neon" style="width: 42px; height: 42px; border-radius: 50%; object-fit: cover; background: #fff; flex-shrink: 0;">
+                            <div id="btw-txt-2" style="font-size: 14px; color: #fff; font-weight: 800; max-width: 90px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: 0 1px 3px rgba(0,0,0,0.3);">Connected.</div>
+                        </div>
+
+                    </div>
+
+                    <div style="position: relative; z-index: 3; width: 100%;">
+                        <div style="display: flex; justify-content: space-between; font-size: 10px; color: rgba(255,255,255,0.8); font-weight: 900; letter-spacing: 1px; margin-bottom: 8px;">
+                            <span>DAILY CYCLE</span>
+                            <span id="prog-txt" style="font-family: monospace;">0.0%</span>
+                        </div>
+                        <div style="width: 100%; height: 8px; background: rgba(255,255,255,0.2); border-radius: 4px; overflow: hidden; box-shadow: inset 0 1px 3px rgba(0,0,0,0.2);">
+                            <div id="prog-bar" style="height: 100%; background: #fff; width: 0%; box-shadow: 0 0 10px #fff; transition: width 1s linear;"></div>
+                        </div>
+                    </div>
+                </div>
+
             </div>
 
             <div class="main-container" id="page-2" style="display: grid; grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(6, 1fr); gap: 16px; padding: 20px;">
     
-                <div class="widget hero-cover-widget" style="grid-area: 1 / 1 / 3 / 5;" onclick="window.editHubField('hero')">
-                    <div class="hero-image-wrapper">
-                        <img id="hub-hero-img" src="https://images.unsplash.com/photo-1494438639946-1ebd1d20bf85?w=800&auto=format&fit=crop" alt="Hero">
-                        <div class="hero-overlay"></div>
-                    </div>
-                    <div class="hero-content-text">
-                        <span class="hero-tag" id="hub-hero-tag" onclick="event.stopPropagation(); window.editHubField('hero_tag')">FEATURED MOMENT</span>
-                        
-                        <h2 id="hub-hero-title" onclick="event.stopPropagation(); window.editHubField('hero_title')">Aesthetic Essence</h2>
-                        
-                        <p id="hub-hero-desc" onclick="event.stopPropagation(); window.editHubField('hero_desc')">"Design is intelligence made visible."</p>
-                    </div>
+                <div style="grid-area: 1 / 1 / 3 / 5; background: transparent !important; display: flex; flex-direction: column; justify-content: space-between; cursor: pointer; padding: 10px; z-index: 10;"
+                    onclick="forceOpenSocialWidgetEditor()">
                     
-                    <div class="hero-edit-icon">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                    <div style="display: flex; gap: 12px; height: 80px;">
+                        <div id="sw-img-1" style="flex: 1; border-radius: 18px; background: linear-gradient(135deg, #fbc2eb 0%, #a6c1ee 100%); background-size: cover; background-position: center; box-shadow: 0 4px 15px rgba(0,0,0,0.1);"></div>
+                        <div id="sw-img-2" style="flex: 1; border-radius: 18px; background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 99%); background-size: cover; background-position: center; box-shadow: 0 4px 15px rgba(0,0,0,0.1);"></div>
                     </div>
+
+                    <div style="display: flex; align-items: center; gap: 14px; padding: 5px 8px;">
+                        <div id="sw-avatar" style="width: 54px; height: 54px; border-radius: 50%; border: 2.5px solid #fff; box-shadow: 0 4px 12px rgba(0,0,0,0.15); background: linear-gradient(135deg, #a1fdd4 0%, #c2fbe5 100%); flex-shrink: 0; background-size: cover; background-position: center;"></div>
+                        <div style="display: flex; flex-direction: column; flex: 1; overflow: hidden;">
+                            <div id="sw-name" style="font-size: 20px; font-weight: 900; color: #1d1d1f; text-shadow: 0 1px 5px rgba(255,255,255,0.9), 0 0 10px rgba(255,255,255,0.8); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: -0.5px;">LUNE OS</div>
+                            <div id="sw-bio" style="font-size: 13px; color: #444; font-weight: 700; text-shadow: 0 1px 3px rgba(255,255,255,0.9); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px;">Collecting aesthetic fragments.</div>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; justify-content: space-around; align-items: center; padding: 12px 10px; background: rgba(255,255,255,0.2); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); border-radius: 20px; border: 1px solid rgba(255,255,255,0.5); box-shadow: 0 8px 20px rgba(0,0,0,0.05);">
+                        <div style="text-align: center; flex: 1;">
+                            <div id="sw-stat-fans" style="font-size: 16px; font-weight: 900; color: #1d1d1f;">12.5k</div>
+                            <div style="font-size: 9px; color: #1d1d1f; font-weight: 800; letter-spacing: 1px; margin-top: 2px;">FANS</div>
+                        </div>
+                        <div style="width: 1px; height: 20px; background: rgba(0,0,0,0.1);"></div>
+                        <div style="text-align: center; flex: 1;">
+                            <div id="sw-stat-follows" style="font-size: 16px; font-weight: 900; color: #1d1d1f;">28</div>
+                            <div style="font-size: 9px; color: #1d1d1f; font-weight: 800; letter-spacing: 1px; margin-top: 2px;">FOLLOWS</div>
+                        </div>
+                        <div style="width: 1px; height: 20px; background: rgba(0,0,0,0.1);"></div>
+                        <div style="text-align: center; flex: 1;">
+                            <div id="sw-stat-views" style="font-size: 16px; font-weight: 900; color: #1d1d1f;">890k</div>
+                            <div style="font-size: 9px; color: #1d1d1f; font-weight: 800; letter-spacing: 1px; margin-top: 2px;">VIEWS</div>
+                        </div>
+                    </div>
+
                 </div>
-                <div class="widget moment-card-widget" style="grid-area: 3 / 1 / 5 / 3;" onclick="window.editHubField('moment_img')">
-                    <div class="moment-photo-area">
-                        <img id="hub-moment-img" src="https://images.unsplash.com/photo-1517841905240-472988babdf9?w=400&auto=format&fit=crop" alt="Moment">
-                        <div class="moment-edit-hint">Change Photo</div>
+
+                <div class="moment-card-widget" 
+                    style="grid-area: 3 / 1 / 5 / 3; background: transparent !important; box-shadow: none !important; border: none !important; cursor: pointer; padding: 12px; display: flex; flex-direction: column; gap: 12px; overflow: hidden;" 
+                    onclick="window.editHubField('moment_img')">
+                    
+                    <div class="moment-photo-area" style="flex: 3; border-radius: 20px; overflow: hidden; position: relative; box-shadow: 0 4px 15px rgba(0,0,0,0.08);">
+                        <div id="hub-moment-img" style="width: 100%; height: 100%; background: linear-gradient(135deg, #fad0c4 0%, #ffd1ff 100%); background-size: cover; background-position: center;"></div>
+                        
+                        <div class="moment-edit-hint" style="background: rgba(0,0,0,0.2); backdrop-filter: blur(5px); color: #fff; font-weight: 700;">Change Color</div>
                     </div>
-                    <div class="moment-text-area">
-                        <h3 id="hub-moment-title" onclick="event.stopPropagation(); window.editHubField('moment_title')">Daily Focus</h3>
-                        <p id="hub-moment-desc" onclick="event.stopPropagation(); window.editHubField('moment_desc')">Keep it simple, keep it real.</p>
+
+                    <div class="moment-text-area" style="flex: 1; display: flex; flex-direction: column; justify-content: center; padding: 0 4px;">
+                        <h3 id="hub-moment-title" 
+                            onclick="event.stopPropagation(); window.editHubField('moment_title')" 
+                            style="margin: 0; font-size: 18px; font-weight: 900; color: #1d1d1f; letter-spacing: -0.5px; text-shadow: 0 1px 3px rgba(255,255,255,0.5);">
+                            Daily Focus
+                        </h3>
+                        
+                        <p id="hub-moment-desc" 
+                        onclick="event.stopPropagation(); window.editHubField('moment_desc')" 
+                        style="margin: 4px 0 0 0; font-size: 13px; color: #1d1d1f; font-weight: 700; opacity: 0.9; text-shadow: 0 1px 2px rgba(255,255,255,0.5);">
+                            Keep it simple, keep it real.
+                        </p>
                     </div>
+
                 </div>
 
                 <div class="app-cell" style="grid-area: 3 / 3 / 4 / 4;" onclick="window.openApp('vibe-grid-app')">
@@ -28740,7 +29242,7 @@ input[type="range"] { width: 100%; accent-color: #000; cursor: pointer; }
 
                 <div class="widget vibe-bar-widget" style="grid-area: 5 / 1 / 6 / 5;" onclick="window.editHubField('vibe_img')">
                     <div class="vibe-bg-wrapper">
-                        <img id="hub-vibe-img" src="https://images.unsplash.com/photo-1502759683299-cdcc6974244f?w=800&auto=format&fit=crop" alt="Vibe">
+                        <div id="hub-vibe-img" style="position: absolute; inset: 0; background: linear-gradient(135deg, #e3f2fd 0%, #fce4ec 100%);"></div>
                         <div class="vibe-overlay"></div>
                     </div>
                     <span id="hub-vibe-text" onclick="event.stopPropagation(); window.editHubField('vibe_text')">Current Vibe: Serenity</span>
@@ -28854,42 +29356,49 @@ input[type="range"] { width: 100%; accent-color: #000; cursor: pointer; }
 
     <div class="dock-container">
         <div class="dock-bar">
-            <div class="dock-app" data-app="RoleBook" onclick="openApp('charApp')" style="background: linear-gradient(135deg, #FF9A9E 0%, #FECFEF 100%);">
+            <div class="dock-app" data-app="RoleBook" onclick="openApp('charApp')">
+                <div class="glass-icon-bg">
+                    <svg class="glass-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+                        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+                    </svg>
+                </div>
                 <span class="app-name" style="display: none;">RoleBook</span>
-                <svg class="svg-icon" viewBox="0 0 24 24" style="color:white;">
-                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" stroke="currentColor" stroke-width="2" fill="none"/>
-                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" stroke="currentColor" stroke-width="2" fill="none"/>
-                </svg>
             </div>
 
-            <div class="dock-app" data-app="WorldBook" onclick="openApp('worldApp')" style="background: linear-gradient(135deg, #2c3e50 0%, #000000 100%);">
+            <div class="dock-app" data-app="WorldBook" onclick="openApp('worldApp')">
+                <div class="glass-icon-bg">
+                    <svg class="glass-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                        <circle cx="12" cy="12" r="2.5"/>
+                    </svg>
+                </div>
                 <span class="app-name" style="display: none;">WorldBook</span>
-                <svg class="svg-icon" viewBox="0 0 24 24" style="color:white; width:28px;">
-                    <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="currentColor" stroke-width="1.5" fill="none"/>
-                    <circle cx="12" cy="12" r="3" fill="rgba(255,255,255,0.2)"/>
-                </svg>
             </div>
 
-            <div class="dock-app" data-app="Beautify" onclick="openApp('beautifyApp')" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); position: relative;">
+            <div class="dock-app" data-app="Beautify" onclick="openApp('beautifyApp')">
+                <div class="glass-icon-bg">
+                    <svg class="glass-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"/>
+                        <path d="M12 8l-2 4h4l-2 4"/>
+                        <path d="M12 2v2M12 20v2M2 12h2M20 12h2" opacity="0.4"/>
+                    </svg>
+                </div>
                 <span class="app-name" style="display: none;">Beautify</span>
-                <svg class="svg-icon" viewBox="0 0 24 24" style="color:white; width:28px;">
-                    <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/>
-                    <path d="M12 8l-2 4h4l-2 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    <path d="M12 2v2M12 20v2M2 12h2M20 12h2" stroke="currentColor" stroke-width="1.5" opacity="0.5"/>
-                </svg>
             </div>
 
-            <div class="dock-app" data-app="Icons" onclick="openApp('iconApp')" style="background: linear-gradient(135deg, #2af598 0%, #009efd 100%);">
+            <div class="dock-app" data-app="Icons" onclick="openApp('iconApp')">
+                <div class="glass-icon-bg">
+                    <svg class="glass-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+                        <rect x="3" y="3" width="7" height="7" rx="1.5"/>
+                        <rect x="14" y="3" width="7" height="7" rx="1.5"/>
+                        <rect x="3" y="14" width="7" height="7" rx="1.5"/>
+                        <path d="M17.5 14v7M14 17.5h7"/>
+                    </svg>
+                </div>
                 <span class="app-name" style="display: none;">Icons</span>
-                <svg class="svg-icon" viewBox="0 0 24 24" style="color:white; width:28px;">
-                    <rect x="3" y="3" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="2" fill="none"/>
-                    <rect x="14" y="3" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="2" fill="none"/>
-                    <rect x="3" y="14" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="2" fill="none"/>
-                    <path d="M17.5 14v7M14 17.5h7" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
-                </svg>
             </div>
         </div>
-        <div class="home-indicator"></div>
     </div>
 
     <div class="modal-overlay" id="weatherM" onclick="hideM('weatherM')">
@@ -28955,11 +29464,34 @@ input[type="range"] { width: 100%; accent-color: #000; cursor: pointer; }
 
     <div class="modal-overlay" id="photoM" onclick="hideM('photoM')">
         <div class="modal-content" onclick="event.stopPropagation()">
-            <div class="modal-top"><span class="modal-h1">Customize</span><span class="modal-done" onclick="hideM('photoM')">Save</span></div>
-            <input type="text" id="q-in" placeholder="Type your quote..." style="width:100%; padding:16px; background:#f2f2f7; border:none; border-radius:14px; font-size:16px;">
-            <div class="upload-tools">
+            <div class="modal-top">
+                <span class="modal-h1">Customize</span>
+                <span class="modal-done" onclick="saveHeroAllConfig(); hideM('photoM')">Save</span>
+            </div>
+
+            <div style="display:flex; gap:10px; margin-bottom:15px;">
+                <input type="text" id="name1-in" placeholder="Name 1" style="flex:1; padding:14px; background:#f2f2f7; border:none; border-radius:12px; font-size:14px; font-weight:700; outline:none;">
+                <input type="text" id="name2-in" placeholder="Name 2" style="flex:1; padding:14px; background:#f2f2f7; border:none; border-radius:12px; font-size:14px; font-weight:700; outline:none;">
+            </div>
+
+            <input type="text" id="q-in" placeholder="Type your quote..." style="width:100%; padding:16px; background:#f2f2f7; border:none; border-radius:14px; font-size:16px; margin-bottom:15px; box-sizing:border-box; outline:none;">
+
+            <div style="display:flex; justify-content:space-around; align-items:center; margin-bottom:20px; padding:15px; background:#f2f2f7; border-radius:18px;">
+                <div style="text-align:center; cursor:pointer;" onclick="document.getElementById('av1-file').click()">
+                    <img id="av1-pre" src="https://api.dicebear.com/7.x/notionists/svg?seed=A" style="width:50px; height:50px; border-radius:50%; object-fit:cover; border:2px solid #fff; background:#fff; box-shadow:0 4px 10px rgba(0,0,0,0.05);">
+                    <div style="font-size:9px; color:#8e8e93; margin-top:8px; font-weight:800; letter-spacing:0.5px;">AVATAR 1</div>
+                    <input type="file" id="av1-file" style="display:none" accept="image/*" onchange="previewHeroAvatar(this, 1)">
+                </div>
+                <div style="text-align:center; cursor:pointer;" onclick="document.getElementById('av2-file').click()">
+                    <img id="av2-pre" src="https://api.dicebear.com/7.x/notionists/svg?seed=B" style="width:50px; height:50px; border-radius:50%; object-fit:cover; border:2px solid #fff; background:#fff; box-shadow:0 4px 10px rgba(0,0,0,0.05);">
+                    <div style="font-size:9px; color:#8e8e93; margin-top:8px; font-weight:800; letter-spacing:0.5px;">AVATAR 2</div>
+                    <input type="file" id="av2-file" style="display:none" accept="image/*" onchange="previewHeroAvatar(this, 2)">
+                </div>
+            </div>
+
+            <div class="upload-tools" style="border-top: 1px solid #eee; padding-top: 15px;">
                 <input type="file" id="f-in" style="display:none" accept="image/*" onchange="loadF(this)">
-                <div class="tool-btn" onclick="document.getElementById('f-in').click()">Photo Library</div>
+                <div class="tool-btn" onclick="document.getElementById('f-in').click()">Edit Background</div>
                 <div class="tool-btn" onclick="loadU()">Paste URL</div>
             </div>
         </div>
@@ -36717,6 +37249,162 @@ input[type="range"] { width: 100%; accent-color: #000; cursor: pointer; }
     <div id="comm-view-market" class="market-grid" style="display:none; overflow-y:auto;">
         </div>
 </div>
+<div id="hero-config-overlay" class="lune-config-mask" style="display:none;" onclick="closeHeroSettings()">
+    <div class="lune-config-card" onclick="event.stopPropagation()">
+        <div class="config-header">
+            <span>VISUAL PROTOCOL</span>
+            <div class="config-close" onclick="closeHeroSettings()">✕</div>
+        </div>
+        
+        <div class="config-body">
+            <div class="config-group">
+                <label>背景透明度 (WIDGET ALPHA)</label>
+                <input type="range" id="hero-alpha-slider" min="0" max="100" value="100" oninput="liveUpdateHeroAlpha(this.value)">
+                <div class="slider-labels"><span>CLEAR</span><span>SOLID</span></div>
+            </div>
+
+            <div class="config-group">
+                <label>自定义画卷 (BACKGROUND IMAGE)</label>
+                <div class="config-btn-row">
+                    <button class="c-btn-black" onclick="document.getElementById('hero-file-in').click()">UPLOAD</button>
+                    <button class="c-btn-outline" onclick="resetHeroVisuals()">RESET</button>
+                    <input type="file" id="hero-file-in" hidden accept="image/*" onchange="handleHeroImgUpload(this)">
+                </div>
+            </div>
+        </div>
+        <button class="config-save-btn" onclick="saveHeroProtocol()">SAVE CHANGES</button>
+    </div>
+</div>
+<div id="modal-btw-editor" onclick="if(event.target===this) closeBtwEditor()">
+    <div class="btw-edit-card" onclick="event.stopPropagation()">
+        <div class="btw-e-title">羁绊组件定制</div>
+        
+        <div class="btw-e-section">
+            <span class="btw-e-label">Widget Background (组件背景图)</span>
+            <div class="btw-e-bg-box" onclick="document.getElementById('btw-in-bg').click()">
+                <span id="btw-bg-hint">点击上传背景照片</span>
+                <img id="btw-pre-bg" src="">
+            </div>
+            <input type="file" id="btw-in-bg" accept="image/*" style="display:none" onchange="previewBtwFile(this, 'bg')">
+        </div>
+
+        <div class="btw-e-section">
+            <span class="btw-e-label">Left Character (左侧角色)</span>
+            <div class="btw-e-row">
+                <div class="btw-e-avatar-btn" onclick="document.getElementById('btw-in-av1').click()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+                    <img id="btw-pre-av1" src="">
+                </div>
+                <input type="file" id="btw-in-av1" accept="image/*" style="display:none" onchange="previewBtwFile(this, 'av1')">
+                <input type="text" id="btw-in-txt1" class="btw-e-input" placeholder="输入左侧文案...">
+            </div>
+        </div>
+
+        <div class="btw-e-section">
+            <span class="btw-e-label">Right Character (右侧角色)</span>
+            <div class="btw-e-row">
+                <input type="text" id="btw-in-txt2" class="btw-e-input" placeholder="输入右侧文案...">
+                <div class="btw-e-avatar-btn" onclick="document.getElementById('btw-in-av2').click()">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+                    <img id="btw-pre-av2" src="">
+                </div>
+                <input type="file" id="btw-in-av2" accept="image/*" style="display:none" onchange="previewBtwFile(this, 'av2')">
+            </div>
+        </div>
+
+        <div class="btw-e-actions">
+            <button class="btw-e-btn cancel" onclick="closeBtwEditor()">取消</button>
+            <button class="btw-e-btn save" onclick="saveBtwData()">保存同步</button>
+        </div>
+    </div>
+</div>
+<div id="modal-mw-editor" onclick="if(event.target===this) closeMusicWidgetEditor()">
+    <div class="mw-edit-card" onclick="event.stopPropagation()">
+        <div class="mw-e-title">定制音乐卡片</div>
+        
+        <div class="mw-e-section">
+            <div class="mw-e-label"><span>自定义背景</span><span style="color:#007AFF;cursor:pointer;" onclick="clearMwBg()">清空</span></div>
+            <div class="mw-e-bg-box" onclick="document.getElementById('mw-in-bg').click()">
+                <span id="mw-bg-hint">点击更换背景图</span>
+                <img id="mw-pre-bg" src="">
+            </div>
+            <input type="file" id="mw-in-bg" accept="image/*" style="display:none" onchange="previewMwFile(this, 'bg')">
+        </div>
+
+        <div id="mw-playing-lock" class="mw-locked-hint" style="margin-bottom:15px;">
+            🎶 音乐应用正在运作，已接管歌曲信息同步。
+        </div>
+
+        <div id="mw-manual-section" class="mw-e-section">
+            <span class="mw-e-label">手动同步状态 (Idle Mode)</span>
+            <div class="mw-e-row">
+                <div class="mw-e-avatar-btn" onclick="document.getElementById('mw-in-cover').click()">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+                    <img id="mw-pre-cover" src="">
+                </div>
+                <input type="file" id="mw-in-cover" accept="image/*" style="display:none" onchange="previewMwFile(this, 'cover')">
+                
+                <div style="flex:1; display:flex; flex-direction:column; gap:8px;">
+                    <input type="text" id="mw-in-title" class="mw-e-input" placeholder="输入歌名...">
+                    <input type="text" id="mw-in-artist" class="mw-e-input" placeholder="输入歌手...">
+                </div>
+            </div>
+        </div>
+
+        <div class="mw-e-actions">
+            <button class="mw-e-btn cancel" onclick="closeMusicWidgetEditor()">取消</button>
+            <button class="mw-e-btn save" onclick="saveMusicWidgetData()">保存设置</button>
+        </div>
+    </div>
+</div>
+<div id="modal-sw-editor" onclick="if(event.target===this) closeSocialWidgetEditor()">
+    <div class="sw-edit-card" onclick="event.stopPropagation()">
+        <div class="sw-e-title">定制社交名片</div>
+        
+        <div class="sw-e-section">
+            <div class="sw-e-label"><span>顶部双矩阵图</span><span style="color:#FF3B30;cursor:pointer;" onclick="clearSwImages()">清空</span></div>
+            <div class="sw-e-img-grid">
+                <div class="sw-e-img-box" onclick="document.getElementById('sw-in-img1').click()">
+                    <span id="sw-hint-img1">+ 左图</span>
+                    <img id="sw-pre-img1" src="">
+                </div>
+                <div class="sw-e-img-box" onclick="document.getElementById('sw-in-img2').click()">
+                    <span id="sw-hint-img2">+ 右图</span>
+                    <img id="sw-pre-img2" src="">
+                </div>
+            </div>
+            <input type="file" id="sw-in-img1" accept="image/*" style="display:none" onchange="previewSwFile(this, 'img1')">
+            <input type="file" id="sw-in-img2" accept="image/*" style="display:none" onchange="previewSwFile(this, 'img2')">
+        </div>
+
+        <div class="sw-e-section">
+            <span class="sw-e-label">基础资料</span>
+            <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                <div class="sw-e-img-box" style="width: 50px; height: 50px; border-radius: 50%;" onclick="document.getElementById('sw-in-avatar').click()">
+                    <span id="sw-hint-avatar" style="font-size: 8px;">头像</span>
+                    <img id="sw-pre-avatar" src="">
+                </div>
+                <input type="file" id="sw-in-avatar" accept="image/*" style="display:none" onchange="previewSwFile(this, 'avatar')">
+                <input type="text" id="sw-in-name" class="sw-e-input" placeholder="输入昵称..." style="flex: 1; margin-bottom: 0;">
+            </div>
+            <input type="text" id="sw-in-bio" class="sw-e-input" placeholder="输入个性签名..." style="margin-bottom: 0;">
+        </div>
+
+        <div class="sw-e-section">
+            <span class="sw-e-label">展示数据</span>
+            <div style="display: flex; gap: 8px;">
+                <input type="text" id="sw-in-fans" class="sw-e-input" placeholder="粉丝 (如 12.5k)">
+                <input type="text" id="sw-in-follows" class="sw-e-input" placeholder="关注 (如 28)">
+                <input type="text" id="sw-in-views" class="sw-e-input" placeholder="浏览量 (如 890k)">
+            </div>
+        </div>
+
+        <div class="sw-e-actions">
+            <button class="sw-e-btn cancel" onclick="closeSocialWidgetEditor()">取消</button>
+            <button class="sw-e-btn save" onclick="saveSocialWidgetData()">保存设置</button>
+        </div>
+    </div>
+</div>
 
 <script>
 class ImmersiveReader {
@@ -37922,6 +38610,634 @@ class ImmersiveReader {
     document.head.appendChild(style);
 })();
 
+// ==========================================
+// 🚨 终极抢救：被误删的【安保扫描与发车进度条】核心样式自动注入
+// ==========================================
+(function rescueLostStyles() {
+    if (document.getElementById('rescue-css-pack')) return;
+    const style = document.createElement('style');
+    style.id = 'rescue-css-pack';
+    
+    // 强制打入最高优先级的 CSS
+    style.innerHTML = `
+        /* 1. 被误删的：邀约状态检测仪 (RSVP Scanner) */
+        #cs-rsvp-scanner {
+            position: fixed !important; inset: 0 !important; background: rgba(5,5,5,0.95) !important;
+            backdrop-filter: blur(20px) !important; -webkit-backdrop-filter: blur(20px) !important;
+            z-index: 6000080 !important; display: none; flex-direction: column; 
+            align-items: center; justify-content: center; opacity: 0; transition: 0.4s;
+        }
+        #cs-rsvp-scanner.active { opacity: 1; }
+        
+        .rsvp-scan-circle {
+            width: 80px; height: 80px; border-radius: 50%; border: 2px dashed rgba(212,175,55,0.5);
+            display: flex; align-items: center; justify-content: center; margin-bottom: 25px;
+            animation: spin 4s linear infinite; position: relative;
+        }
+        .rsvp-scan-circle::after {
+            content: ''; position: absolute; inset: 5px; border-radius: 50%;
+            border: 2px solid transparent; border-top-color: #D4AF37; border-bottom-color: #D4AF37;
+            animation: spin 2s linear infinite reverse;
+        }
+        
+        .rsvp-status-text { font-family: 'Cinzel', serif; color: #fff; font-size: 16px; font-weight: 900; letter-spacing: 3px; text-align: center; }
+        .rsvp-sub-text { font-size: 10px; color: rgba(255,255,255,0.5); letter-spacing: 2px; margin-top: 8px; font-family: monospace; }
+        .rsvp-result-panel { display: none; flex-direction: column; align-items: center; animation: csFadeIn 0.4s ease backwards; }
+        
+        .rsvp-btn {
+            margin-top: 30px; padding: 15px 40px; border-radius: 30px; font-size: 13px; font-weight: 900; letter-spacing: 2px;
+            cursor: pointer; transition: 0.3s; border: none; display: flex; align-items: center; gap: 8px;
+        }
+        .rsvp-btn.depart { background: linear-gradient(135deg, #D4AF37, #aa7700); color: #000; box-shadow: 0 10px 25px rgba(212,175,55,0.25); }
+        .rsvp-btn.depart:active { transform: scale(0.95); }
+        .rsvp-btn.abort { background: transparent; border: 1px solid #FF3B30; color: #FF3B30; }
+
+        /* 2. 被误删的：用户赴约物理模拟器核心排版 */
+        #cs-user-travel-layer {
+            position: fixed !important; inset: 0 !important; z-index: 6000070 !important;
+            display: none; flex-direction: column; justify-content: center; padding: 0 40px;
+            opacity: 0; transition: 0.5s;
+            /* 兜底背景，防止 JS 还没算出来时透明 */
+            background: linear-gradient(135deg, #fdfcfb 0%, #e2d1c3 100%);
+        }
+        #cs-user-travel-layer.active { opacity: 1; }
+        
+        .ut-header { color: #333; font-family: 'Cinzel', serif; font-size: 14px; font-weight: 900; letter-spacing: 4px; margin-bottom: 50px; text-align: center; }
+        .ut-bar-bg { width: 100%; height: 4px; background: rgba(0,0,0,0.1); position: relative; border-radius: 2px; }
+        
+        .ut-bar-fill {
+            position: absolute; left: 0; top: 0; height: 100%; background: #D4AF37; width: 0%; border-radius: 2px;
+            box-shadow: 0 0 15px rgba(212,175,55,0.6); transition: width 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+        
+        .ut-data-row { display: flex; justify-content: space-between; margin-top: 15px; font-family: monospace; font-size: 11px; color: #555; font-weight: bold; letter-spacing: 1px; }
+    `;
+    
+    document.head.appendChild(style);
+    console.log("✅ 抢救成功：缺失的安保扫描仪与发车 CSS 已强行打入系统！");
+})();
+
+/* ==========================================
+   📸 社交透明名片组件引擎 (物理强制版)
+   ========================================== */
+
+var tempSwData = { img1: null, img2: null, avatar: null };
+
+// 1. 🚨 暴力唤醒弹窗 & 读取数据
+window.forceOpenSocialWidgetEditor = async function() {
+    console.log("System: 正在执行透明名片组件物理唤醒...");
+    let modal = document.getElementById('modal-sw-editor');
+    
+    if (!modal) return alert("❌ 找不到 modal-sw-editor");
+
+    // A. 物理搬运：脱离父级限制置顶
+    if (modal.parentElement !== document.body) document.body.appendChild(modal);
+
+    // B. 回显数据库数据
+    try {
+        const data = await window.ib.getItem('lune_social_widget_data') || {};
+        
+        // 文字回填
+        document.getElementById('sw-in-name').value = data.name || "LUNE OS";
+        document.getElementById('sw-in-bio').value = data.bio || "Collecting aesthetic fragments.";
+        document.getElementById('sw-in-fans').value = data.fans || "12.5k";
+        document.getElementById('sw-in-follows').value = data.follows || "28";
+        document.getElementById('sw-in-views').value = data.views || "890k";
+
+        // 图片回填
+        if (data.img1) {
+            document.getElementById('sw-pre-img1').src = data.img1;
+            document.getElementById('sw-pre-img1').style.display = 'block';
+            document.getElementById('sw-hint-img1').style.display = 'none';
+            tempSwData.img1 = data.img1;
+        } else {
+            tempSwData.img1 = null;
+            document.getElementById('sw-pre-img1').style.display = 'none';
+            document.getElementById('sw-hint-img1').style.display = 'block';
+        }
+
+        if (data.img2) {
+            document.getElementById('sw-pre-img2').src = data.img2;
+            document.getElementById('sw-pre-img2').style.display = 'block';
+            document.getElementById('sw-hint-img2').style.display = 'none';
+            tempSwData.img2 = data.img2;
+        } else {
+            tempSwData.img2 = null;
+            document.getElementById('sw-pre-img2').style.display = 'none';
+            document.getElementById('sw-hint-img2').style.display = 'block';
+        }
+
+        if (data.avatar) {
+            document.getElementById('sw-pre-avatar').src = data.avatar;
+            document.getElementById('sw-pre-avatar').style.display = 'block';
+            document.getElementById('sw-hint-avatar').style.display = 'none';
+            tempSwData.avatar = data.avatar;
+        }
+    } catch (e) { console.error("读取组件数据失败", e); }
+
+    // C. 暴力覆写样式强制显示
+    modal.style.cssText = `
+        display: flex !important; position: fixed !important; inset: 0 !important;
+        z-index: 8000010 !important; opacity: 1 !important; visibility: visible !important;
+        pointer-events: auto !important; transition: opacity 0.3s ease;
+    `;
+
+    // 触发动画
+    modal.classList.remove('active');
+    void modal.offsetWidth;
+    modal.classList.add('active');
+
+    if (navigator.vibrate) navigator.vibrate(10);
+};
+
+// 2. 关闭编辑器
+window.closeSocialWidgetEditor = function() {
+    const modal = document.getElementById('modal-sw-editor');
+    if (modal) {
+        modal.classList.remove('active');
+        setTimeout(() => { modal.style.display = 'none'; }, 300);
+    }
+};
+
+// 3. 文件预览与转码压缩
+window.previewSwFile = function(input, targetKey) {
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = async function(e) {
+            const base64 = e.target.result;
+            // 压缩图片防止爆掉数据库
+            const compressed = typeof compressImage === 'function' ? await compressImage(base64, 600) : base64;
+            
+            tempSwData[targetKey] = compressed;
+
+            const imgEl = document.getElementById(`sw-pre-${targetKey}`);
+            if (imgEl) {
+                imgEl.src = compressed;
+                imgEl.style.display = 'block';
+            }
+            const hintEl = document.getElementById(`sw-hint-${targetKey}`);
+            if (hintEl) hintEl.style.display = 'none';
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+};
+
+// 清空顶部的两张图
+window.clearSwImages = function() {
+    tempSwData.img1 = null; tempSwData.img2 = null;
+    document.getElementById('sw-pre-img1').style.display = 'none';
+    document.getElementById('sw-hint-img1').style.display = 'block';
+    document.getElementById('sw-pre-img2').style.display = 'none';
+    document.getElementById('sw-hint-img2').style.display = 'block';
+};
+
+// 4. 💾 保存并物理渲染到桌面
+window.saveSocialWidgetData = async function() {
+    const btn = document.querySelector('#modal-sw-editor .sw-e-btn.save');
+    if (btn) btn.innerText = "SAVING...";
+
+    const newData = {
+        name: document.getElementById('sw-in-name').value.trim() || "LUNE OS",
+        bio: document.getElementById('sw-in-bio').value.trim() || "Collecting aesthetic fragments.",
+        fans: document.getElementById('sw-in-fans').value.trim() || "12.5k",
+        follows: document.getElementById('sw-in-follows').value.trim() || "28",
+        views: document.getElementById('sw-in-views').value.trim() || "890k",
+        img1: tempSwData.img1,
+        img2: tempSwData.img2,
+        avatar: tempSwData.avatar
+    };
+
+    try {
+        await window.ib.setItem('lune_social_widget_data', newData);
+        
+        // 渲染到桌面
+        renderSocialWidgetUI(newData);
+        
+        if (window.triggerSuccessHud) triggerSuccessHud("名片已同步");
+        closeSocialWidgetEditor();
+    } catch (e) {
+        alert("保存失败: 可能是图片体积过大");
+        console.error(e);
+    } finally {
+        if (btn) btn.innerText = "保存设置";
+    }
+};
+
+// 5. 渲染桌面组件 UI
+window.renderSocialWidgetUI = function(data) {
+    if (!data) return;
+    
+    // 文字
+    if (document.getElementById('sw-name')) document.getElementById('sw-name').textContent = data.name;
+    if (document.getElementById('sw-bio')) document.getElementById('sw-bio').textContent = data.bio;
+    if (document.getElementById('sw-stat-fans')) document.getElementById('sw-stat-fans').textContent = data.fans;
+    if (document.getElementById('sw-stat-follows')) document.getElementById('sw-stat-follows').textContent = data.follows;
+    if (document.getElementById('sw-stat-views')) document.getElementById('sw-stat-views').textContent = data.views;
+
+    // 图片 (注意：如果是 null 就还原成自带的马卡龙 CSS 渐变，不渲染空 URL)
+    const img1Layer = document.getElementById('sw-img-1');
+    if (img1Layer) {
+        if (data.img1) img1Layer.style.backgroundImage = `url('${data.img1}')`;
+        else img1Layer.style.backgroundImage = `linear-gradient(135deg, #fbc2eb 0%, #a6c1ee 100%)`;
+    }
+    
+    const img2Layer = document.getElementById('sw-img-2');
+    if (img2Layer) {
+        if (data.img2) img2Layer.style.backgroundImage = `url('${data.img2}')`;
+        else img2Layer.style.backgroundImage = `linear-gradient(135deg, #ff9a9e 0%, #fecfef 99%)`;
+    }
+
+    const avatar = document.getElementById('sw-avatar');
+    if (avatar && data.avatar) {
+        avatar.style.backgroundImage = `url('${data.avatar}')`;
+    }
+};
+
+// 6. 🔄 开机自启：加载桌面数据
+document.addEventListener('DOMContentLoaded', async () => {
+    try {
+        const data = await window.ib.getItem('lune_social_widget_data');
+        if (data) renderSocialWidgetUI(data);
+    } catch (e) { console.warn("社交名片组件读取挂起"); }
+});
+
+// ==========================================
+// 🚀 图标工坊：终极物理自愈引擎 (基于 window.ib 重构版)
+// ==========================================
+
+// 1. 物理级渲染引擎：从全局 ib 提取数据并强制擦除默认样式
+window.applyAllCustomIcons = async function() {
+    try {
+        // 🚨 核心修复：直接从你无限容量的 window.ib 库中拿取图标映射字典
+        const iconMap = await window.ib.getItem('lune_custom_icons') || {};
+        
+        // 如果没人改过图标，直接跳过，节省性能
+        if (Object.keys(iconMap).length === 0) return;
+
+        // 扫描所有潜在目标 (桌面 App 与 Dock 栏)
+        const allTargets = document.querySelectorAll('.app-cell, .dock-app');
+        
+        allTargets.forEach(function(app) {
+            // 身份识别优先级
+            let name = app.getAttribute('data-app');
+            if (!name) {
+                const nameEl = app.querySelector('.app-name');
+                name = nameEl ? nameEl.textContent.trim() : "";
+            }
+            if (!name) {
+                const act = app.getAttribute('onclick') || "";
+                if (act.includes('charApp')) name = "RoleBook";
+                if (act.includes('worldApp')) name = "WorldBook";
+                if (act.includes('beautifyApp')) name = "Beautify";
+                if (act.includes('iconApp')) name = "Icons";
+            }
+
+            // 🎯 如果在数据库里找到了这个 App 的自定义图标，执行物理替换
+            if (name && iconMap[name]) {
+                const box = app.querySelector('.icon-shape') || 
+                            app.querySelector('.glass-icon-bg') || 
+                            app;
+
+                // 🚨 强制重置样式：物理移除背景渐变，注入 !important 样式
+                box.style.cssText = "background: transparent !important; box-shadow: none !important; border: none !important; overflow: hidden !important;";
+                
+                // 注入图片：直接使用 base64 填满盒子
+                box.innerHTML = `<img src="${iconMap[name]}" style="width:100%; height:100%; object-fit:cover; border-radius:inherit; display:block;">`;
+            }
+        });
+        console.log("System: 桌面图标已完成高维覆写 (Loaded from IB)");
+    } catch (e) {
+        console.error("图标渲染失败:", e);
+    }
+};
+
+// 2. 💾 终极保存协议：彻底解决“再点一次”和“刷新失效”
+window.saveIconCustomization = async function() {
+    // A. 物理检查：如果全局变量丢了，直接从 UI 标签里现抓
+    if (!window.currentIconTarget) {
+        const label = document.getElementById('val-icon-target');
+        if (label && label.textContent !== "请选择...") {
+            window.currentIconTarget = label.textContent.trim();
+        }
+    }
+    if (!window.tempIconData) {
+        const img = document.getElementById('icon-pre-img');
+        if (img && img.src && img.style.display !== 'none') {
+            window.tempIconData = img.src;
+        }
+    }
+
+    // B. 精准报错提示
+    if (!window.currentIconTarget || !window.tempIconData) {
+        alert("保存失败：目标 App 名字或图标数据丢失，请重新选择。");
+        return;
+    }
+
+    try {
+        // C. 🚨 核心逻辑：读取旧字典 -> 塞入新图标 -> 存回数据库
+        let iconMap = await window.ib.getItem('lune_custom_icons') || {};
+        iconMap[window.currentIconTarget] = window.tempIconData; // 以 App 名字为 Key 存图片
+        
+        await window.ib.setItem('lune_custom_icons', iconMap);
+
+        // D. 立即刷新全站图标
+        await window.applyAllCustomIcons(); 
+        
+        // E. 成功反馈
+        if (window.triggerSuccessHud) {
+            triggerSuccessHud("全域图标已同步");
+        } else if (typeof showToast === 'function') {
+            showToast("✅ 图标修改成功");
+        }
+
+        // F. 延迟关闭 App (仪式感)
+        setTimeout(function() { 
+            if (typeof closeApp === 'function') closeApp('iconApp'); 
+        }, 800);
+
+    } catch (err) {
+        console.error("Save Logic Crash:", err);
+        alert("数据库写入失败，图片可能超过了单次转换体积，请尝试更小的图片。");
+    }
+};
+
+// 3. 🚀 系统自启动防回退锁
+// 确保一打开网页、无论怎么刷新，都会自动执行替换
+document.addEventListener('DOMContentLoaded', () => {
+    // 延迟 300ms 等待 HTML 节点生成完毕后，强行给图标换衣服
+    setTimeout(window.applyAllCustomIcons, 300);
+});
+
+// 针对手机端滑动返回、唤醒时的缓存问题，执行强制刷新渲染
+window.addEventListener('pageshow', () => {
+    window.applyAllCustomIcons();
+});
+
+/* ==========================================
+   🎵 音乐桌面组件引擎：智能防冲突版
+   ========================================== */
+
+var tempMwData = { bg: null, cover: null };
+
+// 1. 🚨 暴力唤醒弹窗 & 判定播放状态
+window.forceOpenMusicWidgetEditor = async function() {
+    const modal = document.getElementById('modal-mw-editor');
+    if (!modal) return alert("❌ 找不到 modal-mw-editor");
+
+    // 物理层级提权
+    if (modal.parentElement !== document.body) document.body.appendChild(modal);
+
+    // 🌟 核心判断：音乐是否在播放？
+    const audio = document.getElementById('main-audio-engine');
+    const isPlaying = audio && (!audio.paused || audio.currentTime > 0);
+    
+    // UI 联动：如果正在播放，隐藏手动修改歌名，提示已被接管
+    document.getElementById('mw-manual-section').style.display = isPlaying ? 'none' : 'block';
+    document.getElementById('mw-playing-lock').style.display = isPlaying ? 'block' : 'none';
+
+    // 回显本地数据库中的设置
+    try {
+        const data = await window.ib.getItem('lune_music_widget_data') || {};
+        
+        document.getElementById('mw-in-title').value = data.title || "Vibe Sync";
+        document.getElementById('mw-in-artist').value = data.artist || "LUNE ENGINE";
+
+        if (data.bg) {
+            document.getElementById('mw-pre-bg').src = data.bg;
+            document.getElementById('mw-pre-bg').style.display = 'block';
+            document.getElementById('mw-bg-hint').style.display = 'none';
+            tempMwData.bg = data.bg;
+        } else {
+            clearMwBg(); // 确保默认没图
+        }
+
+        if (data.cover) {
+            document.getElementById('mw-pre-cover').src = data.cover;
+            document.getElementById('mw-pre-cover').style.display = 'block';
+            tempMwData.cover = data.cover;
+        }
+    } catch(e) {}
+
+    modal.style.cssText = "display: flex !important; position: fixed !important; inset: 0 !important; z-index: 8000000 !important; opacity: 1 !important; visibility: visible !important;";
+    modal.classList.remove('active'); void modal.offsetWidth; modal.classList.add('active');
+    if (navigator.vibrate) navigator.vibrate(10);
+};
+
+// 2. 文件预览与压缩
+window.previewMwFile = function(input, type) {
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = async function(e) {
+            const base64 = e.target.result;
+            // 调用你写过的压缩，防止卡死
+            const compressed = typeof compressImage === 'function' ? await compressImage(base64, 600) : base64;
+            
+            tempMwData[type] = compressed;
+            const imgEl = document.getElementById(`mw-pre-${type}`);
+            if (imgEl) {
+                imgEl.src = compressed;
+                imgEl.style.display = 'block';
+            }
+            if (type === 'bg') document.getElementById('mw-bg-hint').style.display = 'none';
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+};
+
+window.clearMwBg = function() {
+    tempMwData.bg = null;
+    document.getElementById('mw-pre-bg').style.display = 'none';
+    document.getElementById('mw-bg-hint').style.display = 'block';
+}
+
+window.closeMusicWidgetEditor = function() {
+    const modal = document.getElementById('modal-mw-editor');
+    if (modal) {
+        modal.classList.remove('active');
+        setTimeout(() => modal.style.display = 'none', 300);
+    }
+};
+
+// 3. 💾 保存设置 & 触发渲染
+window.saveMusicWidgetData = async function() {
+    const newData = {
+        title: document.getElementById('mw-in-title').value.trim() || "Vibe Sync",
+        artist: document.getElementById('mw-in-artist').value.trim() || "LUNE ENGINE",
+        bg: tempMwData.bg,
+        cover: tempMwData.cover
+    };
+
+    try {
+        await window.ib.setItem('lune_music_widget_data', newData);
+        window.syncHomeMusicWidget(); // 物理强制调用同步函数
+        if (window.triggerSuccessHud) triggerSuccessHud("卡片已重塑");
+        closeMusicWidgetEditor();
+    } catch(e) {
+        alert("保存失败，图片可能过大");
+    }
+};
+
+// 开机自启动，刷一次数据
+document.addEventListener('DOMContentLoaded', () => {
+    setTimeout(window.syncHomeMusicWidget, 300);
+});
+
+/* ==========================================
+   🕰️ 双人羁绊与时间组件引擎 (物理强制版)
+   ========================================== */
+
+var tempBtwData = { bg: null, av1: null, av2: null };
+
+// 1. 🚨 暴力唤醒弹窗 (模仿直播/购物APP的逻辑)
+window.forceOpenBtwEditor = async function() {
+    console.log("System: 正在执行羁绊组件暴力唤醒程序...");
+    let modal = document.getElementById('modal-btw-editor');
+    
+    if (!modal) {
+        alert("❌ 找不到 modal-btw-editor");
+        return;
+    }
+
+    // A. 物理搬运：脱离父级限制
+    if (modal.parentElement !== document.body) {
+        document.body.appendChild(modal);
+    }
+
+    // B. 尝试从数据库读取并回显
+    try {
+        const data = await window.ib.getItem('lune_bond_widget_data') || {};
+        
+        document.getElementById('btw-in-txt1').value = data.txt1 || "Waiting...";
+        document.getElementById('btw-in-txt2').value = data.txt2 || "Connected.";
+
+        if (data.bg) {
+            document.getElementById('btw-pre-bg').src = data.bg;
+            document.getElementById('btw-pre-bg').style.display = 'block';
+            document.getElementById('btw-bg-hint').style.display = 'none';
+            tempBtwData.bg = data.bg;
+        }
+        if (data.av1) {
+            document.getElementById('btw-pre-av1').src = data.av1;
+            document.getElementById('btw-pre-av1').style.display = 'block';
+            tempBtwData.av1 = data.av1;
+        }
+        if (data.av2) {
+            document.getElementById('btw-pre-av2').src = data.av2;
+            document.getElementById('btw-pre-av2').style.display = 'block';
+            tempBtwData.av2 = data.av2;
+        }
+    } catch (e) { console.error("读取组件数据失败", e); }
+
+    // C. 暴力覆写样式强制显示
+    modal.style.cssText = `
+        display: flex !important;
+        position: fixed !important;
+        inset: 0 !important;
+        z-index: 2147483647 !important;
+        background: rgba(0,0,0,0.6) !important;
+        backdrop-filter: blur(15px) !important;
+        -webkit-backdrop-filter: blur(15px) !important;
+        align-items: center !important;
+        justify-content: center !important;
+        opacity: 1 !important;
+        visibility: visible !important;
+        pointer-events: auto !important;
+        transition: opacity 0.3s ease;
+    `;
+
+    // 触发内部缩放动画
+    modal.classList.remove('active');
+    void modal.offsetWidth;
+    modal.classList.add('active');
+
+    if (navigator.vibrate) navigator.vibrate(10);
+};
+
+// 2. 关闭弹窗
+window.closeBtwEditor = function() {
+    const modal = document.getElementById('modal-btw-editor');
+    if (modal) {
+        modal.classList.remove('active');
+        setTimeout(() => { modal.style.display = 'none'; }, 300);
+    }
+};
+
+// 3. 文件预览
+window.previewBtwFile = function(input, targetKey) {
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = async function(e) {
+            const base64 = e.target.result;
+            // 如果有你之前写好的压缩函数，自动压缩防爆库
+            const compressed = typeof compressImage === 'function' ? await compressImage(base64, 800) : base64;
+            
+            tempBtwData[targetKey] = compressed;
+
+            const imgEl = document.getElementById(`btw-pre-${targetKey}`);
+            if (imgEl) {
+                imgEl.src = compressed;
+                imgEl.style.display = 'block';
+            }
+            if (targetKey === 'bg') document.getElementById('btw-bg-hint').style.display = 'none';
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+};
+
+// 4. 保存并物理渲染
+window.saveBtwData = async function() {
+    const btn = document.querySelector('#modal-btw-editor .btw-e-btn.save');
+    if (btn) btn.innerText = "SAVING...";
+
+    const newData = {
+        txt1: document.getElementById('btw-in-txt1').value.trim() || "Waiting...",
+        txt2: document.getElementById('btw-in-txt2').value.trim() || "Connected.",
+        bg: tempBtwData.bg,
+        av1: tempBtwData.av1,
+        av2: tempBtwData.av2
+    };
+
+    try {
+        await window.ib.setItem('lune_bond_widget_data', newData);
+        
+        // 渲染到桌面
+        const bgLayer = document.getElementById('btw-bg-layer');
+        if (bgLayer && newData.bg) bgLayer.style.backgroundImage = `url(${newData.bg})`;
+        
+        const av1 = document.getElementById('btw-av-1');
+        const av2 = document.getElementById('btw-av-2');
+        if (av1 && newData.av1) av1.src = newData.av1;
+        if (av2 && newData.av2) av2.src = newData.av2;
+
+        const txt1 = document.getElementById('btw-txt-1');
+        const txt2 = document.getElementById('btw-txt-2');
+        if (txt1) txt1.textContent = newData.txt1;
+        if (txt2) txt2.textContent = newData.txt2;
+        
+        if (window.triggerSuccessHud) triggerSuccessHud("羁绊已同步");
+        closeBtwEditor();
+    } catch (e) {
+        alert("保存失败: 可能是图片体积过大");
+        console.error(e);
+    } finally {
+        if (btn) btn.innerText = "保存同步";
+    }
+};
+
+// 5. 开机自启：加载桌面数据
+document.addEventListener('DOMContentLoaded', async () => {
+    try {
+        const data = await window.ib.getItem('lune_bond_widget_data');
+        if (data) {
+            if (data.bg) document.getElementById('btw-bg-layer').style.backgroundImage = `url(${data.bg})`;
+            if (data.av1) document.getElementById('btw-av-1').src = data.av1;
+            if (data.av2) document.getElementById('btw-av-2').src = data.av2;
+            if (data.txt1) document.getElementById('btw-txt-1').textContent = data.txt1;
+            if (data.txt2) document.getElementById('btw-txt-2').textContent = data.txt2;
+        }
+    } catch (e) { console.warn("羁绊组件读取挂起"); }
+});
+
 // 关闭弹窗的物理逻辑
 window.closeSyncSuccessPopup = function() {
     const popup = document.getElementById('sync-success-popup');
@@ -38010,7 +39326,7 @@ window.renderCinemaList = function(containerId, dailyList) {
             : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="15" rx="2" ry="2"></rect><polyline points="17 2 12 7 7 2"></polyline><circle cx="12" cy="14" r="3"></circle></svg>`;
 
         return `
-        <div class="${cardClass}" onclick="openTheatreMode('${item.name}')" style="animation: csFadeIn 0.5s ease backwards ${i * 0.08}s; z-index: ${fullList.length - i};">
+        <div class="${cardClass}" onclick="attemptEnterVenue('${item.name.replace(/'/g, "\\'")}', '${item.status || ''}')" style="animation: csFadeIn 0.5s ease backwards ${i * 0.08}s; z-index: ${fullList.length - i};">
             ${badgeHtml}
             <div class="cs-cv-header">
                 <div class="cs-cv-loc">
@@ -38034,6 +39350,111 @@ window.renderCinemaList = function(containerId, dailyList) {
         </div>
         `;
     }).join('');
+};
+
+// ==========================================
+// 🚨 门禁安保协议：AI 状态拦截引擎
+// ==========================================
+window.attemptEnterVenue = async function(venueName, venueStatus) {
+    // 如果没有状态，直接放行（比如没写状态的普通海报）
+    if (!venueStatus) {
+        openTheatreMode(venueName);
+        return;
+    }
+
+    // 1. 启动扫描 UI
+    const scanner = document.getElementById('cs-gate-scanner');
+    document.getElementById('cs-scan-target').innerText = `NODE // ${venueName.toUpperCase()}`;
+    scanner.style.display = 'flex';
+    void scanner.offsetWidth;
+    scanner.classList.add('active');
+    
+    if (navigator.vibrate) navigator.vibrate([10, 20]);
+
+    try {
+        const apiKey = localStorage.getItem('gpt_key');
+        let apiUrl = (localStorage.getItem('gpt_url') || "https://api.openai.com/v1").replace(/\/+$/, "");
+        if (!apiKey) throw new Error("安保系统未联网");
+
+        // 2. 🧠 AI 逻辑门卫：判断状态是否允许进入
+        const prompt = `你是一个极度高冷的顶级私人影院安保系统。
+        现在有用户试图进入放映室：【${venueName}】。
+        当前该放映室的实时营业状态是：【${venueStatus}】。
+
+        任务：
+        根据现实逻辑判断用户能否进入。
+        - 如果状态表示正常营业、空闲等，允许进入 ("allow": true)。
+        - 如果状态表示已被包场、设备维修、休息中、满座等，必须拒绝进入 ("allow": false)！
+        
+        如果拒绝，请在 "reason" 字段给出一句符合安保身份的高冷拒绝语（20字以内，如：该厅已被神秘财阀包场，闲人免进。/ 放映机冷却中，请勿强行闯入。）
+        如果允许，"reason" 字段留空。
+
+        【绝对命令】只输出 JSON 对象，格式如下：
+        {"allow": true, "reason": ""} 或 {"allow": false, "reason": "高冷的拒绝理由"}`;
+
+        const res = await fetch(`${apiUrl}/chat/completions`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+            body: JSON.stringify({
+                model: localStorage.getItem('gpt_model') || "gpt-3.5-turbo",
+                messages: [{ role: "user", content: prompt }],
+                temperature: 0.2 // 低温度，确保安保逻辑严谨
+            })
+        });
+
+        const data = await res.json();
+        if (data.error) throw new Error(data.error.message);
+
+        const rawContent = data.choices[0].message.content.trim();
+        const jsonMatch = rawContent.match(/\{[\s\S]*\}/);
+        if (!jsonMatch) throw new Error("安保协议解析失败");
+
+        const result = JSON.parse(jsonMatch[0]);
+
+        // 3. 关闭扫描仪
+        scanner.classList.remove('active');
+        setTimeout(() => { scanner.style.display = 'none'; }, 300);
+
+        // 4. 根据 AI 的判定执行物理放行或阻断
+        if (result.allow) {
+            // 放行！进入候场选人界面
+            setTimeout(() => { openTheatreMode(venueName); }, 300);
+        } else {
+            // 阻断！弹出血红色的拒绝访问卡片
+            if (navigator.vibrate) navigator.vibrate([50, 100, 50]); // 警告震动
+            document.getElementById('cs-denied-reason').innerText = result.reason || "当前状态不可访问。";
+            
+            const deniedModal = document.getElementById('cs-access-denied');
+            deniedModal.style.display = 'flex';
+            void deniedModal.offsetWidth;
+            deniedModal.classList.add('active');
+        }
+
+    } catch (e) {
+        console.error("Gatekeeper Error:", e);
+        scanner.classList.remove('active');
+        setTimeout(() => { scanner.style.display = 'none'; }, 300);
+        
+        // 兜底逻辑：如果 AI 断连，基于关键词进行粗暴的物理拦截
+        const blockWords = ["包场", "满", "修", "息", "故障", "紧张", "未"];
+        const isBlocked = blockWords.some(w => venueStatus.includes(w));
+        
+        if (isBlocked) {
+            document.getElementById('cs-denied-reason').innerText = `安保系统离线，但物理锁检测到状态 [${venueStatus}]，强制拦截。`;
+            const deniedModal = document.getElementById('cs-access-denied');
+            deniedModal.style.display = 'flex';
+            void deniedModal.offsetWidth;
+            deniedModal.classList.add('active');
+        } else {
+            openTheatreMode(venueName);
+        }
+    }
+};
+
+window.closeAccessDenied = function() {
+    const deniedModal = document.getElementById('cs-access-denied');
+    deniedModal.classList.remove('active');
+    setTimeout(() => { deniedModal.style.display = 'none'; }, 300);
 };
 
 // 3. 🚀 覆盖 App 启动函数：确保读取的是动态数据，而不是写死的数据
@@ -38532,26 +39953,66 @@ window.sendLobbyMessage = function() {
     input.value = "";
 };
 
-// 5. 占位：发送精美邀请函卡片
+// 全局变量：跟踪当前正在生效的邀请函 ID
+window.currentActiveInviteId = null;
+
+// ==========================================
+// 1. 发送高定实体邀请函
+// ==========================================
 window.sendLobbyInvitation = function() {
-    const text = `[系统] 发送了一张前往「${window.currentCinemaName}」的黑色烫金观影票根。`;
-    appendLobbyBubble("我", text, "https://api.dicebear.com/7.x/initials/svg?seed=Me", true);
-    window.lobbyHistory.push({ role: "user", content: text });
+    const flow = document.getElementById('cs-lobby-flow');
+    if (!flow) return;
+
+    // 震动反馈
+    if (navigator.vibrate) navigator.vibrate([20, 40]);
+
+    // 生成唯一邀请函 ID
+    const inviteId = 'inv-' + Date.now();
+    window.currentActiveInviteId = inviteId; // 记录激活状态
+
+    // 物理注入实体黑金卡片
+    const wrapper = document.createElement('div');
+    wrapper.className = 'cs-invite-wrapper';
+    wrapper.innerHTML = `
+        <div class="cs-vip-ticket" id="${inviteId}">
+            <div class="ticket-brand">PREMIERE INVITATION</div>
+            <div class="ticket-title">私人观影邀约</div>
+            <div class="ticket-venue">LOC: ${window.currentCinemaName.toUpperCase()}</div>
+            
+            <div class="ticket-status-box">
+                <div class="ticket-status pending" id="status-${inviteId}">
+                    <svg class="spin-anim" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M21 12a9 9 0 1 1-6.219-8.56"></path></svg>
+                    AWAITING RSVP... (待同行者回应)
+                </div>
+                <div class="ticket-acceptors" id="acceptors-${inviteId}"></div>
+            </div>
+        </div>
+    `;
+    
+    flow.appendChild(wrapper);
+    flow.scrollTop = flow.scrollHeight;
+
+    // 将这一动作静默写入后台历史，让 AI 知道你发了邀请
+    window.lobbyHistory.push({ 
+        role: "action", 
+        content: `【系统动作】：用户向所有人发放了一张前往 "${window.currentCinemaName}" 的黑金 VIP 观影邀请函，正在等待回复。` 
+    });
 };
 
-// 6. 🚨 核心：唤醒修罗场 AI，必须手动点击才回复
+// ==========================================
+// 2. 核心：带脑子的修罗场 AI 引擎 (碎片气泡版)
+// ==========================================
 window.triggerLobbyAI = async function() {
     const btn = document.getElementById('cs-btn-ai-reply');
     if (btn.classList.contains('processing')) return;
     
-    // 防止没说话就点回复
     if (window.lobbyHistory.length === 0) {
-        if(typeof showToast === 'function') showToast("你还没有说话呢");
+        if(typeof showToast === 'function') showToast("大厅太安静了，先说句话或发个邀请吧");
         return;
     }
 
     btn.classList.add('processing');
-    btn.innerHTML = `<svg class="spin-anim" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 12a9 9 0 1 1-6.219-8.56"></path></svg> <span>信号同步中...</span>`;
+    btn.innerHTML = `<svg class="spin-anim" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 12a9 9 0 1 1-6.219-8.56"></path></svg> <span>各方反应中...</span>`;
     if(navigator.vibrate) navigator.vibrate(10);
 
     try {
@@ -38559,28 +40020,30 @@ window.triggerLobbyAI = async function() {
         let apiUrl = (localStorage.getItem('gpt_url') || "https://api.openai.com/v1").replace(/\/+$/, "");
         if (!apiKey) throw new Error("API Key缺失");
 
-        // 构建群聊背景
-        const guestContext = window.selectedGuests.map(g => `- 姓名: ${g.name}, 背景/人设: ${g.desc}`).join("\n");
+        const guestContext = window.selectedGuests.map(g => `- 姓名: ${g.name}, 背景: ${g.desc}`).join("\n");
         const chatContext = window.lobbyHistory.map(m => `${m.role === 'user' ? '用户' : m.name}: ${m.content}`).join("\n");
-        
-        // 动态判断单聊还是群聊
         const isGroup = window.selectedGuests.length > 1;
-        const prompt = `你是一个多角色模拟器。
-        当前场景：用户邀请了以下角色来到 "${window.currentCinemaName}" 的候场厅：
+        
+        // 🧠 核心 Prompt 升级：强制要求短句与 |BR| 分割
+        const prompt = `你是一个多角色心理学模拟器。
+        当前场景：用户邀请了以下角色来到 "${window.currentCinemaName}" 的候场厅。
+        在场角色清单：
         ${guestContext}
 
-        ${isGroup ? '🚨【警告：这是一场群聊！】这些角色能看到彼此！如果他们的身份有冲突（比如前任、情敌、兄弟），必须在对话中体现出暗流涌动或直接对峙。不要每个人都客客气气，要符合人设。' : '这是一个私密的双人约会候场。'}
+        ${isGroup ? '🚨【群聊修罗场警告】！角色能看到彼此！如果身份有冲突（如前任/情敌），必须体现暗流涌动。' : '这是一个私密约会候场。'}
 
-        【之前的对话记录】：
+        【之前的对话记录与动作】：
         ${chatContext}
 
-        【任务】：
-        请根据上下文，生成 ${isGroup ? '1 到 3 个' : '1 个'} 角色的最新回复。
-        严格输出一个 JSON 数组，格式必须为：
+        【任务与输出规则】：
+        1. 生成 ${isGroup ? '1 到 3 个' : '1 个'} 角色的最新回复。
+        2. 🚨【碎片化语境】：任何人说话，绝对不要把一长段话塞在一起！如果角色要说多句话，**必须使用 |BR| 将句子切断**！（例如："你在看谁？|BR|回答我。"）
+        3. 🚨【赴约判决】：如果用户发了“邀请函”，必须在 "rsvp" 字段给出态度（accept/reject/none）。
+        
+        严格输出一个 JSON 数组：
         [
-            {"id": "角色的ID", "name": "角色的名字", "text": "回复的内容"}
-        ]
-        不要输出任何其他文字，只准输出 JSON 数组！`;
+            {"id": "角色ID", "name": "角色名字", "text": "回复内容(包含|BR|切分)", "rsvp": "accept/reject/none"}
+        ]`;
 
         const res = await fetch(`${apiUrl}/chat/completions`, {
             method: 'POST',
@@ -38588,7 +40051,7 @@ window.triggerLobbyAI = async function() {
             body: JSON.stringify({
                 model: localStorage.getItem('gpt_model') || "gpt-3.5-turbo",
                 messages: [{ role: "user", content: prompt }],
-                temperature: 0.9
+                temperature: 0.9 
             })
         });
 
@@ -38598,15 +40061,50 @@ window.triggerLobbyAI = async function() {
         
         const replies = JSON.parse(jsonMatch[0]);
 
-        // 逐条渲染并加入历史
+        // 3. 🚨 终极切片渲染逻辑
         for (let i = 0; i < replies.length; i++) {
             const r = replies[i];
             const targetChar = window.selectedGuests.find(g => g.name === r.name || g.id === r.id);
+            
             if (targetChar) {
-                // 制造一点打字延迟感
-                await new Promise(resolve => setTimeout(resolve, 800));
-                appendLobbyBubble(targetChar.name, r.text, targetChar.avatar, false);
-                window.lobbyHistory.push({ role: "ai", name: targetChar.name, content: r.text });
+                // 第一层过滤：提取纯文本，去除可能的括号动作描写
+                let rawText = (r.text || "").replace(/（.*?）/g, '').replace(/\(.*?\)/g, '').trim();
+                
+                // 第二层切片：按 |BR| 切割，如果没有 |BR| 但文本过长，按句号强行切割
+                let segments = [];
+                if (rawText.includes('|BR|')) {
+                    segments = rawText.split('|BR|');
+                } else if (rawText.length > 25) {
+                    // 如果 AI 忘了加 |BR|，且字数超过25字，按中文标点强切
+                    segments = rawText.split(/(?<=[。！？~！?…]+)/);
+                } else {
+                    segments = [rawText];
+                }
+
+                // 过滤掉空字符串并去掉首尾空格
+                segments = segments.map(s => s.trim()).filter(s => s.length > 0);
+
+                // 第三层渲染：逐个气泡吐出
+                for (let j = 0; j < segments.length; j++) {
+                    const segText = segments[j];
+                    
+                    // 动态计算打字延迟：首句固定延迟1秒，后续句子根据上一句的字数决定停顿多久
+                    const delay = j === 0 ? 1000 : 500 + (segments[j-1].length * 60);
+                    
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                    
+                    // 渲染单条气泡
+                    appendLobbyBubble(targetChar.name, segText, targetChar.avatar, false);
+                    // 存入历史上下文
+                    window.lobbyHistory.push({ role: "ai", name: targetChar.name, content: segText });
+                }
+
+                // B. 处理邀请函状态同步 (等角色把话说完，再盖章通过)
+                if (window.currentActiveInviteId && r.rsvp === 'accept') {
+                    setTimeout(() => {
+                        syncInviteCardAcceptance(window.currentActiveInviteId, targetChar);
+                    }, 500);
+                }
             }
         }
 
@@ -38619,9 +40117,625 @@ window.triggerLobbyAI = async function() {
     }
 };
 
-// 8. 占位：进场看片
+// ==========================================
+// 🚗 赴约旅途 (The Journey)：AI 测算与弹幕交互引擎
+// ==========================================
+
+window.journeyData = {
+    totalStages: 0,
+    currentStage: 0,
+    stageNames: []
+};
+
+// ==========================================
+// 🎨 工具：随机马卡龙色系渐变生成器
+// ==========================================
+window.getRandomPastelColor = function() {
+    const hue = Math.floor(Math.random() * 360);
+    return `hsl(${hue}, 100%, 85%)`;
+};
+// ==========================================
+// 🎨 工具：随机马卡龙三色光晕引擎 (升级版)
+// ==========================================
+// 不需要单独的 get 函数了，直接在 set 里完成
+window.setRandomPastelBackground = function(elementId) {
+    const el = document.getElementById(elementId);
+    if (!el) return;
+
+    // 生成三个色相环上互补的角度，确保颜色既丰富又不冲突
+    const h1 = Math.floor(Math.random() * 360);
+    const h2 = (h1 + 120) % 360;
+    const h3 = (h1 + 240) % 360;
+
+    // 将生成的颜色注入到元素的 CSS 变量中
+    // 使用高亮度和低饱和度，确保是奶油马卡龙质感
+    el.style.setProperty('--macaron-1', `hsl(${h1}, 100%, 92%)`);
+    el.style.setProperty('--macaron-2', `hsl(${h2}, 100%, 90%)`);
+    el.style.setProperty('--macaron-3', `hsl(${h3}, 100%, 93%)`);
+};
+
+// ==========================================
+// 🚨 1. 上帝模式：物理自愈版安保扫描仪
+// ==========================================
 window.enterFinalCinema = function() {
-    alert("🎬 检票成功！即将为您关闭候场大厅，切入暗房同频放映模式...\n（这里留作下一步视频播放器的入口）");
+    // 物理自愈：不管你 HTML 有没有写，只要没找到，当场注入极其暴力的内联样式节点！
+    let scanner = document.getElementById('cs-rsvp-scanner');
+    
+    if (!scanner || !document.getElementById('rsvp-state-scanning')) {
+        if (scanner) scanner.remove(); // 删掉旧的残缺节点
+        console.log("System: 检测到安保模块缺失或损坏，执行物理注入...");
+        
+        const html = `
+            <div id="cs-rsvp-scanner" style="position:fixed; inset:0; background:rgba(5,5,5,0.9); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px); z-index:2147483640; display:none; flex-direction:column; align-items:center; justify-content:center; opacity:0; transition:0.4s;">
+                
+                <div id="rsvp-state-scanning" style="display:flex; flex-direction:column; align-items:center;">
+                    <div style="width:80px; height:80px; border-radius:50%; border:3px dashed rgba(212,175,55,0.6); display:flex; align-items:center; justify-content:center; margin-bottom:25px; animation:spin 4s linear infinite; box-shadow:0 0 20px rgba(212,175,55,0.2);"></div>
+                    <div style="font-family:'Cinzel', serif; color:#fff; font-size:18px; font-weight:900; letter-spacing:3px;">VERIFYING INVITATION</div>
+                    <div style="font-size:11px; color:rgba(255,255,255,0.6); letter-spacing:2px; margin-top:10px;">正在检索同行者赴约意愿...</div>
+                </div>
+                
+                <div id="rsvp-state-success" style="display:none; flex-direction:column; align-items:center; animation: csFadeIn 0.4s ease;">
+                    <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="#D4AF37" stroke-width="2" style="margin-bottom:20px; filter:drop-shadow(0 0 10px rgba(212,175,55,0.4));"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                    <div style="font-family:'Cinzel', serif; color:#fff; font-size:18px; font-weight:900; letter-spacing:3px;">RSVP CONFIRMED</div>
+                    <div style="font-size:11px; color:rgba(255,255,255,0.6); letter-spacing:2px; margin-top:10px;">同行者已接受邀约，准许发车。</div>
+                    <button onclick="startUserTravelProtocol()" style="margin-top:35px; padding:16px 45px; border-radius:30px; font-size:14px; font-weight:900; letter-spacing:2px; cursor:pointer; background:linear-gradient(135deg, #D4AF37, #aa7700); color:#000; border:none; box-shadow:0 10px 25px rgba(212,175,55,0.3); display:flex; align-items:center; gap:10px;">
+                        START ENGINE <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                    </button>
+                </div>
+
+                <div id="rsvp-state-failed" style="display:none; flex-direction:column; align-items:center; animation: csFadeIn 0.4s ease;">
+                    <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="#FF3B30" stroke-width="2" style="margin-bottom:20px; filter:drop-shadow(0 0 10px rgba(255,59,48,0.4));"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+                    <div style="font-family:'Cinzel', serif; color:#FF3B30; font-size:18px; font-weight:900; letter-spacing:3px;">ACCESS DENIED</div>
+                    <div id="rsvp-fail-reason" style="font-size:11px; color:rgba(255,59,48,0.8); letter-spacing:2px; margin-top:10px;">未能检测到同行者的赴约许可。</div>
+                    <button onclick="closeRsvpScanner()" style="margin-top:35px; padding:16px 45px; border-radius:30px; font-size:13px; font-weight:900; letter-spacing:2px; cursor:pointer; background:rgba(255,59,48,0.1); border:1px solid #FF3B30; color:#FF3B30;">
+                        返回候场大厅
+                    </button>
+                </div>
+            </div>
+        `;
+        document.body.insertAdjacentHTML('beforeend', html);
+        scanner = document.getElementById('cs-rsvp-scanner');
+    }
+
+    // 重置并显示 (使用最高层级物理强显)
+    document.getElementById('rsvp-state-scanning').style.display = 'flex';
+    document.getElementById('rsvp-state-success').style.display = 'none';
+    document.getElementById('rsvp-state-failed').style.display = 'none';
+    
+    scanner.style.display = 'flex';
+    void scanner.offsetWidth; // 触发重绘
+    scanner.style.opacity = '1';
+    
+    if (navigator.vibrate) navigator.vibrate(10);
+
+    // 执行真实检测
+    setTimeout(() => {
+        document.getElementById('rsvp-state-scanning').style.display = 'none';
+        const inviteAcceptedNodes = document.querySelectorAll('.ticket-acc-item');
+        
+        if (window.currentActiveInviteId && inviteAcceptedNodes.length > 0) {
+            if (navigator.vibrate) navigator.vibrate([20, 40]);
+            document.getElementById('rsvp-state-success').style.display = 'flex';
+        } else {
+            if (navigator.vibrate) navigator.vibrate([50, 100, 50]);
+            const reasonEl = document.getElementById('rsvp-fail-reason');
+            if (!window.currentActiveInviteId) {
+                reasonEl.innerText = "您尚未发送观影邀请函。单人通道已关闭。";
+            } else {
+                reasonEl.innerText = "您的同行者拒绝了邀约，或仍在考虑中。";
+            }
+            document.getElementById('rsvp-state-failed').style.display = 'flex';
+        }
+    }, 1500);
+};
+
+window.closeRsvpScanner = function() {
+    const scanner = document.getElementById('cs-rsvp-scanner');
+    if(scanner) {
+        scanner.style.opacity = '0';
+        setTimeout(() => { scanner.style.display = 'none'; }, 400);
+    }
+};
+
+// ==========================================
+// 🚗 2. 用户赴约：同样执行上帝模式物理注入
+// ==========================================
+window.startUserTravelProtocol = function() {
+    window.closeRsvpScanner();
+    if(typeof closeLobbyRoom === 'function') closeLobbyRoom();
+
+    let travelLayer = document.getElementById('cs-user-travel-layer');
+    
+    // 物理自愈：如果没有节点或样式不对，强行霸屏生成
+    if(!travelLayer || !document.getElementById('ut-progress-fill')) {
+        if(travelLayer) travelLayer.remove();
+        console.log("System: 检测到赴约引擎缺失，执行物理注入...");
+        
+        const html = `
+            <div id="cs-user-travel-layer" style="position:fixed; inset:0; z-index:2147483645; display:none; flex-direction:column; justify-content:center; padding:0 40px; opacity:0; transition:0.5s; background:linear-gradient(135deg, #fdfcfb 0%, #e2d1c3 100%);">
+                <div id="ut-header-text" style="color:#333; font-family:'Cinzel', serif; font-size:16px; font-weight:900; letter-spacing:4px; margin-bottom:50px; text-align:center;">EN ROUTE TO CINEMA</div>
+                <div style="width:100%; height:3px; background:rgba(0,0,0,0.08); position:relative; border-radius:3px;">
+                    <div id="ut-progress-fill" style="position:absolute; left:0; top:-1px; height:5px; background:#D4AF37; width:0%; border-radius:3px; box-shadow:0 0 15px rgba(212,175,55,0.6); transition:width 0.3s cubic-bezier(0.25, 1, 0.5, 1);"></div>
+                </div>
+                <div style="display:flex; justify-content:space-between; margin-top:20px; font-family:monospace; font-size:12px; color:#555; font-weight:bold; letter-spacing:1px;">
+                    <span id="ut-dist-text">DISTANCE // CALCULATING...</span>
+                    <span id="ut-progress-num">0%</span>
+                </div>
+            </div>
+        `;
+        document.body.insertAdjacentHTML('beforeend', html);
+        travelLayer = document.getElementById('cs-user-travel-layer');
+    }
+
+    // 应用随机马卡龙背景
+    if (typeof setRandomPastelBackground === 'function') {
+        setRandomPastelBackground('cs-user-travel-layer');
+    }
+
+    const barFill = document.getElementById('ut-progress-fill');
+    const numText = document.getElementById('ut-progress-num');
+    const distText = document.getElementById('ut-dist-text');
+
+    barFill.style.width = '0%';
+    numText.innerText = '0%';
+    distText.innerText = `DESTINATION // ${window.currentCinemaName ? window.currentCinemaName.toUpperCase() : 'UNKNOWN'}`;
+    document.getElementById('ut-header-text').innerText = "EN ROUTE TO CINEMA";
+    
+    travelLayer.style.display = 'flex';
+    void travelLayer.offsetWidth;
+    travelLayer.style.opacity = '1';
+
+    // 极其逼真的非均匀路况算法
+    let progress = 0;
+    const travelInterval = setInterval(() => {
+        let step = Math.random() * 15 + 3; 
+        progress += step;
+        
+        if (progress >= 100) {
+            progress = 100;
+            clearInterval(travelInterval);
+            
+            numText.innerText = '100%';
+            barFill.style.width = '100%';
+            distText.innerText = "ARRIVED // PLEASE WAIT IN THE DARK";
+            document.getElementById('ut-header-text').innerText = "SYSTEM: SEAT SECURED";
+            
+            if (navigator.vibrate) navigator.vibrate([30, 80, 30]);
+
+            setTimeout(() => {
+                travelLayer.style.opacity = '0';
+                setTimeout(() => {
+                    travelLayer.style.display = 'none';
+                    if (typeof triggerAIFinalJourney === 'function') {
+                        window.triggerAIFinalJourney();
+                    } else {
+                        alert("🚨 AI 同行者测算引擎缺失！");
+                    }
+                }, 500);
+            }, 1200);
+            return;
+        }
+
+        barFill.style.width = progress + '%';
+        numText.innerText = Math.floor(progress) + '%';
+        if (navigator.vibrate && Math.random() > 0.5) navigator.vibrate(5);
+
+    }, 450); 
+};
+
+// ==========================================
+// ⏩ 6. 点击推进下一段
+// ==========================================
+window.advanceJourney = async function() {
+    if (window.journeyData.currentStage >= window.journeyData.totalStages) {
+        // 🚨 物理切换：关闭旅途层，打开影院入场层
+        const journeyLayer = document.getElementById('cs-journey-layer');
+        const entranceLayer = document.getElementById('cs-entrance-layer');
+        
+        journeyLayer.classList.remove('active');
+        setTimeout(() => {
+            journeyLayer.style.display = 'none';
+            entranceLayer.style.display = 'flex';
+            void entranceLayer.offsetWidth;
+            entranceLayer.classList.add('active');
+            // 初始化选座网格
+            initSeatGrid();
+        }, 500);
+        return;
+    }
+
+    const btn = document.getElementById('jo-next-btn');
+    btn.style.pointerEvents = 'none';
+    btn.style.opacity = '0.5';
+    btn.innerHTML = `<svg class="spin-anim" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="vertical-align:middle; margin-right:6px;"><path d="M21 12a9 9 0 1 1-6.219-8.56"></path></svg> 演算时间线...`;
+
+    window.journeyData.currentStage++;
+    const nextStageName = window.journeyData.stageNames[window.journeyData.currentStage - 1] || "未知节点";
+
+    try {
+        const apiKey = localStorage.getItem('gpt_key');
+        let apiUrl = (localStorage.getItem('gpt_url') || "https://api.openai.com/v1").replace(/\/+$/, "");
+        
+        const guestInfo = (window.selectedGuests || []).map(g => `${g.name}(人设:${g.desc})`).join(' 和 ');
+        
+        const prompt = `你是一个王牌电影编剧。
+        同行角色【${guestInfo}】正在赴约路上。
+        当前处于第 ${window.journeyData.currentStage} 阶段：【${nextStageName}】。
+        
+        请生成一段约 200 字的描写。
+        🚨【核心要求】：紧扣角色人设（${guestInfo}），极具画面感，体现路途波折和他们此刻的心理活动。只输出一段纯文本，不要任何 JSON 格式，不要多余废话。`;
+
+        const res = await fetch(`${apiUrl}/chat/completions`, {
+            method: 'POST', 
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+            body: JSON.stringify({ 
+                model: localStorage.getItem('gpt_model') || "gpt-3.5-turbo", 
+                messages: [{ role: "user", content: prompt }],
+                temperature: 0.85
+            })
+        });
+        const data = await res.json();
+        const desc = data.choices[0].message.content.trim();
+
+        window.updateJourneyUI(nextStageName, desc);
+
+    } catch(e) {
+        window.updateJourneyUI(nextStageName, "信号干扰，视觉画面丢失。但他们正在靠近...");
+    }
+};
+
+// 2. 处理影片封面上传
+window.handleMoviePoster = function(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const preview = document.getElementById('movie-poster-preview');
+        preview.src = e.target.result;
+        preview.style.display = 'block';
+        window.userSelection.moviePoster = e.target.result;
+    };
+    reader.readAsDataURL(file);
+};
+
+// 3. 第一步完成：存入 DB 并去选座
+window.saveMovieAndGoSeats = function() {
+    const name = document.getElementById('movie-name-input').value.trim();
+    if (!name || !window.userSelection.moviePoster) {
+        return alert("请上传封面并输入片名");
+    }
+    
+    window.userSelection.movieName = name;
+    
+    // 物理同步到 localStorage 库
+    const myMovies = JSON.parse(localStorage.getItem('cinesync_user_movies') || "[]");
+    myMovies.unshift({ name: name, poster: window.userSelection.moviePoster, time: Date.now() });
+    localStorage.setItem('cinesync_user_movies', JSON.stringify(myMovies));
+
+    switchToEntranceStep(2);
+};
+
+// 4. 初始化选座网格
+function initSeatGrid() {
+    const container = document.getElementById('seat-grid-container');
+    container.innerHTML = "";
+    
+    // 生成 30 个位置
+    for (let i = 1; i <= 30; i++) {
+        const seat = document.createElement('div');
+        seat.className = 'seat-unit';
+        // 随机标记几个已占用位置（模拟真实感）
+        if (Math.random() < 0.2) seat.classList.add('occupied');
+        
+        seat.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
+        
+        seat.onclick = function() {
+            if (this.classList.contains('occupied')) return;
+            document.querySelectorAll('.seat-unit').forEach(s => s.classList.remove('selected'));
+            this.classList.add('selected');
+            window.userSelection.seat = `Row ${Math.ceil(i/6)} - Column ${(i%6)||6}`;
+            document.getElementById('selected-seat-display').innerText = window.userSelection.seat;
+            if(navigator.vibrate) navigator.vibrate(10);
+        };
+        container.appendChild(seat);
+    }
+}
+
+// 5. 第二步完成：存入 DB 并去打印票根
+window.saveSeatsAndGoTicket = function() {
+    if (!window.userSelection.seat) return alert("请选择您的座位");
+    
+    // 更新 UI 票根数据
+    document.getElementById('tk-movie-name').innerText = window.userSelection.movieName;
+    document.getElementById('tk-seat-num').innerText = window.userSelection.seat;
+    
+    switchToEntranceStep(3);
+
+    // 🚨 模拟物理打印机的仪式感：延迟 1 秒后“吐出”票根
+    setTimeout(() => {
+        document.getElementById('movie-ticket-card').classList.add('printed');
+        if(navigator.vibrate) navigator.vibrate([50, 100, 50, 100]);
+        
+        // 显示最后的检票按钮
+        const btn = document.getElementById('btn-to-hall');
+        btn.style.opacity = '1';
+        btn.style.pointerEvents = 'auto';
+    }, 1200);
+};
+
+// 6. 最后一步：进入大厅
+window.goToHall = function() {
+    switchToEntranceStep(4);
+};
+
+// 辅助：步骤切换核心引擎
+function switchToEntranceStep(step) {
+    window.currentEntranceStep = step;
+    
+    // 更新顶部步进器
+    document.querySelectorAll('.en-step-dot').forEach((dot, idx) => {
+        dot.classList.toggle('active', (idx + 1) === step);
+    });
+
+    // 视图切换动画
+    document.querySelectorAll('.en-view').forEach(view => view.classList.remove('active'));
+    const nextView = document.getElementById(`view-${['upload', 'seats', 'ticket', 'hall'][step-1]}`);
+    nextView.classList.add('active');
+    
+    if(navigator.vibrate) navigator.vibrate(20);
+}
+
+window.backToJourney = function() {
+    const entranceLayer = document.getElementById('cs-entrance-layer');
+    entranceLayer.classList.remove('active');
+    setTimeout(() => {
+        entranceLayer.style.display = 'none';
+        document.getElementById('cs-journey-layer').style.display = 'flex';
+        document.getElementById('cs-journey-layer').classList.add('active');
+    }, 500);
+};
+
+window.updateJourneyUI = function(stageName, desc) {
+    const card = document.getElementById('jo-status-card');
+    if(!card) return;
+    card.classList.remove('visible');
+    
+    setTimeout(() => {
+        document.getElementById('jo-stage-display').innerText = `STAGE ${window.journeyData.currentStage} // ${stageName}`;
+        document.getElementById('jo-desc-text').innerText = desc;
+        card.classList.add('visible');
+
+        const percent = window.journeyData.totalStages > 1 
+            ? ((window.journeyData.currentStage - 1) / (window.journeyData.totalStages - 1)) * 100 
+            : 100;
+        document.getElementById('jo-track-fill').style.width = `${percent}%`;
+        
+        for (let i = 1; i <= window.journeyData.totalStages; i++) {
+            const node = document.getElementById(`jo-node-${i}`);
+            if (node) {
+                if (i <= window.journeyData.currentStage) node.classList.add('reached');
+                else node.classList.remove('reached');
+            }
+        }
+
+        const btn = document.getElementById('jo-next-btn');
+        btn.style.display = 'block';
+        if (window.journeyData.currentStage >= window.journeyData.totalStages) {
+            btn.innerText = "进入放映室";
+            btn.className = "jo-next-btn final";
+        } else {
+            btn.innerText = "推进时间线";
+            btn.className = "jo-next-btn";
+        }
+        btn.style.opacity = '1';
+        btn.style.pointerEvents = 'auto';
+
+    }, 300);
+};
+
+// ==========================================
+// 💬 悬浮球与自动弹幕 (Danmaku) 系统 [修复版]
+// ==========================================
+
+window.toggleOrbInput = function() {
+    document.getElementById('jo-input-panel').classList.toggle('active');
+    document.getElementById('jo-message-input').focus();
+};
+
+// ==========================================
+// 💬 全息气泡通讯系统：连发引擎与原地浮现
+// ==========================================
+
+// 1. 发射全息气泡的物理动画
+window.shootDanmaku = function(text, avatar, isUser) {
+    const layer = document.getElementById('jo-danmaku-box');
+    if (!layer) return;
+
+    const bubble = document.createElement('div');
+    bubble.className = 'jo-danmaku-item';
+    
+    // 如果是用户发的，给予尊贵的暗金色高光
+    if (isUser) {
+        bubble.style.background = 'rgba(212,175,55,0.15)';
+        bubble.style.borderColor = 'rgba(212,175,55,0.4)';
+        bubble.style.color = '#D4AF37';
+    }
+
+    bubble.innerHTML = `<img src="${avatar}" class="jo-danmaku-avatar"> <span>${text}</span>`;
+    
+    // 🚨 随机坐标矩阵：让气泡在屏幕上/中半部分随机浮现，绝不挡住底部的输入球
+    const randomTop = Math.floor(Math.random() * 45) + 15; // 高度在 15% 到 60% 之间
+    const randomLeft = Math.floor(Math.random() * 30) + 10; // 左侧在 10% 到 40% 之间
+    
+    bubble.style.top = `${randomTop}%`;
+    bubble.style.left = isUser ? 'auto' : `${randomLeft}%`;
+    if (isUser) bubble.style.right = '20px'; // 用户的气泡固定在右边浮现
+
+    layer.appendChild(bubble);
+
+    // 5秒动画结束后，彻底从内存销毁节点
+    setTimeout(() => {
+        if (bubble.parentNode) bubble.parentNode.removeChild(bubble);
+    }, 5500); 
+};
+
+// ==========================================
+// 🧠 全局记忆库：用于存储赴约途中的临时通讯记录
+// ==========================================
+window.journeyChatHistory = [];
+
+// ==========================================
+// 🔗 3. 引擎握手与 AI 旅途初始化
+// ==========================================
+window.triggerAIFinalJourney = function() {
+    const journeyLayer = document.getElementById('cs-journey-layer');
+    if(!journeyLayer) return alert("🚨 错误：缺失 cs-journey-layer 的 HTML代码！");
+
+    window.setRandomPastelBackground('cs-journey-layer');
+
+    journeyLayer.style.display = 'flex';
+    void journeyLayer.offsetWidth;
+    journeyLayer.classList.add('active');
+
+    window.journeyChatHistory = []; // 每次赴约清空记忆
+    window.initJourneyFromAI();
+};
+
+// ==========================================
+// 🧠 4. AI 测算路程阶段
+// ==========================================
+window.initJourneyFromAI = async function() {
+    const btn = document.getElementById('jo-next-btn');
+    btn.style.display = 'none';
+    
+    try {
+        const apiKey = localStorage.getItem('gpt_key');
+        let apiUrl = (localStorage.getItem('gpt_url') || "https://api.openai.com/v1").replace(/\/+$/, "");
+        
+        const guestInfo = (window.selectedGuests || []).map(g => `${g.name}(人设:${g.desc})`).join(' 和 ');
+        
+        const prompt = `你是一个王牌电影编剧。
+        用户(User)已到达影院【${window.currentCinemaName}】等待。
+        同行角色【${guestInfo}】正在赴约路上。
+        
+        任务：
+        1. 根据合理距离和剧情张力，【完全自主决定】将这段赴约的路程切分为几个连续的阶段。
+        2. 为第 1 个阶段写一段约 200 字的状态描写。必须极具画面感、电影感（包含光影、天气、角色的微表情或小动作），体现出角色赴约时的心情或对用户的思念。
+        🚨【核心要求】：描写必须紧扣角色的人设（${guestInfo}）！体现他们独特的性格、此刻的心情（焦急、期待、冷静等）以及对用户的思念。不能写成通用模板！
+        
+        【绝对命令】严格输出一个 JSON 对象，严禁写死数字，根据你的测算动态生成：
+        {
+            "total_stages": 你的测算结果(纯数字，如 2, 4, 5),
+            "stage_names": ["阶段1名称", "阶段2名称", "阶段3名称"],
+            "desc": "第1阶段的200字紧扣人设的电影感描写..."
+        }`;
+
+        const res = await fetch(`${apiUrl}/chat/completions`, {
+            method: 'POST', 
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+            body: JSON.stringify({ 
+                model: localStorage.getItem('gpt_model') || "gpt-3.5-turbo", 
+                messages: [{ role: "user", content: prompt }],
+                temperature: 0.85
+            })
+        });
+        const data = await res.json();
+        const jsonMatch = data.choices[0].message.content.match(/\{[\s\S]*\}/);
+        const result = JSON.parse(jsonMatch[0]);
+
+        window.journeyData.totalStages = result.total_stages;
+        window.journeyData.stageNames = result.stage_names;
+        window.journeyData.currentStage = 1;
+
+        window.renderJourneyTrack();
+        window.updateJourneyUI(result.stage_names[0], result.desc);
+
+    } catch (e) {
+        console.error("Journey Init Error:", e);
+        document.getElementById('jo-desc-text').innerText = "信号屏蔽，无法获取对方坐标。";
+        btn.style.display = 'block';
+        btn.innerText = "重新连接";
+        btn.style.opacity = '1';
+        btn.style.pointerEvents = 'auto';
+    }
+};
+
+// ==========================================
+// 💬 悬浮球通讯：带环境感知与上下文的连发引擎
+// ==========================================
+window.sendOrbMessage = async function() {
+    const input = document.getElementById('jo-message-input');
+    const text = input.value.trim();
+    if (!text) return;
+
+    // 清空并折叠输入框
+    input.value = "";
+    document.getElementById('jo-input-panel').classList.remove('active');
+
+    // 发射用户自己的全息气泡
+    window.shootDanmaku(text, "https://api.dicebear.com/7.x/initials/svg?seed=Me", true);
+
+    // 🚨 核心补丁 2：将用户的发言存入记忆库
+    window.journeyChatHistory.push({ role: 'user', content: text });
+
+    try {
+        const apiKey = localStorage.getItem('gpt_key');
+        let apiUrl = (localStorage.getItem('gpt_url') || "https://api.openai.com/v1").replace(/\/+$/, "");
+        if (!window.selectedGuests || window.selectedGuests.length === 0) return;
+
+        // 随机挑一个角色回你
+        const randomGuest = window.selectedGuests[Math.floor(Math.random() * window.selectedGuests.length)];
+        
+        // 🚨 核心补丁 3：物理抓取屏幕中央那 200 字的环境描写！让 AI 知道自己的处境！
+        const currentEnvText = document.getElementById('jo-desc-text').innerText;
+        
+        // 🚨 核心补丁 4：格式化历史聊天记录
+        const chatContext = window.journeyChatHistory.map(m => `${m.role === 'user' ? '用户' : m.name}: ${m.content}`).join("\n");
+        
+        // 🧠 终极 Prompt：全知全能的回复逻辑
+        const prompt = `用户(User)已经到了电影院，Ta刚刚在通讯器里对你发了一句："${text}"。
+        你现在正在赶赴影院的车上。
+        
+        【你当前的环境与状态（系统实时旁白）】：
+        ${currentEnvText}
+        
+        【你的人设】：
+        ${randomGuest.name}: ${randomGuest.desc}
+        
+        【你俩刚才的聊天记录】：
+        ${chatContext}
+        
+        【极度严格的规则】：
+        1. 🚨 你必须根据【你当前的环境】和【聊天记录】来回话！如果环境里在下雨，你就要知道在下雨；如果用户上一句问了问题，你要接得上。绝对不能牛头不对马嘴！
+        2. 你必须回复 1 到 3 句极其简短口语化的话（像微信聊天一样）。
+        3. 🚨 必须使用 |BR| 分割你的每一句话！（例如："雨太大了，高架全堵死了。|BR|马上到。"）
+        4. 不要输出任何 JSON 或多余格式，只输出带 |BR| 的纯文本。`;
+
+        const res = await fetch(`${apiUrl}/chat/completions`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+            body: JSON.stringify({ model: localStorage.getItem('gpt_model') || "gpt-3.5-turbo", messages: [{ role: "user", content: prompt }], temperature: 0.85 })
+        });
+        const data = await res.json();
+        const replyText = data.choices[0].message.content.trim();
+
+        // 🚨 核心补丁 5：将 AI 的回复去除 |BR| 后也存入记忆库，形成完整闭环
+        const cleanReply = replyText.replace(/\|BR\|/g, ' ');
+        window.journeyChatHistory.push({ role: 'ai', name: randomGuest.name, content: cleanReply });
+
+        // 切片器：将 AI 的回复剁碎成数组并连发
+        let segments = replyText.split('|BR|').map(s => s.trim()).filter(s => s.length > 0);
+        if (segments.length === 0) segments = [replyText];
+
+        for (let i = 0; i < segments.length; i++) {
+            const delay = i === 0 ? 1500 : 800 + (segments[i-1].length * 100);
+            await new Promise(resolve => setTimeout(resolve, delay));
+            window.shootDanmaku(segments[i], randomGuest.avatar, false);
+        }
+
+    } catch(e) { 
+        console.error("Bubble Error", e); 
+        setTimeout(() => window.shootDanmaku("马上到了，别催...", "https://api.dicebear.com/7.x/initials/svg?seed=AI", false), 1500);
+    }
 };
 
 window.closeTheatreMode = function() {
@@ -55894,47 +58008,57 @@ document.addEventListener('DOMContentLoaded', () => {
  * 🎵 全局音乐同步引擎
  * 作用：将音乐 App 的播放状态实时物理投射到主页小组件
  */
-window.syncHomeMusicWidget = function() {
+// 4. 🔄 核心：完全重写你原有的 syncHomeMusicWidget
+window.syncHomeMusicWidget = async function() {
     const audio = document.getElementById('main-audio-engine');
-    const song = currentPlaylist[currentPlayIndex];
+    const song = (typeof currentPlaylist !== 'undefined' && currentPlayIndex >= 0) ? currentPlaylist[currentPlayIndex] : null;
     
-    // 获取主页组件元素
-    const homeTitle = document.querySelector('.track-title');
-    const homeArtist = document.querySelector('.track-artist');
-    const homeCover = document.querySelector('.album-cover');
-    const playIcon = document.querySelector('.ctrl-btns svg:nth-child(2)'); // 播放/暂停图标
+    const isPlaying = audio && (!audio.paused || audio.currentTime > 0);
 
-    if (!song) return;
+    const titleEl = document.getElementById('player-title');
+    const artistEl = document.getElementById('player-artist');
+    const coverEl = document.getElementById('player-cover-v3');
+    const bgLayer = document.getElementById('mw-custom-bg');
+    const playIcon = document.getElementById('play-state-icon');
 
-    // 1. 同步文字内容
-    if (homeTitle) homeTitle.textContent = song.title.toUpperCase();
-    if (homeArtist) homeArtist.textContent = song.artist.toUpperCase();
-
-    // 2. 同步封面图
-    if (homeCover) {
-        homeCover.style.backgroundImage = `url(${song.cover})`;
-        homeCover.style.backgroundSize = 'cover';
-        homeCover.style.backgroundPosition = 'center';
-        
-        // 3. 根据播放状态添加动画
-        if (!audio.paused) {
-            homeCover.classList.add('playing');
-        } else {
-            homeCover.classList.remove('playing');
+    // 1. 同步自定义背景图 (无论播不播，背景一直由用户控制)
+    try {
+        const savedData = await window.ib.getItem('lune_music_widget_data') || {};
+        if (bgLayer) {
+            if (savedData.bg) {
+                bgLayer.style.backgroundImage = `url(${savedData.bg})`;
+                bgLayer.style.opacity = '1';
+            } else {
+                bgLayer.style.opacity = '0'; // 还原马卡龙色
+            }
         }
+
+        // 2. 覆盖逻辑：如果正在播放，用音乐 App 的数据；否则用用户手动设置的
+        if (isPlaying && song) {
+            if (titleEl) titleEl.textContent = song.title.toUpperCase();
+            if (artistEl) artistEl.textContent = song.artist.toUpperCase();
+            if (coverEl) coverEl.style.backgroundImage = `url(${song.cover})`;
+        } else {
+            if (titleEl) titleEl.textContent = savedData.title || "Vibe Sync";
+            if (artistEl) artistEl.textContent = savedData.artist || "LUNE ENGINE";
+            if (coverEl) coverEl.style.backgroundImage = savedData.cover ? `url(${savedData.cover})` : `url(https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?w=400)`;
+        }
+    } catch(e) {
+        console.warn("读取音乐小组件配置失败", e);
     }
 
-    // 4. 同步小组件上的播放图标 (可选)
+    // 3. 同步右下角的播放/暂停图标 (保持巨大尺寸)
     if (playIcon) {
-        if (!audio.paused) {
-            // 切换为暂停图标 (两条竖杠)
-            playIcon.innerHTML = `<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>`;
+        if (isPlaying) {
+            // 暂停图标 (两条竖线)
+            playIcon.innerHTML = `<svg viewBox="0 0 24 24" style="width: 38px; height: 38px;" fill="currentColor"><rect x="5" y="4" width="5" height="16" rx="1"/><rect x="14" y="4" width="5" height="16" rx="1"/></svg>`;
         } else {
-            // 切换为播放图标 (三角形)
-            playIcon.innerHTML = `<path d="M8 5v14l11-7z"/>`;
+            // 播放图标 (三角形)
+            playIcon.innerHTML = `<svg viewBox="0 0 24 24" style="width: 38px; height: 38px;" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>`;
         }
     }
 };
+
 // 🚨 物理补丁：页面加载时自动恢复数据
 window.addEventListener('load', () => {
     const savedPosts = localStorage.getItem('lune_community_posts');
@@ -58238,6 +60362,14 @@ async function loadFromDB(key) {
         const sQuote = localStorage.getItem('ios_quote');
         const sCity = localStorage.getItem('ios_city');
 
+        // 在初始化位置加入
+        const savedNames = localStorage.getItem('hero_names');
+        if (savedNames && savedNames.includes('&')) {
+            const parts = savedNames.split(' & ');
+            document.getElementById('name1-in').value = parts[0];
+            document.getElementById('name2-in').value = parts[1];
+        }
+
         if(sImg) document.getElementById('ui-img').src = sImg;
         if(sQuote) document.getElementById('ui-quote').textContent = `"${sQuote}"`;
         
@@ -58534,16 +60666,36 @@ function closeSubPage(id) {
     initBat();
 
     // 切换标签页功能
+/* 🌐 天气弹窗：双维度切换协议 */
 function switchTab(tab) {
-    // 1. 处理按钮样式
-    document.getElementById('tab-cn').classList.remove('active');
-    document.getElementById('tab-global').classList.remove('active');
-    document.getElementById('tab-' + tab).classList.add('active');
+    console.log("System: Switching Weather Zone ->", tab);
+    
+    // 1. 物理移除所有视图的激活态
+    document.querySelectorAll('.city-view').forEach(view => {
+        view.classList.remove('active');
+        view.style.display = 'none'; // 强制隐藏
+    });
 
-    // 2. 处理内容显示
-    document.getElementById('view-cn').classList.remove('active');
-    document.getElementById('view-global').classList.remove('active');
-    document.getElementById('view-' + tab).classList.add('active');
+    // 2. 物理移除所有按钮的激活态
+    document.querySelectorAll('.segment-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+
+    // 3. 激活目标视图
+    const targetView = document.getElementById('view-' + tab);
+    if (targetView) {
+        targetView.classList.add('active');
+        targetView.style.display = 'block'; // 强制显示
+    }
+
+    // 4. 激活目标按钮
+    const targetBtn = document.getElementById('tab-' + tab);
+    if (targetBtn) {
+        targetBtn.classList.add('active');
+    }
+
+    // 触感反馈
+    if (navigator.vibrate) navigator.vibrate(10);
 }
 
 // === 壁纸 App 增强版逻辑 ===
@@ -64226,57 +66378,6 @@ function initDatabase() {
     };
 }
 
-// 2. 物理级渲染引擎：强制擦除默认样式
-function applyAllCustomIcons() {
-    if (!iconDb) return;
-
-    var transaction = iconDb.transaction("icons", "readonly");
-    var store = transaction.objectStore("icons");
-    var request = store.getAll();
-
-    request.onsuccess = function(e) {
-        var savedData = e.target.result;
-        if (!savedData || savedData.length === 0) return;
-
-        var iconMap = {};
-        savedData.forEach(function(item) { iconMap[item.name] = item.data; });
-
-        // 3. 扫描所有潜在目标 (桌面 App 与 Dock 栏)
-        var allTargets = document.querySelectorAll('.app-cell, .dock-app');
-        
-        allTargets.forEach(function(app) {
-            // 身份识别优先级
-            var name = app.getAttribute('data-app');
-            if (!name) {
-                var nameEl = app.querySelector('.app-name');
-                name = nameEl ? nameEl.textContent.trim() : "";
-            }
-            if (!name) {
-                var act = app.getAttribute('onclick') || "";
-                if (act.includes('charApp')) name = "RoleBook";
-                if (act.includes('worldApp')) name = "WorldBook";
-                if (act.includes('beautifyApp')) name = "Beautify";
-                if (act.includes('iconApp')) name = "Icons";
-            }
-
-            // 4. 命中的图标执行【物理破坏性】替换
-            if (name && iconMap[name]) {
-                var box = app.querySelector('.icon-shape') || 
-                          app.querySelector('.glass-icon-bg') || 
-                          app;
-
-                // 🚨 强制重置样式：物理移除背景渐变，注入 !important 样式
-                box.style.cssText = "background: transparent !important; box-shadow: none !important; border: none !important; overflow: hidden !important;";
-                
-                // 注入图片：增加 onload 监听，确保图片加载完后再隐藏 SVG
-                box.innerHTML = '<img src="' + iconMap[name] + '" style="width:100%; height:100%; object-fit:cover; border-radius:inherit; display:block;">';
-                
-                console.log("Fixed: 物理覆盖成功 -> " + name);
-            }
-        });
-    };
-}
-
 // 5. 启动入口：多时机物理触发
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initDatabase);
@@ -64342,63 +66443,6 @@ function handleIconFile(input) {
             }
         };
         reader.readAsDataURL(input.files[0]);
-    }
-}
-
-// 6. 保存并同步 (IndexedDB 模式，不限大小)
-function saveIconCustomization() {
-    // 1. 物理检查：如果全局变量丢了，直接从 UI 标签里现抓
-    if (!window.currentIconTarget) {
-        var label = document.getElementById('val-icon-target');
-        if (label && label.textContent !== "请选择...") {
-            window.currentIconTarget = label.textContent.trim();
-        }
-    }
-
-    // 2. 预览图补偿：如果图片变量丢了，直接从 img 标签里现抓
-    if (!window.tempIconData) {
-        var img = document.getElementById('icon-pre-img');
-        if (img && img.src && img.style.display !== 'none') {
-            window.tempIconData = img.src;
-        }
-    }
-
-    // 3. 数据库状态检查
-    if (!iconDb) {
-        console.warn("System: 数据库未就绪，尝试重连...");
-        initDatabase(); 
-        alert("系统正在初始化存储空间，请再点一次保存");
-        return;
-    }
-
-    // 4. 精准报错提示 (告诉你到底是哪里没弄好)
-    if (!window.currentIconTarget || !window.tempIconData) {
-        var errorMsg = "保存失败原因：\n";
-        errorMsg += (!window.currentIconTarget ? "- 目标 App 名字没拿到\n" : "");
-        errorMsg += (!window.tempIconData ? "- 图标图片数据丢失\n" : "");
-        alert(errorMsg + "\n请重新选择或上传试试");
-        return;
-    }
-
-    // 5. 执行保存流程
-    try {
-        var tx = iconDb.transaction("icons", "readwrite");
-        var store = tx.objectStore("icons");
-        store.put({ name: window.currentIconTarget, data: window.tempIconData });
-        
-        tx.oncomplete = function() {
-            applyAllCustomIcons(); // 立即刷新全站图标
-            if (window.triggerSuccessHud) triggerSuccessHud("全域图标已同步");
-            setTimeout(function() { closeApp('iconApp'); }, 800);
-        };
-        
-        tx.onerror = function(e) {
-            console.error("Database Error:", e);
-            alert("数据库写入失败，请检查控制台");
-        };
-    } catch (err) {
-        console.error("Save Logic Crash:", err);
-        alert("保存逻辑异常，请刷新页面");
     }
 }
 
@@ -70257,28 +72301,40 @@ function loadLyrics(lrcContent) {
 }
 
 // 4. 进度同步
+// ==========================================
+// 🚀 核心：双通道进度条更新 (同时更新 App 和 桌面组件)
+// ==========================================
 function updateProgress() {
     const audio = document.getElementById('main-audio-engine');
-    const fill = document.getElementById('progress-fill');
-    const currText = document.getElementById('curr-time');
-    const totalText = document.getElementById('total-time');
-
-    if (!audio.duration) return;
+    if (!audio || !audio.duration) return;
 
     const percent = (audio.currentTime / audio.duration) * 100;
-    fill.style.width = percent + '%';
-    currText.innerText = formatTime(audio.currentTime);
-    totalText.innerText = formatTime(audio.duration);
+    
+    // 1. 更新主 App 的进度条
+    const mainFill = document.getElementById('progress-fill');
+    if (mainFill) mainFill.style.width = percent + '%';
+    
+    // 2. 🚨 更新桌面小组件的专属进度条
+    const widgetFill = document.getElementById('widget-progress-fill');
+    if (widgetFill) widgetFill.style.width = percent + '%';
 
-    // 同步歌词滚动
-    const currentLineIdx = parsedLyrics.findLastIndex(l => audio.currentTime >= l.time);
-    if (currentLineIdx !== -1) {
-        document.querySelectorAll('.lyric-line').forEach(el => el.classList.remove('active'));
-        const activeLine = document.getElementById(`lyric-${currentLineIdx}`);
-        if (activeLine) {
-            activeLine.classList.add('active');
-            const offset = activeLine.offsetTop - 50;
-            document.getElementById('lyrics-scroller').style.transform = `translateY(-${offset}px)`;
+    // 3. 更新时间文本
+    const currText = document.getElementById('curr-time');
+    const totalText = document.getElementById('total-time');
+    if (currText) currText.innerText = formatTime(audio.currentTime);
+    if (totalText) totalText.innerText = formatTime(audio.duration);
+
+    // 4. 歌词滚动逻辑
+    if (typeof parsedLyrics !== 'undefined' && parsedLyrics.length > 0) {
+        const currentLineIdx = parsedLyrics.findLastIndex(l => audio.currentTime >= l.time);
+        if (currentLineIdx !== -1) {
+            document.querySelectorAll('.lyric-line').forEach(el => el.classList.remove('active'));
+            const activeLine = document.getElementById(`lyric-${currentLineIdx}`);
+            if (activeLine) {
+                activeLine.classList.add('active');
+                const offset = activeLine.offsetTop - 50;
+                document.getElementById('lyrics-scroller').style.transform = `translateY(-${offset}px)`;
+            }
         }
     }
 }
@@ -70383,31 +72439,26 @@ function togglePlay() {
         audio.pause();
         updatePlayBtnIcon(false); // 切换为播放图标
         window.syncHomeMusicWidget(); // 🚨 同步
-        if (typeof showToast === 'function') showToast("PAUSED");
     }
 }
 
-/**
- * 🔄 图标同步：根据播放状态精准切换加粗版 SVG
- * @param {boolean} isPlaying - 当前是否正在播放
- */
+// ==========================================
+// 🚀 核心：双通道播放图标切换 (同时更新 App 和 桌面组件)
+// ==========================================
 function updatePlayBtnIcon(isPlaying) {
-    const container = document.getElementById('play-state-icon');
-    if (!container) return;
-
-    if (isPlaying) {
-        // ⏸️ 切换为：加粗暂停图标 (两条厚重的竖杠)
-        container.innerHTML = `
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
-                <rect x="5" y="4" width="5" height="16" rx="1"/>
-                <rect x="14" y="4" width="5" height="16" rx="1"/>
-            </svg>`;
-    } else {
-        // ▶️ 切换为：加粗播放图标 (饱满的三角形)
-        container.innerHTML = `
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M7 4v16l12-8L7 4z"/>
-            </svg>`;
+    // 1. 更新主 App 里的图标
+    const mainContainer = document.getElementById('play-state-icon');
+    if (mainContainer) {
+        if (isPlaying) {
+            mainContainer.innerHTML = `<svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="4" width="5" height="16" rx="1"/><rect x="14" y="4" width="5" height="16" rx="1"/></svg>`;
+        } else {
+            mainContainer.innerHTML = `<svg width="32" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M7 4v16l12-8L7 4z"/></svg>`;
+        }
+    }
+    
+    // 2. 🚨 直接调用同步函数，让桌面组件也瞬间刷新状态
+    if (typeof window.syncHomeMusicWidget === 'function') {
+        window.syncHomeMusicWidget();
     }
 }
 
@@ -79956,6 +82007,245 @@ function initCineSyncStyles() {
         .cs-lb-tool-btn:active { transform: scale(0.96); background: #f2f2f7; }
         .cs-lb-tool-btn svg { width: 16px; height: 16px; stroke-width: 2.5; }
         .cs-lb-tool-btn.ai-trigger { color: #D4AF37; border-color: rgba(212,175,55,0.3); background: rgba(212,175,55,0.05); }
+
+        /* 🎟️ 实体级 VIP 邀请函卡片 (非气泡，独立居中排版) */
+        .cs-invite-wrapper {
+            display: flex; justify-content: center; width: 100%; margin: 25px 0;
+            animation: fadeInUp 0.6s cubic-bezier(0.19, 1, 0.22, 1) backwards;
+        }
+        .cs-vip-ticket {
+            background: linear-gradient(145deg, #151515, #0a0a0a);
+            border: 1px solid rgba(212, 175, 55, 0.3);
+            border-radius: 16px; padding: 25px 20px; width: 85%; max-width: 320px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.15), inset 0 0 20px rgba(212, 175, 55, 0.05);
+            position: relative; overflow: hidden; display: flex; flex-direction: column; align-items: center;
+        }
+        
+        /* 烫金反光效果 */
+        .cs-vip-ticket::after {
+            content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+            background: linear-gradient(45deg, transparent 40%, rgba(212, 175, 55, 0.1) 50%, transparent 60%);
+            animation: goldShine 4s infinite; pointer-events: none;
+        }
+        @keyframes goldShine { 0% { transform: translateX(-50%) translateY(-50%) rotate(45deg); } 100% { transform: translateX(50%) translateY(50%) rotate(45deg); } }
+
+        /* 卡片内文字与修饰 */
+        .ticket-brand { font-size: 9px; color: #D4AF37; font-weight: 900; letter-spacing: 4px; margin-bottom: 15px; text-transform: uppercase; }
+        .ticket-title { font-size: 20px; font-weight: 900; color: #fff; letter-spacing: 2px; font-family: 'Cinzel', serif; margin-bottom: 5px; text-align: center; }
+        .ticket-venue { font-size: 11px; color: rgba(255,255,255,0.6); font-family: monospace; letter-spacing: 1px; margin-bottom: 25px; text-align: center; }
+        
+        /* 状态指示器 (待回应 -> 已接受) */
+        .ticket-status-box {
+            display: flex; flex-direction: column; align-items: center; gap: 10px; width: 100%;
+            border-top: 1px dashed rgba(212, 175, 55, 0.3); padding-top: 20px;
+        }
+        .ticket-status {
+            display: flex; align-items: center; gap: 8px; font-size: 10px; font-weight: 800; letter-spacing: 1px;
+            padding: 6px 14px; border-radius: 20px; transition: all 0.4s;
+        }
+        .ticket-status.pending { background: rgba(255,255,255,0.1); color: #fff; }
+        .ticket-status.accepted { background: rgba(212, 175, 55, 0.15); color: #D4AF37; border: 1px solid rgba(212, 175, 55, 0.4); }
+        
+        /* 接受者头像墙 */
+        .ticket-acceptors { display: flex; justify-content: center; flex-wrap: wrap; gap: 8px; margin-top: 5px; width: 100%; }
+        .ticket-acc-item { display: flex; flex-direction: column; align-items: center; gap: 4px; animation: scaleIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .ticket-acc-avatar { width: 36px; height: 36px; border-radius: 50%; border: 2px solid #D4AF37; object-fit: cover; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
+        .ticket-acc-name { font-size: 9px; color: #D4AF37; font-weight: 700; max-width: 40px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: center; }
+
+        /* 🚨 AI 门禁扫描层 */
+        #cs-gate-scanner {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+            z-index: 6000050; display: none; flex-direction: column; 
+            align-items: center; justify-content: center; opacity: 0; transition: 0.3s;
+        }
+        #cs-gate-scanner.active { opacity: 1; }
+        
+        .cs-scan-line {
+            width: 2px; height: 100px; background: #D4AF37;
+            box-shadow: 0 0 20px #D4AF37, 0 0 40px #FFD700;
+            animation: scanMove 1s ease-in-out infinite alternate;
+        }
+        @keyframes scanMove { 0% { transform: translateY(-30px); } 100% { transform: translateY(30px); } }
+        
+        /* 🚨 拒绝访问弹窗 (高冷安保风) */
+        #cs-access-denied {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+            z-index: 6000060; display: none; align-items: center; justify-content: center;
+            opacity: 0; transition: 0.3s;
+        }
+        #cs-access-denied.active { opacity: 1; }
+        .cs-denied-card {
+            background: #111; border: 1px solid #FF3B30; border-radius: 20px;
+            width: 280px; padding: 35px 25px; text-align: center;
+            box-shadow: 0 20px 50px rgba(255, 59, 48, 0.2);
+            transform: scale(0.9); transition: 0.4s cubic-bezier(0.19, 1, 0.22, 1);
+        }
+        #cs-access-denied.active .cs-denied-card { transform: scale(1); }
+
+        /* 🚗 赴约旅途 (The Journey) 遮罩层 - 浅色马卡龙版 */
+        #cs-journey-layer {
+            position: fixed; inset: 0;
+            /* 默认底色，会被 JS 的随机渐变覆盖 */
+            background: linear-gradient(135deg, #fdfcfb 0%, #e2d1c3 100%);
+            z-index: 6000040; display: none; flex-direction: column; opacity: 0;
+            transition: opacity 0.5s cubic-bezier(0.19, 1, 0.22, 1);
+        }
+        #cs-journey-layer.active { opacity: 1; }
+
+        /* 顶部进度条 - 适配浅色 */
+        .jo-progress-box { padding: 50px 30px 20px; position: relative; z-index: 10; }
+        .jo-track { display: flex; align-items: center; justify-content: space-between; position: relative; width: 100%; height: 2px; background: rgba(0,0,0,0.1); }
+        .jo-track-fill { position: absolute; left: 0; top: 0; height: 100%; background: #D4AF37; width: 0%; transition: width 0.6s ease-in-out; box-shadow: 0 0 10px rgba(212,175,55,0.5); }
+        .jo-node { width: 8px; height: 8px; border-radius: 50%; background: #ddd; position: relative; z-index: 2; transition: 0.4s; border: 2px solid #fff; }
+        .jo-node.reached { background: #D4AF37; box-shadow: 0 0 10px rgba(212,175,55,0.5); border-color: #D4AF37; }
+        .jo-stage-name { text-align: center; color: #666; font-size: 10px; font-weight: 800; letter-spacing: 2px; margin-top: 15px; text-transform: uppercase; }
+
+        /* 中央电影感状态卡片 - 磨砂玻璃浅色版 */
+        .jo-card-container { flex: 1; display: flex; align-items: center; justify-content: center; padding: 0 25px; position: relative; z-index: 10; }
+        .jo-card {
+            background: rgba(255, 255, 255, 0.65); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
+            border: 1px solid rgba(255,255,255,0.6); border-radius: 24px; padding: 35px 30px;
+            width: 100%; box-shadow: 0 30px 60px rgba(0,0,0,0.1); position: relative;
+            transform: translateY(20px); opacity: 0; transition: all 0.5s ease;
+        }
+        .jo-card.visible { transform: translateY(0); opacity: 1; }
+        .jo-card::before { content: '”'; position: absolute; top: 10px; left: 25px; font-size: 80px; color: rgba(212,175,55,0.15); font-family: serif; line-height: 1; }
+        .jo-desc { font-size: 15px; color: #333; line-height: 1.85; font-weight: 500; text-align: justify; letter-spacing: 0.5px; position: relative; z-index: 2; }
+
+        /* 底部控制台与按钮 */
+        .jo-footer { padding: 30px; display: flex; flex-direction: column; align-items: center; gap: 20px; z-index: 10; }
+        .jo-next-btn {
+            background: linear-gradient(135deg, #D4AF37, #aa7700); color: #fff;
+            border: none; border-radius: 30px; padding: 16px 40px; font-size: 14px; font-weight: 900;
+            letter-spacing: 2px; cursor: pointer; box-shadow: 0 15px 30px rgba(212,175,55,0.3); transition: 0.3s;
+        }
+        .jo-next-btn:active { transform: scale(0.95); }
+        .jo-next-btn.final { background: #1d1d1f; color: #fff; box-shadow: 0 15px 30px rgba(0,0,0,0.15); }
+
+        /* 💬 全息气泡层 - 深色半透明以突出文字 */
+        .jo-danmaku-layer { position: absolute; inset: 0; pointer-events: none; z-index: 50; overflow: hidden; }
+        .jo-danmaku-item {
+            position: absolute; color: #fff; font-size: 14px; font-weight: 600;
+            background: rgba(0,0,0,0.7); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+            padding: 12px 18px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.15); 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2); display: flex; align-items: center; gap: 10px; 
+            max-width: 75%; animation: popBubble 5s cubic-bezier(0.19, 1, 0.22, 1) forwards;
+        }
+        @keyframes popBubble {
+            0% { opacity: 0; transform: translateY(20px) scale(0.9); }
+            10% { opacity: 1; transform: translateY(0) scale(1); }
+            80% { opacity: 1; transform: translateY(-10px) scale(1); }
+            100% { opacity: 0; transform: translateY(-30px) scale(0.9); }
+        }
+        .jo-danmaku-avatar { width: 26px; height: 26px; border-radius: 50%; object-fit: cover; border: 1px solid rgba(255,255,255,0.2); }
+
+        /* 🔮 悬浮通讯球 & 输入板 - 深色以突出 */
+        .jo-orb-wrapper { position: absolute; bottom: 35px; right: 25px; z-index: 6000060; display: flex; flex-direction: row-reverse; align-items: center; gap: 15px; }
+        .jo-orb {
+            width: 52px; height: 52px; border-radius: 50%; background: rgba(0,0,0,0.75);
+            backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.15); color: #D4AF37;
+            display: flex; align-items: center; justify-content: center; cursor: pointer;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.3); transition: 0.3s;
+        }
+        .jo-orb:hover { transform: scale(1.08); }
+        .jo-input-panel {
+            background: rgba(0,0,0,0.75); backdrop-filter: blur(15px); border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 28px; padding: 6px; display: flex; align-items: center; width: 0; opacity: 0; overflow: hidden; transition: 0.4s cubic-bezier(0.19, 1, 0.22, 1);
+        }
+        .jo-input-panel.active { width: 230px; opacity: 1; padding: 6px 6px 6px 18px; }
+        .jo-input { border: none; background: transparent; color: #fff; font-size: 13px; outline: none; flex: 1; }
+        .jo-send { background: #D4AF37; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: none; cursor: pointer; color: #000; flex-shrink: 0; }
+
+        /* 🚗 用户赴约模拟器 - 同样使用浅色渐变 */
+        #cs-user-travel-layer {
+            position: fixed; inset: 0; z-index: 6000038;
+            display: none; flex-direction: column; justify-content: center; padding: 0 40px;
+            opacity: 0; transition: 0.5s;
+            background: linear-gradient(135deg, #fdfcfb 0%, #e2d1c3 100%); /* 默认值 */
+        }
+        #cs-user-travel-layer.active { opacity: 1; }
+        .ut-header { color: #333; } /* 深色文字 */
+        .ut-bar-bg { background: rgba(0,0,0,0.1); }
+        .ut-bar-fill { background: #D4AF37; box-shadow: 0 0 15px rgba(212,175,55,0.5); }
+        .ut-data-row { color: #666; }
+
+        /* 🎬 影院入场总控层 */
+        #cs-entrance-layer {
+            position: fixed; inset: 0; z-index: 6000100; display: none; flex-direction: column;
+            background: #FAFAFC; opacity: 0; transition: 0.5s cubic-bezier(0.19, 1, 0.22, 1);
+        }
+        #cs-entrance-layer.active { opacity: 1; }
+
+        /* 顶部流程步进器 */
+        .en-header {
+            padding: 55px 20px 15px; background: #fff; border-bottom: 1px solid rgba(0,0,0,0.05);
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .en-steps { display: flex; gap: 15px; flex: 1; justify-content: center; }
+        .en-step-dot { 
+            width: 30px; height: 4px; border-radius: 2px; background: #f2f2f7; transition: 0.4s; 
+        }
+        .en-step-dot.active { background: #1d1d1f; width: 45px; }
+
+        /* 内容舞台 */
+        .en-stage { flex: 1; overflow-y: auto; position: relative; padding: 25px; }
+        .en-view { display: none; flex-direction: column; animation: csFadeIn 0.5s ease; width: 100%; height: 100%; box-sizing: border-box; }
+        .en-view.active { display: flex; }
+
+        /* --- View 1: 影片上传 --- */
+        .up-box {
+            width: 100%; aspect-ratio: 2/3; border: 2px dashed #ddd; border-radius: 20px;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            gap: 15px; color: #8e8e93; cursor: pointer; overflow: hidden; position: relative;
+            background: #fff;
+        }
+        .up-preview { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: none; }
+        .up-input-group { margin-top: 25px; }
+        .up-input { 
+            width: 100%; border: none; background: #f2f2f7; padding: 18px; border-radius: 15px;
+            font-size: 16px; font-weight: 800; outline: none; box-sizing: border-box;
+        }
+
+        /* --- View 2: 选座系统 --- */
+        .seat-screen { 
+            width: 80%; height: 6px; background: #ddd; margin: 0 auto 40px; border-radius: 10px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.05); position: relative;
+        }
+        .seat-screen::after { content: 'SCREEN'; position: absolute; top: 15px; left: 50%; transform: translateX(-50%); font-size: 9px; font-weight: 900; color: #ccc; letter-spacing: 4px; }
+        .seat-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; justify-items: center; }
+        .seat-unit { 
+            width: 35px; height: 35px; border-radius: 8px; background: #eee; cursor: pointer; transition: 0.2s;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .seat-unit svg { width: 18px; height: 18px; color: #fff; opacity: 0; }
+        .seat-unit.selected { background: #D4AF37; transform: scale(1.1); box-shadow: 0 5px 15px rgba(212,175,55,0.3); }
+        .seat-unit.selected svg { opacity: 1; }
+        .seat-unit.occupied { background: #1d1d1f; cursor: not-allowed; }
+
+        /* --- View 3: 票根打印 --- */
+        .ticket-machine { text-align: center; }
+        .ticket-visual {
+            width: 260px; background: #fff; border-radius: 15px; margin: 0 auto;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.1); overflow: hidden;
+            transform: translateY(100px); opacity: 0; transition: 1s cubic-bezier(0.19, 1, 0.22, 1);
+        }
+        .ticket-visual.printed { transform: translateY(0); opacity: 1; }
+        .tk-top { padding: 20px; background: #1d1d1f; color: #fff; }
+        .tk-body { padding: 25px; border-bottom: 1px dashed #ddd; position: relative; }
+        .tk-body::before, .tk-body::after { content: ''; position: absolute; bottom: -10px; width: 20px; height: 20px; background: #FAFAFC; border-radius: 50%; }
+        .tk-body::before { left: -10px; } .tk-body::after { right: -10px; }
+        .tk-info { font-size: 10px; color: #8e8e93; font-weight: 800; letter-spacing: 1px; margin-bottom: 5px; }
+        .tk-val { font-size: 16px; font-weight: 900; color: #1d1d1f; margin-bottom: 15px; }
+
+        /* --- 通用按钮 --- */
+        .en-next-btn {
+            width: 100%; padding: 18px; border-radius: 18px; background: #1d1d1f; color: #fff;
+            font-size: 15px; font-weight: 900; border: none; cursor: pointer; margin-top: auto;
+            transition: 0.3s;
+        }
+        .en-next-btn:disabled { background: #f2f2f7; color: #ccc; cursor: not-allowed; }
     `;
     document.head.appendChild(style);
 }
@@ -80166,6 +82456,197 @@ function initCineSyncDOM() {
             </div>
         </div>
     </div>
+
+    <div id="cs-gate-scanner">
+        <div class="cs-scan-line"></div>
+        <div style="font-family:'Cinzel', serif; color:#D4AF37; font-size:14px; font-weight:900; letter-spacing:4px; margin-top:30px;">
+            VERIFYING ACCESS
+        </div>
+        <div style="font-family:monospace; color:rgba(255,255,255,0.5); font-size:9px; margin-top:8px; letter-spacing:2px;" id="cs-scan-target">
+            NODE // UNKNOWN
+        </div>
+    </div>
+
+    <div id="cs-access-denied" onclick="closeAccessDenied()">
+        <div class="cs-denied-card" onclick="event.stopPropagation()">
+            <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="#FF3B30" stroke-width="2" style="margin-bottom:20px;">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+            </svg>
+            <div style="font-family:'Cinzel', serif; font-size:18px; font-weight:900; color:#fff; letter-spacing:2px; margin-bottom:12px;">
+                ACCESS DENIED
+            </div>
+            <div id="cs-denied-reason" style="font-size:13px; color:#8e8e93; line-height:1.6; margin-bottom:30px; font-weight:500;">
+                身份验证失败。
+            </div>
+            <button onclick="closeAccessDenied()" style="width:100%; padding:14px; border-radius:14px; background:#222; color:#fff; font-size:13px; font-weight:800; border:1px solid #333; cursor:pointer;">
+                撤退 (DISCONNECT)
+            </button>
+        </div>
+    </div>
+
+    <div id="cs-journey-layer">
+        <div class="jo-danmaku-layer" id="jo-danmaku-box"></div>
+        
+        <div class="jo-progress-box">
+            <div class="jo-track" id="jo-track-line">
+                <div class="jo-track-fill" id="jo-track-fill"></div>
+                </div>
+            <div class="jo-stage-name" id="jo-stage-display">INITIALIZING ROUTE...</div>
+        </div>
+
+        <div class="jo-card-container">
+            <div class="jo-card" id="jo-status-card">
+                <div class="jo-desc" id="jo-desc-text">正在通过量子网络接入同行者的当前坐标，请稍候...</div>
+            </div>
+        </div>
+
+        <div class="jo-footer">
+            <button class="jo-next-btn" id="jo-next-btn" onclick="advanceJourney()" style="display:none;">推进时间线</button>
+        </div>
+
+        <div class="jo-orb-wrapper">
+            <div class="jo-orb" onclick="toggleOrbInput()">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+            </div>
+            <div class="jo-input-panel" id="jo-input-panel">
+                <input type="text" id="jo-message-input" class="jo-input" placeholder="发消息催催Ta...">
+                <button class="jo-send" onclick="sendOrbMessage()">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="cs-rsvp-scanner">
+        <div id="rsvp-state-scanning" style="display:flex; flex-direction:column; align-items:center;">
+            <div class="rsvp-scan-circle"></div>
+            <div class="rsvp-status-text">VERIFYING INVITATION</div>
+            <div class="rsvp-sub-text">正在检索同行者赴约意愿...</div>
+        </div>
+        
+        <div id="rsvp-state-success" class="rsvp-result-panel">
+            <svg width="50" height="50" viewBox="0 0 24 24" fill="none" stroke="#D4AF37" stroke-width="2" style="margin-bottom:20px;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+            <div class="rsvp-status-text">RSVP CONFIRMED</div>
+            <div class="rsvp-sub-text">同行者已接受邀约，准许发车。</div>
+            <button class="rsvp-btn depart" onclick="startUserTravelProtocol()">
+                START ENGINE <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+            </button>
+        </div>
+
+        <div id="rsvp-state-failed" class="rsvp-result-panel">
+            <svg width="50" height="50" viewBox="0 0 24 24" fill="none" stroke="#FF3B30" stroke-width="2" style="margin-bottom:20px;"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+            <div class="rsvp-status-text" style="color:#FF3B30;">ACCESS DENIED</div>
+            <div class="rsvp-sub-text" id="rsvp-fail-reason" style="color:rgba(255,59,48,0.7);">未能检测到同行者的赴约许可。</div>
+            <button class="rsvp-btn abort" onclick="closeRsvpScanner()">
+                返回候场大厅
+            </button>
+        </div>
+    </div>
+
+    <div id="cs-user-travel-layer">
+        <div class="ut-header" id="ut-header-text">EN ROUTE TO CINEMA</div>
+        <div class="ut-bar-bg">
+            <div class="ut-bar-fill" id="ut-progress-fill"></div>
+        </div>
+        <div class="ut-data-row">
+            <span id="ut-dist-text">DISTANCE // CALCULATING...</span>
+            <span id="ut-progress-num">0%</span>
+        </div>
+    </div>
+
+    <div id="cs-entrance-layer">
+        <div class="en-header">
+            <div class="cs-lb-back" onclick="backToJourney()">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 18l-6-6 6-6"/></svg>
+            </div>
+            <div class="en-steps">
+                <div class="en-step-dot active" id="en-step-1"></div>
+                <div class="en-step-dot" id="en-step-2"></div>
+                <div class="en-step-dot" id="en-step-3"></div>
+                <div class="en-step-dot" id="en-step-4"></div>
+            </div>
+            <div style="width:24px;"></div> </div>
+
+        <div class="en-stage">
+            <div class="en-view active" id="view-upload">
+                <div style="font-size:22px; font-weight:900; margin-bottom:10px;">准备放映内容</div>
+                <div style="font-size:12px; color:#8e8e93; margin-bottom:30px; font-weight:600;">上传您想和同行者一起观看的私人影片</div>
+                
+                <div class="up-box" onclick="document.getElementById('movie-file-input').click()">
+                    <img id="movie-poster-preview" class="up-preview">
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+                    <span style="font-size:13px; font-weight:800;">点击上传影片封面图</span>
+                    <input type="file" id="movie-file-input" accept="image/*" style="display:none;" onchange="handleMoviePoster(event)">
+                </div>
+
+                <div class="up-input-group">
+                    <input type="text" id="movie-name-input" class="up-input" placeholder="输入影片名称..." autocomplete="off">
+                </div>
+                
+                <button class="en-next-btn" id="btn-to-seats" onclick="saveMovieAndGoSeats()" style="margin-top:40px;">确认并挑选座位</button>
+            </div>
+
+            <div class="en-view" id="view-seats">
+                <div style="font-size:22px; font-weight:900; margin-bottom:10px;">挑选心仪位置</div>
+                <div style="font-size:12px; color:#8e8e93; margin-bottom:40px; font-weight:600;">私人包厢，请选择您和同行者的落座点</div>
+                
+                <div class="seat-screen"></div>
+                <div class="seat-grid" id="seat-grid-container"></div>
+                
+                <div style="margin-top:40px; display:flex; justify-content:space-between; align-items:center;">
+                    <div>
+                        <div style="font-size:10px; color:#8e8e93; font-weight:800;">已选座位</div>
+                        <div id="selected-seat-display" style="font-size:16px; font-weight:900; color:#D4AF37;">未选择</div>
+                    </div>
+                    <button class="en-next-btn" id="btn-to-ticket" onclick="saveSeatsAndGoTicket()" style="width:200px; margin-top:0;">锁定座位</button>
+                </div>
+            </div>
+
+            <div class="en-view" id="view-ticket" style="justify-content:center;">
+                <div class="ticket-machine">
+                    <div style="font-size:16px; font-weight:900; margin-bottom:40px; letter-spacing:2px;">正在生成电子票根...</div>
+                    
+                    <div class="ticket-visual" id="movie-ticket-card">
+                        <div class="tk-top">
+                            <div style="font-size:9px; font-weight:900; letter-spacing:3px;">LUNE CINEMA</div>
+                        </div>
+                        <div class="tk-body" style="text-align:left;">
+                            <div class="tk-info">MOVIE</div>
+                            <div class="tk-val" id="tk-movie-name">---</div>
+                            
+                            <div style="display:flex; justify-content:space-between;">
+                                <div>
+                                    <div class="tk-info">SEAT</div>
+                                    <div class="tk-val" id="tk-seat-num" style="color:#D4AF37;">---</div>
+                                </div>
+                                <div>
+                                    <div class="tk-info">HALL</div>
+                                    <div class="tk-val" id="tk-hall-name">VIP ROOM A</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="padding:20px; display:flex; justify-content:center; background:#fff;">
+                            <div style="width:100%; height:40px; background:repeating-linear-gradient(90deg, #000 0, #000 2px, transparent 2px, transparent 4px);"></div>
+                        </div>
+                    </div>
+
+                    <button class="en-next-btn" id="btn-to-hall" onclick="goToHall()" style="margin-top:60px; width:220px; opacity:0; pointer-events:none; transition:0.5s;">检票进入影厅</button>
+                </div>
+            </div>
+
+            <div class="en-view" id="view-hall" style="justify-content:center; align-items:center; text-align:center;">
+                <div style="width:100px; height:100px; border-radius:50%; background:#1d1d1f; display:flex; align-items:center; justify-content:center; margin-bottom:30px;">
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#D4AF37" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M12 8l4 4-4 4M8 12h8"/></svg>
+                </div>
+                <div style="font-family:'Cinzel', serif; font-size:24px; font-weight:900; letter-spacing:4px;">VIP HALL 01</div>
+                <div style="font-size:12px; color:#8e8e93; margin-top:15px; letter-spacing:1px; line-height:1.8;">
+                    光影同步已就绪，欢迎来到私密放映室。<br>祝您和同行者度过一段美妙时光。
+                </div>
+                <button class="en-next-btn" style="margin-top:50px; width:240px; background:linear-gradient(135deg, #D4AF37, #aa7700); color:#000;" onclick="alert('🎬 即将开启终极视频播放引擎...')">开始放映</button>
+            </div>
+        </div>
+    </div>
     `;
     document.body.insertAdjacentHTML('beforeend', html);
 }
@@ -80289,30 +82770,189 @@ function showSyncSuccessPopup() {
     if (navigator.vibrate) navigator.vibrate([20, 50]);
 }
 
-// 7. 将消息渲染到屏幕
+// ==========================================
+// 3. 将答应邀约的角色同步到实体卡片上
+// ==========================================
+function syncInviteCardAcceptance(inviteId, char) {
+    const statusBox = document.getElementById('status-' + inviteId);
+    const acceptorsBox = document.getElementById('acceptors-' + inviteId);
+    
+    if (!statusBox || !acceptorsBox) return;
+
+    // 1. 检查是否已经在这个邀请函里了，防重复添加
+    const existing = acceptorsBox.querySelector(`[data-char="${char.id}"]`);
+    if (existing) return; 
+
+    // 2. 改变卡片主状态 (从 pending 变成 accepted)
+    statusBox.className = 'ticket-status accepted';
+    statusBox.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg> RSVP CONFIRMED`;
+
+    // 3. 动态注入角色的头像和昵称
+    const accHtml = `
+        <div class="ticket-acc-item" data-char="${char.id}">
+            <img src="${char.avatar}" class="ticket-acc-avatar">
+            <span class="ticket-acc-name">${char.name}</span>
+        </div>
+    `;
+    acceptorsBox.insertAdjacentHTML('beforeend', accHtml);
+
+    // 4. 发出签收成功的特殊震动
+    if (navigator.vibrate) navigator.vibrate([10, 30, 50, 30]);
+}
+
+// ==========================================
+// 4. 重写气泡渲染，去掉之前临时的黑色框处理
+// ==========================================
 function appendLobbyBubble(name, text, avatar, isUser) {
     const flow = document.getElementById('cs-lobby-flow');
     const row = document.createElement('div');
     row.className = `lb-msg-row ${isUser ? 'user' : ''}`;
     
-    // 如果是系统邀请函特殊渲染
-    let bubbleHtml = `<div class="lb-bubble">${text}</div>`;
-    if (text.includes('黑色烫金观影票根')) {
-        bubbleHtml = `<div class="lb-bubble" style="background: linear-gradient(135deg, #1d1d1f, #000); color: #D4AF37; border: 1px solid #D4AF37; box-shadow: 0 0 15px rgba(212,175,55,0.2);">🎟️ ${text}</div>`;
-    }
+    // 如果是动作旁白，稍微改一下样式
+    let textStyle = "";
+    if (text.startsWith('【系统动作】')) return; // 系统动作不显示气泡，只存后台
 
     row.innerHTML = `
         <img src="${avatar}" class="lb-avatar">
         <div class="lb-bubble-wrap">
             <div class="lb-name">${name}</div>
-            ${bubbleHtml}
+            <div class="lb-bubble" style="${textStyle}">${text}</div>
         </div>
     `;
     flow.appendChild(row);
     flow.scrollTop = flow.scrollHeight;
-    if (navigator.vibrate) navigator.vibrate(10);
+    if (navigator.vibrate) navigator.vibrate(5);
 }
 
+// 3. 渲染进度条 UI
+function renderJourneyTrack() {
+    const track = document.getElementById('jo-track-line');
+    // 保留进度填充条，生成节点
+    track.innerHTML = `<div class="jo-track-fill" id="jo-track-fill"></div>`;
+    
+    for (let i = 1; i <= window.journeyData.totalStages; i++) {
+        const node = document.createElement('div');
+        node.className = 'jo-node';
+        node.id = `jo-node-${i}`;
+        track.appendChild(node);
+    }
+}
+
+/* ==========================================
+   🏛️ Lune Hero 物理存取与弹窗协议
+   ========================================== */
+
+// 1. 自动初始化：从 DB 回溯视觉
+document.addEventListener('DOMContentLoaded', async () => {
+    if (!window.ib) return;
+    const settings = await window.ib.getItem('hero_v3_protocol') || { alpha: 100, bg: null };
+    
+    // 恢复透明度
+    applyHeroAlphaToStyle(settings.alpha);
+    // 恢复背景
+    if (settings.bg) {
+        document.getElementById('ui-img').src = settings.bg;
+    }
+});
+
+function openHeroSettings() {
+    document.getElementById('hero-config-overlay').style.display = 'flex';
+    if(window.navigator.vibrate) window.navigator.vibrate(10);
+}
+
+function closeHeroSettings() {
+    document.getElementById('hero-config-overlay').style.display = 'none';
+}
+
+// 实时更新预览 (不存库)
+function liveUpdateHeroAlpha(val) {
+    applyHeroAlphaToStyle(val);
+}
+
+// 物理修改样式
+function applyHeroAlphaToStyle(val) {
+    const alpha = val / 100;
+    // 物理锁定：修改整个组件的透明度
+    document.getElementById('main-hero-widget').style.opacity = alpha;
+    document.getElementById('hero-alpha-slider').value = val;
+}
+
+// 处理图片上传预览
+function handleHeroImgUpload(input) {
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = e => {
+            document.getElementById('ui-img').src = e.target.result;
+            showToast("DATA_STREAM: IMAGE_LOADED");
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+function resetHeroVisuals() {
+    document.getElementById('ui-img').src = "";
+    applyHeroAlphaToStyle(100);
+}
+
+// 🚀 最终存盘：物理封入 IndexedDB
+async function saveHeroProtocol() {
+    const alpha = document.getElementById('hero-alpha-slider').value;
+    const bg = document.getElementById('ui-img').src;
+
+    const data = {
+        alpha: parseInt(alpha),
+        bg: bg.startsWith('data:') ? bg : (bg || null)
+    };
+
+    try {
+        await window.ib.setItem('hero_v3_protocol', data);
+        if (window.triggerSuccessHud) triggerSuccessHud("协议已封存");
+        closeHeroSettings();
+    } catch (e) {
+        alert("DB 写入冲突：图片可能过大");
+    }
+}
+
+function previewHeroAvatar(input, num) {
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            // 仅仅改变弹窗里的预览图，点击 Save 才会真正保存
+            document.getElementById(`av1-pre`).src = e.target.result;
+            // 暂存 base64 到全局，方便最后保存
+            window[`tempAv${num}`] = e.target.result; 
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+async function saveHeroAllConfig() {
+    const n1 = document.getElementById('name1-in').value.trim();
+    const n2 = document.getElementById('name2-in').value.trim();
+    const quote = document.getElementById('q-in').value.trim();
+
+    // 1. 同步到桌面 UI
+    if(n1) {
+        document.getElementById('bond-name-ui').innerText = n1 + (n2 ? " & " + n2 : "");
+        localStorage.setItem('hero_names', n1 + (n2 ? " & " + n2 : ""));
+    }
+    if(quote) {
+        document.getElementById('ui-quote').innerText = `"${quote}"`;
+        localStorage.setItem('ios_quote', quote);
+    }
+
+    // 2. 同步头像
+    if(window.tempAv1) {
+        document.getElementById('bond-av-1').src = window.tempAv1;
+        localStorage.setItem('hero_av_1', window.tempAv1);
+    }
+    if(window.tempAv2) {
+        document.getElementById('bond-av-2').src = window.tempAv2;
+        localStorage.setItem('hero_av_2', window.tempAv2);
+    }
+
+    if(window.triggerSuccessHud) triggerSuccessHud("Archive Synchronized");
+}
 
 </script>
 </body>
