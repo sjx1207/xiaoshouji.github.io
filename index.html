@@ -29242,7 +29242,7 @@ input[type="range"] { width: 100%; accent-color: #000; cursor: pointer; }
 
                 <div class="widget vibe-bar-widget" style="grid-area: 5 / 1 / 6 / 5;" onclick="window.editHubField('vibe_img')">
                     <div class="vibe-bg-wrapper">
-                        <div id="hub-vibe-img" style="position: absolute; inset: 0; background: linear-gradient(135deg, #e3f2fd 0%, #fce4ec 100%);"></div>
+                        <div id="hub-vibe-img" style="position: absolute; inset: 0; background: linear-gradient(135deg, #e3f2fd 0%, #fce4ec 100%); background-size: cover; background-position: center;"></div>
                         <div class="vibe-overlay"></div>
                     </div>
                     <span id="hub-vibe-text" onclick="event.stopPropagation(); window.editHubField('vibe_text')">Current Vibe: Serenity</span>
@@ -66415,7 +66415,7 @@ function openIconTargetPicker() {
         "Music", "Profiles", "Phone", "Messages", 
         "Beautify", "Icons", "Diary", "Wallet", 
         "Notes", "Shopping", "Forum", "Novels", "Live",
-        "RoleBook", "WorldBook","Vibe Grid","Lost&Found","CineSync" // 👈 补上了！
+        "RoleBook", "WorldBook","Vibe Grid","Lost & Found","CineSync" // 👈 补上了！
     ];
     
     list.innerHTML = apps.map(function(name) {
@@ -82938,7 +82938,7 @@ async function saveHeroAllConfig() {
     const n2 = document.getElementById('name2-in').value.trim();
     const quote = document.getElementById('q-in').value.trim();
 
-    // 1. 同步到桌面 UI
+    // 1. 同步名字和文字到桌面 UI (文字很小，放 localStorage 没问题)
     if(n1) {
         document.getElementById('bond-name-ui').innerText = n1 + (n2 ? " & " + n2 : "");
         localStorage.setItem('hero_names', n1 + (n2 ? " & " + n2 : ""));
@@ -82948,18 +82948,51 @@ async function saveHeroAllConfig() {
         localStorage.setItem('ios_quote', quote);
     }
 
-    // 2. 同步头像
-    if(window.tempAv1) {
-        document.getElementById('bond-av-1').src = window.tempAv1;
-        localStorage.setItem('hero_av_1', window.tempAv1);
-    }
-    if(window.tempAv2) {
-        document.getElementById('bond-av-2').src = window.tempAv2;
-        localStorage.setItem('hero_av_2', window.tempAv2);
+    // 2. 🚨 核心修复：同步头像，改用无上限的 window.ib 数据库！
+    try {
+        if(window.tempAv1) {
+            document.getElementById('bond-av-1').src = window.tempAv1;
+            await window.ib.setItem('hero_av_1', window.tempAv1); // 物理入库
+        }
+        if(window.tempAv2) {
+            document.getElementById('bond-av-2').src = window.tempAv2;
+            await window.ib.setItem('hero_av_2', window.tempAv2); // 物理入库
+        }
+    } catch(e) {
+        console.error("头像保存失败:", e);
     }
 
-    if(window.triggerSuccessHud) triggerSuccessHud("Archive Synchronized");
+    if(window.triggerSuccessHud) triggerSuccessHud("羁绊档案已同步");
 }
+
+// ==========================================
+// 🚀 桌面双人羁绊组件：开机自动物理回溯协议
+// ==========================================
+document.addEventListener('DOMContentLoaded', async () => {
+    try {
+        // 1. 从底层数据库捞取高清头像
+        const savedAv1 = await window.ib.getItem('hero_av_1');
+        const savedAv2 = await window.ib.getItem('hero_av_2');
+        
+        if (savedAv1) {
+            const img1 = document.getElementById('bond-av-1');
+            if (img1) img1.src = savedAv1;
+        }
+        if (savedAv2) {
+            const img2 = document.getElementById('bond-av-2');
+            if (img2) img2.src = savedAv2;
+        }
+        
+        // 2. 从本地缓存捞取名字
+        const savedNames = localStorage.getItem('hero_names');
+        if (savedNames) {
+            const nameUi = document.getElementById('bond-name-ui');
+            if (nameUi) nameUi.innerText = savedNames;
+        }
+    } catch (e) {
+        console.warn("羁绊组件数据回溯挂起:", e);
+    }
+});
 
 </script>
 </body>
