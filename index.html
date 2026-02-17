@@ -60186,7 +60186,7 @@ window.editHubField = function(field) {
     }
 };
 
-// --- 3. 应用修改 ---
+// --- 3. 应用修改 (修复 div 背景替换失效问题) ---
 window.applyP2Changes = function(field, value) {
     if (!value) return;
 
@@ -60194,9 +60194,8 @@ window.applyP2Changes = function(field, value) {
     try {
         localStorage.setItem(`hub_p2_${field}`, value);
     } catch (e) {
-        // 如果图片是 Base64 且太大，会触发这个错误
         console.error("存储失败，可能是图片体积过大:", e);
-        if (field.indexOf('img') !== -1) {
+        if (field.indexOf('img') !== -1 || field === 'hero') {
             alert("保存失败：图片体积超过浏览器限制，请尝试使用图片链接(URL)。");
             return;
         }
@@ -60209,7 +60208,13 @@ window.applyP2Changes = function(field, value) {
     if (el) {
         const isImage = field === 'hero' || field.indexOf('img') !== -1;
         if (isImage) {
-            el.src = value;
+            // 🚨 核心修复：智能判断它是 <img> 还是 <div>
+            if (el.tagName.toLowerCase() === 'img') {
+                el.src = value;
+            } else {
+                // 如果是 div，则修改 backgroundImage 属性覆盖掉马卡龙色
+                el.style.backgroundImage = `url('${value}')`;
+            }
         } else {
             el.textContent = (field.indexOf('desc') !== -1) ? `"${value}"` : value;
         }
@@ -60226,7 +60231,7 @@ const P2_PERSIST_FIELDS = [
     'app7_img', 'app7_name', 'app8_img', 'app8_name'        // Row 6 Apps
 ];
 
-// --- 2. 页面加载初始化：从本地存储还原内容 ---
+// --- 4. 页面加载初始化：从本地存储还原内容 (同步修复) ---
 window.initP2Data = function() {
     console.log("正在同步第二页数据...");
     
@@ -60234,17 +60239,19 @@ window.initP2Data = function() {
         const savedValue = localStorage.getItem(`hub_p2_${field}`);
         
         if (savedValue) {
-            // 获取对应的 HTML 元素 ID
             const targetId = window.getHubElementId(field);
             const el = document.getElementById(targetId);
             
             if (el) {
-                // 判断是图片还是文字并还原
                 const isImage = field === 'hero' || field.indexOf('img') !== -1;
                 if (isImage) {
-                    el.src = savedValue;
+                    // 🚨 核心修复：智能判断它是 <img> 还是 <div>
+                    if (el.tagName.toLowerCase() === 'img') {
+                        el.src = savedValue;
+                    } else {
+                        el.style.backgroundImage = `url('${savedValue}')`;
+                    }
                 } else {
-                    // 如果是描述类文字，自动补上引号
                     el.textContent = (field.indexOf('desc') !== -1) ? `"${savedValue}"` : savedValue;
                 }
             }
@@ -66405,10 +66412,10 @@ function openIconTargetPicker() {
     // 🚨 物理补全：确保所有 App 都在名单里
     var apps = [
         "Wallpaper", "Settings", "Chat", "Photos", 
-        "Music", "Themes", "Phone", "Messages", 
+        "Music", "Profiles", "Phone", "Messages", 
         "Beautify", "Icons", "Diary", "Wallet", 
         "Notes", "Shopping", "Forum", "Novels", "Live",
-        "RoleBook", "WorldBook" // 👈 补上了！
+        "RoleBook", "WorldBook","Vibe Grid","Lost&Found","CineSync" // 👈 补上了！
     ];
     
     list.innerHTML = apps.map(function(name) {
