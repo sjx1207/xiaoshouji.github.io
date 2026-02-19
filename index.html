@@ -38934,11 +38934,14 @@ window.renderSoulDanmaku = function(text, role) {
 // 🔮 全局悬浮球控制器 (带角色嗅探)
 // ==========================================
 // ==========================================
-// 🔮 全局悬浮球控制器 (量子缝合版)
+// 🔮 全局悬浮球控制器 (防误触防死锁终极版)
 // ==========================================
 window.initCpaFloatingBall = function() {
     const fab = document.getElementById('cpa-floating-ball');
-    if (!fab || fab.dataset.initialized) return;
+    if (!fab) return; // 如果找不到直接退出
+    
+    // 如果已经绑定过，先解绑或者直接跳过
+    if (fab.dataset.initialized) return;
     fab.dataset.initialized = "true";
 
     let ballWidth = 48;
@@ -38950,12 +38953,11 @@ window.initCpaFloatingBall = function() {
     let startX, startY, initialX, initialY;
     let hideTimeout;
 
-    // 🚨 优化隐藏逻辑
     const resetHideTimeout = () => {
         clearTimeout(hideTimeout);
         fab.classList.remove('inactive');
         
-        // 如果“选择菜单”或“灵魂输入框”开着，绝对不隐藏
+        // 检查弹窗是否开着，开着就不缩进
         const menu = document.getElementById('modal-agent-action');
         const soulInput = document.getElementById('soul-input-overlay');
         const isAnyModalOpen = (menu && menu.classList.contains('active')) || 
@@ -38969,10 +38971,16 @@ window.initCpaFloatingBall = function() {
     };
 
     const onStart = (e) => {
+        // 如果是电脑右键，不处理
+        if (e.type === 'mousedown' && e.button !== 0) return; 
+        
         const touch = e.type.includes('mouse') ? e : e.touches[0];
         startX = touch.clientX; startY = touch.clientY;
         initialX = fab.offsetLeft; initialY = fab.offsetTop;
-        isDragging = true; hasMoved = false;
+        
+        isDragging = true; 
+        hasMoved = false;
+        
         clearTimeout(hideTimeout);
         fab.classList.add('dragging');
         fab.classList.remove('inactive', 'edge-left', 'edge-right');
@@ -38980,13 +38988,26 @@ window.initCpaFloatingBall = function() {
 
     const onMove = (e) => {
         if (!isDragging) return;
+        
         const touch = e.type.includes('mouse') ? e : e.touches[0];
-        const dx = touch.clientX - startX; const dy = touch.clientY - startY;
-        if (Math.abs(dx) > 5 || Math.abs(dy) > 5) hasMoved = true;
-        let newX = initialX + dx; let newY = initialY + dy;
-        const maxX = window.innerWidth - ballWidth; const maxY = window.innerHeight - ballWidth;
-        newX = Math.max(0, Math.min(newX, maxX)); newY = Math.max(0, Math.min(newY, maxY));
-        fab.style.left = newX + 'px'; fab.style.top = newY + 'px';
+        const dx = touch.clientX - startX; 
+        const dy = touch.clientY - startY;
+        
+        // 🚨 核心修复：把位移判定阈值从 5 放宽到 10，防止手机点击时手指轻微颤抖被误判为拖拽
+        if (Math.abs(dx) > 10 || Math.abs(dy) > 10) {
+            hasMoved = true;
+            e.preventDefault(); // 只有确认是拖拽时才阻止滚动
+        }
+        
+        if (hasMoved) {
+            let newX = initialX + dx; let newY = initialY + dy;
+            const maxX = window.innerWidth - ballWidth; 
+            const maxY = window.innerHeight - ballWidth;
+            newX = Math.max(0, Math.min(newX, maxX)); 
+            newY = Math.max(0, Math.min(newY, maxY));
+            fab.style.left = newX + 'px'; 
+            fab.style.top = newY + 'px';
+        }
     };
 
     const onEnd = (e) => {
@@ -38994,7 +39015,7 @@ window.initCpaFloatingBall = function() {
         isDragging = false;
         fab.classList.remove('dragging');
 
-        // 吸附逻辑
+        // 吸附边缘
         const centerX = fab.offsetLeft + ballWidth / 2;
         if (centerX < window.innerWidth / 2) {
             fab.style.left = '0px'; fab.classList.add('edge-left');
@@ -39004,16 +39025,18 @@ window.initCpaFloatingBall = function() {
 
         // 🚨 核心逻辑：点击判定
         if (!hasMoved) {
+            if(window.navigator.vibrate) window.navigator.vibrate(15);
+
             if (fab.classList.contains('inactive')) {
-                // 状态 1：缩进中，点一下唤醒
+                // 1. 如果是缩进状态，点击只唤醒
                 resetHideTimeout(); 
             } else {
-                // 状态 2：已唤醒，根据模式判断弹窗
+                // 2. 如果已经唤醒，触发对应菜单
                 if (fab.classList.contains('connected')) {
-                    // 💜 连接模式：直接弹灵魂输入框
+                    // 连接模式：打开灵魂感应输入框
                     if (window.openSoulInput) window.openSoulInput();
                 } else {
-                    // 🖤 普通模式：弹选择菜单
+                    // 潜行模式：打开特工菜单
                     const charId = window.currentCharPhoneId;
                     let ownerName = "目标";
                     try {
@@ -39030,9 +39053,11 @@ window.initCpaFloatingBall = function() {
     };
 
     fab.addEventListener('mousedown', onStart);
-    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mousemove', onMove, {passive: false});
     window.addEventListener('mouseup', onEnd);
-    fab.addEventListener('touchstart', onStart, {passive: false});
+    fab.addEventListener('mouseleave', onEnd); // 防止鼠标滑出窗口导致死锁
+    
+    fab.addEventListener('touchstart', onStart, {passive: true});
     window.addEventListener('touchmove', onMove, {passive: false});
     window.addEventListener('touchend', onEnd);
 
@@ -86520,9 +86545,23 @@ function getMacaronTagStyle(str) {
 
 // 1. 物理注入 DOM 与 极简高级 CSS
 function injectCharPhoneInterfaceDOM() {
-    // 🚨 物理清理：防止旧样式干扰，确保新样式 100% 生效
+    // 🚨 1. 物理清理旧样式
     const oldStyle = document.getElementById('cp-desktop-styles');
     if (oldStyle) oldStyle.remove();
+    
+    // 🚨 2. 核心修复：物理清理旧的 DOM，防止重复生成导致事件绑定错乱！
+    const elementsToRemove = [
+        'page-char-phone-desktop', 'modal-widget-editor', 'modal-social-editor', 'modal-bg-editor',
+        'modal-chat-app', 'modal-chat-detail', 'modal-gallery-app', 'page-gallery-detail',
+        'modal-diary-app', 'page-diary-detail', 'modal-browser-app', 'page-browser-trash', 
+        'page-browser-search-detail', 'modal-wallet-app', 'modal-location-app', 'modal-notes-app', 
+        'modal-settings-app', 'cpa-floating-ball', 'modal-agent-action', 'soul-danmaku-container', 'soul-input-overlay'
+    ];
+    elementsToRemove.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.remove();
+    });
+
     const style = document.createElement('style');
     style.id = 'cp-desktop-styles';
     style.innerHTML = `
