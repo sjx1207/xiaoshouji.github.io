@@ -38721,18 +38721,23 @@ window.triggerCpaAppReaction = function(appName) {
 // 🧬 灵魂链接：弹幕交互与 AI 记忆引擎
 // ==========================================
 
-// 1. 拦截悬浮球点击 (在此之前确保 fab 已有逻辑)
-// 修改 initCpaFloatingBall 里的点击判定：
-// 如果包含 'connected' 类，执行 window.openSoulInput()
-
+// ==========================================
+// 💬 灵魂输入框：防输入法暴走版
+// ==========================================
 window.openSoulInput = function() {
     const overlay = document.getElementById('soul-input-overlay');
-    overlay.style.display = 'flex';
-    document.getElementById('soul-input-field').focus();
+    if (overlay) {
+        overlay.style.display = 'flex';
+        // 🚨 核心修复：去掉了 overlay.querySelector('input').focus();
+        // 这样在手机上就不会强行拉起键盘了，把主动权交还给你的手指。
+    }
 };
 
 window.closeSoulInput = function() {
-    document.getElementById('soul-input-overlay').style.display = 'none';
+    const overlay = document.getElementById('soul-input-overlay');
+    if (overlay) {
+        overlay.style.display = 'none';
+    }
 };
 
 // 2. 发送消息并触发弹幕
@@ -39088,25 +39093,54 @@ window.closeAgentActionMenu = function() {
     }
 };
 
-// 🚨 物理状态锁：记录当前查手机是否被角色“感知”
-window.cpaIsStealthMode = true; // 默认潜行
+// ==========================================
+// 🕵️‍♂️ 悬浮球：状态机与量子变身引擎
+// ==========================================
+window.cpaIsStealthMode = true; // 默认潜行状态
 
 window.selectAgentAction = function(type) {
     window.closeAgentActionMenu();
     const fab = document.getElementById('cpa-floating-ball');
+    if (!fab) return;
     
     if (type === 'stealth') {
+        // 🖤 潜行模式
         window.cpaIsStealthMode = true;
-        window.showCpaToast("静默模式：数据提取中，对方无感知。");
+        window.showCpaToast("👁️ 静默模式：数据提取中，对方无感知。");
+        
+        // 恢复黑白雷达状态
         fab.classList.remove('connected');
+        fab.innerHTML = `
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <circle cx="12" cy="12" r="4"></circle>
+                <circle cx="12" cy="12" r="9" stroke-dasharray="4 4"></circle>
+            </svg>`;
+            
     } else if (type === 'connect') {
+        // 💜 连接模式
         window.cpaIsStealthMode = false;
-        window.showCpaToast("建立连接：对方已察觉你的介入。");
-        fab.classList.add('connected');
-        // 只有在“告知”模式下，才可能触发角色主动发弹幕
+        window.showCpaToast("⚡ 建立连接：对方已察觉你的介入。");
+        
+        // 🚨 1. 播放量子变身动画 (先缩再炸)
+        fab.classList.add('quantum-burst');
+        
         setTimeout(() => {
-            window.triggerSoulAiResponse("(系统：对方发现你正在翻看手机，并准备对你说话)");
-        }, 1000);
+            // 🚨 2. 彻底改变样式与图标 (变紫、变气泡)
+            fab.classList.add('connected');
+            fab.innerHTML = `
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                </svg>`;
+            
+            fab.classList.remove('quantum-burst');
+        }, 300);
+
+        // 🚨 3. 灵魂暴击：连接成功后，角色发现你上线了，主动跟你打招呼
+        setTimeout(() => {
+            if (window.triggerSoulAiResponse) {
+                window.triggerSoulAiResponse("(系统提示：对方发现你刚刚上线并连接了TA的感官，正注视着你。)");
+            }
+        }, 1500);
     }
 };
 
