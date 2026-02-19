@@ -38699,19 +38699,21 @@ window.cpaPerception = {
     appHistory: [] 
 };
 
-// 🧠 感官联动钩子：让角色发现你在偷窥 App
 window.triggerCpaAppReaction = function(appName) {
     window.cpaPerception.currentApp = appName;
-    window.cpaPerception.lastActionTime = Date.now();
     
-    // 🚨 设定 40% 的概率让角色主动蹦出一句话（你可以把 0.4 改大或改小）
-    if (Math.random() < 0.4) {
-        // 延迟 1.5 秒发送，模拟角色“发现并思考”的过程
-        setTimeout(() => {
-            if (window.triggerSoulAiResponse) {
-                window.triggerSoulAiResponse(`(系统提示：对方感知到你正在翻看 TA 的【${appName}】)`);
-            }
-        }, 1500);
+    // 🚨 逻辑修正：
+    if (window.cpaIsStealthMode) {
+        // 【潜行模式】：角色不知情。不触发弹幕，但悄悄记录这一次“违规翻看”到记忆数据库
+        console.log(`%c 🕵️‍♂️ 潜行监控：用户正在翻看 ${appName}，角色暂未察觉。`, "color: #888");
+        // 可以在这里静默保存一条 hidden 消息到数据库，作为未来的“算账”依据
+    } else {
+        // 【连接模式】：角色知情。根据人设概率触发主动弹幕
+        if (Math.random() < 0.5) {
+            setTimeout(() => {
+                window.triggerSoulAiResponse(`[感知行为：${appName}]`);
+            }, 1000);
+        }
     }
 };
 
@@ -38806,10 +38808,10 @@ ${worldContent}
 【你与对方 (${userData.name}) 的真实关系脉络】：
 ${userData.bio}
 
-🚨【当前感官实时数据】：
-- 🚨 **当前时间**：深夜 ${timeStr} (你的情绪应随时间波动)。
-- 🚨 **对方的行为**：【${userData.name}】正在翻看你手机里的【${currentApp}】。
-- 🚨 **潜意识直觉**：如果你收到的输入包含“(系统提示：...)”，那不是对方在说话，而是你作为【${ownerName}】瞬间察觉到了对方的窥视。请直接表现出你的【抓包反应】或【心理波动】。
+🚨【当前物理环境感知】：
+- 时间背景：${sensory.timeVibe}
+- 对方行为：正在翻看你的【${sensory.currentApp}】。
+- 心理压迫：${sensory.appSecretDesc}
 
 🚨【灵魂共鸣死令 - 必须绝对执行】：
 1. 🚨 **身份完全锁定**：无论你是被动回复，还是主动感知，严禁出现任何机械化词汇。你必须始终以【${ownerName}】的主观视角说话。
@@ -38822,6 +38824,7 @@ ${userData.bio}
 4. **物理切割协议**：严禁大段堆砌。每个独立的念头、转折、或情绪落点，【必须换行】。我要看到破碎、跳跃、真实的灵魂碎片。
 5. **记忆衔接与反馈**：严格参考历史记录，严禁跳戏。针对对方查阅【${currentApp}】的行为，必须在台词中体现出你的态度。
 6. **剔除冗余干扰**：禁止输出动作描写 ( ) 或 * *。你只需要交出你的【灵魂台词】。
+7. 🚨 **拒绝平庸回复**：严禁说“既然你在看，那我就告诉你吧”这种助理台词。
 
 你现在正真实地感受着【${userData.name}】。不要思考，基于你的本能和人设档案，交出你此时最真实的灵魂回响：`;
 
@@ -39060,36 +39063,52 @@ window.closeAgentActionMenu = function() {
     }
 };
 
+// 🚨 物理状态锁：记录当前查手机是否被角色“感知”
+window.cpaIsStealthMode = true; // 默认潜行
+
 window.selectAgentAction = function(type) {
     window.closeAgentActionMenu();
     const fab = document.getElementById('cpa-floating-ball');
     
     if (type === 'stealth') {
-        window.showCpaToast("静默模式：正在离线提取数据...");
-        // 保持原样
+        window.cpaIsStealthMode = true;
+        window.showCpaToast("静默模式：数据提取中，对方无感知。");
         fab.classList.remove('connected');
-        fab.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="4"></circle><circle cx="12" cy="12" r="9" stroke-dasharray="4 4"></circle></svg>`;
-        
     } else if (type === 'connect') {
-        window.showCpaToast("建立连接：正在介入目标意识...");
-        
-        // 🚨 播放量子变身动画
-        fab.classList.add('quantum-burst');
-        
+        window.cpaIsStealthMode = false;
+        window.showCpaToast("建立连接：对方已察觉你的介入。");
+        fab.classList.add('connected');
+        // 只有在“告知”模式下，才可能触发角色主动发弹幕
         setTimeout(() => {
-            // 🚨 彻底改变样式与图标
-            fab.classList.add('connected');
-            // 换成“消息信封”图标
-            fab.innerHTML = `
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-                </svg>`;
-            
-            fab.classList.remove('quantum-burst');
-        }, 300);
-
-        // 这里可以触发后续角色的反应逻辑
+            window.triggerSoulAiResponse("(系统：对方发现你正在翻看手机，并准备对你说话)");
+        }, 1000);
     }
+};
+
+// 🧬 高级感官解析器
+window.getDetailedPerception = function() {
+    const now = new Date();
+    const hour = now.getHours();
+    
+    // 1. 时间意境解析
+    let timeVibe = "";
+    if (hour >= 0 && hour < 5) timeVibe = "凌晨：灵魂最脆弱、防备消失、容易产生极端情绪或幻觉。";
+    else if (hour >= 5 && hour < 9) timeVibe = "清晨：刚清醒，带着点混沌和起床气。";
+    else if (hour >= 18 && hour < 23) timeVibe = "夜晚：渴望陪伴，思维活跃但感性。";
+    else timeVibe = "日间：理智尚存，社交面具厚重。";
+
+    // 2. 软件秘密权重 (赋予 App 灵魂)
+    const appWeights = {
+        "钱包": "【极其私密】：涉及金钱往来，TA会怀疑你在查 TA 的开销或转账记录。",
+        "私人相册": "【极度禁忌】：里面存着 TA 不愿示人的瞬间，翻看这里会引起 TA 的强烈羞耻或愤怒。",
+        "加密日记": "【灵魂深处】：TA 最真实的内心独白，被翻看时 TA 会感到被彻底看穿的恐惧。",
+        "位置追踪": "【控制感】：TA 会觉得你在监视 TA 的行踪，产生被禁锢的窒息感。"
+    };
+
+    const currentApp = window.cpaPerception.currentApp || "主屏幕";
+    const appSecretDesc = appWeights[currentApp] || "【日常应用】：相对放松，但仍有被窥探的不适。";
+
+    return { timeVibe, appSecretDesc, currentApp };
 };
 
 // ==========================================
@@ -40991,28 +41010,69 @@ window.loadCpWallpaperData = async function(charId) {
     window.loadAppIcons(); 
 };
 
-// 2. 增强版：打开视觉编辑器
+// ==========================================
+// 🛠️ 视觉编辑器：物理开关与保存逻辑
+// ==========================================
+
+// 1. 物理打开 (确保 ID 匹配 modal-bg-editor)
 window.openCpBgEditor = function() {
     const modal = document.getElementById('modal-bg-editor');
-    if (!modal) return;
+    if (!modal) return console.error("找不到 modal-bg-editor 元素");
 
-    // 🚨 物理对齐：同步现有数据到预览框
-    // 壁纸预览
-    const preImg = document.getElementById('ed-pre-bg-wallpaper');
+    // 加载当前壁纸和图标的预览
+    if (window.loadAppIcons) window.loadAppIcons(); 
+    
+    modal.style.display = 'flex';
+    // 强制重绘，确保 transition 动画生效
+    void modal.offsetWidth; 
+    modal.classList.add('active');
+    
+    if(navigator.vibrate) navigator.vibrate(15);
+};
+
+// 2. 🚨 物理关闭 (修复点击没反应的问题)
+window.closeCpBgEditor = function() {
+    const modal = document.getElementById('modal-bg-editor');
+    if (modal) {
+        // 先移除 active 类触发 CSS 退场动画 (translateY(100%) 或 opacity 0)
+        modal.classList.remove('active');
+        
+        // 等待动画结束后 (300ms) 再彻底隐藏 display
+        setTimeout(() => {
+            modal.style.display = 'none';
+            // 清理临时预览草稿，防止下次打开时数据残留
+            window.iconDrafts = null; 
+        }, 300);
+    }
+};
+
+// 3. 缝合保存逻辑 (确保保存后调用了正确的关闭函数)
+window.saveAllVisualStyles = async function() {
+    const charId = window.currentCharPhoneId;
+    if (!charId) return;
+
+    // A. 保存壁纸
     if (window.tempCpWallpaper) {
-        preImg.src = window.tempCpWallpaper;
-        preImg.style.display = 'block';
-    } else {
-        preImg.src = ''; 
+        const wpKey = `cp_wallpaper_${charId}`;
+        if (window.ib) await window.ib.setItem(wpKey, window.tempCpWallpaper);
+        else localStorage.setItem(wpKey, window.tempCpWallpaper);
     }
 
-    // 图标预览 (加载已存的图标到弹窗内的 8 个小框里)
-    window.loadAppIcons(); 
+    // B. 保存图标
+    if (window.iconDrafts) {
+        const iconKey = `cpa_custom_icons_${charId}`;
+        let existingIcons = (await window.ib.getItem(iconKey)) || {};
+        existingIcons = { ...existingIcons, ...window.iconDrafts };
+        await window.ib.setItem(iconKey, existingIcons);
+        window.iconDrafts = null;
+    }
 
-    modal.style.display = 'flex';
-    void modal.offsetWidth;
-    modal.classList.add('active');
-    if(navigator.vibrate) navigator.vibrate(15);
+    // C. 刷新 UI 并关闭
+    await window.loadCpWallpaperData(charId);
+    window.showCpaToast("系统视觉配置已同步");
+    
+    // 🚨 调用刚才修复的关闭函数
+    window.closeCpBgEditor(); 
 };
 
 // 3. 处理图标预览上传 (暂存到 Drafts)
@@ -41034,33 +41094,6 @@ window.handleIconPreUpload = function(input, appId) {
         };
         reader.readAsDataURL(input.files[0]);
     }
-};
-
-// 4. 🚨 核心：物理保存所有更改 (Apply All Changes)
-window.saveAllVisualStyles = async function() {
-    const charId = window.currentCharPhoneId;
-    if (!charId) return;
-
-    // --- A. 保存壁纸 ---
-    if (window.tempCpWallpaper) {
-        const wpKey = `cp_wallpaper_${charId}`;
-        if (window.ib) await window.ib.setItem(wpKey, window.tempCpWallpaper);
-        else localStorage.setItem(wpKey, window.tempCpWallpaper);
-    }
-
-    // --- B. 保存图标草稿 ---
-    if (window.iconDrafts) {
-        const iconKey = `cpa_custom_icons_${charId}`;
-        let existingIcons = (await window.ib.getItem(iconKey)) || {};
-        existingIcons = { ...existingIcons, ...window.iconDrafts };
-        await window.ib.setItem(iconKey, existingIcons);
-        window.iconDrafts = null; // 清空草稿
-    }
-
-    // --- C. 刷新渲染并关闭 ---
-    await window.loadCpWallpaperData(charId);
-    window.showCpaToast("系统视觉配置已更新");
-    window.closeCpBgEditor();
 };
 
 // 5. 渲染 App 图标 (桌面+弹窗预览)
