@@ -41014,39 +41014,73 @@ window.loadCpWallpaperData = async function(charId) {
 // 🛠️ 视觉编辑器：物理开关与保存逻辑
 // ==========================================
 
-// 1. 物理打开 (确保 ID 匹配 modal-bg-editor)
-window.openCpBgEditor = function() {
-    const modal = document.getElementById('modal-bg-editor');
-    if (!modal) return console.error("找不到 modal-bg-editor 元素");
+// ==========================================
+// 🛠️ 视觉编辑器：手机端高兼容性开关
+// ==========================================
 
-    // 加载当前壁纸和图标的预览
-    if (window.loadAppIcons) window.loadAppIcons(); 
-    
-    modal.style.display = 'flex';
-    // 强制重绘，确保 transition 动画生效
-    void modal.offsetWidth; 
-    modal.classList.add('active');
-    
-    if(navigator.vibrate) navigator.vibrate(15);
-};
-
-// 2. 🚨 物理关闭 (修复点击没反应的问题)
+// 1. 物理关闭函数
 window.closeCpBgEditor = function() {
+    console.log("尝试关闭弹窗..."); // 手机连电脑调试时可以看到
     const modal = document.getElementById('modal-bg-editor');
     if (modal) {
-        // 先移除 active 类触发 CSS 退场动画 (translateY(100%) 或 opacity 0)
+        // 移除 active 类触发退场动画
         modal.classList.remove('active');
         
-        // 等待动画结束后 (300ms) 再彻底隐藏 display
+        // 🚨 针对手机端的双重保险：先视觉消失，再彻底隐藏
+        modal.style.opacity = '0'; 
+        
         setTimeout(() => {
             modal.style.display = 'none';
-            // 清理临时预览草稿，防止下次打开时数据残留
+            // 清理草稿
             window.iconDrafts = null; 
+            console.log("弹窗已关闭");
         }, 300);
     }
 };
 
-// 3. 缝合保存逻辑 (确保保存后调用了正确的关闭函数)
+// 2. 物理打开函数
+window.openCpBgEditor = function() {
+    const modal = document.getElementById('modal-bg-editor');
+    if (!modal) return;
+
+    // 同步预览
+    if (window.loadAppIcons) window.loadAppIcons();
+
+    modal.style.display = 'flex';
+    // 强制刷新
+    void modal.offsetWidth; 
+    modal.classList.add('active');
+    modal.style.opacity = '1';
+    
+    if(navigator.vibrate) navigator.vibrate(20);
+};
+
+// 3. 🚨 核心修复：手动给手机端按钮绑定事件
+// 在你 inject DOM 之后的代码末尾，调用这个函数
+window.fixMobileClickBinding = function() {
+    const modal = document.getElementById('modal-bg-editor');
+    if (!modal) return;
+
+    // 找到 Back 按钮
+    const backBtn = modal.querySelector('.cp-btn.cancel');
+    if (backBtn) {
+        // 移除旧监听，绑定新监听，兼容 touch 和 click
+        backBtn.onclick = null;
+        backBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation(); // 阻止冒泡，防止点到背景
+            window.closeCpBgEditor();
+        });
+        // 针对某些极品安卓机增加 touchend 支持
+        backBtn.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            window.closeCpBgEditor();
+        });
+    }
+};
+
+// 🚨 1. 物理保存逻辑修复
 window.saveAllVisualStyles = async function() {
     const charId = window.currentCharPhoneId;
     if (!charId) return;
@@ -41059,44 +41093,23 @@ window.saveAllVisualStyles = async function() {
     }
 
     // B. 保存图标
-    if (window.iconDrafts) {
+    if (window.iconDrafts && Object.keys(window.iconDrafts).length > 0) {
         const iconKey = `cpa_custom_icons_${charId}`;
+        // 先读取旧的，再合并新的
         let existingIcons = (await window.ib.getItem(iconKey)) || {};
         existingIcons = { ...existingIcons, ...window.iconDrafts };
         await window.ib.setItem(iconKey, existingIcons);
-        window.iconDrafts = null;
+        window.iconDrafts = null; 
     }
 
-    // C. 刷新 UI 并关闭
-    await window.loadCpWallpaperData(charId);
-    window.showCpaToast("系统视觉配置已同步");
+    // C. 🚨 关键：先强制刷新数据，再物理应用到桌面
+    await window.loadCpWallpaperData(charId); 
     
-    // 🚨 调用刚才修复的关闭函数
-    window.closeCpBgEditor(); 
+    window.showCpaToast("系统视觉配置已更新");
+    window.closeCpBgEditor();
 };
 
-// 3. 处理图标预览上传 (暂存到 Drafts)
-window.handleIconPreUpload = function(input, appId) {
-    if (input.files && input.files[0]) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            const base64 = e.target.result;
-            // 更新预览图
-            const img = document.getElementById(`ie-pre-${appId}`);
-            if(img) {
-                img.src = base64;
-                img.style.display = 'block';
-                img.parentElement.querySelector('svg').style.display = 'none';
-            }
-            // 🚨 存入草稿区，不立即存库
-            if (!window.iconDrafts) window.iconDrafts = {};
-            window.iconDrafts[appId] = base64;
-        };
-        reader.readAsDataURL(input.files[0]);
-    }
-};
-
-// 5. 渲染 App 图标 (桌面+弹窗预览)
+// 🚨 2. 物理渲染逻辑修复
 window.loadAppIcons = async function() {
     const charId = window.currentCharPhoneId;
     if (!charId) return;
@@ -41105,31 +41118,83 @@ window.loadAppIcons = async function() {
     const icons = (window.ib) ? await window.ib.getItem(iconKey) : JSON.parse(localStorage.getItem(iconKey) || '{}');
     if (!icons) return;
 
+    // 对应 8 个 App 的标签
     const labels = ['Chat', 'Gallery', 'Diary', 'Browser', 'Wallet', 'Location', 'Notes', 'Settings'];
     
     labels.forEach(label => {
         const base64 = icons[label];
         if (base64) {
-            // A. 更新桌面图标
+            // --- 桌面图标渲染 ---
             const desktopApps = document.querySelectorAll('.cp-app-cell');
             desktopApps.forEach(cell => {
-                if (cell.querySelector('.cp-app-label').innerText === label) {
+                // 🚨 增强匹配：去掉空格并统一大小写
+                const cellLabel = cell.querySelector('.cp-app-label').innerText.trim().toLowerCase();
+                if (cellLabel === label.toLowerCase()) {
                     const iconBox = cell.querySelector('.cp-app-icon');
-                    iconBox.classList.add('custom-img');
-                    let img = iconBox.querySelector('img') || document.createElement('img');
+                    iconBox.classList.add('custom-img'); // 激活 CSS 屏蔽逻辑
+                    
+                    let img = iconBox.querySelector('img');
+                    if (!img) {
+                        img = document.createElement('img');
+                        iconBox.appendChild(img);
+                    }
                     img.src = base64;
-                    if(!iconBox.querySelector('img')) iconBox.appendChild(img);
+                    img.style.display = 'block';
                 }
             });
-            // B. 更新弹窗内预览
+
+            // --- 弹窗内预览图同步 ---
             const preImg = document.getElementById(`ie-pre-${label}`);
             if (preImg) {
                 preImg.src = base64;
                 preImg.style.display = 'block';
-                if(preImg.parentElement.querySelector('svg')) preImg.parentElement.querySelector('svg').style.display = 'none';
+                const parent = preImg.parentElement;
+                if(parent && parent.querySelector('svg')) {
+                    parent.querySelector('svg').style.display = 'none';
+                }
             }
         }
     });
+};
+
+// ==========================================
+// 🎨 核心修复：处理图标上传预览 (Base64 转换)
+// ==========================================
+window.handleIconPreUpload = function(input, appId) {
+    console.log(`正在预处理 ${appId} 的图标...`);
+    
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        
+        reader.onload = function(e) {
+            const base64 = e.target.result;
+            
+            // 1. 🚨 更新弹窗内的预览图 (让用户知道选成功了)
+            const preImg = document.getElementById(`ie-pre-${appId}`);
+            if (preImg) {
+                preImg.src = base64;
+                preImg.style.display = 'block';
+                
+                // 物理抹除预览框里的上传图标 (SVG)
+                const parent = preImg.parentElement;
+                if (parent && parent.querySelector('svg')) {
+                    parent.querySelector('svg').style.display = 'none';
+                }
+            }
+
+            // 2. 🚨 存入“视觉草稿箱” (Drafts)
+            // 等待点击 Apply All Changes 时再一次性存入数据库
+            if (!window.iconDrafts) window.iconDrafts = {};
+            window.iconDrafts[appId] = base64;
+            
+            console.log(`${appId} 图标已存入临时草稿`);
+        };
+
+        // 读取图片文件
+        reader.readAsDataURL(input.files[0]);
+    } else {
+        console.warn("未选择文件或读取失败");
+    }
 };
 
 // 6. 恢复默认设置
@@ -88514,6 +88579,43 @@ function injectCharPhoneInterfaceDOM() {
     .ie-upload-box svg { width: 18px; color: #999; }
     .ie-label { font-size: 10px; margin-top: 4px; color: #666; font-weight: bold; }
 
+    /* 确保编辑器弹窗层级高于一切 */
+        #modal-bg-editor {
+            z-index: 200000000 !important; /* 给一个极高的数值 */
+            pointer-events: auto !important;
+        }
+
+        .cp-editor-card {
+            pointer-events: auto !important; /* 确保卡片内部允许点击 */
+            z-index: 200000001 !important;
+        }
+
+        .cp-btn {
+            cursor: pointer;
+            touch-action: manipulation; /* 优化移动端点击延迟 */
+            -webkit-tap-highlight-color: transparent; /* 去除手机点击时的蓝色阴影 */
+            position: relative;
+            z-index: 200000005 !important;
+        }
+
+        /* 🚨 核心修复：当应用了自定义图片后，彻底抹除原本的 SVG 和样式 */
+        .cp-app-icon.custom-img {
+            background: #fff !important;
+            padding: 0 !important;
+            border: none !important;
+            overflow: hidden;
+        }
+
+        .cp-app-icon.custom-img svg {
+            display: none !important; /* 物理抹除原本的图标 */
+        }
+
+        .cp-app-icon.custom-img img {
+            display: block !important;
+            width: 100% !important;
+            height: 100% !important;
+            object-fit: cover !important;
+        }
     `;
     document.head.appendChild(style);
 
@@ -88762,7 +88864,7 @@ function injectCharPhoneInterfaceDOM() {
             </div>
 
             <div class="cp-btn-row">
-                <button class="cp-btn cancel" style="flex:none; width:80px;" onclick="window.closeCpBgEditor()">Back</button>
+                <button class="cp-btn cancel" onclick="window.closeCpBgEditor(); event.stopPropagation();">Back</button>
                 <button class="cp-btn save" onclick="window.saveAllVisualStyles()">Apply All Changes</button>
             </div>
             <button class="cp-btn reset-bg" onclick="window.resetCpWallpaper()">恢复原始默认壁纸</button>
