@@ -38691,6 +38691,162 @@ class ImmersiveReader {
     console.log("✅ 抢救成功：缺失的安保扫描仪与发车 CSS 已强行打入系统！");
 })();
 
+// ==========================================
+// 🎨 图标编辑器逻辑 (全量存储版)
+// ==========================================
+
+// 1. 初始化长按监听 (在 inject 之后执行一次)
+// ==========================================
+// 🎨 图标编辑器初始化 (移动端长按 + 电脑端右键)
+// ==========================================
+window.initAppIconLongPress = function() {
+    const apps = document.querySelectorAll('.cp-app-cell');
+    
+    apps.forEach(app => {
+        let pressTimer;
+
+        // --- 1. 移动端 & 电脑端通用：点击并按住 (Long Press) ---
+        const start = (e) => {
+            // 如果是右键点击(button 2)，交给 contextmenu 事件处理，这里跳过
+            if (e.button === 2) return; 
+            
+            pressTimer = setTimeout(() => {
+                window.openAppIconEditor();
+            }, 600); // 按住 600ms 触发
+        };
+
+        const end = () => {
+            clearTimeout(pressTimer);
+        };
+
+        // --- 2. 🚨 电脑端专属：右键直接触发 (Right Click) ---
+        const handleContextMenu = (e) => {
+            e.preventDefault(); // 物理拦截：禁止弹出浏览器自带的菜单
+            if (window.navigator.vibrate) window.navigator.vibrate(20);
+            window.openAppIconEditor();
+        };
+
+        // 绑定右键事件
+        app.addEventListener('contextmenu', handleContextMenu);
+
+        // 绑定点击按住事件 (兼容所有端)
+        app.addEventListener('mousedown', start);
+        app.addEventListener('mouseup', end);
+        app.addEventListener('mouseleave', end); // 鼠标移出也要取消计时
+        
+        // 绑定移动端触摸
+        app.addEventListener('touchstart', start, {passive: true});
+        app.addEventListener('touchend', end);
+    });
+
+    // 🚨 进来先加载一次已存数据
+    window.loadAppIcons();
+};
+
+// 2. 弹窗控制
+window.openAppIconEditor = function() {
+    const modal = document.getElementById('modal-app-icon-editor');
+    modal.style.display = 'flex';
+    void modal.offsetWidth;
+    modal.classList.add('active');
+    if (navigator.vibrate) navigator.vibrate(20);
+};
+
+window.closeAppIconEditor = function() {
+    const modal = document.getElementById('modal-app-icon-editor');
+    modal.classList.remove('active');
+    setTimeout(() => modal.style.display = 'none', 300);
+};
+
+// 3. 处理上传预览
+window.handleIconPreUpload = function(input, appId) {
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const img = document.getElementById(`ie-pre-${appId}`);
+            img.src = e.target.result;
+            img.style.display = 'block';
+            img.parentElement.querySelector('svg').style.display = 'none';
+            // 存入临时草稿对象，点击保存才真正存入 DB
+            if (!window.iconDrafts) window.iconDrafts = {};
+            window.iconDrafts[appId] = e.target.result;
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+};
+
+// 4. 🚨 物理存储：存入 IndexedDB
+window.saveAppIcons = async function() {
+    const charId = window.currentCharPhoneId;
+    if (!charId) return;
+    
+    // 获取现有的图标库，如果没有则初始化
+    const dbKey = `cpa_custom_icons_${charId}`;
+    let existingIcons = (await window.ib.getItem(dbKey)) || {};
+    
+    // 合并新上传的图标
+    if (window.iconDrafts) {
+        existingIcons = { ...existingIcons, ...window.iconDrafts };
+    }
+    
+    await window.ib.setItem(dbKey, existingIcons);
+    window.iconDrafts = null; // 清空草稿
+    
+    window.loadAppIcons(); // 立即刷新 UI
+    window.closeAppIconEditor();
+    window.showCpaToast("图标系统已固化");
+};
+
+// 5. 🚨 读取并应用图标 (核心)
+window.loadAppIcons = async function() {
+    const charId = window.currentCharPhoneId;
+    if (!charId) return;
+    
+    const dbKey = `cpa_custom_icons_${charId}`;
+    const icons = await window.ib.getItem(dbKey);
+    if (!icons) return;
+
+    // 遍历这 8 个 App
+    const appLabels = ['Chat', 'Gallery', 'Diary', 'Browser', 'Wallet', 'Location', 'Notes', 'Settings'];
+    
+    appLabels.forEach(label => {
+        if (icons[label]) {
+            // 1. 更新桌面图标
+            const desktopCells = document.querySelectorAll('.cp-app-cell');
+            desktopCells.forEach(cell => {
+                if (cell.querySelector('.cp-app-label').innerText === label) {
+                    const iconBox = cell.querySelector('.cp-app-icon');
+                    iconBox.classList.add('custom-img');
+                    // 检查是否已有 img，没有则创建
+                    let img = iconBox.querySelector('img');
+                    if (!img) {
+                        img = document.createElement('img');
+                        iconBox.appendChild(img);
+                    }
+                    img.src = icons[label];
+                }
+            });
+            // 2. 更新编辑器里的预览
+            const preImg = document.getElementById(`ie-pre-${label}`);
+            if (preImg) {
+                preImg.src = icons[label];
+                preImg.style.display = 'block';
+                preImg.parentElement.querySelector('svg').style.display = 'none';
+            }
+        }
+    });
+};
+
+// 6. 恢复出厂设置
+window.resetAppIcons = async function() {
+    if (!confirm("确定要恢复默认 SVG 图标吗？")) return;
+    const charId = window.currentCharPhoneId;
+    await window.ib.removeItem(`cpa_custom_icons_${charId}`);
+    
+    // 强制刷新页面生效，或物理清理 UI
+    location.reload();
+};
+
 // 🧬 全局感官记录器：这是角色的“直觉”来源
 window.cpaPerception = {
     currentApp: "主屏幕", 
@@ -69661,7 +69817,7 @@ function openIconTargetPicker() {
         "Music", "Profiles", "Phone", "Messages", 
         "Beautify", "Icons", "Diary", "Wallet", 
         "Notes", "Shopping", "Forum", "Novels", "Live",
-        "RoleBook", "WorldBook","Vibe Grid","Lost & Found","CineSync" // 👈 补上了！
+        "RoleBook", "WorldBook","Vibe Grid","Lost & Found","CineSync","Char Phone" // 👈 补上了！
     ];
     
     list.innerHTML = apps.map(function(name) {
@@ -88416,6 +88572,45 @@ function injectCharPhoneInterfaceDOM() {
             width: 36px; height: 36px; border-radius: 50%; background: #AF52DE;
             color: #fff; display: flex; align-items: center; justify-content: center; border: none;
         }
+
+        /* ==============================
+           🎨 App 图标高级定制弹窗
+        ============================== */
+        #modal-app-icon-editor {
+            position: fixed; inset: 0; z-index: 100000009 !important;
+            background: rgba(0,0,0,0.5); backdrop-filter: blur(15px);
+            display: none; align-items: flex-end; opacity: 0; transition: 0.3s;
+        }
+        #modal-app-icon-editor.active { display: flex !important; opacity: 1; }
+        
+        .icon-editor-card {
+            width: 100%; background: #FAFAFC; border-radius: 32px 32px 0 0;
+            padding: 30px 24px 50px; transform: translateY(100%); 
+            transition: 0.4s cubic-bezier(0.19, 1, 0.22, 1);
+            max-height: 90vh; overflow-y: auto;
+        }
+        #modal-app-icon-editor.active .icon-editor-card { transform: translateY(0); }
+
+        .ie-grid {
+            display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin: 20px 0;
+        }
+        .ie-item { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+        
+        .ie-upload-box {
+            width: 100%; aspect-ratio: 1; border-radius: 18px;
+            background: #fff; border: 2px dashed #ddd;
+            display: flex; align-items: center; justify-content: center;
+            overflow: hidden; cursor: pointer; position: relative;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.02);
+        }
+        .ie-upload-box img { width: 100%; height: 100%; object-fit: cover; display: none; }
+        .ie-upload-box svg { width: 24px; height: 24px; color: #ccc; }
+        .ie-label { font-size: 10px; font-weight: 800; color: #8e8e93; text-transform: uppercase; }
+
+        /* 强制覆盖桌面图标为照片的样式 */
+        .cp-app-icon.custom-img { background: #fff !important; padding: 0 !important; overflow: hidden; }
+        .cp-app-icon.custom-img img { width: 100%; height: 100%; object-fit: cover; }
+        .cp-app-icon.custom-img svg { display: none; }
     `;
     document.head.appendChild(style);
 
@@ -89085,6 +89280,86 @@ function injectCharPhoneInterfaceDOM() {
             <button class="soul-send-btn" onclick="window.sendSoulMessage()">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="width:18px;height:18px;"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
             </button>
+        </div>
+    </div>
+
+    <div id="modal-app-icon-editor" onclick="if(event.target===this) window.closeAppIconEditor()">
+        <div class="icon-editor-card" onclick="event.stopPropagation()">
+            <div class="cp-ed-title">Icon Customization</div>
+            <div class="cp-ed-label" style="text-align:center;">长按桌面图标可唤醒此菜单</div>
+            
+            <div class="ie-grid">
+                <div class="ie-item">
+                    <div class="ie-upload-box" onclick="document.getElementById('ie-file-Chat').click()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                        <img id="ie-pre-Chat">
+                    </div>
+                    <div class="ie-label">Chat</div>
+                    <input type="file" id="ie-file-Chat" hidden accept="image/*" onchange="window.handleIconPreUpload(this, 'Chat')">
+                </div>
+                <div class="ie-item">
+                    <div class="ie-upload-box" onclick="document.getElementById('ie-file-Gallery').click()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                        <img id="ie-pre-Gallery">
+                    </div>
+                    <div class="ie-label">Gallery</div>
+                    <input type="file" id="ie-file-Gallery" hidden accept="image/*" onchange="window.handleIconPreUpload(this, 'Gallery')">
+                </div>
+                <div class="ie-item">
+                    <div class="ie-upload-box" onclick="document.getElementById('ie-file-Diary').click()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                        <img id="ie-pre-Diary">
+                    </div>
+                    <div class="ie-label">Diary</div>
+                    <input type="file" id="ie-file-Diary" hidden accept="image/*" onchange="window.handleIconPreUpload(this, 'Diary')">
+                </div>
+                <div class="ie-item">
+                    <div class="ie-upload-box" onclick="document.getElementById('ie-file-Browser').click()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                        <img id="ie-pre-Browser">
+                    </div>
+                    <div class="ie-label">Browser</div>
+                    <input type="file" id="ie-file-Browser" hidden accept="image/*" onchange="window.handleIconPreUpload(this, 'Browser')">
+                </div>
+                <div class="ie-item">
+                    <div class="ie-upload-box" onclick="document.getElementById('ie-file-Wallet').click()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                        <img id="ie-pre-Wallet">
+                    </div>
+                    <div class="ie-label">Wallet</div>
+                    <input type="file" id="ie-file-Wallet" hidden accept="image/*" onchange="window.handleIconPreUpload(this, 'Wallet')">
+                </div>
+                <div class="ie-item">
+                    <div class="ie-upload-box" onclick="document.getElementById('ie-file-Location').click()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                        <img id="ie-pre-Location">
+                    </div>
+                    <div class="ie-label">Location</div>
+                    <input type="file" id="ie-file-Location" hidden accept="image/*" onchange="window.handleIconPreUpload(this, 'Location')">
+                </div>
+                <div class="ie-item">
+                    <div class="ie-upload-box" onclick="document.getElementById('ie-file-Notes').click()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                        <img id="ie-pre-Notes">
+                    </div>
+                    <div class="ie-label">Notes</div>
+                    <input type="file" id="ie-file-Notes" hidden accept="image/*" onchange="window.handleIconPreUpload(this, 'Notes')">
+                </div>
+                <div class="ie-item">
+                    <div class="ie-upload-box" onclick="document.getElementById('ie-file-Settings').click()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                        <img id="ie-pre-Settings">
+                    </div>
+                    <div class="ie-label">Settings</div>
+                    <input type="file" id="ie-file-Settings" hidden accept="image/*" onchange="window.handleIconPreUpload(this, 'Settings')">
+                </div>
+            </div>
+
+            <div class="cp-btn-row">
+                <button class="cp-btn cancel" onclick="window.closeAppIconEditor()">Cancel</button>
+                <button class="cp-btn save" onclick="window.saveAppIcons()">Save Styles</button>
+            </div>
+            <button class="cp-btn reset-bg" style="width:100%; margin-top:10px;" onclick="window.resetAppIcons()">Reset to Default Icons</button>
         </div>
     </div>
 
