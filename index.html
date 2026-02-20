@@ -36,6 +36,10 @@
             --macaron-green: #D4F0CE;
             --macaron-purple: #E2CFFF;
             --shop-accent: #000000;
+                --fm-trends-bg: #FAFAFC;
+                --fm-accent-gold: #D4AF37;
+                --fm-text-black: #1D1D1F;
+                --fm-glass-border: rgba(0, 0, 0, 0.05);
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
@@ -29258,7 +29262,7 @@ input[type="range"] { width: 100%; accent-color: #000; cursor: pointer; }
                     <span class="app-name">Shopping</span>
                 </div>
 
-                <div class="app-cell" style="grid-area: 6 / 2 / 7 / 3;" onclick="openApp('forumApp')">
+                <div class="app-cell" style="grid-area: 6 / 2 / 7 / 3;" onclick="forceOpenForumApp()">
                     <div class="glass-icon-bg">
                         <span class="app-name" style="display: none;">Forum</span>
                         <svg class="glass-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
@@ -38690,6 +38694,1511 @@ class ImmersiveReader {
     document.head.appendChild(style);
     console.log("✅ 抢救成功：缺失的安保扫描仪与发车 CSS 已强行打入系统！");
 })();
+
+
+window.refreshRankCenterData = async function(btn) {
+    if (!btn || btn.classList.contains('sync-spinning')) return;
+    
+    // 1. 启动旋转动画
+    btn.classList.add('sync-spinning');
+    btn.style.filter = "drop-shadow(0 0 12px #AF52DE)";
+
+    const charId = window.currentCharPhoneId || 'public_node';
+    const apiKey = localStorage.getItem('gpt_key');
+    let apiUrl = (localStorage.getItem('gpt_url') || "https://api.openai.com/v1").replace(/\/+$/, "");
+    let model = localStorage.getItem('gpt_model') || "gpt-3.5-turbo";
+
+    try {
+        const oldData = await window.ib.getItem(`fm_trends_data_${charId}`) || { trends: [] };
+        const filterWords = oldData.trends.map(t => t.word).slice(0, 15).join(',');
+
+        // 2. 发起请求：要求严格生成 30 条有意义的中文词条
+        const response = await fetch(`${apiUrl}/chat/completions`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+            body: JSON.stringify({
+                model,
+                messages: [
+                    { 
+                        role: "system", 
+                        content: `你是一个社交平台后端。请生成 25条核心热搜 和 5条Rising(上升)词条。
+                        要求：
+                        1. 词条必须是高质量、有话题感的中文（如：#全球首个AI市长上任#、#猫咪是否在监视人类#、#2026复古穿搭指南#）。
+                        2. 排除重复：${filterWords}。
+                        3. 必须严格返回 JSON，严禁在引号外出现#号：
+                        {"top_trends": [{"word":"话题名", "heat":"50000", "tag":"领域", "trend":"UP"}], "rising_stars": [...]}` 
+                    },
+                    { role: "user", content: "GENERATE_30_REAL_TRENDS" }
+                ],
+                temperature: 0.8
+            })
+        });
+
+        const resData = await response.json();
+        let content = resData.choices[0].message.content;
+
+        // 3. 强力解析
+        let rawJson;
+        try {
+            const jsonMatch = content.match(/\{[\s\S]*\}/);
+            if (!jsonMatch) throw new Error("No JSON");
+            let cleanStr = jsonMatch[0].replace(/:\s?#(\S+)/g, ': "$1"'); 
+            rawJson = JSON.parse(cleanStr);
+        } catch (e) {
+            rawJson = {
+                top_trends: [{word: "信号重构中...", heat: "999", tag: "系统", trend: "STABLE"}],
+                rising_stars: []
+            };
+        }
+
+        // 4. 合并数据：只保留 AI 生成的这 30 条，不再额外凑数
+        let coreTrends = [
+            ...(rawJson.rising_stars || []).map(t => ({ ...t, isRising: true, trend: 'NEW' })),
+            ...(rawJson.top_trends || [])
+        ];
+
+        // 排序：热度从高到低
+        coreTrends.sort((a, b) => parseInt(b.heat) - parseInt(a.heat));
+
+        // 5. 持久化存储 (这 30 条会覆盖旧的 50 条)
+        await window.ib.setItem(`fm_trends_data_${charId}`, { ...oldData, trends: coreTrends });
+
+        // 6. 动画渲染
+        const listEl = document.getElementById('rank-center-list');
+        if (listEl) {
+            listEl.innerHTML = ''; // 先清空
+            
+            // 使用 coreTrends 直接渲染，它有多少条就画多少条
+            listEl.innerHTML = coreTrends.map((item, index) => {
+                const isTop3 = index < 3;
+                const rankColor = isTop3 ? (index === 0 ? '#FFD700' : (index === 1 ? '#C0C0C0' : '#CD7F32')) : '#8e8e93';
+                
+                return `
+                <div class="rank-center-card" 
+                     style="animation: slideIn 0.4s ease forwards ${index * 0.03}s; opacity: 0; background: white; border-radius: 18px; padding: 18px; margin-bottom: 12px; display: flex; align-items: center; border: 1px solid rgba(0,0,0,0.01); box-shadow: 0 4px 12px rgba(0,0,0,0.03); position: relative; overflow: hidden;">
+                    
+                    <div style="font-size: 20px; font-weight: 900; color: ${rankColor}; width: 40px; font-style: italic;">
+                        ${(index+1).toString().padStart(2,'0')}
+                    </div>
+                    
+                    <div style="flex-grow: 1;">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span style="font-weight: 800; font-size: 15px; color: #1c1c1e;">${item.word}</span>
+                            ${item.isRising ? `<span class="rising-tag">RISING</span>` : `<span class="hot-tag">HOT</span>`}
+                        </div>
+                        <div style="font-size: 10px; color: #8e8e93; margin-top: 4px; font-weight: 600;">
+                            <span style="color:#AF52DE; font-size:12px;">⚡</span> ${item.heat} VIBES · ${item.tag}
+                        </div>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        // 7. 同步主页
+        if (typeof window.renderForumRankings === 'function') {
+            window.renderForumRankings();
+        }
+
+        window.showCpaToast("榜单已更新至最新话题");
+
+    } catch (e) {
+        console.error("更新失败:", e);
+        window.showCpaToast("同步中断");
+    } finally {
+        setTimeout(() => {
+            btn.classList.remove('sync-spinning');
+            btn.style.filter = "none";
+        }, 800);
+    }
+};
+
+window.goToRankDetailCenter = async function() {
+    // 1. 创建或获取覆盖层
+    let overlay = document.getElementById('fm-rank-center-overlay');
+    if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'fm-rank-center-overlay';
+        overlay.style = `
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(20px);
+            z-index: 30000000; display: none; flex-direction: column;
+            font-family: 'PingFang SC', system-ui; overflow-y: auto;
+        `;
+        document.body.appendChild(overlay);
+    }
+
+    // 2. 基础结构渲染 (注意：这里 onclick 绑定的是 refreshRankCenterData)
+    overlay.style.display = 'flex';
+    overlay.style.animation = 'tp-page-slide 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)';
+    
+    overlay.innerHTML = `
+        <div style="padding: 60px 25px 20px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; background: rgba(255,255,255,0.8); z-index: 10;">
+            <div onclick="this.parentElement.parentElement.style.display='none'" style="width: 40px; height: 40px; border-radius: 50%; background: #f2f2f7; display: flex; align-items: center; justify-content: center; cursor: pointer;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1d1d1f" stroke-width="2.5"><path d="M15 18l-6-6 6-6"></path></svg>
+            </div>
+            <div style="text-align: center;">
+                <div style="font-size: 10px; font-weight: 900; color: #AF52DE; letter-spacing: 2px;">TRENDING HUB</div>
+                <div style="font-size: 18px; font-weight: 900; color: #1d1d1f;">热点数据中心</div>
+            </div>
+            <div id="rank-center-update-btn" 
+                class="jelly-anim" 
+                style="width: 40px; height: 40px; border-radius: 50%; background: #AF52DE; display: flex; align-items: center; justify-content: center; color: white; cursor: pointer; box-shadow: 0 4px 15px rgba(175,82,222,0.3);" 
+                onclick="window.refreshRankCenterData(this)">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                </svg>
+            </div>
+        </div>
+        <div id="rank-center-list" style="padding: 10px 20px 50px;">
+            <div style="text-align:center; padding:100px; opacity:0.3; font-weight:800; font-size:12px;">SYNCHRONIZING TRENDS...</div>
+        </div>
+    `;
+
+    // 3. 读取当前数据库里的 50 条并显示
+    const charId = window.currentCharPhoneId || 'public_node';
+    let data = await window.ib.getItem(`fm_trends_data_${charId}`);
+    
+    if (data && data.trends) {
+        // 直接使用渲染函数（确保这个函数在全局已定义）
+        window.renderRankCenterList(data.trends);
+    } else {
+        // 如果没数据，自动触发一次同步
+        const btn = document.getElementById('rank-center-update-btn');
+        window.refreshRankCenterData(btn);
+    }
+};
+
+// 既然 renderRanks 逻辑在 refreshRankCenterData 里也要用，我们把它统一成全局函数
+window.renderRankCenterList = function(trends) {
+    const listEl = document.getElementById('rank-center-list');
+    if (!listEl) return;
+
+    listEl.innerHTML = trends.map((item, index) => {
+        const isTop3 = index < 3;
+        const rankColor = isTop3 ? (index === 0 ? '#FFD700' : (index === 1 ? '#C0C0C0' : '#CD7F32')) : '#8e8e93';
+        
+        return `
+        <div class="rank-center-card jelly-anim ${isTop3 ? 'top-3-glow' : ''}" 
+             onclick="window.openTopicDetail('${item.word}')"
+             style="animation-delay: ${index * 0.05}s; background: white; border-radius: 24px; padding: 20px; margin-bottom: 15px; border: 1px solid rgba(0,0,0,0.03); display: flex; align-items: center; box-shadow: 0 10px 30px rgba(0,0,0,0.02);">
+            <div style="font-size: 28px; font-weight: 900; font-style: italic; color: ${rankColor}; width: 50px; flex-shrink: 0;">${index + 1}</div>
+            <div style="flex-grow: 1;">
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                    <span style="font-weight: 900; font-size: 17px; color: #1d1d1f;">${item.word}</span>
+                    ${isTop3 ? `<span style="background: rgba(255, 59, 48, 0.1); color: #FF3B30; font-size: 9px; padding: 2px 6px; border-radius: 6px; font-weight: 800;">HOT</span>` : ''}
+                    ${item.isRising ? `<span class="rising-tag" style="background:linear-gradient(90deg, #FF9500, #FFCC00); color:white; font-size:9px; padding:2px 6px; border-radius:4px;">RISING</span>` : ''}
+                </div>
+                <div style="font-size: 11px; color: #8e8e93; font-weight: 600;">
+                    SIGNAL: <span style="color: #AF52DE;">${item.heat}</span> | #${item.tag || 'GENERAL'}
+                </div>
+            </div>
+        </div>`;
+    }).join('');
+};
+
+window.renderSinglePostHTML = function(p, index) {
+    const firstChar = p.author.charAt(0).toUpperCase();
+    const pBg = (typeof window.generateMacaronGradient === 'function') 
+        ? window.generateMacaronGradient() : 'linear-gradient(135deg, #E2CFFF, #AF52DE)';
+    
+    // 这里用了 window.linkifyTopic 确保词条可点
+    const contentHtml = window.linkifyTopic ? window.linkifyTopic(p.content) : p.content;
+
+    return `
+    <div class="fm-pro-post jelly-anim" style="animation-delay: ${index * 0.1}s; margin-bottom: 20px;">
+        <div class="fm-post-header">
+            <div class="fm-post-user-box">
+                <div class="fm-post-avatar-wrapper">
+                    <div class="fm-post-avatar-text" style="background: ${pBg}">${firstChar}</div>
+                </div>
+                <div class="fm-post-meta">
+                    <div class="fm-post-nickname">${p.author}</div>
+                    <div class="fm-post-sub">SIGNAL_STRENGTH: 100%</div>
+                </div>
+            </div>
+        </div>
+        <div class="fm-post-body" style="font-size:15px; color:#3a3a3c; line-height:1.6; margin: 12px 0;">
+            ${contentHtml}
+        </div>
+        <div class="fm-post-actions-bar" style="border-top: 1px solid rgba(0,0,0,0.03); padding-top: 12px; margin-top: 5px;">
+            <div class="fm-action-group" style="display: flex; justify-content: space-between; max-width: 95%;">
+                <div class="fm-action-unit">
+                     <div class="fm-action-icon-bg"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg></div>
+                     <span class="fm-action-count">${p.likes || '0'}</span>
+                </div>
+                <div class="fm-action-unit">
+                     <div class="fm-action-icon-bg"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg></div>
+                     <span class="fm-action-count">${p.comments || '0'}</span>
+                </div>
+                <div class="fm-action-unit">
+                     <div class="fm-action-icon-bg"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="17 1 21 5 17 9"></polyline><path d="M3 11V9a4 4 0 0 1 4-4h14"></path><polyline points="7 23 3 19 7 15"></polyline><path d="M21 13v2a4 4 0 0 1-4 4H3"></path></svg></div>
+                     <span class="fm-action-count">${p.retweets || '0'}</span>
+                </div>
+                <div class="fm-action-unit">
+                     <div class="fm-action-icon-bg"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg></div>
+                     <span class="fm-action-count">${p.saves || '0'}</span>
+                </div>
+            </div>
+        </div>
+    </div>`;
+};
+
+window.refreshTopicData = async function(btn) {
+    const titleEl = document.getElementById('tp-display-title');
+    const postsEl = document.getElementById('tp-display-posts');
+    if (!titleEl || titleEl.innerText.includes('--')) return;
+
+    if (btn && btn.classList.contains('updating')) return;
+    if (btn) btn.classList.add('updating');
+
+    const topicWord = titleEl.innerText.replace('#', '').trim();
+    const textEl = btn ? btn.querySelector('.v-btn-text') : null;
+    const originalText = textEl ? textEl.innerText : "更新";
+
+    if (textEl) textEl.innerText = "同步";
+
+    const apiKey = localStorage.getItem('gpt_key');
+    let apiUrl = (localStorage.getItem('gpt_url') || "https://api.openai.com/v1").replace(/\/+$/, "");
+    let model = localStorage.getItem('gpt_model') || "gpt-3.5-turbo";
+
+    try {
+        if (postsEl) postsEl.style.opacity = '0.4';
+
+        // 1. 发起 AI 请求，明确要求统计数据
+        const response = await fetch(`${apiUrl}/chat/completions`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+            body: JSON.stringify({
+                model,
+                messages: [
+                    { 
+                        role: "system", 
+                        content: `你是一个高级社交后端。基于世界设定生成 #${topicWord} 的5条NPC动态。
+                        必须返回 JSON 格式：
+                        {
+                          "stats": { "views": "随机100-999", "heat": "随机1000-9999" },
+                          "posts": [{ "author": "昵称", "content": "内容", "likes": "数", "comments": "数", "retweets": "数", "saves": "数" }]
+                        }`
+                    },
+                    { role: "user", content: `同步词条 #${topicWord} 数据包。` }
+                ],
+                temperature: 0.8
+            })
+        });
+
+        const resData = await response.json();
+        const data = JSON.parse(resData.choices[0].message.content.match(/\{[\s\S]*\}/)[0]);
+
+        // 2. 核心：数据滚动更新（告别写死的 0）
+        if (data.stats && typeof window.animateValue === 'function') {
+            const oldViews = parseInt(document.getElementById('tp-stat-views').innerText) || 0;
+            const oldHeat = parseInt(document.getElementById('tp-stat-heat').innerText) || 0;
+            
+            // 滚动到 AI 返回的新数值
+            window.animateValue('tp-stat-views', oldViews, parseInt(data.stats.views), 1500, 'K');
+            window.animateValue('tp-stat-heat', oldHeat, parseInt(data.stats.heat), 1500);
+        }
+
+        // 3. 渲染博主头像区
+        if (data.posts && window.renderTopicAuthors) window.renderTopicAuthors(data.posts);
+
+        // 4. 渲染帖子列表（包含点赞、评论、转发、收藏四件套）
+        if (data.posts && postsEl) {
+            postsEl.innerHTML = data.posts.map((post, index) => {
+                const firstChar = post.author.charAt(0).toUpperCase();
+                const pBg = (typeof window.generateMacaronGradient === 'function') 
+                    ? window.generateMacaronGradient() 
+                    : 'linear-gradient(135deg, #E2CFFF 0%, #AF52DE 100%)';
+
+                return `
+                <div class="fm-pro-post jelly-anim" style="animation-delay: ${index * 0.1}s; margin-bottom: 20px;">
+                    <div class="fm-post-header">
+                        <div class="fm-post-user-box">
+                            <div class="fm-post-avatar-wrapper">
+                                <div class="fm-post-avatar-text" style="background: ${pBg}">${firstChar}</div>
+                            </div>
+                            <div class="fm-post-meta">
+                                <div class="fm-post-nickname">${post.author}</div>
+                                <div class="fm-post-sub">SIGNAL_SENT_AT: ${new Date().toLocaleTimeString()}</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="fm-post-body" style="font-size:15px; color:#3a3a3c; margin: 12px 0;">
+                        ${window.linkifyTopic(post.content)} </div>
+                    <div class="fm-post-actions-bar" style="border-top: 1px solid rgba(0,0,0,0.03); padding-top: 12px; margin-top: 5px;">
+                        <div class="fm-action-group" style="display: flex; justify-content: space-between; max-width: 90%;">
+                            <div class="fm-action-unit">
+                                 <div class="fm-action-icon-bg"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg></div>
+                                 <span class="fm-action-count">${post.likes || '0'}</span>
+                            </div>
+                            <div class="fm-action-unit">
+                                 <div class="fm-action-icon-bg"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg></div>
+                                 <span class="fm-action-count">${post.comments || '0'}</span>
+                            </div>
+                            <div class="fm-action-unit">
+                                 <div class="fm-action-icon-bg"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="17 1 21 5 17 9"></polyline><path d="M3 11V9a4 4 0 0 1 4-4h14"></path><polyline points="7 23 3 19 7 15"></polyline><path d="M21 13v2a4 4 0 0 1-4 4H3"></path></svg></div>
+                                 <span class="fm-action-count">${post.retweets || '0'}</span>
+                            </div>
+                            <div class="fm-action-unit">
+                                 <div class="fm-action-icon-bg"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg></div>
+                                 <span class="fm-action-count">${post.saves || '0'}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        // 在 refreshTopicData 的 try 块末尾，解析完 data 之后
+        const existingData = await window.ib.getItem(`fm_trends_data_${charId}`) || { posts: [] };
+        // 将新生成的 5 条帖子追加到最前面，并去重
+        const combinedPosts = [...data.posts, ...existingData.posts].slice(0, 50); 
+        await window.ib.setItem(`fm_trends_data_${charId}`, {
+            ...existingData,
+            posts: combinedPosts,
+            stats: data.stats // 同时更新阅读量统计
+        });
+    } catch (e) {
+        console.error(e);
+        window.showCpaToast("SYNC FAILED");
+    } finally {
+        if (postsEl) postsEl.style.opacity = '1';
+        if (btn) btn.classList.remove('updating');
+        if (textEl) textEl.innerText = originalText;
+    }
+};
+
+window.renderTopicAuthors = function(posts) {
+    const showcase = document.getElementById('tp-author-showcase');
+    if (!showcase) return;
+
+    // 提取去重后的博主
+    const uniqueAuthors = [];
+    const seen = new Set();
+    posts.forEach(p => {
+        if(!seen.has(p.author)) {
+            uniqueAuthors.push(p.author);
+            seen.add(p.author);
+        }
+    });
+
+    showcase.innerHTML = uniqueAuthors.slice(0, 5).map((auth, index) => {
+        const firstChar = auth.charAt(0).toUpperCase();
+        const pBg = (typeof window.generateMacaronGradient === 'function') 
+            ? window.generateMacaronGradient() 
+            : 'linear-gradient(135deg, #E2CFFF 0%, #AF52DE 100%)';
+
+        return `
+        <div class="tp-author-card jelly-anim" style="animation-delay: ${index * 0.05}s">
+            <div class="fm-post-avatar-text" style="background: ${pBg}; width:44px; height:44px; line-height:44px; font-size:18px; border-radius:50%; text-align:center; color:white; font-weight:900; margin-bottom:8px; border: 2px solid #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">${firstChar}</div>
+            <div class="tp-author-info">
+                <span class="tp-author-name">${auth}</span>
+                <span class="tp-author-tag">CONTRIBUTOR</span>
+            </div>
+        </div>`;
+    }).join('');
+};
+
+window.openTopicDetail = async function(topicWord) {
+    const page = document.getElementById('fm-topic-page-overlay');
+    const postsEl = document.getElementById('tp-display-posts');
+    const titleEl = document.getElementById('tp-display-title');
+    
+    if (!page) return;
+    page.style.display = 'flex';
+    const cleanWord = topicWord.replace('#', '').trim();
+    titleEl.innerText = `# ${cleanWord}`;
+
+    // --- 关键修改：进入页面不自动调用 refreshTopicData ---
+    // 1. 先展示“读取中”
+    postsEl.innerHTML = `<div class="loading-hint">正在从本地矩阵恢复数据...</div>`;
+
+    const charId = window.currentCharPhoneId || 'public_node';
+    let data = null;
+    
+    try {
+        // 2. 强行从数据库读取主页同步过的数据
+        data = await window.ib.getItem(`fm_trends_data_${charId}`);
+    } catch(e) { console.error("读取缓存失败", e); }
+
+    // 3. 渲染逻辑：只找已经存在的数据
+    if (data && data.posts) {
+        const related = data.posts.filter(p => 
+            p.content.includes(cleanWord) || 
+            (p.hashtags && p.hashtags.includes(cleanWord))
+        );
+
+        if (related.length > 0) {
+            // 使用之前写好的全功能渲染逻辑 (带四件套+Linkify)
+            postsEl.innerHTML = related.map((p, index) => renderSinglePostHTML(p, index)).join('');
+        } else {
+            postsEl.innerHTML = `<div class="no-data-hint">本地暂无关于 #${cleanWord} 的记录，请手动同步。</div>`;
+        }
+        
+        // 渲染数字统计 (Views/Heat) - 同样优先用缓存里的
+        const stats = data.stats || { views: Math.floor(Math.random()*50), heat: Math.floor(Math.random()*500) };
+        window.animateValue('tp-stat-views', 0, stats.views, 1000, 'K');
+        window.animateValue('tp-stat-heat', 0, stats.heat, 1000);
+    } else {
+        postsEl.innerHTML = `<div class="no-data-hint">未检测到同步信号，请点击上方“同步”按钮。</div>`;
+    }
+    
+    // 删除了之前的 auto-refreshTopicData 调用！现在只有手动点按钮才会更新。
+};
+
+
+// 核心：数字滚动动画函数
+window.animateValue = function(id, start, end, duration, suffix = '') {
+    const obj = document.getElementById(id);
+    if (!obj) return;
+    
+    // 确保处理的是数值
+    const startNum = parseFloat(start) || 0;
+    const endNum = parseFloat(end) || 0;
+    
+    let startTimestamp = null;
+    const step = (timestamp) => {
+        if (!startTimestamp) startTimestamp = timestamp;
+        const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+        // 使用线性插值计算当前数值
+        const current = Math.floor(progress * (endNum - startNum) + startNum);
+        
+        // 渲染到页面
+        obj.innerText = current + suffix;
+        
+        if (progress < 1) {
+            window.requestAnimationFrame(step);
+        }
+    };
+    window.requestAnimationFrame(step);
+};
+
+window.closeTopicPage = function() {
+    const page = document.getElementById('fm-topic-page-overlay');
+    if (page) page.style.display = 'none';
+};
+
+window.triggerTrendsAIUpdate = async function() {
+    const charId = window.currentCharPhoneId || 'public_node';
+    const apiKey = localStorage.getItem('gpt_key');
+    let apiUrl = (localStorage.getItem('gpt_url') || "https://api.openai.com/v1").replace(/\/+$/, "");
+    let model = localStorage.getItem('gpt_model') || "gpt-3.5-turbo";
+    
+    if (!apiKey) return window.showCpaToast("ERROR: 系统未联网 (Key Missing)");
+
+    const btn = document.querySelector('.fm-q-sync-btn');
+    const container = document.getElementById('fm-rank-dynamic-content');
+
+    let ownerName = "GLOBAL_NODE", ownerBio = "全域观察模式", worldContent = "";
+    try {
+        const allWorlds = await window.ib.getItem('world_list') || [];
+        worldContent = allWorlds.length > 0 ? allWorlds.map(w => `【设定】：${w.content}`).join('\n') : "通用背景";
+        const charList = await window.ib.getItem('char_list') || [];
+        const dbChar = charList.find(c => String(c.id) === String(charId));
+        if (dbChar) { ownerName = dbChar.name; ownerBio = dbChar.desc || dbChar.bio; }
+    } catch (e) { console.warn("链路不稳定", e); }
+
+    if (btn) { btn.style.pointerEvents = 'none'; btn.classList.add('is-loading'); }
+
+    if (container) {
+        container.innerHTML = `
+            <div class="fm-ai-loading-wrap">
+                <div class="fm-ai-loader-core"><div class="loader-ring"></div><div class="loader-hex"></div></div>
+                <div class="fm-ai-loading-text">
+                    <span class="loading-main">SYNCHRONIZING STRATA</span>
+                    <span class="loading-sub">SOURCE: ${charId === 'public_node' ? 'GLOBAL_TIMELINE' : ownerName.toUpperCase()}</span>
+                </div>
+            </div>`;
+    }
+
+    const systemPrompt = `你现在是世界观架构师及社交平台模拟器。
+    【背景】：${worldContent}
+    ${charId !== 'public_node' ? `【核心角色】：${ownerBio}` : '【模式】：公共视角'}
+    【任务】：生成3条热搜词条和5条NPC帖子。要求风格真实、细节丰富。
+    必须返回 JSON：
+    {
+      "trends": [{"word": "词条名", "heat": "100K", "tag": "标签", "trend": "TOP"}],
+      "posts": [{"author": "昵称", "handle": "@ID", "content": "内容", "likes": "1.2K", "comments": "88", "retweets": "24", "saves": "15"}]
+    }`;
+
+    try {
+        const response = await fetch(`${apiUrl}/chat/completions`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+            body: JSON.stringify({
+                model,
+                messages: [{ role: "system", content: systemPrompt }, { role: "user", content: "执行全域脉动同步。" }],
+                temperature: 0.9 
+            })
+        });
+
+        const resData = await response.json();
+        const data = JSON.parse(resData.choices[0].message.content.match(/\{[\s\S]*\}/)[0]);
+
+        // 1. 存储到数据库
+        await window.ib.setItem(`fm_trends_data_${charId}`, data);
+        
+        // 2. 核心：立即手动重新渲染，确保主页帖子样式完美
+        if (container) {
+            // 这里我们不再依赖外部可能过时的 renderForumRankings，直接在这里写死最新的渲染逻辑
+            let html = `
+                <div class="fm-search-container">
+                    <div class="fm-search-glass"><input type="text" id="fm-global-search" placeholder="SEARCH NODES..."></div>
+                </div>
+                <div class="fm-trends-section">
+                    <div class="fm-section-header"><h2 class="fm-section-main-title">Top Trends</h2></div>
+                    <div class="fm-rank-list">
+                        ${data.trends.map((item, i) => `
+                            <div class="fm-rank-item" onclick="window.openTopicDetail('${item.word}')">
+                                <div class="rank-index">0${i+1}</div>
+                                <div class="rank-content">
+                                    <div class="rank-title">${item.word}</div>
+                                    <div class="rank-meta"><span class="rank-hot-value">${item.heat} VIBES</span></div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+                <div class="fm-feed-header-section">
+                    <h3 style="font-size: 24px; font-weight: 900; padding: 20px;">Recent Echoes</h3>
+                </div>
+                <div class="fm-post-feed">
+                    ${data.posts.map((post, index) => {
+                        const firstChar = post.author.charAt(0).toUpperCase();
+                        const pBg = (typeof window.generateMacaronGradient === 'function') 
+                            ? window.generateMacaronGradient() : 'linear-gradient(135deg, #E2CFFF, #AF52DE)';
+                        return `
+                        <div class="fm-pro-post jelly-anim" style="margin-bottom: 20px; animation-delay: ${index*0.1}s">
+                            <div class="fm-post-header">
+                                <div class="fm-post-user-box">
+                                    <div class="fm-post-avatar-wrapper">
+                                        <div class="fm-post-avatar-text" style="background: ${pBg}">${firstChar}</div>
+                                    </div>
+                                    <div class="fm-post-meta">
+                                        <div class="fm-post-nickname">${post.author}</div>
+                                        <div class="fm-post-sub">${post.handle || '@USER'}</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="fm-post-body" style="font-size:15px; color:#3a3a3c; line-height:1.6; margin: 12px 0;">
+                                ${window.linkifyTopic(post.content)} </div>
+                            <div class="fm-post-actions-bar" style="border-top:1px solid rgba(0,0,0,0.03); padding-top:12px;">
+                                <div class="fm-action-group" style="display:flex; justify-content:space-between;">
+                                    <div class="fm-action-unit">
+                                        <div class="fm-action-icon-bg"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg></div>
+                                        <span class="fm-action-count">${post.likes}</span>
+                                    </div>
+                                    <div class="fm-action-unit">
+                                        <div class="fm-action-icon-bg"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg></div>
+                                        <span class="fm-action-count">${post.comments}</span>
+                                    </div>
+                                    <div class="fm-action-unit">
+                                        <div class="fm-action-icon-bg"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="17 1 21 5 17 9"></polyline><path d="M3 11V9a4 4 0 0 1 4-4h14"></path><polyline points="7 23 3 19 7 15"></polyline><path d="M21 13v2a4 4 0 0 1-4 4H3"></path></svg></div>
+                                        <span class="fm-action-count">${post.retweets || '0'}</span>
+                                    </div>
+                                    <div class="fm-action-unit">
+                                        <div class="fm-action-icon-bg"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg></div>
+                                        <span class="fm-action-count">${post.saves || '0'}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>`;
+                    }).join('')}
+                </div>`;
+            container.innerHTML = html;
+        }
+        window.showCpaToast("WORLD DATA UPDATED");
+
+    } catch (e) {
+        console.error("AI Error:", e);
+        window.showCpaToast("SYNC FAILED");
+    } finally {
+        if (btn) { btn.style.pointerEvents = 'auto'; btn.classList.remove('is-loading'); }
+    }
+};
+
+// 把文本里的 #词条 变成可点击的 span
+window.linkifyTopic = function(text) {
+    if (!text) return "";
+    // 正则匹配 # 后面跟着非空白字符
+    return text.replace(/#([^\s#]+)/g, (match, word) => {
+        return `<span class="fm-topic-link" onclick="event.stopPropagation(); window.openTopicDetail('${word}')" style="color: #AF52DE; font-weight: 800; cursor: pointer;">${match}</span>`;
+    });
+};
+
+window.handleSearchFocus = function(input) {
+    const parent = input.parentElement;
+    parent.classList.add('focused');
+    if (navigator.vibrate) navigator.vibrate(5); // 极轻微的触感反馈
+};
+
+window.handleSearchBlur = function(input) {
+    const parent = input.parentElement;
+    parent.classList.remove('focused');
+};
+
+window.generateMacaronGradient = function() {
+    const colors = [
+        ['#E2CFFF', '#AF52DE'], // 丁香紫
+        ['#CCFBFF', '#8EC5FC'], // 奶油蓝
+        ['#D4FFEC', '#57F2CC'], // 薄荷绿
+        ['#FFF1EB', '#FF9A9E'], // 蜜桃粉
+        ['#E0C3FC', '#8EC5FC']  // 梦幻紫蓝
+    ];
+    const picked = colors[Math.floor(Math.random() * colors.length)];
+    return `linear-gradient(135deg, ${picked[0]} 0%, ${picked[1]} 100%)`;
+};
+
+window.triggerGummyAction = function(el, type) {
+    // 物理震动反馈
+    if (navigator.vibrate) navigator.vibrate(10);
+    
+    // 逻辑演示：如果是点赞，切换状态
+    if (type === 'like') {
+        el.classList.toggle('liked');
+        const icon = el.querySelector('svg');
+        // Q弹动画补齐
+        icon.style.transform = 'scale(1.4)';
+        setTimeout(() => icon.style.transform = 'scale(1)', 200);
+    }
+    
+    console.log(`Action triggered: ${type}`);
+};
+
+window.toggleFollow = function(el) {
+    if (el.innerText.includes('FOLLOW')) {
+        el.style.background = '#f2f2f7';
+        el.style.color = '#8e8e93';
+        el.innerHTML = '<span>FOLLOWED</span>';
+    } else {
+        el.style.background = '#1d1d1f';
+        el.style.color = '#fff';
+        el.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M12 5v14M5 12h14"/></svg><span>FOLLOW</span>';
+    }
+};
+
+
+window.renderForumRankings = async function() {
+    const container = document.getElementById('fm-rank-dynamic-content');
+    if (!container) return;
+
+    const charId = window.currentCharPhoneId || 'public_node';
+    const dbKey = `fm_trends_data_${charId}`;
+    
+    // 1. 强行只从数据库取
+    let sourceData = await window.ib.getItem(dbKey);
+
+    try {
+        if (window.ib) {
+            sourceData = await window.ib.getItem(dbKey);
+        } else {
+            const localRaw = localStorage.getItem(dbKey);
+            if (localRaw) sourceData = JSON.parse(localRaw);
+        }
+    } catch (e) {
+        console.error("读取 AI 数据失败:", e);
+    }
+
+    if (!sourceData || !sourceData.trends) {
+        sourceData = {
+            trends: [
+                { word: "AWAITING_SYNC", heat: "---", tag: "SYSTEM", trend: "NEW" },
+                { word: "NODE_OFFLINE", heat: "---", tag: "WAIT", trend: "NEW" }
+            ],
+            posts: [] 
+        };
+    }
+
+    let html = '';
+
+    // --- 1. 搜索框 (保持原样) ---
+    html += `
+    <div class="fm-search-container">
+        <div class="fm-search-glass" onclick="document.getElementById('fm-global-search').focus()">
+            <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                <circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input type="text" id="fm-global-search" placeholder="SEARCH NODES & TRENDS...">
+            <div class="search-scan-line"></div>
+        </div>
+    </div>
+
+    <div class="fm-trends-section">
+        <div class="fm-section-header">
+            <div class="fm-section-title-box">
+                <span class="fm-section-tag">REAL-TIME DATA</span>
+                <h2 class="fm-section-main-title">Top Trends</h2>
+            </div>
+            <div class="fm-view-all-btn" onclick="window.goToRankDetailCenter()">
+                <span>DETAILS</span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                    <path d="M5 12h14M12 5l7 7-7 7"></path>
+                </svg>
+            </div>
+        </div>
+        <div class="fm-rank-list">
+    `;
+    
+    // --- 2. 渲染热搜 (【核心修改点】：添加 .slice(0, 3)) ---
+    // 这里确保即使数据库有 50 条，主页也只展示前 3 条
+    const displayTrends = sourceData.trends.slice(0, 3);
+    
+    displayTrends.forEach((item, index) => {
+        html += `
+        <div class="fm-rank-item" onclick="window.openTopicDetail('${item.word}')">
+            <div class="rank-index">0${index + 1}</div>
+            <div class="rank-content">
+                <div class="rank-title">${item.word}</div>
+                <div class="rank-meta">
+                    <span class="rank-hot-value">${item.heat} VIBES</span>
+                    <span>#${item.tag}</span>
+                    <span style="color: #34C759;">${item.trend || 'UP'}</span>
+                </div>
+            </div>
+            <div style="width:6px; height:6px; background:#AF52DE; border-radius:50%; opacity:0.6;"></div>
+        </div>`;
+    });
+
+    html += `</div></div>`; 
+
+    // --- 3. 帖子列表 Header (保持原样) ---
+    html += `
+        <div class="fm-feed-header-section" style="padding: 40px 20px 15px;">
+            <div class="fm-feed-title-group">
+                <span style="font-size: 10px; font-weight: 900; color: #AF52DE; letter-spacing: 3px; display: block; margin-bottom: 4px; opacity: 0.8;">DISCOVER NOW</span>
+                <h3 style="font-family: 'Cinzel', serif; font-size: 28px; font-weight: 900; color: #1d1d1f; margin: 0; letter-spacing: -0.5px;">Recent Echoes</h3>
+            </div>
+            <div style="width: 100%; height: 1px; background: linear-gradient(90deg, rgba(175,82,222,0.2) 0%, rgba(175,82,222,0) 100%); margin-top: 15px;"></div>
+        </div>
+        <div class="fm-post-feed" style="padding: 0 15px;">
+    `;
+
+    // --- 4. 核心渲染：帖子列表内容 (保持原样) ---
+    if (sourceData.posts && sourceData.posts.length > 0) {
+        sourceData.posts.forEach((post, index) => {
+            const firstChar = (post.author || "?").charAt(0).toUpperCase();
+            const pBg = (typeof window.generateMacaronGradient === 'function') 
+                ? window.generateMacaronGradient() 
+                : 'linear-gradient(135deg, #E2CFFF 0%, #AF52DE 100%)';
+            
+            const displayContent = window.linkifyTopic ? window.linkifyTopic(post.content) : post.content;
+
+            html += `
+            <div class="fm-pro-post jelly-anim" style="animation-delay: ${index * 0.1}s; margin-bottom: 20px;">
+                <div class="fm-post-header">
+                    <div class="fm-post-user-box">
+                        <div class="fm-post-avatar-wrapper">
+                            <div class="fm-post-avatar-text" style="background: ${pBg}">${firstChar}</div>
+                        </div>
+                        <div class="fm-post-meta">
+                            <div class="fm-post-nickname">${post.author}</div>
+                            <div class="fm-post-sub">SIGNAL_STRENGTH: 100%</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="fm-post-body" style="font-size:15px; color:#3a3a3c; margin: 12px 0; line-height: 1.5;">
+                    ${displayContent}
+                </div>
+                <div class="fm-post-actions-bar" style="border-top: 1px solid rgba(0,0,0,0.03); padding-top: 12px; margin-top: 5px;">
+                    <div class="fm-action-group" style="display: flex; justify-content: space-between; max-width: 90%;">
+                        <div class="fm-action-unit">
+                             <div class="fm-action-icon-bg"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg></div>
+                             <span class="fm-action-count">${post.likes || '0'}</span>
+                        </div>
+                        <div class="fm-action-unit">
+                             <div class="fm-action-icon-bg"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg></div>
+                             <span class="fm-action-count">${post.comments || '0'}</span>
+                        </div>
+                        <div class="fm-action-unit">
+                             <div class="fm-action-icon-bg"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="17 1 21 5 17 9"></polyline><path d="M3 11V9a4 4 0 0 1 4-4h14"></path><polyline points="7 23 3 19 7 15"></polyline><path d="M21 13v2a4 4 0 0 1-4 4H3"></path></svg></div>
+                             <span class="fm-action-count">${post.retweets || '0'}</span>
+                        </div>
+                        <div class="fm-action-unit">
+                             <div class="fm-action-icon-bg"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg></div>
+                             <span class="fm-action-count">${post.saves || '0'}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>`;
+        });
+    } else {
+        html += `<div style="text-align:center; padding: 40px; color:#8e8e93; font-family:'JetBrains Mono'; font-size:12px;">NO RECENT ECHOES DETECTED.</div>`;
+    }
+
+    html += `</div>`; 
+    container.innerHTML = html;
+};
+
+// 带物理 Q 弹效果的刷新函数
+window.triggerGummySync = function(el) {
+    // 1. 震动反馈 (物理 Q 弹感的核心)
+    if (navigator.vibrate) navigator.vibrate(15);
+    
+    // 2. 图标旋转
+    const svg = el.querySelector('svg');
+    svg.style.transition = 'transform 0.6s cubic-bezier(0.5, 1.5, 0.5, 1)';
+    svg.style.transform = 'rotate(360deg)';
+    
+    // 3. 模拟“刷新”完成后的回弹
+    setTimeout(() => {
+        svg.style.transition = 'none';
+        svg.style.transform = 'rotate(0deg)';
+        if (window.renderForumRankings) window.renderForumRankings();
+        showToast("Nodes Synchronized.");
+    }, 600);
+};
+// ==========================================
+// 🌌 Forum App: 身份切换与实体定制 (绝对防报错合体版)
+// ==========================================
+
+window.tempForumCharData = { id: null, bg: null };
+
+// 🛠️ 1. 物理注入器：身份切换面板 (Switch ID)
+window.initForumSwitchID_DOM = function() {
+    if (document.getElementById('modal-forum-switch-id')) return;
+
+    const style = document.createElement('style');
+    style.id = 'forum-switch-id-styles';
+    style.innerHTML = `
+        #modal-forum-switch-id { position: fixed; inset: 0; z-index: 8000100 !important; background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); display: none; align-items: flex-end; opacity: 0; transition: opacity 0.3s ease; }
+        #modal-forum-switch-id.active { display: flex !important; opacity: 1 !important; pointer-events: auto !important; }
+        .fms-drawer { width: 100%; max-height: 85vh; background: #FAFAFC; border-radius: 32px 32px 0 0; display: flex; flex-direction: column; transform: translateY(100%); transition: transform 0.4s cubic-bezier(0.19, 1, 0.22, 1); box-shadow: 0 -20px 60px rgba(0,0,0,0.2); overflow: hidden; border-top: 1px solid rgba(255,255,255,0.8); }
+        #modal-forum-switch-id.active .fms-drawer { transform: translateY(0); }
+        .fms-header { padding: 30px 24px 20px; background: #FAFAFC; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(0,0,0,0.04); position: relative; z-index: 10; }
+        .fms-title-box { display: flex; flex-direction: column; gap: 4px; }
+        .fms-title { font-size: 20px; font-weight: 900; color: #1d1d1f; letter-spacing: -0.5px; }
+        .fms-sub { font-family: 'JetBrains Mono', monospace; font-size: 9px; color: #007AFF; font-weight: 800; letter-spacing: 2px; }
+        .fms-close-btn { width: 36px; height: 36px; border-radius: 50%; background: rgba(0,0,0,0.05); display: flex; align-items: center; justify-content: center; cursor: pointer; color: #1d1d1f; transition: 0.2s; }
+        .fms-close-btn:active { transform: scale(0.85); background: rgba(0,0,0,0.1); }
+        .fms-close-btn svg { width: 16px; height: 16px; stroke-width: 2.5; }
+        .fms-body { flex: 1; overflow-y: auto; padding: 24px; display: flex; flex-direction: column; gap: 16px; padding-bottom: 50px; }
+        .fms-account-card { background: #fff; border-radius: 24px; padding: 20px; border: 1px solid rgba(0,0,0,0.04); box-shadow: 0 8px 25px rgba(0,0,0,0.02); cursor: pointer; transition: all 0.3s cubic-bezier(0.19, 1, 0.22, 1); position: relative; overflow: hidden; }
+        .fms-account-card:active { transform: scale(0.96); box-shadow: 0 4px 10px rgba(0,0,0,0.01); background: #F9F9FB; }
+        .fms-account-card::before { content: ''; position: absolute; top: 0; left: 0; bottom: 0; width: 4px; background: linear-gradient(180deg, #e0c3fc 0%, #8ec5fc 100%); opacity: 0.5; transition: 0.3s; }
+        .fms-account-card:hover::before { opacity: 1; width: 6px; }
+        .fms-card-top { display: flex; gap: 16px; margin-bottom: 16px; align-items: flex-start; }
+        .fms-avatar { width: 56px; height: 56px; border-radius: 18px; object-fit: cover; border: 1px solid rgba(0,0,0,0.05); background: #eee; flex-shrink: 0; }
+        .fms-info { flex: 1; display: flex; flex-direction: column; gap: 4px; overflow: hidden; }
+        .fms-name-row { display: flex; justify-content: space-between; align-items: center; }
+        .fms-name { font-size: 16px; font-weight: 800; color: #1d1d1f; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .fms-domain-tag { font-family: 'JetBrains Mono', monospace; font-size: 8px; font-weight: 800; background: rgba(142, 142, 147, 0.1); color: #8e8e93; padding: 3px 8px; border-radius: 6px; letter-spacing: 0.5px; text-transform: uppercase; }
+        .fms-bio { font-size: 12px; color: #555; line-height: 1.5; font-weight: 500; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .fms-stats-grid { display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px dashed rgba(0,0,0,0.06); }
+        .fms-stat-item { display: flex; flex-direction: column; align-items: center; gap: 2px; flex: 1; }
+        .fms-stat-num { font-family: 'JetBrains Mono', monospace; font-size: 15px; font-weight: 900; color: #1d1d1f; }
+        .fms-stat-label { font-size: 9px; color: #8e8e93; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+        .fms-empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px; color: rgba(0,0,0,0.3); text-align: center; gap: 10px; }
+        .fms-empty-state svg { width: 32px; height: 32px; stroke-width: 1.5; }
+        .fms-empty-state span { font-size: 12px; font-weight: 700; letter-spacing: 0.5px; }
+    `;
+    document.head.appendChild(style);
+
+    const html = `
+    <div id="modal-forum-switch-id" onclick="if(event.target===this) window.closeForumSwitchID()">
+        <div class="fms-drawer" onclick="event.stopPropagation()">
+            <div class="fms-header">
+                <div class="fms-title-box">
+                    <div class="fms-title">Switch Entity</div>
+                    <div class="fms-sub">SELECT A SYNCHRONIZED IDENTITY</div>
+                </div>
+                <div class="fms-close-btn" onclick="window.closeForumSwitchID()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </div>
+            </div>
+            <div class="fms-body" id="fms-account-list"></div>
+        </div>
+    </div>`;
+    document.body.insertAdjacentHTML('beforeend', html);
+};
+
+// 🛠️ 2. 物理注入器：角色定制面板 (Char Editor)
+window.initForumCharEditorDOM = function() {
+    if (document.getElementById('modal-forum-char-editor')) return;
+
+    const style = document.createElement('style');
+    style.id = 'forum-char-editor-styles';
+    style.innerHTML = `
+        #modal-forum-char-editor { position: fixed; inset: 0; z-index: 8000200 !important; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); display: none; align-items: flex-end; opacity: 0; transition: opacity 0.3s ease; }
+        #modal-forum-char-editor.active { display: flex !important; opacity: 1 !important; pointer-events: auto !important; }
+        .fce-drawer { width: 100%; max-height: 90vh; background: #FAFAFC; border-radius: 32px 32px 0 0; display: flex; flex-direction: column; transform: translateY(100%); transition: transform 0.4s cubic-bezier(0.19, 1, 0.22, 1); box-shadow: 0 -20px 60px rgba(0,0,0,0.3); overflow: hidden; border-top: 1px solid rgba(255,255,255,0.4); }
+        #modal-forum-char-editor.active .fce-drawer { transform: translateY(0); }
+        .fce-header { padding: 24px; background: #fff; border-bottom: 1px solid rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; z-index: 10; }
+        .fce-btn-text { font-size: 14px; font-weight: 800; cursor: pointer; transition: 0.2s; }
+        .fce-btn-text.cancel { color: #8e8e93; }
+        .fce-btn-text.save { color: #007AFF; }
+        .fce-title-box { text-align: center; }
+        .fce-title { font-size: 17px; font-weight: 900; color: #1d1d1f; }
+        .fce-sub { font-family: 'JetBrains Mono', monospace; font-size: 9px; color: #AF52DE; font-weight: 800; letter-spacing: 1px; }
+        .fce-body { flex: 1; overflow-y: auto; padding: 24px; display: flex; flex-direction: column; gap: 24px; padding-bottom: 50px; }
+        .fce-locked-profile { display: flex; align-items: center; gap: 15px; padding: 15px; background: rgba(0,0,0,0.03); border-radius: 20px; border: 1px dashed rgba(0,0,0,0.1); }
+        .fce-locked-av { width: 50px; height: 50px; border-radius: 16px; object-fit: cover; }
+        .fce-locked-info { flex: 1; }
+        .fce-locked-name { font-size: 16px; font-weight: 900; color: #1d1d1f; }
+        .fce-locked-hint { font-size: 10px; color: #8e8e93; font-weight: 700; margin-top: 4px; }
+        .fce-lock-icon { color: #8e8e93; opacity: 0.5; }
+        .fce-section { background: #fff; border-radius: 20px; padding: 20px; border: 1px solid rgba(0,0,0,0.03); box-shadow: 0 4px 15px rgba(0,0,0,0.02); }
+        .fce-label { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: #8e8e93; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 12px; display: block; }
+        .fce-up-bg { width: 100%; height: 120px; background: #F5F5F7; border: 1px dashed rgba(0,0,0,0.1); border-radius: 16px; display: flex; align-items: center; justify-content: center; cursor: pointer; position: relative; overflow: hidden; color: #8e8e93; transition: 0.2s; }
+        .fce-up-bg:active { transform: scale(0.98); }
+        .fce-up-bg img { width: 100%; height: 100%; object-fit: cover; position: absolute; inset: 0; display: none; }
+        .fce-input { width: 100%; border: none; background: #F5F5F7; padding: 14px 16px; border-radius: 12px; font-size: 14px; font-weight: 600; color: #1d1d1f; outline: none; margin-bottom: 12px; }
+        .fce-input:focus { background: #fff; box-shadow: 0 0 0 2px rgba(175,82,222,0.2); }
+        textarea.fce-input { resize: none; height: 80px; margin-bottom: 0; }
+        .fce-super-btn { width: 100%; padding: 18px; border-radius: 18px; font-size: 15px; font-weight: 900; background: linear-gradient(135deg, #1d1d1f 0%, #434343 100%); color: #fff; border: none; cursor: pointer; box-shadow: 0 10px 25px rgba(0,0,0,0.2); transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .fce-super-btn:active { transform: scale(0.96); }
+    `;
+    document.head.appendChild(style);
+
+    const html = `
+    <div id="modal-forum-char-editor" onclick="if(event.target===this) window.closeForumCharEditor()">
+        <div class="fce-drawer" onclick="event.stopPropagation()">
+            <div class="fce-header">
+                <div class="fce-btn-text cancel" onclick="window.closeForumCharEditor()">返回</div>
+                <div class="fce-title-box">
+                    <div class="fce-title">Entity Setup</div>
+                    <div class="fce-sub">FORUM IDENTITY CONFIG</div>
+                </div>
+                <div class="fce-btn-text save" onclick="window.saveForumCharProfile(false)">暂存</div>
+            </div>
+            <div class="fce-body">
+                <div class="fce-locked-profile">
+                    <img id="fce-lock-av" class="fce-locked-av" src="">
+                    <div class="fce-locked-info">
+                        <div id="fce-lock-name" class="fce-locked-name">Name</div>
+                        <div class="fce-locked-hint">核心档案已由角色书锁定</div>
+                    </div>
+                    <div class="fce-lock-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg></div>
+                </div>
+                <div class="fce-section">
+                    <span class="fce-label">Forum Background (论坛专属背景)</span>
+                    <div class="fce-up-bg" onclick="document.getElementById('fce-file-bg').click()">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                        <img id="fce-pre-bg">
+                    </div>
+                    <input type="file" id="fce-file-bg" hidden accept="image/*" onchange="window.processForumCharBg(this)">
+                </div>
+                <div class="fce-section">
+                    <span class="fce-label">Forum Persona (论坛人设表现)</span>
+                    <input type="text" id="fce-in-tag" class="fce-input" placeholder="领域身份标签 (如：独立音乐人)">
+                    <textarea id="fce-in-bio" class="fce-input" placeholder="个性签名/简介..."></textarea>
+                </div>
+                <button class="fce-super-btn" onclick="window.saveForumCharProfile(true)">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><polyline points="17 11 19 13 23 9"></polyline></svg>
+                    保存并立即切换至该身份
+                </button>
+            </div>
+        </div>
+    </div>`;
+    document.body.insertAdjacentHTML('beforeend', html);
+};
+
+// 🌟 3. 核心：打开“切换账号”列表
+window.openForumSwitchID = async function() {
+    // 强制执行初始化，保证一定能找到 DOM！
+    window.initForumSwitchID_DOM();
+    window.initForumCharEditorDOM();
+
+    const modal = document.getElementById('modal-forum-switch-id');
+    const listContainer = document.getElementById('fms-account-list');
+    
+    listContainer.innerHTML = `<div class="fms-empty-state"><span style="animation: pulse 1.5s infinite;">SCANNING ENTITIES...</span></div>`;
+    modal.style.display = 'flex'; void modal.offsetWidth; modal.classList.add('active');
+    if (navigator.vibrate) navigator.vibrate(10);
+
+    try {
+        const profile = await window.ib.getItem('forum_my_profile') || {};
+        const invitedIds = profile.invitedChars || [];
+        const charList = await window.ib.getItem('char_list') || [];
+
+        let html = '';
+
+        // 渲染主账号 (Master)
+        const mainAvt = profile.avatar || "https://api.dicebear.com/7.x/initials/svg?seed=U";
+        const mainName = profile.name || "Commander";
+        const mainTag = profile.tag || "LUNE CREATOR";
+        
+        html += `
+            <div style="font-size:10px; font-weight:800; color:#8e8e93; letter-spacing:1px; margin-bottom:4px; margin-top:10px;">MASTER NODE</div>
+            <div class="fms-account-card" style="border: 2px solid #1d1d1f; box-shadow: 0 10px 30px rgba(0,0,0,0.08);" onclick="window.selectForumAccount('MASTER')">
+                <div class="fms-card-top">
+                    <img src="${mainAvt}" class="fms-avatar">
+                    <div class="fms-info">
+                        <div class="fms-name-row"><span class="fms-name">${mainName}</span><span class="fms-domain-tag" style="background:#1d1d1f; color:#fff;">${mainTag}</span></div>
+                        <div class="fms-bio">${profile.bio || '观测者...'}</div>
+                    </div>
+                </div>
+                <div class="fms-stats-grid">
+                    <div class="fms-stat-item"><span class="fms-stat-num">0</span><span class="fms-stat-label">Posts</span></div>
+                    <div class="fms-stat-item"><span class="fms-stat-num">128</span><span class="fms-stat-label">Flwg</span></div>
+                    <div class="fms-stat-item"><span class="fms-stat-num">1.2M</span><span class="fms-stat-label">Flwrs</span></div>
+                    <div class="fms-stat-item"><span class="fms-stat-num">34M</span><span class="fms-stat-label">Views</span></div>
+                </div>
+            </div>
+            <div style="font-size:10px; font-weight:800; color:#8e8e93; letter-spacing:1px; margin-bottom:4px; margin-top:20px;">SYNCED ENTITIES</div>
+        `;
+
+        // 渲染子角色 (Entities)
+        if (invitedIds.length > 0) {
+            const invitedChars = charList.filter(c => invitedIds.includes(c.id));
+            for (let c of invitedChars) {
+                const charCustom = await window.ib.getItem('forum_char_profile_' + c.id) || {};
+                const displayTag = charCustom.tag || c.role || "ENTITY NODE";
+                const displayBio = charCustom.bio || c.desc || "Click to setup identity...";
+
+                html += `
+                    <div class="fms-account-card" onclick="window.openForumCharEditor('${c.id}')">
+                        <div class="fms-card-top">
+                            <img src="${c.avatar}" class="fms-avatar">
+                            <div class="fms-info">
+                                <div class="fms-name-row"><span class="fms-name">${c.name}</span><span class="fms-domain-tag">${displayTag}</span></div>
+                                <div class="fms-bio">${displayBio}</div>
+                            </div>
+                        </div>
+                        <div class="fms-stats-grid">
+                            <div class="fms-stat-item"><span class="fms-stat-num" style="color:#007AFF;">0</span><span class="fms-stat-label">Posts</span></div>
+                            <div class="fms-stat-item"><span class="fms-stat-num">0</span><span class="fms-stat-label">Flwg</span></div>
+                            <div class="fms-stat-item"><span class="fms-stat-num">0</span><span class="fms-stat-label">Flwrs</span></div>
+                            <div class="fms-stat-item"><span class="fms-stat-num">0</span><span class="fms-stat-label">Views</span></div>
+                        </div>
+                    </div>
+                `;
+            }
+        } else {
+            html += `<div class="fms-empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle></svg><span>No synced entities.<br>Edit profile to invite characters.</span></div>`;
+        }
+        listContainer.innerHTML = html;
+    } catch (e) {
+        listContainer.innerHTML = `<div class="fms-empty-state"><span style="color:#FF3B30;">DATA_LINK_FAILED</span></div>`;
+    }
+};
+
+window.closeForumSwitchID = function() {
+    const modal = document.getElementById('modal-forum-switch-id');
+    if (modal) { modal.classList.remove('active'); setTimeout(() => modal.style.display = 'none', 300); }
+};
+
+// 🛠️ 4. 打开角色编辑台 (回显数据)
+window.openForumCharEditor = async function(charId) {
+    if(navigator.vibrate) navigator.vibrate(10);
+    window.tempForumCharData.id = charId;
+    window.tempForumCharData.bg = null;
+
+    const charList = await window.ib.getItem('char_list') || [];
+    const baseChar = charList.find(c => c.id === charId);
+    if (!baseChar) return;
+
+    const customData = await window.ib.getItem('forum_char_profile_' + charId) || {};
+
+    document.getElementById('fce-lock-av').src = baseChar.avatar;
+    document.getElementById('fce-lock-name').textContent = baseChar.name;
+    document.getElementById('fce-in-tag').value = customData.tag || baseChar.role || "";
+    document.getElementById('fce-in-bio').value = customData.bio || baseChar.desc || "";
+    
+    const bgImg = document.getElementById('fce-pre-bg');
+    if (customData.bg) {
+        window.tempForumCharData.bg = customData.bg;
+        bgImg.src = customData.bg;
+        bgImg.style.display = 'block';
+    } else {
+        bgImg.style.display = 'none';
+    }
+
+    const modal = document.getElementById('modal-forum-char-editor');
+    modal.style.display = 'flex'; void modal.offsetWidth; modal.classList.add('active');
+};
+
+window.closeForumCharEditor = function() {
+    const modal = document.getElementById('modal-forum-char-editor');
+    if(modal) { modal.classList.remove('active'); setTimeout(() => modal.style.display = 'none', 300); }
+};
+
+// 🛠️ 5. 角色专属图片上传与保存
+window.processForumCharBg = function(input) {
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            window.tempForumCharData.bg = e.target.result;
+            const img = document.getElementById('fce-pre-bg');
+            img.src = e.target.result; img.style.display = 'block';
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+};
+
+window.saveForumCharProfile = async function(doSwitch = false) {
+    const charId = window.tempForumCharData.id;
+    if (!charId) return;
+
+    const customData = {
+        tag: document.getElementById('fce-in-tag').value.trim(),
+        bio: document.getElementById('fce-in-bio').value.trim(),
+        bg: window.tempForumCharData.bg
+    };
+
+    await window.ib.setItem('forum_char_profile_' + charId, customData);
+    window.closeForumCharEditor();
+
+    if (doSwitch) {
+        window.selectForumAccount(charId);
+    } else {
+        if(window.triggerSuccessHud) window.triggerSuccessHud("节点配置已保存");
+        window.openForumSwitchID();
+    }
+};
+
+// 🛠️ 6. 执行账号切换并同步渲染主界面
+window.selectForumAccount = async function(accountId) {
+    if (navigator.vibrate) navigator.vibrate([15, 30]);
+    window.currentForumAccountId = accountId;
+    window.closeForumSwitchID();
+    window.closeForumCharEditor();
+    
+    try {
+        const mainAvt = document.getElementById('fm-me-avatar-main');
+        const mainName = document.getElementById('fm-me-name-main');
+        const mainBio = document.getElementById('fm-me-bio-main');
+        const mainTag = document.querySelector('.fm-me-domain-tag');
+        const mainBg = document.getElementById('fm-me-bg-main');
+
+        if (accountId === 'MASTER') {
+            const profile = await window.ib.getItem('forum_my_profile') || {};
+            if (mainAvt) mainAvt.src = profile.avatar || "https://api.dicebear.com/7.x/initials/svg?seed=U";
+            if (mainName) mainName.textContent = profile.name || "Commander";
+            if (mainBio) mainBio.textContent = `"${profile.bio || '...'}"`;
+            if (mainTag) mainTag.textContent = profile.tag || "LUNE CREATOR";
+            if (mainBg) {
+                mainBg.style.backgroundImage = profile.bg ? `url(${profile.bg})` : 'none';
+                mainBg.style.background = profile.bg ? 'none' : 'linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%)';
+                if(profile.bg) mainBg.style.backgroundSize = 'cover';
+            }
+        } else {
+            const charList = await window.ib.getItem('char_list') || [];
+            const baseChar = charList.find(x => x.id === accountId);
+            const customData = await window.ib.getItem('forum_char_profile_' + accountId) || {};
+            
+            if (baseChar) {
+                if (mainAvt) mainAvt.src = baseChar.avatar;
+                if (mainName) mainName.textContent = baseChar.name;
+                if (mainBio) mainBio.textContent = `"${customData.bio || baseChar.desc || '...'}"`;
+                if (mainTag) mainTag.textContent = customData.tag || baseChar.role || "ENTITY NODE";
+                if (mainBg) {
+                    if (customData.bg) {
+                        mainBg.style.background = `url(${customData.bg})`;
+                        mainBg.style.backgroundSize = 'cover';
+                        mainBg.style.backgroundPosition = 'center';
+                    } else {
+                        mainBg.style.background = `url(${baseChar.avatar})`;
+                        mainBg.style.backgroundSize = 'cover';
+                        mainBg.style.backgroundPosition = 'center';
+                        mainBg.style.boxShadow = 'inset 0 0 0 2000px rgba(0,0,0,0.4)'; 
+                    }
+                }
+            }
+        }
+        
+        if (window.triggerSuccessHud) window.triggerSuccessHud("身份已重构");
+        
+    } catch(e) { console.error("Sync Profile Error:", e); }
+};
+
+// ==========================================
+// 🌌 Forum (Echoes) App: Profile 交互与数据流 (终极物理版)
+// ==========================================
+
+// 暂存数据的容器
+window.tempForumProfileData = {
+    avatar: null,
+    bg: null,
+    invitedChars: [] // 选中的角色 ID 数组
+};
+
+// 1. 打开编辑器并加载数据
+window.openForumProfileEditor = async function() {
+    // 如果没有 DOM，先注入
+    initForumEditorDOM();
+    
+    // 清空上次暂存
+    window.tempForumProfileData.invitedChars = [];
+
+    // --- A. 从 IndexedDB 提取当前配置 ---
+    const profile = await window.ib.getItem('forum_my_profile') || {
+        name: "Commander", tag: "LUNE CREATOR", bio: "在数据的缝隙里，观测维度的坍缩。",
+        avatar: "https://api.dicebear.com/7.x/initials/svg?seed=U", bg: null,
+        syncedWorld: "", invitedChars: []
+    };
+
+    // 回填文本
+    document.getElementById('fme-in-name').value = profile.name || "";
+    document.getElementById('fme-in-tag').value = profile.tag || "";
+    document.getElementById('fme-in-bio').value = profile.bio || "";
+
+    // 回填图像并暂存
+    window.tempForumProfileData.avatar = profile.avatar;
+    window.tempForumProfileData.bg = profile.bg;
+    if (profile.avatar) {
+        document.getElementById('fme-pre-av').src = profile.avatar;
+        document.getElementById('fme-pre-av').style.display = 'block';
+    }
+    if (profile.bg) {
+        document.getElementById('fme-pre-bg').src = profile.bg;
+        document.getElementById('fme-pre-bg').style.display = 'block';
+    }
+
+    // 恢复已邀请的角色数组
+    if (profile.invitedChars) {
+        window.tempForumProfileData.invitedChars = [...profile.invitedChars];
+    }
+
+    // --- B. 读取世界书并渲染下拉框 ---
+    const worldList = await window.ib.getItem('world_list') || [];
+    const worldSelect = document.getElementById('fme-in-world');
+    worldSelect.innerHTML = '<option value="">-- No World Sync --</option>' + 
+        worldList.map(w => `<option value="${w.id}">${w.name}</option>`).join('');
+    if (profile.syncedWorld) worldSelect.value = profile.syncedWorld;
+
+    // --- C. 读取角色书并渲染邀请列表 ---
+    const charList = await window.ib.getItem('char_list') || [];
+    const charContainer = document.getElementById('fme-char-list-container');
+    
+    if (charList.length === 0) {
+        charContainer.innerHTML = `<span style="font-size:12px; color:#ccc;">Role book is empty.</span>`;
+    } else {
+        charContainer.innerHTML = charList.map(c => {
+            const isSel = window.tempForumProfileData.invitedChars.includes(c.id) ? 'selected' : '';
+            return `
+            <div class="fme-char-item ${isSel}" onclick="window.toggleForumInviteChar('${c.id}', this)">
+                <div class="fme-char-check">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                </div>
+                <img src="${c.avatar}" class="fme-char-av">
+                <div class="fme-char-name">${c.name}</div>
+            </div>`;
+        }).join('');
+    }
+
+    // --- D. 物理弹窗显形 ---
+    const modal = document.getElementById('modal-forum-editor');
+    modal.style.display = 'flex';
+    void modal.offsetWidth; // 重绘
+    modal.classList.add('active');
+    
+    if (navigator.vibrate) navigator.vibrate(10);
+};
+
+// 2. 关闭编辑器
+window.closeForumProfileEditor = function() {
+    const modal = document.getElementById('modal-forum-editor');
+    if (modal) {
+        modal.classList.remove('active');
+        setTimeout(() => modal.style.display = 'none', 300);
+    }
+};
+
+// 3. 处理图片转 Base64 预览
+window.processForumImage = function(input, type) {
+    if (input.files && input.files[0]) {
+        if(typeof showToast === 'function') showToast("Reading Image...");
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const base64 = e.target.result;
+            if (type === 'avatar') {
+                window.tempForumProfileData.avatar = base64;
+                const imgEl = document.getElementById('fme-pre-av');
+                imgEl.src = base64; imgEl.style.display = 'block';
+            } else {
+                window.tempForumProfileData.bg = base64;
+                const imgEl = document.getElementById('fme-pre-bg');
+                imgEl.src = base64; imgEl.style.display = 'block';
+            }
+        };
+        // 调用你之前的压缩引擎防止图片太大撑爆数据库
+        if(typeof compressImage === 'function') {
+            reader.readAsDataURL(input.files[0]); // 简写，如果要深层压缩可以用 compressImage
+        } else {
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+};
+
+// 4. 角色选择的开关逻辑
+window.toggleForumInviteChar = function(charId, el) {
+    const arr = window.tempForumProfileData.invitedChars;
+    const idx = arr.indexOf(charId);
+    if (idx !== -1) {
+        arr.splice(idx, 1); // 移除
+        el.classList.remove('selected');
+    } else {
+        arr.push(charId); // 添加
+        el.classList.add('selected');
+    }
+    if (navigator.vibrate) navigator.vibrate(5);
+};
+
+// 5. 💾 核心保存与主页刷新同步
+window.saveForumProfile = async function() {
+    if(typeof showToast === 'function') showToast("Syncing Database...");
+
+    // A. 打包数据
+    const newProfile = {
+        name: document.getElementById('fme-in-name').value.trim() || "Unknown",
+        tag: document.getElementById('fme-in-tag').value.trim() || "GUEST",
+        bio: document.getElementById('fme-in-bio').value.trim() || "...",
+        avatar: window.tempForumProfileData.avatar,
+        bg: window.tempForumProfileData.bg,
+        syncedWorld: document.getElementById('fme-in-world').value,
+        invitedChars: window.tempForumProfileData.invitedChars
+    };
+
+    try {
+        // B. 存入专属数据库 (为了你以后的多账号切换打下根基)
+        await window.ib.setItem('forum_my_profile', newProfile);
+
+        // C. 🚨 物理覆盖主页 UI，不需要刷新页面即可看效果
+        const mainAvt = document.getElementById('fm-me-avatar-main');
+        const mainName = document.getElementById('fm-me-name-main');
+        const mainBio = document.getElementById('fm-me-bio-main');
+        const mainTag = document.querySelector('.fm-me-domain-tag');
+        const mainBg = document.getElementById('fm-me-bg-main'); // 刚才让你加的 ID
+
+        if (mainAvt && newProfile.avatar) mainAvt.src = newProfile.avatar;
+        if (mainName) mainName.textContent = newProfile.name;
+        if (mainBio) mainBio.textContent = `"${newProfile.bio}"`;
+        if (mainTag) mainTag.textContent = newProfile.tag;
+
+        if (mainBg) {
+            if (newProfile.bg) {
+                // 如果有自定义图片，替换背景
+                mainBg.style.backgroundImage = `url(${newProfile.bg})`;
+                mainBg.style.backgroundSize = 'cover';
+                mainBg.style.backgroundPosition = 'center';
+            } else {
+                // 如果没有图片，恢复默认幻彩紫
+                mainBg.style.backgroundImage = 'none';
+                mainBg.style.background = 'linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%)';
+            }
+        }
+
+        if (window.triggerSuccessHud) window.triggerSuccessHud("档案已更新");
+        window.closeForumProfileEditor();
+
+    } catch(e) {
+        console.error("Save Error:", e);
+        if(typeof showToast === 'function') showToast("❌ Database Error");
+    }
+};
+
+// ==========================================
+// 🌌 Forum (Echoes) App: 核心交互联动 (全局强制挂载版)
+// ==========================================
+
+// 1. 切换底部 Tab 与 千面头部
+window.switchForumTab = function(viewId, el) {
+    // A. 切换底部高亮
+    document.querySelectorAll('.fm-nav-item').forEach(item => item.classList.remove('active'));
+    if (el) el.classList.add('active');
+
+    // B. 切换主视图 (Body)
+    document.querySelectorAll('.fm-view-page').forEach(page => page.classList.remove('active'));
+    const targetView = document.getElementById('fm-view-' + viewId);
+    if(targetView) targetView.classList.add('active');
+
+    // C. 🚨 切换千面头部 (Header Cross-fade)
+    document.querySelectorAll('.fm-header-module').forEach(header => header.classList.remove('active'));
+    const targetHeader = document.getElementById('fm-head-' + viewId);
+    if(targetHeader) {
+        targetHeader.classList.add('active');
+        
+        // 特殊处理：如果切到视频区，App底色变黑；切出来变白
+        const appContainer = document.getElementById('page-forum-app');
+        if (appContainer) {
+            appContainer.style.background = (viewId === 'video') ? '#141416' : '#FAFAFC';
+        }
+    }
+
+    // D. 震动反馈
+    if (navigator.vibrate) navigator.vibrate(10);
+
+    // E. 🚨 核心新增：如果切到"我的"页面，自动从数据库拉取最新资料渲染
+    if (viewId === 'me') {
+        window.ib.getItem('forum_my_profile').then(profile => {
+            if (profile) {
+                const mainAvt = document.getElementById('fm-me-avatar-main');
+                const mainName = document.getElementById('fm-me-name-main');
+                const mainBio = document.getElementById('fm-me-bio-main');
+                const mainTag = document.querySelector('.fm-me-domain-tag');
+                const mainBg = document.getElementById('fm-me-bg-main');
+
+                if (mainAvt && profile.avatar) mainAvt.src = profile.avatar;
+                if (mainName) mainName.textContent = profile.name;
+                if (mainBio) mainBio.textContent = `"${profile.bio}"`;
+                if (mainTag) mainTag.textContent = profile.tag;
+                if (mainBg && profile.bg) {
+                    mainBg.style.backgroundImage = `url(${profile.bg})`;
+                    mainBg.style.backgroundSize = 'cover';
+                    mainBg.style.backgroundPosition = 'center';
+                }
+            }
+        }).catch(e => console.error("Profile Sync Error:", e));
+    }
+
+    // --- 仅仅修改这一个判断逻辑，兼容你的页面 ID ---
+    // 3. 如果是排行榜页，触发渲染
+    if (viewId === 'rank') {
+        if (typeof window.renderForumRankings === 'function') {
+            window.renderForumRankings();
+        }
+    }
+};
+
+// 2. 关闭应用
+window.closeForumApp = function() {
+    const app = document.getElementById('page-forum-app');
+    if (app) {
+        app.classList.remove('active');
+        if (navigator.vibrate) navigator.vibrate(10);
+    }
+};
+
+// 3. 占位功能：发帖、私信、通知
+window.openForumCompose = function() {
+    if (navigator.vibrate) navigator.vibrate([15, 30]); 
+    if(typeof showToast === 'function') showToast(">>> 呼叫量子编辑台...");
+};
+
+window.openForumDM = function() {
+    if(typeof showToast === 'function') showToast(">>> 正在接入私密波段...");
+};
+
+window.openForumNotif = function() {
+    if(typeof showToast === 'function') showToast(">>> 正在提取系统日志...");
+};
+
+// 处理内部标签页的滑动切换 (升级版：带自动居中与阻尼)
+window.switchFmMeTab = function(tabId, element) {
+    // 1. 切换标签高亮
+    const tabs = document.querySelectorAll('.fm-me-tab-item');
+    tabs.forEach(t => t.classList.remove('active'));
+    element.classList.add('active');
+
+    // 2. 🚨 顶级视效：让被点击的果冻块自动平滑滚动到容器正中间
+    const navContainer = document.querySelector('.fm-me-tabs-nav');
+    if (navContainer) {
+        const scrollLeft = element.offsetLeft - (navContainer.offsetWidth / 2) + (element.offsetWidth / 2);
+        navContainer.scrollTo({
+            left: scrollLeft,
+            behavior: 'smooth'
+        });
+    }
+
+    // 3. 切换下方视图
+    const views = document.querySelectorAll('.fm-me-sub-view');
+    views.forEach(v => v.classList.remove('active'));
+    document.getElementById('fm-me-sub-' + tabId).classList.add('active');
+
+    // 4. 微弱且清晰的果冻回弹震动
+    if (navigator.vibrate) navigator.vibrate([10, 20]);
+};
 
 
 // 🧬 全局感官记录器：这是角色的“直觉”来源
@@ -59979,6 +61488,7 @@ window.closeInsModal = function(id) {
         setTimeout(() => { m.style.display = 'none'; }, 500);
     }
 };
+
 // 全局音频上下文 (保持单例，防止内存泄漏)
 window.sharedAudioCtx = window.sharedAudioCtx || new (window.AudioContext || window.webkitAudioContext)();
 // ==========================================
@@ -64188,6 +65698,7 @@ function openApp(appId) {
         'wallApp': 'page-wall-app',      
         'settingsApp': 'page-settings',    
         'safariApp': 'page-safari',
+        'forumApp': 'page-forum-app',
     };
 
     const pageId = idMap[appId] || ('page-' + appId);
@@ -65995,7 +67506,7 @@ async function renderWorldList() {
         card.innerHTML = `
             <div class="name">${w.name}</div>
             <div class="hint">VIEW DETAILS</div>
-        `;
+        `;DETA
         // 点击只弹窗，不换页
         card.onclick = () => showWorldDetails(w);
         grid.appendChild(card);
@@ -89464,6 +90975,2173 @@ async function loadCpWidgetData(charId) {
         window.tempCpWidgetData = { img1:null, img2:null, img3:null, text1:"", text2:"", bg:null };
     }
 }
+
+// ==========================================
+// 🌌 Forum (Echoes) App: 顶级杂志风社区引擎 CSS (千面头部版)
+// ==========================================
+function initForumStyles() {
+    if (document.getElementById('forum-pro-styles')) document.getElementById('forum-pro-styles').remove();
+    const style = document.createElement('style');
+    style.id = 'forum-pro-styles';
+    style.innerHTML = `
+        /* 🚨 物理强显容器 */
+        #page-forum-app {
+            position: fixed; inset: 0; z-index: 8000000 !important;
+            background: #FAFAFC; display: none; flex-direction: column;
+            transform: translateY(100%); opacity: 0; visibility: hidden;
+            transition: transform 0.5s cubic-bezier(0.19, 1, 0.22, 1), opacity 0.4s ease;
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+            color: #1d1d1f; overflow: hidden;
+        }
+        #page-forum-app.active {
+            display: flex !important;
+            transform: translateY(0) !important;
+            opacity: 1 !important;
+            visibility: visible !important;
+        }
+
+        /* 👑 动态头部插槽容器 (重构核心) */
+        .fm-dynamic-header-wrapper {
+            position: relative;
+            width: 100%;
+            height: 115px; /* 锁定头部高度 */
+            flex-shrink: 0;
+            z-index: 100;
+        }
+
+        /* 🎭 头部模块通用隐形逻辑 */
+        .fm-header-module {
+            position: absolute; inset: 0;
+            padding: 55px 24px 15px;
+            display: flex; justify-content: space-between; align-items: flex-end;
+            opacity: 0; pointer-events: none;
+            transform: translateY(-10px);
+            transition: all 0.4s cubic-bezier(0.19, 1, 0.22, 1);
+            background: rgba(250, 250, 252, 0.85);
+            backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
+            border-bottom: 1px solid rgba(0,0,0,0.06);
+        }
+        .fm-header-module.active {
+            opacity: 1; pointer-events: auto;
+            transform: translateY(0);
+        }
+
+        /* -------------------------------------
+           🎬 模块 1: Home (Echoes) 经典杂志风
+        -------------------------------------- */
+        .fm-h-home .fm-title-main { font-family: 'Georgia', serif; font-size: 30px; font-weight: 900; letter-spacing: -1px; line-height: 1; }
+        .fm-h-home .fm-title-sub { font-family: 'JetBrains Mono', monospace; font-size: 9px; color: #007AFF; font-weight: 800; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 6px; }
+        .fm-tab-pills { display: flex; gap: 8px; margin-bottom: 4px; }
+        .fm-pill { font-size: 11px; font-weight: 800; color: #8e8e93; padding: 4px 10px; border-radius: 12px; cursor: pointer; transition: 0.2s; }
+        .fm-pill.active { background: #1d1d1f; color: #fff; }
+        .fm-actions { display: flex; gap: 12px; align-items: center; }
+        .fm-btn-circle { width: 38px; height: 38px; border-radius: 50%; border: 1px solid rgba(0,0,0,0.1); background: #fff; display: flex; align-items: center; justify-content: center; cursor: pointer; position: relative; }
+        .fm-btn-circle svg { width: 18px; height: 18px; stroke-width: 1.8; }
+        .fm-dot-red { position: absolute; top: 8px; right: 10px; width: 6px; height: 6px; background: #FF2D55; border-radius: 50%; }
+
+        /* -------------------------------------
+           🎬 模块 2: Video (Reels) 深空暗房风
+        -------------------------------------- */
+        .fm-h-video { background: rgba(20, 20, 22, 0.85); border-bottom: 1px solid rgba(255,255,255,0.08); color: #fff; }
+        .fm-rec-box { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+        .fm-rec-dot { width: 8px; height: 8px; background: #FF3B30; border-radius: 50%; box-shadow: 0 0 10px #FF3B30; animation: recBlink 1.5s infinite; }
+        @keyframes recBlink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+        .fm-rec-text { font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 800; letter-spacing: 2px; }
+        .fm-h-video .fm-title-main { font-family: -apple-system, sans-serif; font-size: 24px; font-weight: 900; letter-spacing: 0.5px; }
+        .fm-h-video .fm-btn-circle { background: rgba(255,255,255,0.1); border: none; color: #fff; }
+
+        /* -------------------------------------
+           🎬 模块 3: Rank (Trends) 金融看板风
+        -------------------------------------- */
+/* Trends 专用头部容器 */
+.fm-h-rank.active {
+    padding: 20px 24px;
+    background: #fff !important;
+    display: flex !important;
+    align-items: flex-end;
+    border-bottom: 2px solid #f2f2f7;
+}
+
+/* 标题美化：黑白高级感 */
+.fm-q-title {
+    font-family: 'Cinzel', serif;
+    font-size: 38px;
+    font-weight: 900;
+    color: #1d1d1f;
+    letter-spacing: -1.5px;
+    line-height: 1;
+}
+
+.fm-q-tag {
+    font-size: 10px;
+    font-weight: 800;
+    color: #000;
+    opacity: 0.3;
+    margin-bottom: 4px;
+    letter-spacing: 1px;
+}
+
+/* --- 升级版：马卡龙混色流光 Q 弹按钮 --- */
+.fm-q-sync-btn {
+    /* 核心：三色混合马卡龙渐变 (薄荷绿 -> 奶油蓝 -> 丁香紫) */
+    background: linear-gradient(135deg, #CCFBFF 0%, #EF96FF 100%);
+    background-size: 200% 200%;
+    animation: gummy-flow 4s ease infinite; /* 让颜色自己动起来 */
+    
+    color: #8E54E9; /* 字体深紫色提高易读性 */
+    padding: 10px 18px;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    
+    /* 物理质感：多重软阴影，营造“厚实软糖”感 */
+    box-shadow: 
+        0 6px 0 #D1C4E9,           /* 底部厚度 */
+        0 8px 15px rgba(0,0,0,0.1); /* 悬浮投影 */
+    
+    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.5); /* 超强弹性回归 */
+    position: relative;
+    top: -4px;
+    border: 1px solid rgba(255, 255, 255, 0.4); /* 边缘高光线 */
+    overflow: hidden;
+}
+
+/* 按钮文字：加粗并增加一点发光 */
+.fm-q-sync-btn span { 
+    font-weight: 900; 
+    font-size: 12px; 
+    letter-spacing: 0.5px;
+    text-shadow: 0 1px 2px rgba(255,255,255,0.5);
+}
+
+/* 关键：点击时的“果冻深蹲”压缩感 */
+.fm-q-sync-btn:active {
+    top: 0px; 
+    box-shadow: 0 2px 0 #D1C4E9, 0 4px 10px rgba(0,0,0,0.05);
+    transform: scale(0.88) translateY(2px); /* 深度缩放 */
+}
+
+/* 按钮内部的流动闪光 (高光效果) */
+.fm-q-sync-btn::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255,255,255,0.4) 0%, transparent 70%);
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+/* 呼吸点：颜色跟着按钮走 */
+.fm-q-dot {
+    width: 6px;
+    height: 6px;
+    background: #fff;
+    border-radius: 50%;
+    box-shadow: 0 0 8px rgba(255, 255, 255, 0.8);
+    animation: gummy-glow 1.5s infinite ease-in-out;
+}
+
+/* --- 动画：渐变色平滑滚动 --- */
+@keyframes gummy-flow {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+@keyframes gummy-glow {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.6); opacity: 0.6; }
+}
+
+/* --- Trends 头部左侧容器美化 --- */
+.fm-header-left {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    gap: 2px; /* 标签与大标题的间距 */
+}
+
+/* 顶部微小标签：马卡龙丁香紫点缀 + 科技感 */
+.fm-q-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    font-weight: 800;
+    color: #AF52DE; /* 马卡龙紫色 */
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    opacity: 0.8;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    animation: fm-tag-fade 2s ease-in-out infinite;
+}
+
+/* 标签前的小点，增加灵动感 */
+.fm-q-tag::before {
+    content: '';
+    width: 4px;
+    height: 4px;
+    background: #AF52DE;
+    border-radius: 50%;
+    box-shadow: 0 0 8px rgba(175, 82, 222, 0.8);
+}
+
+/* Trends 大标题：Cinzel 字体 + 高级墨黑 + 软糖投影 */
+.fm-q-title {
+    font-family: 'Cinzel', serif;
+    font-size: 42px; /* 足够大才有视觉冲击力 */
+    font-weight: 900;
+    color: #1d1d1f; /* 经典的苹果式墨黑 */
+    letter-spacing: -2px; /* 紧凑的字间距更有杂志高级感 */
+    line-height: 0.9;
+    position: relative;
+    /* 增加一个非常淡的软糖质感阴影 */
+    filter: drop-shadow(0 4px 10px rgba(0,0,0,0.05));
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    cursor: default;
+    user-select: none;
+}
+
+/* QQ弹弹的交互：当鼠标滑过或点击标题时会有轻微晃动 */
+.fm-q-title:hover {
+    transform: scale(1.02) translateY(-2px);
+    color: #000;
+}
+
+.fm-q-title:active {
+    transform: scale(0.95); /* 点击时像果冻一样缩一下 */
+}
+
+/* --- 动画部分 --- */
+@keyframes fm-tag-fade {
+    0%, 100% { opacity: 0.6; transform: translateX(0); }
+    50% { opacity: 1; transform: translateX(2px); }
+}
+
+/* 适配你提到的状态栏高度：确保头部不被顶部的状态栏遮挡 */
+#fm-head-rank {
+    margin-top: 10px; /* 留出一定的下移空间，防止贴死状态栏 */
+    padding-bottom: 15px;
+    border-bottom: 1px solid rgba(0,0,0,0.03); /* 极淡的分割线 */
+}
+        /* -------------------------------------
+           🎬 模块 4: Me (Profile) 个人档案风
+        -------------------------------------- */
+        .fm-h-me { padding-bottom: 10px; }
+        .fm-profile-row { display: flex; align-items: center; gap: 12px; }
+        .fm-h-avatar { width: 44px; height: 44px; border-radius: 14px; object-fit: cover; border: 1px solid rgba(0,0,0,0.08); background: #eee; }
+        .fm-h-name { font-size: 18px; font-weight: 800; color: #1d1d1f; }
+        .fm-h-id { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: #8e8e93; margin-top: 2px; }
+
+        /* ============================== */
+        /* 📱 视图层与底部 Dock (保持原有高级感) */
+        /* ============================== */
+        .fm-view-page { flex: 1; overflow-y: auto; display: none; padding: 15px 20px 140px; animation: fmFadeIn 0.4s cubic-bezier(0.19, 1, 0.22, 1) forwards; }
+        .fm-view-page.active { display: block; }
+        @keyframes fmFadeIn { from { opacity: 0; transform: translateY(15px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+
+        .fm-bottom-dock {
+            position: absolute; bottom: 35px; left: 50%; transform: translateX(-50%);
+            width: 90%; max-width: 400px; height: 65px;
+            background: rgba(29, 29, 31, 0.95); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border-radius: 35px; display: flex; justify-content: space-between; align-items: center;
+            padding: 0 15px; box-shadow: 0 20px 40px rgba(0,0,0,0.25); z-index: 200; border: 1px solid rgba(255,255,255,0.1);
+        }
+        .fm-nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: rgba(255,255,255,0.4); cursor: pointer; transition: 0.3s; height: 100%; }
+        .fm-nav-item svg { width: 22px; height: 22px; stroke-width: 1.8; transition: 0.3s; margin-bottom: 3px; }
+        .fm-nav-item.active { color: #fff; }
+        .fm-nav-item.active svg { transform: translateY(-2px); stroke-width: 2.2; }
+
+        .fm-post-wrapper { position: relative; width: 66px; height: 66px; display: flex; align-items: center; justify-content: center; transform: translateY(-20px); z-index: 210; }
+        .fm-post-btn {
+            width: 58px; height: 58px; border-radius: 50%;
+            background: linear-gradient(135deg, #E3F2FD 0%, #FCE4EC 100%);
+            display: flex; align-items: center; justify-content: center; color: #1d1d1f; cursor: pointer;
+            box-shadow: 0 12px 25px rgba(227, 242, 253, 0.6), inset 0 2px 5px rgba(255,255,255,0.8);
+            border: 4px solid #FAFAFC; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .fm-post-btn:active { transform: scale(0.85) rotate(90deg); box-shadow: 0 5px 10px rgba(227, 242, 253, 0.4); }
+        .fm-post-btn svg { width: 24px; height: 24px; stroke-width: 2.5; }
+
+        .fm-empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 60vh; color: rgba(0,0,0,0.2); text-align: center; }
+        .fm-empty-state svg { width: 48px; height: 48px; stroke-width: 1; margin-bottom: 15px; }
+        .fm-empty-state h3 { font-family: 'Georgia', serif; font-size: 18px; color: #1d1d1f; margin: 0 0 8px; }
+        .fm-empty-state p { font-size: 12px; font-weight: 600; }\
+
+        /* 1. 贯穿顶部状态栏的方形背景 (超级放大版) */
+        .fm-me-hero-bg {
+            position: absolute;
+            top: -115px; 
+            left: -20px; right: -20px; 
+            height: 270px; /* 🚨 大幅增加高度，占位更霸气，视觉冲击力拉满 */
+            background: linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%); 
+            border-radius: 0; 
+            z-index: -1; 
+        }
+        
+        /* 🚨 核心联动：让 Me 页面的头部毛玻璃变透明 */
+        .fm-h-me {
+            background: transparent !important;
+            backdrop-filter: none !important;
+            border-bottom: none !important;
+        }
+        .fm-h-me .fm-h-name { color: #fff !important; text-shadow: 0 2px 10px rgba(0,0,0,0.2); }
+        .fm-h-me .fm-h-id { color: rgba(255,255,255,0.8) !important; }
+        .fm-h-me .fm-btn-circle { background: rgba(255,255,255,0.2) !important; border: none !important; color: #fff !important; backdrop-filter: blur(10px); }
+
+        /* 2. 头像独立悬浮定位：骑在背景和白底的交界线上 */
+        .fm-me-avatar-box {
+            position: absolute; 
+            top: 105px; /* 🚨 往下移，恰好让头像的中心线压在背景的底边上 */
+            left: 12px; /* 🚨 往右移，不再死死贴着左边框，增加呼吸感 */
+            width: 96px; height: 96px; /* 🚨 头像整体放大一丢丢，更有主理人排面 */
+            border-radius: 32px; 
+            background: #FAFAFC; padding: 4px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            z-index: 10;
+        }
+        .fm-me-avatar-img {
+            width: 100%; height: 100%; border-radius: 28px; object-fit: cover; background: #eee;
+        }
+        /* 认证金V徽标 */
+        .fm-me-verified {
+            position: absolute; bottom: -5px; right: -5px;
+            width: 28px; height: 28px; background: #1d1d1f; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            border: 3px solid #FAFAFC; color: #FFD700;
+        }
+        .fm-me-verified svg { width: 14px; height: 14px; stroke-width: 3; }
+
+        /* 3. 核心身份信息区 (下压避开头像) */
+        .fm-me-info-zone { 
+            padding: 0 6px; /* 🚨 配合头像往右缩进一点，视觉对齐更舒服 */
+            margin-top: 215px; /* 🚨 强行把文字区域压到大头像下方，防止重叠 */
+            margin-bottom: 25px; 
+        }
+        .fm-me-name-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+        .fm-me-name { font-family: 'SF Pro Display', sans-serif; font-size: 26px; font-weight: 900; color: #1d1d1f; letter-spacing: -0.5px; }
+        .fm-me-domain-tag {
+            font-family: 'JetBrains Mono', monospace; font-size: 10px; font-weight: 800;
+            background: rgba(0, 122, 255, 0.1); color: #007AFF;
+            padding: 4px 10px; border-radius: 8px; letter-spacing: 0.5px; text-transform: uppercase;
+        }
+        .fm-me-bio { font-size: 14px; color: #555; line-height: 1.6; font-weight: 500; margin-bottom: 20px; }
+
+        /* 4. 四大数据矩阵 (贴子/关注/粉丝/浏览) */
+        .fm-me-stats-grid {
+            display: flex; justify-content: space-between; align-items: center;
+            background: #fff; border-radius: 20px; padding: 20px;
+            border: 1px solid rgba(0,0,0,0.04); box-shadow: 0 8px 20px rgba(0,0,0,0.02);
+            margin-bottom: 25px; text-align: center;
+        }
+        .fm-me-stat-item { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+        .fm-me-stat-num { font-family: 'SF Pro Display', sans-serif; font-size: 18px; font-weight: 900; color: #1d1d1f; }
+        .fm-me-stat-label { font-size: 10px; color: #8e8e93; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+
+        /* 5. 双动作按钮 */
+        .fm-me-action-row { display: flex; gap: 12px; margin-bottom: 35px; }
+        .fm-me-btn {
+            flex: 1; padding: 16px 0; border-radius: 16px; font-size: 13px; font-weight: 800;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            cursor: pointer; transition: 0.2s; border: none; letter-spacing: 0.5px;
+        }
+        .fm-me-btn.edit { background: #1d1d1f; color: #fff; box-shadow: 0 8px 20px rgba(0,0,0,0.15); }
+        .fm-me-btn.edit:active { transform: scale(0.96); background: #000; }
+        .fm-me-btn.switch { background: #fff; color: #1d1d1f; border: 1px solid rgba(0,0,0,0.1); }
+        .fm-me-btn.switch:active { transform: scale(0.96); background: #f2f2f7; }
+        .fm-me-btn svg { width: 16px; height: 16px; stroke-width: 2.5; }
+
+        /* ==============================
+           6. 灵动马卡龙导航栏 (QQ弹弹果冻版)
+        ============================== */
+        /* 导航栏底座：微凹的毛玻璃槽 */
+        .fm-me-tabs-nav {
+            display: flex; gap: 8px; 
+            padding: 8px; margin-bottom: 25px; 
+            overflow-x: auto; 
+            scroll-behavior: smooth;
+            background: rgba(0, 0, 0, 0.03); /* 浅浅的底座槽 */
+            border-radius: 28px;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: inset 0 4px 10px rgba(0,0,0,0.02);
+        }
+        /* 隐藏滚动条 */
+        .fm-me-tabs-nav::-webkit-scrollbar { display: none; }
+
+        /* 默认状态：安静、内敛的线框 */
+        .fm-me-tab-item {
+            display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+            min-width: 68px; height: 68px; padding: 0 10px;
+            border-radius: 20px;
+            color: #8e8e93; cursor: pointer; 
+            background: transparent;
+            /* 🚨 灵魂核心：果冻回弹曲线 */
+            transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+            position: relative;
+        }
+
+        .fm-me-tab-item svg { width: 22px; height: 22px; stroke-width: 1.8; transition: 0.3s; }
+        .fm-me-tab-item span { 
+            font-family: 'JetBrains Mono', monospace; font-size: 9px; 
+            font-weight: 800; letter-spacing: 0.5px; transition: 0.3s;
+        }
+
+        /* 🚨 交互细节：按压时的物理挤压感 */
+        .fm-me-tab-item:active {
+            transform: scale(0.85);
+        }
+
+        /* 🌟 激活状态：马卡龙高光浮出 */
+        .fm-me-tab-item.active { 
+            color: #1d1d1f; 
+            background: linear-gradient(135deg, #E3F2FD 0%, #FCE4EC 100%); /* 冰蓝过渡樱花粉 */
+            /* 内部高光 + 外部柔光，打造实体果冻感 */
+            box-shadow: 
+                0 8px 20px rgba(227, 242, 253, 0.7), 
+                inset 0 2px 4px rgba(255, 255, 255, 0.9);
+            transform: scale(1.05) translateY(-2px); /* 放大且上浮 */
+            border: 1px solid rgba(255,255,255,0.8);
+        }
+        
+        /* 激活时的图标变色加粗 */
+        .fm-me-tab-item.active svg { 
+            stroke-width: 2.5; 
+            color: #007AFF; /* 亮蓝色点缀 */
+            transform: scale(1.1); 
+        }
+        /* 激活时的文字变黑 */
+        .fm-me-tab-item.active span {
+            color: #1d1d1f;
+        }
+
+        /* 7. 子视图容器 */
+        .fm-me-sub-view { display: none; animation: fmFadeIn 0.3s ease forwards; }
+        .fm-me-sub-view.active { display: block; }
+
+        /* ==============================
+           📈 模块 5: Trends (排行榜) 专属样式
+           ============================== */
+        .fm-discover-container { padding: 16px; display: flex; flex-direction: column; gap: 24px; }
+        
+        /* 趋势卡片容器 */
+        .fm-trend-section { 
+            background: rgba(255, 255, 255, 0.8); 
+            backdrop-filter: blur(20px);
+            border-radius: 28px; padding: 20px; 
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.03); 
+        }
+        
+        .fm-section-title { 
+            font-size: 16px; font-weight: 900; color: #1d1d1f; 
+            margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between;
+        }
+        .fm-section-title span { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: #8e8e93; }
+
+        /* 每一行热搜项 */
+        .fm-trend-item { 
+            display: flex; align-items: center; gap: 16px; padding: 16px 0; 
+            border-bottom: 1px solid rgba(0,0,0,0.04); cursor: pointer; 
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); 
+        }
+        .fm-trend-item:last-child { border: none; }
+        .fm-trend-item:active { transform: scale(0.97); opacity: 0.6; }
+        
+        /* 排名数字 */
+        .fm-rank-num { 
+            font-family: 'JetBrains Mono', monospace; font-size: 18px; font-weight: 900; 
+            width: 30px; font-style: italic; color: #c7c7cc;
+        }
+        .fm-trend-item:nth-child(1) .fm-rank-num { color: #FF3B30; }
+        .fm-trend-item:nth-child(2) .fm-rank-num { color: #FF9500; }
+        .fm-trend-item:nth-child(3) .fm-rank-num { color: #FFCC00; }
+        
+        .fm-trend-content { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+        .fm-trend-word { font-size: 15px; font-weight: 700; color: #1d1d1f; display: flex; align-items: center; gap: 8px; }
+        .fm-trend-meta { font-size: 11px; color: #8e8e93; font-weight: 600; }
+        
+        /* 热力指数标签 */
+        .fm-trend-tag { 
+            font-size: 9px; padding: 2px 6px; border-radius: 6px; font-weight: 800;
+            background: rgba(255, 59, 48, 0.1); color: #FF3B30;
+        }
+
+        /* 实体横向滚动榜单 */
+        .fm-rank-scroll { 
+            display: flex; gap: 15px; overflow-x: auto; padding: 5px 5px 15px 5px; 
+            scrollbar-width: none; -webkit-overflow-scrolling: touch;
+        }
+        .fm-rank-scroll::-webkit-scrollbar { display: none; }
+        
+        .fm-rank-card { 
+            min-width: 130px; background: #fff; border-radius: 24px; padding: 16px; 
+            border: 1px solid rgba(0,0,0,0.03); display: flex; flex-direction: column; 
+            align-items: center; text-align: center; gap: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+        }
+        .fm-rank-card-av { 
+            width: 60px; height: 60px; border-radius: 22px; 
+            object-fit: cover; box-shadow: 0 8px 20px rgba(0,0,0,0.08); 
+        }
+        .fm-rank-card-name { font-size: 13px; font-weight: 800; color: #1d1d1f; }
+        .fm-rank-card-val { 
+            font-family: 'JetBrains Mono', monospace; font-size: 10px; 
+            color: #007AFF; font-weight: 800; background: rgba(0,122,255,0.08); 
+            padding: 4px 10px; border-radius: 10px; 
+        }
+/* --- 彻底消除容器留白 --- */
+#fm-view-rank {
+    padding: 0 !important;
+}
+
+#fm-rank-dynamic-content {
+    width: 100% !important;
+    padding: 0 !important;
+}
+
+/* --- 排行榜 Section 容器 --- */
+.fm-trends-section {
+    width: 100vw;
+    position: relative;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 30px 0;
+    /* 极致悬浮感背景：不需要实色，用微弱的渐变光晕 */
+    background: #ffffff;
+}
+
+/* --- 区域头部：大标题 + 总入口按钮 --- */
+.fm-section-header {
+    padding: 0 24px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end; /* 底部对齐更有商业感 */
+}
+
+.fm-section-title-box {
+    display: flex;
+    flex-direction: column;
+}
+
+.fm-section-tag {
+    font-size: 10px;
+    font-weight: 900;
+    color: #AF52DE;
+    letter-spacing: 3px;
+    margin-bottom: 4px;
+}
+
+.fm-section-main-title {
+    font-family: 'Cinzel', serif;
+    font-size: 32px;
+    font-weight: 900;
+    color: #1d1d1f;
+    letter-spacing: -1px;
+}
+
+/* 排行榜总入口按钮：QQ弹弹的胶囊感 */
+.fm-view-all-btn {
+    background: #1d1d1f;
+    color: #fff;
+    padding: 10px 18px;
+    border-radius: 100px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.5);
+}
+
+.fm-view-all-btn span {
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 1px;
+}
+
+.fm-view-all-btn:active {
+    transform: scale(0.85) rotate(-2deg); /* Q弹缩放 */
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+/* --- 词条卡片美化：软糖悬浮感 --- */
+.fm-rank-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 0 16px; /* 卡片组两侧留一点点缝隙显得精致 */
+}
+
+.fm-rank-item {
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(15px);
+    border-radius: 24px;
+    padding: 20px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border: 1px solid rgba(255,255,255,0.6);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.03);
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.fm-rank-item:active {
+    transform: scale(0.96) translateY(2px);
+    background: rgba(255, 255, 255, 1);
+}
+
+.rank-index {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 24px;
+    font-weight: 900;
+    color: #1d1d1f;
+    opacity: 0.15;
+    margin-right: 15px;
+}
+
+.rank-content { flex: 1; }
+
+.rank-title {
+    font-size: 17px;
+    font-weight: 800;
+    color: #1d1d1f;
+    margin-bottom: 2px;
+}
+
+.rank-meta {
+    font-size: 11px;
+    font-weight: 700;
+    color: #8e8e93;
+    display: flex;
+    gap: 10px;
+}
+
+.rank-hot-value {
+    color: #AF52DE;
+    background: rgba(175, 82, 222, 0.1);
+    padding: 0 6px;
+    border-radius: 4px;
+}
+
+/* --- 帖子卡片：加宽、去留白、强化悬浮 --- */
+.fm-pro-post {
+    /* 核心修改：将左右边距缩小到 8px，卡片瞬间变大 */
+    margin: 0 3px 13px; 
+    
+    /* 宽度自适应，配合 margin 实现几乎撑满效果 */
+    width: auto; 
+    
+    /* 内部填充微调：让内容有更多呼吸空间 */
+    padding: 20px; 
+    
+    /* 保持你的 QQ 弹弹质感 */
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(25px) saturate(160%);
+    -webkit-backdrop-filter: blur(25px) saturate(160%);
+    border-radius: 30px; 
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.03);
+    
+    /* 极致回弹动画 */
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.5);
+    position: relative;
+    overflow: hidden;
+}
+
+/* --- 头部用户信息 --- */
+.fm-post-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 18px;
+}
+
+.fm-post-user-box { display: flex; align-items: center; gap: 12px; }
+
+.fm-post-avatar-wrapper { position: relative; }
+.fm-post-avatar {
+    width: 48px; height: 48px; 
+    border-radius: 18px; 
+    background: #f2f2f7;
+    object-fit: cover;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+}
+
+.fm-post-status-dot {
+    position: absolute; bottom: -2px; right: -2px;
+    width: 12px; height: 12px;
+    background: #34C759; border: 2px solid #fff;
+    border-radius: 50%;
+}
+
+.fm-post-nickname { font-size: 16px; font-weight: 800; color: #1d1d1f; }
+.fm-post-sub { font-size: 11px; font-weight: 600; color: #8e8e93; }
+
+/* --- 关注按钮：马卡龙 Q 弹 --- */
+.fm-post-follow-btn {
+    background: #1d1d1f;
+    color: #fff;
+    padding: 6px 14px;
+    border-radius: 100px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 10px;
+    font-weight: 900;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.5);
+}
+
+.fm-post-follow-btn:active { transform: scale(0.8); }
+
+/* --- 正文与媒体 --- */
+.fm-post-body {
+    font-size: 15px; line-height: 1.6; color: #3a3a3c;
+    font-weight: 500; margin-bottom: 16px;
+}
+
+.fm-post-hashtags {
+    color: #AF52DE; font-weight: 800; margin-top: 8px; font-size: 13px;
+}
+
+.fm-post-media-container {
+    width: 100%; border-radius: 24px; overflow: hidden;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    aspect-ratio: 16/9; margin-bottom: 20px;
+    display: flex; align-items: center; justify-content: center;
+}
+
+.fm-post-media-placeholder {
+    display: flex; flex-direction: column; align-items: center; gap: 10px;
+}
+.fm-post-media-placeholder span {
+    font-family: 'JetBrains Mono'; font-size: 10px; color: rgba(255,255,255,0.8); letter-spacing: 2px;
+}
+
+/* --- 交互栏：极致 Q 弹反馈 --- */
+.fm-post-actions-bar {
+    display: flex; justify-content: space-between; align-items: center;
+}
+
+.fm-action-group {
+    display: flex;
+    align-items: center;
+    
+    /* 1. 核心修改：不要用 space-between，改用靠左对齐 */
+    justify-content: flex-start !important; 
+    
+    /* 2. 核心修改：手动控制图标之间的距离 (24px 比较符合商用审美) */
+    gap: 24px !important; 
+    
+    /* 如果之前有宽度限制，确保它是自适应的 */
+    width: auto;
+}
+
+/* 确保每个按钮内部的图标和文字紧凑 */
+.fm-action-unit {
+    display: flex;
+    align-items: center;
+    gap: 6px; /* 图标和数字之间的距离 */
+    cursor: pointer;
+}
+
+.fm-action-icon-bg {
+    width: 36px; height: 36px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 50%; color: #8e8e93;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.5);
+}
+
+.fm-action-unit:hover .fm-action-icon-bg {
+    background: rgba(175, 82, 222, 0.1);
+    color: #AF52DE;
+}
+
+.fm-action-unit:active .fm-action-icon-bg {
+    transform: scale(0.7); /* QQ弹弹的压缩感 */
+}
+
+.fm-action-count { font-size: 13px; font-weight: 700; color: #8e8e93; }
+
+/* 点赞后的亮起状态 */
+.fm-action-unit.liked .fm-action-icon-bg { color: #FF3B30; }
+.fm-action-unit.liked .fm-action-count { color: #FF3B30; }
+/* --- 1. 修复 Feed 容器：预留导航栏高度 --- */
+.fm-post-feed {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    /* 核心修改：预留出导航栏高度 (约70px) + 安全距离 (20px) */
+    padding-bottom: 100px !important; 
+    /* 允许平滑滚动 */
+    -webkit-overflow-scrolling: touch;
+}
+
+/* --- 2. 优化滚动容器：确保能滚到底 --- */
+#fm-rank-dynamic-content {
+    height: auto;
+    min-height: 101%; /* 强制多出一点点空间，保证滚动顺滑 */
+}
+
+/* --- 3. iOS 全屏适配 (可选但推荐) --- */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+    .fm-post-feed {
+        /* 在新款手机上自动增加底部安全区高度 */
+        padding-bottom: calc(100px + env(safe-area-inset-bottom)) !important;
+    }
+}
+
+/* --- 4. 增加一个最后一条帖子的弹性动画 --- */
+.fm-pro-post:last-child {
+    margin-bottom: 30px; /* 给最后一条帖子再多一点点呼吸感 */
+}
+
+/* 文字头像的核心样式 */
+.fm-post-avatar-text {
+    width: 48px;
+    height: 48px;
+    border-radius: 16px; /* 稍微方圆一点更高级 */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-weight: 900;
+    font-size: 20px;
+    font-family: 'Montserrat', sans-serif;
+    border: 1.5px solid rgba(255, 255, 255, 0.6);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.fm-post-avatar-wrapper {
+    position: relative;
+    width: 48px;
+    height: 48px;
+}
+
+/* 状态小点稍微偏移，适配文字头像 */
+.fm-post-status-dot {
+    position: absolute;
+    bottom: -1px;
+    right: -1px;
+    width: 12px;
+    height: 12px;
+    background: #34C759;
+    border: 2px solid #fff;
+    border-radius: 50%;
+    z-index: 2;
+}
+/* 帖子流顶部的标题组动画 */
+.fm-feed-title-group h3 {
+    position: relative;
+    display: inline-block;
+}
+
+/* 在标题后面加一个动态的小圆点，代表“实时” */
+.fm-feed-title-group h3::after {
+    content: '';
+    position: absolute;
+    top: 8px;
+    right: -12px;
+    width: 6px;
+    height: 6px;
+    background: #AF52DE;
+    border-radius: 50%;
+    animation: title-dot-pulse 1.5s infinite;
+}
+
+@keyframes title-dot-pulse {
+    0% { transform: scale(1); opacity: 1; box-shadow: 0 0 0px rgba(175,82,222,0.5); }
+    50% { transform: scale(1.5); opacity: 0.5; box-shadow: 0 0 10px rgba(175,82,222,0.8); }
+    100% { transform: scale(1); opacity: 1; box-shadow: 0 0 0px rgba(175,82,222,0.5); }
+}
+
+/* 搜索框容器：确保撑满且有呼吸感 */
+.fm-search-container {
+    padding: 20px 16px 10px;
+    width: 100%;
+    box-sizing: border-box;
+    background: transparent; /* 确保外层不带颜色 */
+}
+
+.fm-search-glass {
+    position: relative;
+    background: #ffffff !important;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    height: 54px;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    padding: 0 18px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.03);
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.5);
+    overflow: hidden;
+}
+
+/* 搜索图标：深灰色高级质感 */
+.search-icon {
+    color: #1d1d1f;
+    opacity: 0.4;
+    transition: 0.3s;
+}
+
+/* 输入框原生重置 */
+#fm-global-search {
+    border: none;
+    background: transparent;
+    outline: none;
+    margin-left: 12px;
+    flex: 1;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    font-weight: 700;
+    color: #1d1d1f;
+}
+
+#fm-global-search::placeholder {
+    color: #8e8e93;
+    letter-spacing: 1px;
+}
+
+/* 聚焦时的 Q 弹效果：边框亮起并产生内阴影 */
+.fm-search-glass.focused {
+    background: rgba(255, 255, 255, 0.95);
+    transform: scale(0.98);
+    box-shadow: inset 0 2px 8px rgba(0,0,0,0.05), 0 5px 15px rgba(175,82,222,0.15);
+    border: 1.5px solid #AF52DE;
+}
+
+.fm-search-glass.focused .search-icon {
+    color: #AF52DE;
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+/* 装饰性扫描线动画：增加科技感 */
+.search-scan-line {
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(175,82,222,0.05), transparent);
+    transition: 0s;
+}
+
+.fm-search-glass.focused .search-scan-line {
+    animation: search-scan 2s infinite linear;
+}
+
+@keyframes search-scan {
+    0% { left: -100%; }
+    100% { left: 100%; }
+}
+
+/* 旋转按钮动画 */
+.set-update-btn.is-loading svg {
+    animation: fm-spin 1s linear infinite;
+}
+
+@keyframes fm-spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* AI 加载容器 */
+.fm-ai-loading-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 100px 20px;
+    background: #ffffff; /* 确保是纯白背景 */
+    min-height: 400px;
+}
+
+.fm-ai-loader-core {
+    position: relative;
+    width: 60px;
+    height: 60px;
+    margin-bottom: 30px;
+}
+
+.loader-ring {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border: 3px solid rgba(175, 82, 222, 0.1);
+    border-top-color: #AF52DE;
+    border-radius: 50%;
+    animation: fm-spin 1.5s cubic-bezier(0.68, -0.55, 0.27, 1.55) infinite;
+}
+
+.loader-hex {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 20px;
+    height: 20px;
+    background: #AF52DE;
+    transform: translate(-50%, -50%) rotate(45deg);
+    animation: hex-pulse 1s ease-in-out infinite alternate;
+}
+
+@keyframes hex-pulse {
+    from { transform: translate(-50%, -50%) rotate(45deg) scale(0.8); opacity: 0.5; }
+    to { transform: translate(-50%, -50%) rotate(45deg) scale(1.3); opacity: 1; }
+}
+
+.fm-ai-loading-text {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.loading-main {
+    display: block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    font-weight: 800;
+    letter-spacing: 2px;
+    color: #1d1d1f;
+}
+
+.loading-sub {
+    font-size: 10px;
+    color: #8e8e93;
+    margin-top: 8px;
+    display: block;
+}
+
+.loading-bar-container {
+    width: 160px;
+    height: 4px;
+    background: rgba(0,0,0,0.05);
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.loading-bar-progress {
+    width: 40%;
+    height: 100%;
+    background: linear-gradient(90deg, #AF52DE, #E2CFFF);
+    border-radius: 2px;
+    animation: bar-scan 1.5s ease-in-out infinite;
+}
+
+@keyframes bar-scan {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(250%); }
+}
+
+/* === 词条详情全屏页面 === */
+#fm-topic-page-overlay {
+    position: fixed; inset: 0; z-index: 100000000; /* 比直播间更高 */
+    background: #fbfbfd; color: #1d1d1f;
+    display: none; flex-direction: column;
+    font-family: 'Urbanist', sans-serif;
+    overflow: hidden;
+}
+
+/* 背景装饰：流体渐变 */
+.topic-page-bg {
+    position: absolute; inset: 0; z-index: -1;
+    background: radial-gradient(circle at 0% 0%, rgba(175,82,222,0.08) 0%, transparent 40%),
+                radial-gradient(circle at 100% 100%, rgba(52,199,89,0.05) 0%, transparent 40%);
+}
+
+/* 头部布局容器 */
+.tp-header {
+    padding: 55px 20px 20px;
+    display: flex; justify-content: space-between; align-items: flex-start;
+}
+
+/* 左侧标题区 */
+.tp-title-group {
+    display: flex; align-items: center; gap: 8px; margin-bottom: 8px;
+}
+
+/* 热搜排名标签 */
+.tp-rank-badge {
+    background: #FF9500; color: #fff;
+    font-size: 10px; font-weight: 900;
+    padding: 2px 8px; border-radius: 6px;
+    box-shadow: 0 4px 10px rgba(255,149,0,0.3);
+    transform: rotate(-2deg);
+}
+
+.tp-main-title {
+    font-size: 28px; font-weight: 900; color: #1d1d1f; letter-spacing: -1px;
+}
+
+/* Q弹的数据胶囊 */
+.tp-data-capsule {
+    display: inline-flex; align-items: center;
+    background: rgba(0,0,0,0.05);
+    padding: 6px 12px; border-radius: 12px;
+    gap: 10px;
+    backdrop-filter: blur(10px);
+}
+
+.tp-data-item {
+    display: flex; align-items: center; gap: 4px;
+    font-size: 11px; font-weight: 700; color: #8e8e93;
+}
+
+.tp-divider { width: 1px; height: 10px; background: rgba(0,0,0,0.1); }
+
+.tp-status-tag {
+    font-size: 9px; font-weight: 800; color: #34C759;
+    background: rgba(52,199,89,0.1); padding: 2px 6px; border-radius: 4px;
+}
+
+/* 垂直按钮组 */
+.tp-vertical-actions {
+    display: flex;
+    flex-direction: column; /* 上下分布 */
+    gap: 12px; /* 两个按钮之间的间距 */
+}
+
+/* 单个按钮设计：高级长方形胶囊 */
+.tp-v-btn {
+    width: 58px;
+    height: 52px;
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border: 1px solid rgba(0, 0, 0, 0.04);
+    border-radius: 16px;
+    
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    
+    cursor: pointer;
+    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+}
+
+/* 按钮文字排版 */
+.v-btn-tag {
+    font-size: 7px;
+    font-weight: 900;
+    color: #af52de;
+    letter-spacing: 1px;
+    margin-bottom: 2px;
+    opacity: 0.6;
+}
+
+.v-btn-text {
+    font-size: 13px;
+    font-weight: 900;
+    color: #1d1d1f;
+}
+
+/* Q弹交互 */
+.tp-v-btn:active {
+    transform: scale(0.88);
+    background: rgba(0, 0, 0, 0.05);
+}
+
+/* 更新按钮特有样式 */
+.tp-v-btn.update {
+    border-bottom: 2px solid rgba(175, 82, 222, 0.2);
+}
+
+/* 关闭按钮特有样式 */
+.tp-v-btn.close {
+    border-bottom: 2px solid rgba(0, 0, 0, 0.1);
+}
+.tp-v-btn.close .v-btn-tag {
+    color: #8e8e93;
+}
+
+/* 正在更新的动态效果 */
+.tp-v-btn.updating {
+    animation: v-btn-pulse 1s infinite alternate;
+    pointer-events: none;
+}
+
+@keyframes v-btn-pulse {
+    from { border-color: rgba(175, 82, 222, 0.1); }
+    to { border-color: rgba(175, 82, 222, 0.6); transform: translateY(-2px); }
+}
+    
+/* 核心内容卡片 (灵动岛风格) */
+.tp-island-card {
+    margin: 20px; padding: 25px;
+    background: rgba(255, 255, 255, 0.6);
+    backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(0,0,0,0.05);
+    border-radius: 32px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.03);
+}
+
+.tp-brief-label {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: #1d1d1f; color: #fff;
+    padding: 4px 10px; border-radius: 8px;
+    font-size: 9px; font-weight: 800; margin-bottom: 15px;
+}
+
+.tp-description {
+    font-size: 17px; line-height: 1.6; color: #3a3a3c; font-weight: 500;
+}
+
+/* 滚动讨论区 */
+.tp-echoes-section {
+    flex: 1; overflow-y: auto; padding: 0 20px 100px;
+}
+.tp-section-label {
+    font-size: 12px; font-weight: 800; color: #8e8e93;
+    margin: 20px 0 15px 5px; letter-spacing: 1px;
+}
+
+/* 关闭按钮 (直播间同款水晶版) */
+.tp-close-btn {
+    width: 48px; height: 48px;
+    background: rgba(0, 0, 0, 0.05);
+    backdrop-filter: blur(10px);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: 0.2s;
+}
+.tp-close-btn:active { transform: scale(0.9); background: rgba(255, 59, 48, 0.1); color: #FF3B30; }
+/* 博主展示区容器 */
+.tp-author-list {
+    display: flex;
+    gap: 15px;
+    overflow-x: auto; /* 支持横向滑动查看更多 */
+    padding: 5px 0;
+    scrollbar-width: none; /* 隐藏进度条 */
+}
+.tp-author-list::-webkit-scrollbar { display: none; }
+
+/* 单个博主简讯卡片 */
+.tp-author-card {
+    display: flex;
+    flex-direction: column; /* 上下分布核心 */
+    align-items: center;
+    min-width: 85px;
+    padding: 12px 10px;
+    background: rgba(255, 255, 255, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    border-radius: 20px;
+    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.tp-author-card:active {
+    transform: scale(0.9) translateY(4px);
+}
+
+/* 头像：外发光 + 细边框 */
+.tp-author-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    margin-bottom: 8px;
+    border: 2px solid #fff;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    object-fit: cover;
+}
+
+/* 垂直文字组 */
+.tp-author-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+}
+
+.tp-author-name {
+    font-size: 12px;
+    font-weight: 900;
+    color: #1d1d1f;
+    max-width: 70px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.tp-author-tag {
+    font-size: 8px;
+    font-weight: 800;
+    color: #af52de;
+    background: rgba(175, 82, 222, 0.1);
+    padding: 1px 6px;
+    border-radius: 4px;
+    letter-spacing: 0.5px;
+}
+
+/* 加载文字样式 */
+.tp-author-loading {
+    font-size: 13px;
+    font-weight: 600;
+    color: #8e8e93;
+    width: 100%;
+    text-align: center;
+    padding: 20px 0;
+}
+/* 当按钮带有 updating 类时的状态 */
+.tp-v-btn.update.updating {
+    background: rgba(175, 82, 222, 0.1); /* 淡淡的紫色背景 */
+    border-color: rgba(175, 82, 222, 0.4);
+}
+
+.tp-v-btn.update.updating .v-btn-tag {
+    animation: tp-blink 0.8s ease-in-out infinite; /* 顶部标签闪烁 */
+}
+
+@keyframes tp-blink {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 1; color: #ff3b30; } /* 甚至可以变红提示正在录入 */
+}
+
+/* 热搜中心专属动画 */
+@keyframes rank-bounce-in {
+    0% { transform: scale(0.9) translateY(30px); opacity: 0; }
+    60% { transform: scale(1.05) translateY(-5px); opacity: 1; }
+    100% { transform: scale(1) translateY(0); }
+}
+
+.rank-center-card {
+    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    cursor: pointer;
+}
+
+.rank-center-card:active {
+    transform: scale(0.95);
+}
+
+.rank-center-card:hover {
+    background: rgba(175, 82, 222, 0.1) !important;
+    border-color: rgba(175, 82, 222, 0.3) !important;
+}
+
+/* 前三名的特殊光效 */
+.top-3-glow {
+    position: relative;
+    overflow: hidden;
+}
+.top-3-glow::after {
+    content: '';
+    position: absolute;
+    top: -50%; left: -50%;
+    width: 200%; height: 200%;
+    background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent);
+    transform: rotate(45deg);
+    animation: glow-slide 3s infinite;
+}
+@keyframes glow-slide {
+    0% { margin-left: -100%; }
+    100% { margin-left: 100%; }
+}
+/* 旋转动画 */
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+.sync-spinning svg {
+    animation: spin 1s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+/* 卡片滑入动画 */
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* 标签样式 */
+.rising-tag {
+    background: linear-gradient(90deg, #FF9500, #FFCC00);
+    color: white; font-size: 9px; padding: 2px 6px; border-radius: 4px; font-weight: 900;
+}
+.hot-tag {
+    background: rgba(175, 82, 222, 0.1);
+    color: #AF52DE; font-size: 9px; padding: 2px 6px; border-radius: 4px; font-weight: 900;
+}
+
+/* 装饰性光效 */
+.rank-center-card::after {
+    content: '';
+    position: absolute;
+    top: 0; left: -100%;
+    width: 50%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent);
+    transform: skewX(-25deg);
+    transition: 0.5s;
+}
+.rank-center-card:hover::after {
+    left: 150%;
+}
+    `;
+    document.head.appendChild(style);
+}
+
+// ==========================================
+// 🌌 Forum (Echoes) App: 千面 Header DOM 注入
+// ==========================================
+function initForumDOM() {
+    if (document.getElementById('page-forum-app')) document.getElementById('page-forum-app').remove();
+
+    const html = `
+    <div id="page-forum-app">
+        
+        <div class="fm-dynamic-header-wrapper">
+            
+            <div id="fm-head-home" class="fm-header-module fm-h-home active">
+                <div>
+                    <div class="fm-title-sub">NEURAL NETWORK</div>
+                    <div class="fm-title-main">Echoes.</div>
+                </div>
+                <div class="fm-actions">
+                    <div class="fm-btn-circle" onclick="openForumDM()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                        <div class="fm-dot-red"></div>
+                    </div>
+                    <div class="fm-btn-circle" style="border:none;" onclick="closeForumApp()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="#1d1d1f" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    </div>
+                </div>
+            </div>
+
+            <div id="fm-head-video" class="fm-header-module fm-h-video">
+                <div>
+                    <div class="fm-rec-box">
+                        <div class="fm-rec-dot"></div>
+                        <div class="fm-rec-text">LIVE RECORDING</div>
+                    </div>
+                    <div class="fm-title-main">Visuals</div>
+                </div>
+                <div class="fm-actions">
+                    <div class="fm-btn-circle" onclick="showToast('Switching to Grid View')">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                    </div>
+                </div>
+            </div>
+
+            <div id="fm-head-rank" class="fm-header-module fm-h-rank">
+                <div class="fm-header-left">
+                    <div class="fm-q-tag">NETWORK: OPTIMAL</div>
+                    <div class="fm-q-title">Trends</div>
+                </div>
+                
+                <div class="fm-header-right">
+                    <div class="fm-q-sync-btn" onclick="window.triggerTrendsAIUpdate()">
+                        <div class="fm-q-dot"></div>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+                        <span>SYNC</span>
+                    </div>
+                </div>
+            </div>
+
+            <div id="fm-view-me" class="fm-view-page">
+            
+                <div class="fm-me-hero-bg" id="fm-me-bg-main"></div>
+
+                <div class="fm-me-avatar-box">
+                    <img src="https://api.dicebear.com/7.x/initials/svg?seed=User" class="fm-me-avatar-img" id="fm-me-avatar-main">
+                    <div class="fm-me-verified">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    </div>
+                </div>
+
+                <div class="fm-me-info-zone">
+                    <div class="fm-me-name-row">
+                        <div class="fm-me-name" id="fm-me-name-main">Commander</div>
+                        <div class="fm-me-domain-tag">LUNE CREATOR</div>
+                    </div>
+                    <div class="fm-me-bio" id="fm-me-bio-main">
+                        "在数据的缝隙里，观测每一次维度的坍缩与重组。"
+                    </div>
+                </div>
+
+                <div class="fm-me-stats-grid">
+                    <div class="fm-me-stat-item">
+                        <span class="fm-me-stat-num">0</span>
+                        <span class="fm-me-stat-label">Posts</span>
+                    </div>
+                    <div class="fm-me-stat-item">
+                        <span class="fm-me-stat-num">128</span>
+                        <span class="fm-me-stat-label">Following</span>
+                    </div>
+                    <div class="fm-me-stat-item">
+                        <span class="fm-me-stat-num">1.2M</span>
+                        <span class="fm-me-stat-label">Followers</span>
+                    </div>
+                    <div class="fm-me-stat-item">
+                        <span class="fm-me-stat-num">34M</span>
+                        <span class="fm-me-stat-label">Views</span>
+                    </div>
+                </div>
+
+                <div class="fm-me-action-row">
+                    <button class="fm-me-btn edit" onclick="window.openForumProfileEditor()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                        EDIT PROFILE
+                    </button>
+                    <button class="fm-me-btn switch" onclick="window.openForumSwitchID()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><polyline points="17 11 19 13 23 9"></polyline></svg>
+                        SWITCH ID
+                    </button>
+                </div>
+
+                <div class="fm-me-tabs-nav">
+                    <div class="fm-me-tab-item active" onclick="switchFmMeTab('posts', this)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+                        <span>POSTS</span>
+                    </div>
+                    <div class="fm-me-tab-item" onclick="switchFmMeTab('reels', this)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect><line x1="7" y1="2" x2="7" y2="22"></line><line x1="17" y1="2" x2="17" y2="22"></line><line x1="2" y1="12" x2="22" y2="12"></line><line x1="2" y1="7" x2="7" y2="7"></line><line x1="2" y1="17" x2="7" y2="17"></line><line x1="17" y1="17" x2="22" y2="17"></line><line x1="17" y1="7" x2="22" y2="7"></line></svg>
+                        <span>REELS</span>
+                    </div>
+                    <div class="fm-me-tab-item" onclick="switchFmMeTab('likes', this)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+                        <span>LIKES</span>
+                    </div>
+                    <div class="fm-me-tab-item" onclick="switchFmMeTab('saved', this)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
+                        <span>SAVED</span>
+                    </div>
+                    <div class="fm-me-tab-item" onclick="switchFmMeTab('reposts', this)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="17 1 21 5 17 9"></polyline><path d="M3 11V9a4 4 0 0 1 4-4h14"></path><polyline points="7 23 3 19 7 15"></polyline><path d="M21 13v2a4 4 0 0 1-4 4H3"></path></svg>
+                        <span>REPOSTS</span>
+                    </div>
+                </div>
+
+                <div id="fm-me-sub-posts" class="fm-me-sub-view active">
+                    <div class="fm-empty-state" style="height: 30vh;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>
+                        <p>No Posts Yet</p>
+                    </div>
+                </div>
+                <div id="fm-me-sub-reels" class="fm-me-sub-view">
+                    <div class="fm-empty-state" style="height: 30vh;"><p>No Reels Available</p></div>
+                </div>
+                <div id="fm-me-sub-likes" class="fm-me-sub-view">
+                    <div class="fm-empty-state" style="height: 30vh;"><p>You haven't liked anything.</p></div>
+                </div>
+                <div id="fm-me-sub-saved" class="fm-me-sub-view">
+                    <div class="fm-empty-state" style="height: 30vh;"><p>Saved fragments will appear here.</p></div>
+                </div>
+                <div id="fm-me-sub-reposts" class="fm-me-sub-view">
+                    <div class="fm-empty-state" style="height: 30vh;"><p>No echoes broadcasted.</p></div>
+                </div>
+
+            </div>
+
+        </div>
+
+        <div id="fm-view-home" class="fm-view-page active">
+            <div class="fm-tab-pills">
+                <div class="fm-pill active">Following</div>
+                <div class="fm-pill">Global Signals</div>
+            </div>
+            <div class="fm-empty-state">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>
+                <h3>Timeline Empty</h3>
+                <p>No signals intercepted yet.</p>
+            </div>
+        </div>
+
+        <div id="fm-view-video" class="fm-view-page" style="background:#141416;">
+            <div class="fm-empty-state" style="color:rgba(255,255,255,0.3);">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect><line x1="7" y1="2" x2="7" y2="22"></line><line x1="17" y1="2" x2="17" y2="22"></line><line x1="2" y1="12" x2="22" y2="12"></line><line x1="2" y1="7" x2="7" y2="7"></line><line x1="2" y1="17" x2="7" y2="17"></line><line x1="17" y1="17" x2="22" y2="17"></line><line x1="17" y1="7" x2="22" y2="7"></line></svg>
+                <h3 style="color:#fff;">Visual Resonance</h3>
+                <p>Video data streams are offline.</p>
+            </div>
+        </div>
+
+        <div id="fm-view-rank" class="fm-view-page">
+            <div class="fm-discover-container" id="fm-rank-dynamic-content">
+                <div class="fm-empty-state" style="height: 60vh;">
+                    <div class="fm-glitch-loader"></div>
+                    <p style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #8e8e93; margin-top: 15px;">
+                        CONNECTING TO GLOBAL NODES...
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div id="fm-view-me" class="fm-view-page">
+            <div class="fm-empty-state">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                <h3>Identity Core</h3>
+                <p>Your profile is currently encrypted.</p>
+            </div>
+        </div>
+
+        <div class="fm-bottom-dock">
+            <div class="fm-nav-item active" onclick="switchForumTab('home', this)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+            </div>
+            
+            <div class="fm-nav-item" onclick="switchForumTab('video', this)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect><line x1="7" y1="2" x2="7" y2="22"></line><line x1="17" y1="2" x2="17" y2="22"></line><line x1="2" y1="12" x2="22" y2="12"></line><line x1="2" y1="7" x2="7" y2="7"></line><line x1="2" y1="17" x2="7" y2="17"></line><line x1="17" y1="17" x2="22" y2="17"></line><line x1="17" y1="7" x2="22" y2="7"></line></svg>
+            </div>
+
+            <div class="fm-post-wrapper">
+                <div class="fm-post-btn" onclick="openForumCompose()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                </div>
+            </div>
+
+            <div class="fm-nav-item" onclick="switchForumTab('rank', this)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+            </div>
+
+            <div class="fm-nav-item" onclick="switchForumTab('me', this)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+            </div>
+        </div>
+    </div>
+
+    <div id="fm-topic-page-overlay">
+        <div class="topic-page-bg"></div>
+        
+        <div class="tp-header">
+            <div class="tp-left-section">
+                <div class="tp-title-group">
+                    <div class="tp-rank-badge" id="tp-rank-num">TOP 1</div>
+                    <h1 id="tp-display-title" class="tp-main-title"># --</h1>
+                </div>
+                
+                <div class="tp-data-capsule">
+                    <div class="tp-data-item">
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                        <span id="tp-stat-views">0</span>
+                    </div>
+                    <div class="tp-divider"></div>
+                    <div class="tp-data-item">
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path></svg>
+                        <span id="tp-stat-heat">0</span>
+                    </div>
+                    <div class="tp-divider"></div>
+                    <div class="tp-status-tag">LIVE_SYNC</div>
+                </div>
+            </div>
+
+            <div class="tp-vertical-actions">
+                <div class="tp-v-btn update" onclick="window.refreshTopicData(this)" title="执行 AI 量子同步">
+                    <span class="v-btn-tag">SYNC</span>
+                    <span class="v-btn-text">更新</span>
+                </div>
+                <div class="tp-v-btn close" onclick="window.closeTopicPage()">
+                    <span class="v-btn-tag">EXIT</span>
+                    <span class="v-btn-text">返回</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="tp-island-card">
+            <div class="tp-brief-label">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="9" cy="7" r="4"></circle>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                </svg>
+                TOP_CONTRIBUTORS
+            </div>
+            
+            <div id="tp-author-showcase" class="tp-author-list">
+                <div class="tp-author-loading">正在扫描时空节点中的关键贡献者...</div>
+            </div>
+        </div>
+
+        <div class="tp-echoes-section">
+            <div class="tp-section-label">RELATED_ECHOES</div>
+            <div id="tp-display-posts"></div>
+        </div>
+    </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', html);
+}
+
+// ==========================================
+// 🌌 Forum (Echoes) App: 核心交互逻辑
+// ==========================================
+
+// 初始化启动器
+document.addEventListener('DOMContentLoaded', () => {
+    initForumStyles();
+    initForumDOM();
+});
+
+// ==========================================
+// 🌌 Forum (Echoes) App: 核心交互联动
+// ==========================================
+
+function forceOpenForumApp() {
+    console.log("🌌 正在执行 Echoes 社区唤醒程序...");
+    let app = document.getElementById('page-forum-app');
+    
+    if (!app) {
+        if(typeof initForumStyles === 'function') initForumStyles();
+        if(typeof initForumDOM === 'function') initForumDOM();
+        app = document.getElementById('page-forum-app');
+    }
+    if (!app) return alert("❌ 注入失败");
+
+    if (app.parentElement !== document.body) document.body.appendChild(app);
+
+    app.classList.remove('active');
+    void app.offsetWidth; 
+    app.classList.add('active');
+    
+    // 每次打开尝试同步一下“我的”页面的真实头像
+    syncForumMeHeader();
+
+    if (navigator.vibrate) navigator.vibrate(15);
+}
+
+// 2. 覆盖你之前的 syncForumMeHeader，让它把中间的大卡片也同步了！
+function syncForumMeHeader() {
+    try {
+        // 读取本我全局档案
+        const userData = JSON.parse(localStorage.getItem('user_persona_data_global'));
+        if (userData) {
+            // 1. 顶部 Header 区的同步 (之前写的)
+            const topAvt = document.getElementById('fm-user-avatar');
+            const topName = document.getElementById('fm-user-name');
+            if (topAvt && userData.avatar) topAvt.src = userData.avatar;
+            if (topName && userData.name) topName.textContent = userData.name;
+
+            // 2. 主页面大卡片区的同步 (本次新增)
+            const mainAvt = document.getElementById('fm-me-avatar-main');
+            const mainName = document.getElementById('fm-me-name-main');
+            const mainBio = document.getElementById('fm-me-bio-main');
+            if (mainAvt && userData.avatar) mainAvt.src = userData.avatar;
+            if (mainName && userData.name) mainName.textContent = userData.name;
+            if (mainBio && userData.bio) mainBio.textContent = `"${userData.bio}"`;
+        }
+    } catch(e) {
+        console.log("Forum Profile Sync Error:", e);
+    }
+}
+
+// ==========================================
+// 🌌 Forum (Echoes) App: Profile 编辑台 (UI + CSS 注入)
+// ==========================================
+function initForumEditorDOM() {
+    if (document.getElementById('modal-forum-editor')) return;
+
+    // 1. 注入顶级弹窗 CSS
+    const style = document.createElement('style');
+    style.innerHTML = `
+        /* 🛠️ 编辑台全屏遮罩 */
+        #modal-forum-editor {
+            position: fixed; inset: 0; z-index: 8000050 !important;
+            background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+            display: none; align-items: flex-end; opacity: 0; transition: opacity 0.3s ease;
+        }
+        #modal-forum-editor.active { display: flex !important; opacity: 1; }
+
+        /* 🎛️ 抽屉主面板 */
+        .fme-card {
+            width: 100%; height: 85vh; background: #F5F5F7;
+            border-radius: 32px 32px 0 0; display: flex; flex-direction: column;
+            transform: translateY(100%); transition: transform 0.4s cubic-bezier(0.19, 1, 0.22, 1);
+            box-shadow: 0 -20px 60px rgba(0,0,0,0.15); overflow: hidden;
+        }
+        #modal-forum-editor.active .fme-card { transform: translateY(0); }
+
+        /* 顶部控制栏 */
+        .fme-header {
+            padding: 24px; background: #fff; border-bottom: 1px solid rgba(0,0,0,0.05);
+            display: flex; justify-content: space-between; align-items: center; position: relative; z-index: 10;
+        }
+        .fme-btn-text { font-size: 15px; font-weight: 800; cursor: pointer; transition: 0.2s; }
+        .fme-btn-text.cancel { color: #8e8e93; }
+        .fme-btn-text.save { color: #007AFF; }
+        .fme-btn-text:active { opacity: 0.5; transform: scale(0.95); }
+        .fme-title { font-size: 17px; font-weight: 900; color: #1d1d1f; letter-spacing: -0.5px; }
+
+        /* 滚动内容区 */
+        .fme-body { flex: 1; overflow-y: auto; padding: 24px; display: flex; flex-direction: column; gap: 24px; padding-bottom: 60px; }
+
+        /* 区块统一样式 */
+        .fme-section { background: #fff; border-radius: 20px; padding: 20px; border: 1px solid rgba(0,0,0,0.03); box-shadow: 0 4px 15px rgba(0,0,0,0.02); }
+        .fme-label { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: #8e8e93; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 12px; display: block; }
+
+        /* 视觉上传区 (背景 & 头像) */
+        .fme-visual-group { display: flex; gap: 15px; }
+        .fme-up-box {
+            background: #F5F5F7; border: 1px dashed rgba(0,0,0,0.1); border-radius: 16px;
+            display: flex; align-items: center; justify-content: center; cursor: pointer;
+            position: relative; overflow: hidden; transition: 0.2s; color: #8e8e93;
+        }
+        .fme-up-box:active { background: #E5E5EA; transform: scale(0.97); }
+        .fme-up-box img { width: 100%; height: 100%; object-fit: cover; position: absolute; inset: 0; z-index: 2; display: none; }
+        .fme-up-bg { flex: 1; height: 100px; } /* 背景上传框长一点 */
+        .fme-up-av { width: 100px; height: 100px; border-radius: 50%; } /* 头像上传框圆的 */
+
+        /* 极简输入框 */
+        .fme-input {
+            width: 100%; border: none; background: #F5F5F7; padding: 14px 16px; border-radius: 12px;
+            font-size: 15px; font-weight: 600; color: #1d1d1f; outline: none; margin-bottom: 12px; transition: 0.3s;
+        }
+        .fme-input:focus { background: #fff; box-shadow: 0 0 0 2px rgba(0,122,255,0.2); }
+        textarea.fme-input { resize: none; height: 80px; margin-bottom: 0; }
+
+        /* 同步选择器 (Select & Grid) */
+        .fme-select {
+            width: 100%; border: none; background: #F5F5F7; padding: 14px 16px; border-radius: 12px;
+            font-size: 14px; font-weight: 700; color: #1d1d1f; outline: none; appearance: none;
+        }
+        .fme-char-grid {
+            display: flex; gap: 12px; overflow-x: auto; padding-bottom: 10px; scrollbar-width: none;
+        }
+        .fme-char-grid::-webkit-scrollbar { display: none; }
+        .fme-char-item {
+            min-width: 60px; display: flex; flex-direction: column; align-items: center; gap: 6px;
+            cursor: pointer; transition: 0.2s; position: relative;
+        }
+        .fme-char-item:active { transform: scale(0.9); }
+        .fme-char-av {
+            width: 50px; height: 50px; border-radius: 18px; object-fit: cover; border: 2px solid transparent; transition: 0.3s;
+        }
+        .fme-char-name { font-size: 10px; font-weight: 800; color: #8e8e93; text-align: center; white-space: nowrap; }
+        
+        /* 选中状态 */
+        .fme-char-item.selected .fme-char-av { border-color: #007AFF; box-shadow: 0 4px 10px rgba(0,122,255,0.3); }
+        .fme-char-item.selected .fme-char-name { color: #007AFF; }
+        .fme-char-check {
+            position: absolute; top: -5px; right: -5px; width: 18px; height: 18px; background: #007AFF;
+            border-radius: 50%; color: #fff; display: none; align-items: center; justify-content: center;
+            border: 2px solid #fff;
+        }
+        .fme-char-item.selected .fme-char-check { display: flex; }
+        .fme-char-check svg { width: 10px; height: 10px; stroke-width: 3; }
+    `;
+    document.head.appendChild(style);
+
+    // 2. 注入 HTML
+    const html = `
+    <div id="modal-forum-editor" onclick="if(event.target===this) window.closeForumProfileEditor()">
+        <div class="fme-card" onclick="event.stopPropagation()">
+            <div class="fme-header">
+                <div class="fme-btn-text cancel" onclick="window.closeForumProfileEditor()">Cancel</div>
+                <div class="fme-title">Edit Identity</div>
+                <div class="fme-btn-text save" onclick="window.saveForumProfile()">Save</div>
+            </div>
+            
+            <div class="fme-body">
+                <div class="fme-section">
+                    <span class="fme-label">Visuals (Cover & Avatar)</span>
+                    <div class="fme-visual-group">
+                        <div class="fme-up-box fme-up-av" onclick="document.getElementById('fme-file-av').click()">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                            <img id="fme-pre-av">
+                        </div>
+                        <div class="fme-up-box fme-up-bg" onclick="document.getElementById('fme-file-bg').click()">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                            <img id="fme-pre-bg">
+                        </div>
+                    </div>
+                    <input type="file" id="fme-file-av" hidden accept="image/*" onchange="window.processForumImage(this, 'avatar')">
+                    <input type="file" id="fme-file-bg" hidden accept="image/*" onchange="window.processForumImage(this, 'bg')">
+                </div>
+
+                <div class="fme-section">
+                    <span class="fme-label">Basic Info</span>
+                    <input type="text" id="fme-in-name" class="fme-input" placeholder="Display Name (e.g. Commander)">
+                    <input type="text" id="fme-in-tag" class="fme-input" placeholder="Identity Tag (e.g. LUNE CREATOR)">
+                    <textarea id="fme-in-bio" class="fme-input" placeholder="A short bio about your current state..."></textarea>
+                </div>
+
+                <div class="fme-section">
+                    <span class="fme-label">Sync Protocol (World Base)</span>
+                    <select id="fme-in-world" class="fme-select">
+                        <option value="">-- Select a World Node --</option>
+                    </select>
+                </div>
+
+                <div class="fme-section">
+                    <span class="fme-label">Invite Entities (From Char Book)</span>
+                    <div class="fme-char-grid" id="fme-char-list-container">
+                        </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', html);
+}
+
+// ==========================================
+// 🌌 Forum (Echoes) App: Switch ID 身份切换引擎 (注入层)
+// ==========================================
+window.initForumSwitchID_DOM = function() {
+    if (document.getElementById('modal-forum-switch-id')) return;
+
+    // 1. 注入顶级弹窗 CSS
+    const style = document.createElement('style');
+    style.id = 'forum-switch-id-styles';
+    style.innerHTML = `
+        /* 🛠️ 弹窗全屏遮罩 (物理锁定) */
+        #modal-forum-switch-id {
+            position: fixed; inset: 0; z-index: 8000100 !important;
+            background: rgba(0, 0, 0, 0.5); 
+            backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+            display: none; align-items: flex-end; opacity: 0; transition: opacity 0.3s ease;
+        }
+        #modal-forum-switch-id.active { 
+            display: flex !important; opacity: 1 !important; pointer-events: auto !important;
+        }
+
+        /* 🎛️ 抽屉主面板 */
+        .fms-drawer {
+            width: 100%; max-height: 85vh; background: #FAFAFC;
+            border-radius: 32px 32px 0 0; display: flex; flex-direction: column;
+            transform: translateY(100%); transition: transform 0.4s cubic-bezier(0.19, 1, 0.22, 1);
+            box-shadow: 0 -20px 60px rgba(0,0,0,0.2); overflow: hidden;
+            border-top: 1px solid rgba(255,255,255,0.8);
+        }
+        #modal-forum-switch-id.active .fms-drawer { transform: translateY(0); }
+
+        /* 顶部控制栏 */
+        .fms-header {
+            padding: 30px 24px 20px; background: #FAFAFC;
+            display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 1px solid rgba(0,0,0,0.04); position: relative; z-index: 10;
+        }
+        .fms-title-box { display: flex; flex-direction: column; gap: 4px; }
+        .fms-title { font-size: 20px; font-weight: 900; color: #1d1d1f; letter-spacing: -0.5px; }
+        .fms-sub { font-family: 'JetBrains Mono', monospace; font-size: 9px; color: #007AFF; font-weight: 800; letter-spacing: 2px; }
+
+        .fms-close-btn {
+            width: 36px; height: 36px; border-radius: 50%; background: rgba(0,0,0,0.05);
+            display: flex; align-items: center; justify-content: center; cursor: pointer;
+            color: #1d1d1f; transition: 0.2s;
+        }
+        .fms-close-btn:active { transform: scale(0.85); background: rgba(0,0,0,0.1); }
+        .fms-close-btn svg { width: 16px; height: 16px; stroke-width: 2.5; }
+
+        /* 滚动列表区 */
+        .fms-body { 
+            flex: 1; overflow-y: auto; padding: 24px; 
+            display: flex; flex-direction: column; gap: 16px; padding-bottom: 50px;
+        }
+
+        /* 📇 实体身份卡片 (高级质感) */
+        .fms-account-card {
+            background: #fff; border-radius: 24px; padding: 20px;
+            border: 1px solid rgba(0,0,0,0.04); box-shadow: 0 8px 25px rgba(0,0,0,0.02);
+            cursor: pointer; transition: all 0.3s cubic-bezier(0.19, 1, 0.22, 1);
+            position: relative; overflow: hidden;
+        }
+        .fms-account-card:active { transform: scale(0.96); box-shadow: 0 4px 10px rgba(0,0,0,0.01); background: #F9F9FB; }
+        
+        /* 侧边马卡龙装饰线 */
+        .fms-account-card::before {
+            content: ''; position: absolute; top: 0; left: 0; bottom: 0; width: 4px;
+            background: linear-gradient(180deg, #e0c3fc 0%, #8ec5fc 100%);
+            opacity: 0.5; transition: 0.3s;
+        }
+        .fms-account-card:hover::before { opacity: 1; width: 6px; }
+
+        /* 上半部：头像与信息 */
+        .fms-card-top { display: flex; gap: 16px; margin-bottom: 16px; align-items: flex-start; }
+        .fms-avatar {
+            width: 56px; height: 56px; border-radius: 18px; object-fit: cover;
+            border: 1px solid rgba(0,0,0,0.05); background: #eee; flex-shrink: 0;
+        }
+        .fms-info { flex: 1; display: flex; flex-direction: column; gap: 4px; overflow: hidden; }
+        
+        .fms-name-row { display: flex; justify-content: space-between; align-items: center; }
+        .fms-name { font-size: 16px; font-weight: 800; color: #1d1d1f; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .fms-domain-tag {
+            font-family: 'JetBrains Mono', monospace; font-size: 8px; font-weight: 800;
+            background: rgba(142, 142, 147, 0.1); color: #8e8e93;
+            padding: 3px 8px; border-radius: 6px; letter-spacing: 0.5px; text-transform: uppercase;
+        }
+
+        .fms-bio {
+            font-size: 12px; color: #555; line-height: 1.5; font-weight: 500;
+            display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+        }
+
+        /* 下半部：清零的数据矩阵 */
+        .fms-stats-grid {
+            display: flex; justify-content: space-between; align-items: center;
+            padding-top: 12px; border-top: 1px dashed rgba(0,0,0,0.06);
+        }
+        .fms-stat-item { display: flex; flex-direction: column; align-items: center; gap: 2px; flex: 1; }
+        .fms-stat-num { font-family: 'JetBrains Mono', monospace; font-size: 15px; font-weight: 900; color: #1d1d1f; }
+        .fms-stat-label { font-size: 9px; color: #8e8e93; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+
+        /* 空状态 */
+        .fms-empty-state {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            padding: 40px 20px; color: rgba(0,0,0,0.3); text-align: center; gap: 10px;
+        }
+        .fms-empty-state svg { width: 32px; height: 32px; stroke-width: 1.5; }
+        .fms-empty-state span { font-size: 12px; font-weight: 700; letter-spacing: 0.5px; }
+    `;
+    document.head.appendChild(style);
+
+    // 2. 注入 HTML
+    const html = `
+    <div id="modal-forum-switch-id" onclick="if(event.target===this) window.closeForumSwitchID()">
+        <div class="fms-drawer" onclick="event.stopPropagation()">
+            <div class="fms-header">
+                <div class="fms-title-box">
+                    <div class="fms-title">Switch Entity</div>
+                    <div class="fms-sub">SELECT A SYNCHRONIZED IDENTITY</div>
+                </div>
+                <div class="fms-close-btn" onclick="window.closeForumSwitchID()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </div>
+            </div>
+            <div class="fms-body" id="fms-account-list">
+                </div>
+        </div>
+    </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', html);
+};
+
+// ==========================================
+// 🌌 Forum App: 子角色专属定制台 (DOM + CSS)
+// ==========================================
+window.initForumCharEditorDOM = function() {
+    if (document.getElementById('modal-forum-char-editor')) return;
+
+    const style = document.createElement('style');
+    style.innerHTML = `
+        /* 🚨 角色定制台遮罩 */
+        #modal-forum-char-editor {
+            position: fixed; inset: 0; z-index: 8000200 !important;
+            background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            display: none; align-items: flex-end; opacity: 0; transition: opacity 0.3s ease;
+        }
+        #modal-forum-char-editor.active { display: flex !important; opacity: 1 !important; pointer-events: auto !important; }
+
+        .fce-drawer {
+            width: 100%; max-height: 90vh; background: #FAFAFC;
+            border-radius: 32px 32px 0 0; display: flex; flex-direction: column;
+            transform: translateY(100%); transition: transform 0.4s cubic-bezier(0.19, 1, 0.22, 1);
+            box-shadow: 0 -20px 60px rgba(0,0,0,0.3); overflow: hidden;
+            border-top: 1px solid rgba(255,255,255,0.4);
+        }
+        #modal-forum-char-editor.active .fce-drawer { transform: translateY(0); }
+
+        .fce-header {
+            padding: 24px; background: #fff; border-bottom: 1px solid rgba(0,0,0,0.05);
+            display: flex; justify-content: space-between; align-items: center; z-index: 10;
+        }
+        .fce-btn-text { font-size: 14px; font-weight: 800; cursor: pointer; transition: 0.2s; }
+        .fce-btn-text.cancel { color: #8e8e93; }
+        .fce-btn-text.save { color: #007AFF; }
+        .fce-title-box { text-align: center; }
+        .fce-title { font-size: 17px; font-weight: 900; color: #1d1d1f; }
+        .fce-sub { font-family: 'JetBrains Mono', monospace; font-size: 9px; color: #AF52DE; font-weight: 800; letter-spacing: 1px; }
+
+        .fce-body { flex: 1; overflow-y: auto; padding: 24px; display: flex; flex-direction: column; gap: 24px; padding-bottom: 50px; }
+
+        /* 角色档案锁定区 (不可修改头像和名字，强调从角色书同步) */
+        .fce-locked-profile {
+            display: flex; align-items: center; gap: 15px; padding: 15px;
+            background: rgba(0,0,0,0.03); border-radius: 20px; border: 1px dashed rgba(0,0,0,0.1);
+        }
+        .fce-locked-av { width: 50px; height: 50px; border-radius: 16px; object-fit: cover; }
+        .fce-locked-info { flex: 1; }
+        .fce-locked-name { font-size: 16px; font-weight: 900; color: #1d1d1f; }
+        .fce-locked-hint { font-size: 10px; color: #8e8e93; font-weight: 700; margin-top: 4px; }
+        .fce-lock-icon { color: #8e8e93; opacity: 0.5; }
+
+        /* 编辑区段 */
+        .fce-section { background: #fff; border-radius: 20px; padding: 20px; border: 1px solid rgba(0,0,0,0.03); box-shadow: 0 4px 15px rgba(0,0,0,0.02); }
+        .fce-label { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: #8e8e93; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 12px; display: block; }
+        
+        .fce-up-bg {
+            width: 100%; height: 120px; background: #F5F5F7; border: 1px dashed rgba(0,0,0,0.1);
+            border-radius: 16px; display: flex; align-items: center; justify-content: center;
+            cursor: pointer; position: relative; overflow: hidden; color: #8e8e93; transition: 0.2s;
+        }
+        .fce-up-bg:active { transform: scale(0.98); }
+        .fce-up-bg img { width: 100%; height: 100%; object-fit: cover; position: absolute; inset: 0; display: none; }
+
+        .fce-input {
+            width: 100%; border: none; background: #F5F5F7; padding: 14px 16px; border-radius: 12px;
+            font-size: 14px; font-weight: 600; color: #1d1d1f; outline: none; margin-bottom: 12px;
+        }
+        .fce-input:focus { background: #fff; box-shadow: 0 0 0 2px rgba(175,82,222,0.2); }
+        textarea.fce-input { resize: none; height: 80px; margin-bottom: 0; }
+
+        /* 强力操作按钮 */
+        .fce-super-btn {
+            width: 100%; padding: 18px; border-radius: 18px; font-size: 15px; font-weight: 900;
+            background: linear-gradient(135deg, #1d1d1f 0%, #434343 100%); color: #fff;
+            border: none; cursor: pointer; box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .fce-super-btn:active { transform: scale(0.96); }
+    `;
+    document.head.appendChild(style);
+
+    const html = `
+    <div id="modal-forum-char-editor" onclick="if(event.target===this) window.closeForumCharEditor()">
+        <div class="fce-drawer" onclick="event.stopPropagation()">
+            <div class="fce-header">
+                <div class="fce-btn-text cancel" onclick="window.closeForumCharEditor()">返回</div>
+                <div class="fce-title-box">
+                    <div class="fce-title">Entity Setup</div>
+                    <div class="fce-sub">FORUM IDENTITY CONFIG</div>
+                </div>
+                <div class="fce-btn-text save" onclick="window.saveForumCharProfile(false)">暂存</div>
+            </div>
+            
+            <div class="fce-body">
+                <div class="fce-locked-profile">
+                    <img id="fce-lock-av" class="fce-locked-av" src="">
+                    <div class="fce-locked-info">
+                        <div id="fce-lock-name" class="fce-locked-name">Name</div>
+                        <div class="fce-locked-hint">核心档案已由角色书锁定</div>
+                    </div>
+                    <div class="fce-lock-icon">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                    </div>
+                </div>
+
+                <div class="fce-section">
+                    <span class="fce-label">Forum Background (论坛专属背景)</span>
+                    <div class="fce-up-bg" onclick="document.getElementById('fce-file-bg').click()">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                        <img id="fce-pre-bg">
+                    </div>
+                    <input type="file" id="fce-file-bg" hidden accept="image/*" onchange="window.processForumCharBg(this)">
+                </div>
+
+                <div class="fce-section">
+                    <span class="fce-label">Forum Persona (论坛人设表现)</span>
+                    <input type="text" id="fce-in-tag" class="fce-input" placeholder="领域身份标签 (如：独立音乐人)">
+                    <textarea id="fce-in-bio" class="fce-input" placeholder="个性签名/简介..."></textarea>
+                </div>
+
+                <button class="fce-super-btn" onclick="window.saveForumCharProfile(true)">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><polyline points="17 11 19 13 23 9"></polyline></svg>
+                    保存并立即切换至该身份
+                </button>
+            </div>
+        </div>
+    </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', html);
+};
 
 </script>
 </body>
