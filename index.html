@@ -38815,6 +38815,306 @@ class ImmersiveReader {
 })();
 
 
+window.triggerSubAiEcho = async function() {
+    const btn = document.getElementById('fms-ai-refresh');
+    const listContainer = document.getElementById('fms-replies-list');
+    
+    if (btn.classList.contains('fms-spinning')) return;
+    
+    // 1. 进入加载状态
+    btn.classList.add('fms-spinning');
+    
+    // 在列表顶部插入一个有呼吸感的加载占位
+    const loaderHtml = `<div id="fms-ai-loader" class="fms-loading-placeholder">正在捕捉深度回响...</div>`;
+    listContainer.insertAdjacentHTML('afterbegin', loaderHtml);
+
+    try {
+        const { postId, tag } = window.currentEssayContext;
+        // 核心：获取文章全文 + 当前聚焦的用户评论
+        const essayContent = document.getElementById('fer-display-target').innerText;
+        const userComment = document.getElementById('fms-focus-target').innerText;
+
+        const apiKey = localStorage.getItem('gpt_key');
+        const apiUrl = (localStorage.getItem('gpt_url') || "https://api.openai.com/v1").replace(/\/+$/, "");
+
+        // 2. 深度定制的双向 Prompt
+        const prompt = `
+            【场景设定】
+            你正在阅读一篇随笔，文章内容如下：
+            " ${essayContent} "
+
+            有一位读者针对这篇文章发表了感悟：
+            " ${userComment} "
+
+            【任务】
+            请你作为5个正在围观这段对话的独立灵魂，对“这位读者的感悟”进行深度回响（二级回复）。
+            
+            【要求】
+            1. 关联性：回响内容必须同时兼顾“随笔的底色”和“读者的评论”。你可以引用随笔里的意象来评论读者，或者从读者的感悟里延伸出对随笔的新解读。
+            2. 活人感：说话要有呼吸感，禁止AI腔。可以使用一些自然的语气（如：确实、看哭了、我也想到了文章里说的那个点、好清醒、碎掉了...）。
+            3. 真实情绪：5个人要有不同立场。有人可以非常温柔地安抚，有人可以分享一段跟文章相关的私密记忆，有人可以从比较辛辣的角度质疑这种感悟。
+            4. 拒绝格式化：字数长短错落禁止少于50字，不要都是整齐的段落。
+            
+            【返回规范】
+            只返回JSON: {"replies":[{"u":"昵称","t":"回响内容"}]}
+        `;
+
+        const res = await fetch(`${apiUrl}/chat/completions`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+            body: JSON.stringify({
+                model: localStorage.getItem('gpt_model') || "gpt-3.5-turbo",
+                messages: [{ role: "user", content: prompt }],
+                temperature: 0.8
+            })
+        });
+
+        const json = await res.json();
+        const data = JSON.parse(json.choices[0].message.content.match(/\{[\s\S]*\}/)[0]).replies;
+
+        // 3. 存储到数据库中对应的 replies 数组里
+        let allPosts = await window.ib.getItem('fm_posts_db');
+        let story = allPosts[tag].find(i => i.id === postId);
+        let parentComment = story.comments_list.find(c => c.id === window.currentActiveCommentId);
+        
+        if (!parentComment.replies) parentComment.replies = [];
+        
+        // 将新生成的 5 条追加进去
+        data.forEach(item => {
+            parentComment.replies.unshift({ // unshift 让最新的在上面
+                u: item.u,
+                t: item.t,
+                time: "此刻"
+            });
+        });
+
+        await window.ib.setItem('fm_posts_db', allPosts);
+
+        // 4. 移除加载器并重新渲染列表
+        document.getElementById('fms-ai-loader').remove();
+        window.renderSubReplies(parentComment.replies);
+        
+        window.showCpaToast("深度共鸣已达成");
+
+    } catch (e) {
+        console.error(e);
+        if (document.getElementById('fms-ai-loader')) document.getElementById('fms-ai-loader').remove();
+        window.showCpaToast("回响信号中断");
+    } finally {
+        btn.classList.remove('fms-spinning');
+    }
+};
+
+window.renderSubReplies = function(replies) {
+    const listContainer = document.getElementById('fms-replies-list');
+    listContainer.innerHTML = '';
+
+    replies.forEach((r, i) => {
+        const html = `
+            <div class="fms-reply-item" style="animation: fmsSlideUp 0.6s ease ${i * 0.1}s both;">
+                <div class="fms-reply-user"><span>✦</span> ${r.u || r.user}</div>
+                <div class="fms-reply-text">${r.t || r.text}</div>
+            </div>`;
+        listContainer.insertAdjacentHTML('beforeend', html);
+    });
+};
+
+window.initSubReplyDOM = function() {
+    if (document.getElementById('fm-sub-reply-page')) return;
+    
+    // 顺便把上面的 CSS 给注了
+    window.injectSubReplyCSS();
+
+    const html = `
+    <div id="fm-sub-reply-page" class="fm-sub-reply-page">
+        <div class="fms-header">
+            <div class="fms-back" onclick="window.closeSubReplyPage()">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 18l-6-6 6-6"/></svg>
+                <span>返回</span>
+            </div>
+            <div class="fms-title">ECHO DETAIL</div>
+            <div class="fms-refresh" id="fms-ai-refresh" onclick="window.triggerSubAiEcho()">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M23 4v6h-6"></path>
+                    <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                </svg>
+            </div>
+        </div>
+
+        <div class="fms-content" id="fms-scroll-container">
+            <div id="fms-focus-target" class="fms-focus-card"></div>
+            <div class="fms-divider"><span>DEEP RESONANCE</span></div>
+            <div id="fms-replies-list" class="fms-list"></div>
+        </div>
+
+        <div class="fms-input-area">
+            <input type="text" id="fms-input-field" placeholder="以此为引，写下回响..." maxlength="100">
+            <button onclick="window.postSubComment()" id="fms-send-btn">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                    <line x1="22" y1="2" x2="11" y2="13"></line>
+                    <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                </svg>
+            </button>
+        </div>
+    </div>`;
+    document.body.insertAdjacentHTML('beforeend', html);
+};
+
+window.postSubComment = async function() {
+    const input = document.getElementById('fms-input-field');
+    const text = input.value.trim();
+    if (!text || !window.currentActiveCommentId) return;
+
+    const { postId, tag } = window.currentEssayContext;
+    const user = window.getFmUser();
+
+    // 1. 读取数据库并定位到那条“主评论”
+    const allPosts = await window.ib.getItem('fm_posts_db');
+    const story = allPosts[tag].find(i => i.id === postId);
+    const parentComment = story.comments_list.find(c => c.id === window.currentActiveCommentId);
+
+    if (parentComment) {
+        // 2. 塞进二级评论数组
+        if (!parentComment.replies) parentComment.replies = [];
+        parentComment.replies.push({
+            u: user.name,
+            t: text,
+            time: "JUST NOW"
+        });
+
+        // 3. 持久化
+        await window.ib.setItem('fm_posts_db', allPosts);
+
+        // 4. 清空输入框并局部刷新列表
+        input.value = '';
+        window.renderSubReplies(parentComment.replies); // 重新跑一下渲染列表的函数
+        window.showCpaToast("共鸣已深陷一步");
+    }
+};
+
+window.injectSubReplyCSS = function() {
+    if (document.getElementById('fm-sub-reply-style')) return;
+    const css = `
+        <style id="fm-sub-reply-style">
+            .fm-sub-reply-page {
+                position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+                background: rgba(10, 10, 12, 0.9); /* 纯粹深灰 */
+                backdrop-filter: blur(30px) saturate(120%);
+                z-index: 50000000; display: none; flex-direction: column;
+                color: #E0E0E0; transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+                opacity: 0; transform: scale(1.05);
+            }
+            .fm-sub-reply-page.active { opacity: 1; transform: scale(1); display: flex; }
+
+            .fms-header {
+                padding: 25px 20px; display: flex; align-items: center; 
+                border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+            }
+            .fms-back { display: flex; align-items: center; gap: 8px; font-size: 13px; opacity: 0.5; cursor: pointer; }
+            .fms-title { position: absolute; left: 50%; transform: translateX(-50%); font-size: 14px; font-weight: 900; letter-spacing: 2px; opacity: 0.8; }
+
+            .fms-content { flex: 1; overflow-y: auto; padding-bottom: 100px; scroll-behavior: smooth; }
+
+            .fms-focus-card {
+                margin: 20px; padding: 30px;
+                background: rgba(255, 255, 255, 0.02);
+                border-radius: 20px; border: 1px solid rgba(255, 255, 255, 0.05);
+                box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            }
+
+            .fms-divider { text-align: center; margin: 30px 0; }
+            .fms-divider span { font-size: 10px; letter-spacing: 4px; opacity: 0.2; }
+
+            .fms-reply-item { 
+                padding: 20px; margin: 0 20px 15px 20px;
+                background: rgba(255,255,255,0.01); border-radius: 12px;
+                animation: fmsSlideUp 0.6s ease both;
+            }
+            .fms-reply-user { font-size: 11px; color: #7A5CB0; font-weight: 800; margin-bottom: 6px; }
+            .fms-reply-text { font-size: 14px; line-height: 1.7; opacity: 0.85; }
+
+            .fms-input-area {
+                position: absolute; bottom: 0; left: 0; width: 100%;
+                padding: 25px 20px; background: linear-gradient(to top, #0A0A0C 80%, transparent);
+                display: flex; gap: 12px;
+            }
+            #fms-input-field {
+                flex: 1; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+                padding: 12px 20px; border-radius: 30px; color: #fff; outline: none;
+            }
+            #fms-send-btn {
+                width: 45px; height: 45px; border-radius: 50%; background: #7A5CB0;
+                border: none; color: #fff; display: flex; align-items: center; justify-content: center;
+            }
+
+            @keyframes fmsSlideUp {
+                from { opacity: 0; transform: translateY(20px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+
+            .fms-header {
+    /* 增加顶部内边距，避开状态栏 */
+    padding: 60px 20px 20px 20px; 
+    display: flex; 
+    align-items: center; 
+    /* 确保左右元素撑开 */
+    justify-content: space-between; 
+    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+    /* 建议加上这行，防止内容在滚动时透出来太乱 */
+    background: rgba(10, 10, 12, 0.8);
+    backdrop-filter: blur(10px);
+}
+
+.fms-refresh {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.5;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.fms-refresh:active {
+    transform: rotate(180deg); /* 点击时转半圈，很有手感 */
+    opacity: 1;
+}
+
+/* 旋转动画类，用于 AI 加载时 */
+.fms-spinning {
+    animation: fmsRotate 0.8s linear infinite;
+}
+
+@keyframes fmsRotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* 信号捕捉动画 */
+@keyframes fmsPulse {
+    0% { opacity: 0.3; transform: scale(0.98); }
+    50% { opacity: 0.6; transform: scale(1); }
+    100% { opacity: 0.3; transform: scale(0.98); }
+}
+
+.fms-loading-placeholder {
+    margin: 15px 20px;
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 12px;
+    border: 1px dashed rgba(122, 92, 176, 0.3);
+    animation: fmsPulse 1.5s infinite ease-in-out;
+    text-align: center;
+    font-size: 11px;
+    color: #7A5CB0;
+    letter-spacing: 2px;
+}
+        </style>
+    `;
+    document.head.insertAdjacentHTML('beforeend', css);
+};
+
 window.refreshEssayEchoes = async function() {
     const btn = document.getElementById('fer-refresh-trigger');
     if (btn.classList.contains('fer-spinning')) return;
@@ -38890,28 +39190,27 @@ window.postEssayEcho = async function() {
     const { postId, tag } = window.currentEssayContext;
     const user = window.getFmUser();
 
-    // 1. 读取数据库，把内容塞进 comments_list
-    const allPosts = await window.ib.getItem('fm_posts_db');
+    // 1. 读取 DB
+    const allPosts = await window.ib.getItem('fm_posts_db') || {};
     const story = allPosts[tag].find(i => i.id === postId);
     if (!story.comments_list) story.comments_list = [];
 
+    // 2. 存入用户数据（一定要带 isUser）
     story.comments_list.push({
         id: 'user_' + Date.now(),
         user: user.name,
         text: content,
-        time: "刚刚",
-        isUser: true,
-        replies: [] // 用户评论暂不设二级回复
+        time: "JUST NOW",
+        isUser: true, // 核心：标记它是你发的
+        replies: []   // 预留二级评论槽位
     });
 
-    // 2. 保存并局部刷新 UI
+    // 3. 写回 DB
     await window.ib.setItem('fm_posts_db', allPosts);
-    input.value = ''; // 清空输入框
-    window.openEssayReplyPage(postId, encodeURIComponent(content)); 
-    
-    // 更新主页面的评论数显示
-    const countLabel = document.getElementById('fme-comment-count');
-    if (countLabel) countLabel.innerText = `${story.comments_list.length} ECHOES`;
+
+    // 4. 清空并重新加载（这时 openEssayReplyPage 会从库里读出刚存的这条）
+    input.value = '';
+    window.openEssayReplyPage(postId, encodeURIComponent(content));
 };
 
 window.openEssayReplyPage = async function(postId, encodedText) {
@@ -38953,20 +39252,36 @@ window.openEssayReplyPage = async function(postId, encodedText) {
     // 在 openEssayReplyPage 的渲染循环里
     sortedComments.forEach((comment, i) => {
         setTimeout(() => {
+            const isUser = comment.isUser === true;
+            
             let html = `
-                <div class="fer-echo-group" style="margin-bottom: 20px;">
-                    <div class="fer-echo-item">
-                        <div class="fer-echo-user">${comment.user}</div>
+                <div class="fer-echo-group" style="margin-bottom: 24px;">
+                    <div class="fer-echo-item ${isUser ? 'fer-user-glow' : ''}" 
+                        ${isUser ? `onclick="event.stopPropagation(); window.enterSubEchoPage('${comment.id}')" style="cursor:pointer;"` : ''}>
+                        
+                        <div class="fer-echo-user">
+                            ${comment.user} ${isUser ? '<span style="font-size:8px; opacity:0.5; margin-left:5px;">(MY ECHO)</span>' : ''}
+                        </div>
                         <div class="fer-echo-text">${comment.text}</div>
+                        
+                        ${isUser ? `
+                        <div class="fer-user-action">
+                            <div class="fer-deep-echo-btn">
+                                <span>Deep Resonance</span>
+                                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="9 18 15 12 9 6"></polyline>
+                                </svg>
+                            </div>
+                        </div>` : ''}
                     </div>`;
 
-            // 如果有二级评论，直接循环渲染在下面
-            if (comment.replies && comment.replies.length > 0) {
+            // --- 核心改动：只有非用户评论（AI生成的）才在这里显示二级评论 ---
+            if (!isUser && comment.replies && comment.replies.length > 0) {
                 comment.replies.forEach(r => {
                     html += `
                         <div class="fer-echo-item fer-ai-reply" style="margin-left: 20px; margin-top: 8px; background: rgba(122, 92, 176, 0.05); border-left: 2px solid #7A5CB0; opacity: 0.8; transform: scale(0.96);">
-                            <div class="fer-echo-user" style="font-size: 10px; color: #A289D1;">${r.u}</div>
-                            <div class="fer-echo-text" style="font-size: 12px;">${r.t}</div>
+                            <div class="fer-echo-user" style="font-size: 10px; color: #A289D1;">${r.u || r.user}</div>
+                            <div class="fer-echo-text" style="font-size: 12px;">${r.t || r.text}</div>
                         </div>`;
                 });
             }
@@ -38975,6 +39290,53 @@ window.openEssayReplyPage = async function(postId, encodedText) {
             container.insertAdjacentHTML('beforeend', html);
         }, i * 150);
     });
+};
+
+window.enterSubEchoPage = async function(commentId) {
+    window.initSubReplyDOM();
+    window.currentActiveCommentId = commentId; // 记录当前在回复哪一条
+
+    // 1. 从库里捞出这条评论
+    const { postId, tag } = window.currentEssayContext;
+    const allPosts = await window.ib.getItem('fm_posts_db');
+    const story = allPosts[tag].find(i => i.id === postId);
+    const comment = story.comments_list.find(c => c.id === commentId);
+
+    if (!comment) return;
+
+    // 2. 渲染聚焦的“主评论”
+    document.getElementById('fms-focus-target').innerHTML = `
+        <div style="font-size:11px; opacity:0.4; margin-bottom:12px;">@${comment.user} 的随笔感悟</div>
+        <div>${comment.text}</div>
+    `;
+
+    // 3. 渲染已有的二级回复
+    const listContainer = document.getElementById('fms-replies-list');
+    listContainer.innerHTML = '';
+    
+    if (comment.replies && comment.replies.length > 0) {
+        comment.replies.forEach(r => {
+            const html = `
+                <div class="fms-reply-item">
+                    <div class="fms-reply-user">${r.u || r.user}</div>
+                    <div class="fms-reply-text">${r.t || r.text}</div>
+                </div>`;
+            listContainer.insertAdjacentHTML('beforeend', html);
+        });
+    } else {
+        listContainer.innerHTML = '<div style="text-align:center; opacity:0.2; padding:40px; font-size:12px;">尚无深度回响</div>';
+    }
+
+    // 4. 显示页面
+    const page = document.getElementById('fm-sub-reply-page');
+    page.style.display = 'flex';
+    requestAnimationFrame(() => page.classList.add('active'));
+};
+
+window.closeSubReplyPage = function() {
+    const page = document.getElementById('fm-sub-reply-page');
+    page.classList.remove('active');
+    setTimeout(() => page.style.display = 'none', 400);
 };
 
 window.closeEssayReplyPage = function() {
@@ -39213,7 +39575,7 @@ window.triggerAIForUserComment = async function(userText, userCommentId) {
     // 视觉反馈
     btn.style.opacity = "0.5";
     btn.style.pointerEvents = "none";
-    btn.innerText = "🔍 正在解析你的回响...";
+    btn.innerText = "正在解析你的回响...";
 
     try {
         const apiKey = localStorage.getItem('gpt_key');
@@ -39341,7 +39703,7 @@ window.openCommentsPage = async function(postId, storyTag) {
                             <span class="fmc-time">${item.time}</span>
                         </div>
                         <div class="fmc-text">${item.text}</div>
-                        ${item.isUser ? '<div style="font-size:9px; color:#7A5CB0; margin-top:5px; font-weight:800;">⚡ 查看 AI 的定向回响</div>' : ''}
+                        ${item.isUser ? '<div style="font-size:9px; color:#7A5CB0; margin-top:5px; font-weight:800;">查看 AI 的定向回响</div>' : ''}
                     </div>
                 </div>`;
 
@@ -39380,7 +39742,7 @@ window.triggerAIComments = async function() {
     const originalContent = btn.innerHTML;
     btn.style.opacity = "0.5";
     btn.style.pointerEvents = "none";
-    btn.innerHTML = `<span>⚔️</span><span>神仙打架中...</span>`;
+    btn.innerHTML = `<span>神仙打架中...</span>`;
 
     const loaderId = 'loader_' + Date.now();
     container.insertAdjacentHTML('beforeend', `
@@ -39400,9 +39762,12 @@ window.triggerAIComments = async function() {
         let storyIdx = tagPosts.findIndex(i => i.id === window.currentReadingPost.id);
         let story = tagPosts[storyIdx];
 
+        // --- 核心修复：定义 existingTexts，防止 ReferenceError ---
+        const existingTexts = (story.comments_list || []).slice(-10).map(c => c.text).join(' | ');
+
         // 2. 深度定制 Prompt
         const prompt = `你现在是资深文学沙龙组织者。请针对故事《${story.title}》模拟5组读者之间的"共鸣碰撞"。
-        已有评论观点：${existingTexts}
+        已有评论观点：${existingTexts || "暂无"}
 
         要求：请避开上述已有的讨论点，开启5组全新的、具有冲突性的对话。
         1. 生成5组。每组包含1条主评论，以及针对该评论的至少3条二级回复（形成神仙打架的辩论感）。
@@ -39421,8 +39786,7 @@ window.triggerAIComments = async function() {
             })
         });
 
-        // 存储逻辑修改：
-        story.comments_list = [...(story.comments_list || []), ...newGroupsForDB]; // 用解构赋值追加，不覆盖
+        // --- 移除这里原本错误的提前存储逻辑 ---
 
         const json = await res.json();
         const rawData = JSON.parse(json.choices[0].message.content.match(/\{[\s\S]*\}/)[0]).groups;
@@ -39468,7 +39832,7 @@ window.triggerAIComments = async function() {
             container.insertAdjacentHTML('beforeend', html);
         });
 
-        // 4. 持久化存储
+        // 4. 持久化存储 (在渲染完成后存入)
         story.comments_list = [...(story.comments_list || []), ...newGroupsForDB];
         allPosts[window.currentReadingPost.tag][storyIdx] = story;
         await window.ib.setItem('fm_posts_db', allPosts);
@@ -40224,7 +40588,7 @@ window.renderPostWithYourTemplate = function(post, delay = 0) {
 
     // 完整的精致马卡龙帖子模板
     wrapper.innerHTML = `
-        <div class="fm-post-card jelly-anim" id="${post.id}" style="margin-bottom:15px; background: #fff; border-radius: 24px; padding: 18px; box-shadow: 0 10px 30px rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.02);">
+        <div class="fm-post-card jelly-anim" id="${post.id}" onclick="window.openPostReader('${post.id}')" style="margin-bottom:15px; background: #fff; border-radius: 24px; padding: 18px; box-shadow: 0 10px 30px rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.02);">
             <div style="display: flex; align-items: center; margin-bottom: 12px;">
                 <div style="width: 38px; height: 38px; background: #FFE5EC; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #FF8FAB; font-weight: 800; font-size: 14px; overflow:hidden;">
                     ${post.avatar ? `<img src="${post.avatar}" style="width:100%;height:100%;object-fit:cover;">` : post.initial}
@@ -40263,6 +40627,18 @@ window.renderPostWithYourTemplate = function(post, delay = 0) {
             </div>
         </div>
     `;
+
+    // 获取刚刚创建的卡片
+    const card = wrapper.querySelector('.fm-post-card');
+    
+    // 绑定点击进入详情逻辑
+    card.onclick = () => {
+        if (window.openStoryReader) {
+            window.openStoryReader(post);
+        } else {
+            console.error("阅读器函数 openStoryReader 尚未定义！");
+        }
+    };
 
     // 动态插入
     timeline.prepend(wrapper);
@@ -93445,6 +93821,7 @@ async function loadCpWidgetData(charId) {
     }
 }
 
+
 // ==========================================
 // 🌌 Forum (Echoes) App: 顶级杂志风社区引擎 CSS (千面头部版)
 // ==========================================
@@ -95887,7 +96264,7 @@ function initForumDOM() {
 
         </div>
 
-        <div id="fm-view-home" class="fm-view-page active" style="background: #ffffff; height: 100%; display: flex; flex-direction: column; overflow: hidden;">
+        <div id="fm-view-home" class="fm-view-page active" >
 
             <div style="padding: 15px 12px 5px;">
                 <div class="fm-update-bar jelly-anim" onclick="refreshSignals()" style="background: #f2f2f7; color: #1d1d1f; height: 42px; border-radius: 21px; box-shadow: none; border: 1px solid rgba(0,0,0,0.02);">
@@ -96768,11 +97145,17 @@ function injectStoryReaderCSS() {
     style.id = 'fm-reader-style';
     style.innerHTML = `
         /* 📖 全屏阅读器容器 */
-        #fm-story-reader {
-            position: fixed; inset: 0; z-index: 9000000;
-            background: #fff; display: none; flex-direction: column;
-            transform: translateX(100%); transition: transform 0.5s cubic-bezier(0.19, 1, 0.22, 1);
-        }
+        /* 修改后的 CSS 属性 */
+#fm-story-reader {
+    position: fixed !important; 
+    inset: 0 !important; 
+    z-index: 300000000 !important; /* 浏览器允许的最大值 */
+    background: #ffffff !important; 
+    display: none; 
+    flex-direction: column;
+    transform: translateX(100%); 
+    transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
         #fm-story-reader.active { display: flex; transform: translateX(0); }
 
         /* 顶部导航：果冻返回感 */
@@ -97590,6 +97973,151 @@ function injectEssayReplyCSS() {
     from { transform: translateY(-50%) rotate(0deg); }
     to { transform: translateY(-50%) rotate(360deg); }
 }
+
+/* 用户评论的独特容器 */
+.fer-echo-item.user-echo {
+    background: linear-gradient(145deg, rgba(122, 92, 176, 0.15), rgba(20, 20, 25, 0.4));
+    border: 1px solid rgba(122, 92, 176, 0.3);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    position: relative;
+    overflow: hidden;
+}
+
+/* 独特的左侧装饰线，带呼吸灯效果 */
+.fer-echo-item.user-echo::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 4px;
+    background: #7A5CB0;
+    box-shadow: 0 0 10px #7A5CB0;
+}
+
+/* 右下角的“进入回响”提示点 */
+.fer-user-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 10px;
+    font-size: 10px;
+}
+
+.fer-enter-btn {
+    color: #7A5CB0;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.fer-enter-btn::after {
+    content: '→';
+    font-size: 14px;
+}
+
+.fer-user-action {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 12px;
+}
+
+.fer-deep-echo-btn {
+    background: rgba(122, 92, 176, 0.15); /* 极浅的紫色底 */
+    padding: 4px 10px;
+    border-radius: 20px;
+    border: 1px solid rgba(122, 92, 176, 0.3);
+    
+    /* 文字美化：拉开间距，缩小字体 */
+    font-size: 9px;
+    color: #A289D1;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    backdrop-filter: blur(5px);
+}
+
+/* 增加一个小光点闪烁，增加活物感 */
+.fer-deep-echo-btn::before {
+    content: '';
+    width: 4px; height: 4px;
+    background: #7A5CB0;
+    border-radius: 50%;
+    box-shadow: 0 0 8px #7A5CB0;
+    animation: ferPulse 2s infinite;
+}
+
+@keyframes ferPulse {
+    0% { opacity: 0.4; transform: scale(0.8); }
+    50% { opacity: 1; transform: scale(1.2); }
+    100% { opacity: 0.4; transform: scale(0.8); }
+}
+
+/* 鼠标悬停（或点击时）的效果 */
+.fer-echo-item.user-echo:active .fer-deep-echo-btn {
+    background: rgba(122, 92, 176, 0.4);
+    border-color: #7A5CB0;
+    transform: translateX(3px);
+}
+
+.fm-sub-reply-page {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(15, 15, 17, 0.85); /* 深灰背景 */
+    backdrop-filter: blur(25px); /* 极强的虚化，营造安静感 */
+    z-index: 3000; display: none; flex-direction: column;
+    color: #E0E0E0; transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    opacity: 0; transform: translateY(30px);
+}
+
+.fm-sub-reply-page.active { opacity: 1; transform: translateY(0); display: flex; }
+
+.fms-header {
+    padding: 20px; display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.fms-back { display: flex; align-items: center; gap: 5px; font-size: 13px; opacity: 0.6; }
+
+.fms-focus-card {
+    margin: 30px 20px; padding: 25px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.08);
+    font-size: 17px; line-height: 1.8; letter-spacing: 0.5px;
+    color: #FFFFFF; box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+}
+
+.fms-divider {
+    text-align: center; margin: 20px 0; position: relative;
+}
+.fms-divider span {
+    font-size: 9px; letter-spacing: 3px; opacity: 0.3; background: transparent; padding: 0 15px;
+}
+
+.fms-reply-item {
+    padding: 20px; border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+    animation: fmsFadeIn 0.6s ease both;
+}
+
+.fms-reply-user { font-size: 11px; color: #7A5CB0; margin-bottom: 8px; font-weight: 700; }
+.fms-reply-text { font-size: 14px; line-height: 1.6; opacity: 0.9; }
+
+.fms-input-area {
+    padding: 20px; background: rgba(20, 20, 22, 0.95);
+    display: flex; gap: 12px; align-items: center;
+}
+
+#fms-input-field {
+    flex: 1; background: rgba(255,255,255,0.05); border: none; padding: 12px 18px;
+    border-radius: 25px; color: #fff; font-size: 14px;
+}
+
+@keyframes fmsFadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     `;
     document.head.appendChild(style);
 }
@@ -97639,6 +98167,11 @@ function initEssayReplyDOM() {
     
     document.body.insertAdjacentHTML('beforeend', html);
 }
+
+
+
+
+
 
 
 
