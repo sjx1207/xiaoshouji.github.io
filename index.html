@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>LUNA - The Cinematic Universe</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Montserrat:wght@100&family=Tenor+Sans&display=swap" rel="stylesheet">
     <style>
         :root {
             --bg-abyss: #020205;
@@ -88,20 +89,45 @@
             animation: float 8s ease-in-out infinite;
         }
 
-        /* --- 史诗感文字设计 --- */
+        /* 主标题美化：神圣、空灵、电影感 */
         .luna-title {
-            font-size: 5rem; font-weight: 200; letter-spacing: 2.5rem; padding-left: 2.5rem;
+            font-family: 'Cinzel', serif; /* 使用 Cinzel 字体 */
+            font-size: 5rem;
+            font-weight: 400;
+            text-transform: uppercase;
+            
+            /* 极致字间距：L U N A 之间的空气感 */
+            letter-spacing: 2.5rem;
+            padding-left: 2.5rem; /* 抵消右侧间距实现居中 */
+            
+            /* 高级感色调：冷银渐变 */
+            background: linear-gradient(
+                to bottom, 
+                #ffffff 0%, 
+                #cfd9df 50%, 
+                #a1abb3 100%
+            );
+            -webkit-background-clip: text;
+            background-clip: text;
             color: transparent;
-            background: linear-gradient(180deg, #ffffff 0%, #a0b0d0 100%);
-            -webkit-background-clip: text; background-clip: text;
-            filter: drop-shadow(0 0 20px rgba(255,255,255,0.2));
-            margin-bottom: 10px;
+            
+            /* 柔和微光 */
+            filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.3));
+            
+            /* 进场动画：模糊淡入+间距收缩 */
+            animation: lunaEntrance 4s cubic-bezier(0.19, 1, 0.22, 1) 2s forwards;
+            opacity: 0;
         }
 
+        /* 副标题美化：极简、现代 */
         .luna-tagline {
-            font-size: 0.75rem; font-weight: 300; letter-spacing: 0.8rem; padding-left: 0.8rem;
-            color: rgba(200, 220, 255, 0.6); text-transform: uppercase;
-            margin-bottom: 60px;
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 100;
+            font-size: 0.7rem;
+            letter-spacing: 0.8rem;
+            padding-left: 0.8rem;
+            color: rgba(255, 255, 255, 0.4);
+            margin-top: 10px;
         }
 
         /* --- 沉浸式交互按钮 --- */
@@ -158,6 +184,103 @@
         /* 过场白屏/黑幕 */
         #warp-flash { position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; z-index: 999; transition: opacity 0.8s cubic-bezier(0.8, 0, 0.2, 1); }
         #warp-dark { position: absolute; inset: 0; background: #000; opacity: 0; pointer-events: none; z-index: 1000; transition: opacity 1.5s ease; }
+
+/* --- 手机端专项适配 (屏幕宽度小于 768px) --- */
+@media (max-width: 768px) {
+    /* 标题：缩小字号，字间距从 2.5rem 缩减到更灵动的 1.2rem */
+    .luna-title {
+        font-size: 10vw; /* 随屏幕宽度自动缩放 */
+        letter-spacing: 1.2rem;
+        padding-left: 1.2rem; /* 保持居中修正 */
+        margin-bottom: 5px;
+        white-space: nowrap; /* 强制不换行，保证排版完整 */
+    }
+
+    /* Tagline：Architect Of The Digital Void */
+    .luna-tagline {
+        font-size: 2vw; /* 极细小字 */
+        letter-spacing: 0.3rem;
+        padding-left: 0.3rem;
+        width: 90%; /* 限制宽度，防止贴边 */
+        text-align: center;
+        line-height: 1.5;
+        margin-bottom: 40px;
+        /* 如果文字还是太长，可以尝试取消大写或进一步缩小 */
+    }
+
+    /* 调整中心元素大小，为文字腾出纵向空间 */
+    .luna-astrolabe {
+        width: 160px;
+        height: 160px;
+        margin-bottom: 20px;
+    }
+
+    /* 按钮在手机端适当缩小，方便点击且不突兀 */
+    .enter-portal {
+        width: 160px;
+        height: 44px;
+    }
+}
+
+/* --- 1. 调整 UI 层整体布局 --- */
+#ui-layer {
+    position: absolute; 
+    inset: 0;
+    display: flex; 
+    flex-direction: column; 
+    align-items: center; 
+    justify-content: center;
+    z-index: 10; 
+    pointer-events: none;
+    
+    /* 核心修改：利用 gap 统一控制所有直系子元素的间距 */
+    gap: 2.5rem; 
+}
+
+/* --- 2. 针对各元素的精准间距微调 --- */
+
+.luna-astrolabe {
+    /* 增加 Logo 下方的间距，让它像悬浮在宇宙中心 */
+    margin-bottom: 2rem; 
+}
+
+.luna-title {
+    /* 标题和副标题之间不需要太大间距，保持关联感 */
+    margin-bottom: 0.5rem; 
+}
+
+.luna-tagline {
+    /* 副标题和按钮之间是视觉断层，增加间距产生“空灵感” */
+    margin-bottom: 5rem; 
+}
+
+/* --- 3. 手机端专项适配 (最关键的间距调整) --- */
+@media (max-width: 768px) {
+    #ui-layer {
+        /* 手机屏窄长，间距要按比例调整 */
+        gap: 1.5rem; 
+    }
+
+    .luna-astrolabe {
+        width: 150px; /* 缩小 Logo */
+        height: 150px;
+        margin-bottom: 1.5rem;
+    }
+
+    .luna-tagline {
+        /* 手机端按钮位置可以稍微靠下一些 */
+        margin-bottom: 15vh; 
+        width: 80%;
+        line-height: 1.8;
+    }
+    
+    /* 针对手机端文字美化，防止换行太挤 */
+    .luna-title {
+        font-size: 11vw;
+        letter-spacing: 1rem;
+        padding-left: 1rem;
+    }
+}
     </style>
 </head>
 <body>
@@ -420,7 +543,7 @@
 
             // 最终跳转
             setTimeout(() => {
-                window.location.href = "index.html"; // 你的目标页面
+                window.location.href = "zhuji.html"; // 你的目标页面
             }, 2000);
         }
 
